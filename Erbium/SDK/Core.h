@@ -435,7 +435,7 @@ namespace SDK
 			return Call(obj, Params);
 		}
 
-		int32 GetVTableIndex() 
+		uint32 GetVTableIndex() 
 		{
 			if (!this) 
 				return -1;

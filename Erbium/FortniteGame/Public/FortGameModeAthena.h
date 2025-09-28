@@ -24,6 +24,7 @@ public:
     DEFINE_PROP(StartingItems, TArray<FItemAndCount>);
     DEFINE_PROP(bDisableGCOnServerDuringMatch, bool);
     DEFINE_PROP(bPlaylistHotfixChangedGCDisabling, bool);
+    DEFINE_PROP(AthenaGameDataTable, UCurveTable*);
 
     DEFINE_FUNC(SpawnDefaultPawnAtTransform, AFortPlayerPawnAthena*);
     DEFINE_FUNC(RestartPlayer, void);

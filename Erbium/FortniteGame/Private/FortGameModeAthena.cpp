@@ -56,11 +56,11 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         __stosb((PBYTE)URL, 0, FURL::Size());
         URL->Port = 7777;
 
-        auto InitListen = (bool (*)(UNetDriver*, UWorld*, FURL&, bool, FString&)) FindInitListen();
+        auto InitListen = (bool (*)(UNetDriver*, UWorld*, FURL*, bool, FString&)) FindInitListen();
         auto SetWorld = (void (*)(UNetDriver*, UWorld*)) FindSetWorld();
 
         FString Err;
-        if (InitListen(NetDriver, World, *URL, false, Err))
+        if (InitListen(NetDriver, World, URL, false, Err))
         {
             SetWorld(NetDriver, World);
         }
@@ -73,9 +73,9 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
         if (Playlist)
         {
+            printf("Playlist: %s\n", Playlist->Name.ToString().c_str());
             if (GameState->HasCurrentPlaylistInfo())
             {
-                printf("Playlist: %s\n", Playlist->Name.ToString().c_str());
                 if (VersionInfo.EngineVersion >= 4.27)
                     Playlist->GarbageCollectionFrequency = 9999999999999999.f; // 4.27 needs a different GC disable method
                 GameState->CurrentPlaylistInfo.BasePlaylist = Playlist;
@@ -165,7 +165,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         if (VersionInfo.FortniteVersion >= 18)
         {
             // fix storm damage bug
-            UCurveTable* AthenaGameDataTable = GameState->AthenaGameDataTable;
+            UCurveTable* AthenaGameDataTable = GameMode->HasAthenaGameDataTable() ? GameMode->AthenaGameDataTable : GameState->AthenaGameDataTable;
 
             if (AthenaGameDataTable)
             {
@@ -304,7 +304,7 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
 
     if (DurationSum == 0)
     {
-        auto GameData = GameState->AthenaGameDataTable;
+        auto GameData = GameMode->HasAthenaGameDataTable() ? GameMode->AthenaGameDataTable : GameState->AthenaGameDataTable;
 
         auto ShrinkTime = UKismetStringLibrary::Conv_StringToName(FString(L"Default.SafeZone.ShrinkTime"));
         auto HoldTime = UKismetStringLibrary::Conv_StringToName(FString(L"Default.SafeZone.WaitTime"));
