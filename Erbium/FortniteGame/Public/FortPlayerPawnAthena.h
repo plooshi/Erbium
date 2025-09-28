@@ -11,4 +11,6 @@ public:
     DEFINE_FUNC(SetHealth, void);
     DEFINE_FUNC(SetShield, void);
     DEFINE_FUNC(EquipWeaponDefinition, AActor*);
+
+    InitHooks;
 };

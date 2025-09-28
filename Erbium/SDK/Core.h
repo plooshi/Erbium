@@ -785,12 +785,40 @@ namespace SDK
 		return *(uint64_t*)(__int64(this) + Offset);
 	}
 
+	class UEnum : public UField
+	{
+	public:
+		int64 GetValue(const char *EnumMemberName) const
+		{
+			auto Names = *(TArray<TPair<FName, int64>>*)(__int64(this) + 0x40);
+
+			for (int i = 0; i < Names.Num(); i++)
+			{
+				auto& Pair = Names[i];
+				auto& Name = Pair.Key();
+				auto& Value = Pair.Value();
+
+				if (Name.ComparisonIndex)
+				{
+					if (Name.ToString().contains(EnumMemberName))
+						return Value;
+				}
+			}
+
+			return -1;
+		}
+	};
+
 	inline const UClass* FindClass(const char* Name) {
 		return (UClass*)TUObjectArray::FindObject(Name, 0x20);
 	}
 
 	inline const UStruct* FindStruct(const char* Name) {
 		return (UStruct*)TUObjectArray::FindObject(Name, 0x10);
+	}
+
+	inline const UEnum* FindEnum(const char* Name) {
+		return (UEnum*)TUObjectArray::FindObject(Name, 0x4);
 	}
 
 	inline const UClass* UFunction::StaticClass()

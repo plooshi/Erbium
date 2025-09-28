@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "../Public/FortInventory.h"
+#include "../Public/FortPlayerPawnAthena.h"
 
 // OnItemInstanceRemoved is always + 1
 inline uint32_t FindOnItemInstanceAddedVft()
@@ -61,6 +62,13 @@ UFortWorldItem* AFortInventory::GiveItem(UFortItemDefinition* Def, int Count, in
     return Item;
 }
 
+UFortWorldItem* AFortInventory::GiveItem(FFortItemEntry entry, int Count, bool ShowPickupNoti, bool updateInventory)
+{
+    if (Count == -1)
+        Count = entry.Count;
+
+    return GiveItem(entry.ItemDefinition, Count, entry.LoadedAmmo, entry.Level, ShowPickupNoti, updateInventory, entry.HasPhantomReserveAmmo() ? entry.PhantomReserveAmmo : 0);
+}
 
 void AFortInventory::Update(FFortItemEntry* Entry)
 {
@@ -68,4 +76,104 @@ void AFortInventory::Update(FFortItemEntry* Entry)
     HandleInventoryLocalUpdate();
 
     return Entry ? Inventory.MarkItemDirty(*Entry) : Inventory.MarkArrayDirty();
+}
+
+
+void AFortInventory::Remove(FGuid Guid)
+{
+    auto ItemEntryIdx = Inventory.ReplicatedEntries.SearchIndex([&](FFortItemEntry& entry) { return entry.ItemGuid == Guid; }, FFortItemEntry::Size());
+    if (ItemEntryIdx != -1)
+        Inventory.ReplicatedEntries.Remove(ItemEntryIdx, FFortItemEntry::Size());
+
+    auto ItemInstanceIdx = Inventory.ItemInstances.SearchIndex([&](UFortWorldItem* entry) { return entry->ItemEntry.ItemGuid == Guid; }, FFortItemEntry::Size());
+    auto ItemInstance = Inventory.ItemInstances.Search([&](UFortWorldItem* entry)
+        { return entry->ItemEntry.ItemGuid == Guid; }, FFortItemEntry::Size());
+
+    auto Instance = ItemInstance ? *ItemInstance : nullptr;
+    if (ItemInstanceIdx != -1)
+        Inventory.ItemInstances.Remove(ItemInstanceIdx, FFortItemEntry::Size());
+
+    static auto OnItemInstanceRemovedVft = FindOnItemInstanceAddedVft() + 1;
+    if (ItemInstanceIdx != -1 && OnItemInstanceRemovedVft)
+    {
+        static auto InterfaceClass = FindClass("FortInventoryOwnerInterface");
+        ((bool(*)(UFortItemDefinition*, const IInterface*, UFortWorldItem*)) Instance->ItemEntry.ItemDefinition->Vft[OnItemInstanceRemovedVft])(Instance->ItemEntry.ItemDefinition, Owner->GetInterface(InterfaceClass), Instance);
+    }
+
+    Update(nullptr);
+}
+
+FFortRangedWeaponStats* AFortInventory::GetStats(UFortWeaponItemDefinition* Def)
+{
+    if (!Def || !Def->WeaponStatHandle.DataTable)
+        return nullptr;
+
+    auto Val = Def->WeaponStatHandle.DataTable->RowMap.Search([Def](FName& Key, uint8_t* Value) {
+        return Def->WeaponStatHandle.RowName == Key && Value;
+        });
+
+    return Val ? *(FFortRangedWeaponStats**)Val : nullptr;
+}
+
+
+FFortItemEntry* AFortInventory::MakeItemEntry(UFortItemDefinition* ItemDefinition, int32 Count, int32 Level)
+{
+    FFortItemEntry* ItemEntry = new FFortItemEntry();
+
+    ItemEntry->MostRecentArrayReplicationKey = -1;
+    ItemEntry->ReplicationID = -1;
+    ItemEntry->ReplicationKey = -1;
+
+    ItemEntry->ItemDefinition = ItemDefinition;
+    ItemEntry->Count = Count;
+    ItemEntry->Durability = 1.f;
+    ItemEntry->GameplayAbilitySpecHandle = FGameplayAbilitySpecHandle(-1);
+    ItemEntry->ParentInventory.ObjectIndex = -1;
+    ItemEntry->Level = Level;
+    if (auto Weapon = ItemDefinition->Cast<UFortWeaponItemDefinition>())
+    {
+        auto Stats = GetStats(Weapon);
+        ItemEntry->LoadedAmmo = Stats->ClipSize;
+        if (Weapon->HasbUsesPhantomReserveAmmo() && Weapon->bUsesPhantomReserveAmmo)
+            ItemEntry->PhantomReserveAmmo = Stats->InitialClips * Stats->ClipSize;
+    }
+
+    return ItemEntry;
+}
+
+AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entry, long long SourceTypeFlag, long long SpawnSource, AFortPlayerPawnAthena* Pawn, int OverrideCount, bool Toss, bool RandomRotation, bool bCombine)
+{
+    if (!&Entry)
+        return nullptr;
+    AFortPickupAthena* NewPickup = UWorld::SpawnActor<AFortPickupAthena>(Loc, {});
+    if (!NewPickup)
+        return nullptr;
+
+    NewPickup->bRandomRotation = RandomRotation;
+    NewPickup->PrimaryPickupItemEntry.ItemDefinition = Entry.ItemDefinition;
+    NewPickup->PrimaryPickupItemEntry.LoadedAmmo = Entry.LoadedAmmo;
+    NewPickup->PrimaryPickupItemEntry.Count = OverrideCount != -1 ? OverrideCount : Entry.Count;
+    NewPickup->PrimaryPickupItemEntry.PhantomReserveAmmo = Entry.PhantomReserveAmmo;
+    NewPickup->OnRep_PrimaryPickupItemEntry();
+    NewPickup->PawnWhoDroppedPickup = Pawn;
+
+    NewPickup->TossPickup(Loc, Pawn, -1, Toss, true, (uint8) SourceTypeFlag, (uint8) SpawnSource);
+    NewPickup->bTossedFromContainer = SpawnSource == EFortPickupSpawnSource::GetChest() || SpawnSource == EFortPickupSpawnSource::GetAmmoBox();
+    if (NewPickup->bTossedFromContainer)
+        NewPickup->OnRep_TossedFromContainer();
+
+    return NewPickup;
+}
+
+
+bool AFortInventory::IsPrimaryQuickbar(UFortItemDefinition* ItemDefinition)
+{
+    static auto MeleeClass = FindClass("FortWeaponMeleeItemDefinition");
+    static auto ResourceClass = FindClass("FortResourceItemDefinition");
+    static auto AmmoClass = FindClass("FortAmmoItemDefinition");
+    static auto TrapClass = FindClass("FortTrapItemDefinition");
+    static auto BuildingClass = FindClass("FortBuildingItemDefinition");
+    static auto EditToolClass = FindClass("FortEditToolItemDefinition");
+
+    return ItemDefinition->IsA(MeleeClass) || ItemDefinition->IsA(ResourceClass) || ItemDefinition->IsA(AmmoClass) || ItemDefinition->IsA(TrapClass) || ItemDefinition->IsA(BuildingClass) || ItemDefinition->IsA(EditToolClass) || ItemDefinition->bForceIntoOverflow ? false : true;
 }

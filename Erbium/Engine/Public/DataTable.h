@@ -9,3 +9,9 @@ public:
 
     DEFINE_PROP(RowMap, TMap<FName, uint8*>);
 };
+
+struct FDataTableRowHandle
+{
+    UDataTable* DataTable;
+    FName RowName;
+};

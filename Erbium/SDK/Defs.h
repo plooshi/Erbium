@@ -48,6 +48,17 @@
 	}                                                                           \
     static inline constexpr auto _StructName = #__Class + 1;
 
+#define UENUM_COMMON_MEMBERS(__Class)                                           \
+	static const SDK::UEnum* StaticEnum()                                       \
+	{                                                                           \
+		static const SDK::UEnum* _storage = nullptr;                            \
+                                                                                \
+		if (!_storage)                                                          \
+	        _storage = SDK::FindEnum(#__Class);                                 \
+                                                                                \
+		return _storage;                                                        \
+	}
+
 #define DEFINE_PROP(Name, ...)                                                  \
     static inline int32 Name##__Offset = -1;                                    \
     __VA_ARGS__& Get##Name() const                                              \
@@ -115,6 +126,21 @@
                                                                                 \
     __declspec(property(get = Get##Name, put = Set##Name))                      \
     __VA_ARGS__ Name;
+
+#define DEFINE_ENUM_PROP(Name)                                                  \
+    static inline __int64 Name##__Value = -1;                                   \
+    static __int64 Get##Name()                                                  \
+    {                                                                           \
+        if (Name##__Value == -1)                                                \
+            Name##__Value = StaticEnum()->GetValue(#Name);                      \
+        return Name##__Value;                                                   \
+    }                                                                           \
+                                                                                \
+    static bool Has##Name()                                                     \
+    {                                                                           \
+        return Get##Name() != -1;                                               \
+    }                                                                           \
+
 
 #define DEFINE_FUNC(Name, ...)                                                  \
     static inline UFunction* Name##__Ptr = nullptr;                             \

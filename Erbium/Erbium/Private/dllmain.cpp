@@ -1,9 +1,10 @@
 // dllmain.cpp : Defines the entry point for the DLL application.
 #include "pch.h"
-#include "../../Erbium/Public/Utils.h"
+#include "../Public/Utils.h"
 #include <thread>
 #include <iostream>
-#include "../../Erbium/Public/Finders.h"
+#include "../Public/Finders.h"
+#include "../../FortniteGame/Public/FortInventory.h"
 
 
 void Main()
@@ -19,6 +20,8 @@ void Main()
     SetConsoleTitleA(buffer);
 
     FindNullsAndRetTrues();
+
+    printf("%lld\n", EFortPickupSourceTypeFlag::GetFishing());
 
     for (auto& NullFunc : NullFuncs)
         if (NullFunc != 0)

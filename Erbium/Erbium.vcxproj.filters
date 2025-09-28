@@ -54,25 +54,10 @@
     <ClInclude Include="SDK\Memcury.h">
       <Filter>SDK</Filter>
     </ClInclude>
-    <ClInclude Include="Finders.h">
-      <Filter>Erbium\Public</Filter>
-    </ClInclude>
     <ClInclude Include="framework.h">
       <Filter>Erbium\Public</Filter>
     </ClInclude>
-    <ClInclude Include="Misc.h">
-      <Filter>Erbium\Public</Filter>
-    </ClInclude>
     <ClInclude Include="pch.h">
-      <Filter>Erbium\Public</Filter>
-    </ClInclude>
-    <ClInclude Include="Utils.h">
-      <Filter>Erbium\Public</Filter>
-    </ClInclude>
-    <ClInclude Include="Configuration.h">
-      <Filter>Erbium\Public</Filter>
-    </ClInclude>
-    <ClInclude Include="MinHook.h">
       <Filter>Erbium\Public</Filter>
     </ClInclude>
     <ClInclude Include="FortniteGame\Public\FortGameStateAthena.h">
@@ -129,6 +114,24 @@
     <ClInclude Include="Engine\Public\NetDriver.h">
       <Filter>Engine\Public</Filter>
     </ClInclude>
+    <ClInclude Include="FortniteGame\Public\BuildingSMActor.h">
+      <Filter>FortniteGame\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Erbium\Public\Configuration.h">
+      <Filter>Erbium\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Erbium\Public\Finders.h">
+      <Filter>Erbium\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Erbium\Public\MinHook.h">
+      <Filter>Erbium\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Erbium\Public\Misc.h">
+      <Filter>Erbium\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Erbium\Public\Utils.h">
+      <Filter>Erbium\Public</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Erbium\Private\dllmain.cpp">
@@ -160,6 +163,12 @@
     </ClCompile>
     <ClCompile Include="Engine\Private\NetDriver.cpp">
       <Filter>Engine\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="FortniteGame\Private\FortPlayerPawnAthena.cpp">
+      <Filter>FortniteGame\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="FortniteGame\Private\BuildingSMActor.cpp">
+      <Filter>FortniteGame\Private</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

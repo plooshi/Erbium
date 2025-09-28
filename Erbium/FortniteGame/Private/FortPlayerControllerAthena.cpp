@@ -85,7 +85,7 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump(UObject* Context, FF
 		PlayerController = (AFortPlayerControllerAthena*)Context;
 
 	GameMode->RestartPlayer(PlayerController);
-	PlayerController->ClientSetRotation(Rotation, true);
+	//PlayerController->ClientSetRotation(Rotation, true);
 
 	if (PlayerController->MyFortPawn)
 	{

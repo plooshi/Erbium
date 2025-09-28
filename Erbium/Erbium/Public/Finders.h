@@ -828,9 +828,16 @@ inline void FindNullsAndRetTrues()
 
     if (VersionInfo.FortniteVersion >= 19.00 && VersionInfo.FortniteVersion <= 24.00)
     {
-        auto NoLocalPlayer = Memcury::Scanner::FindStringRef(L"%s - No FortLocalPlayer").ScanFor({ 0x48, 0x83, 0xEC }, false).Get();
+        auto NoFortLocalPlayer = Memcury::Scanner::FindStringRef(L"%s - No FortLocalPlayer").ScanFor({ 0x48, 0x83, 0xEC }, false).Get();
 
-        NullFuncs.push_back(NoLocalPlayer);
+        if (NoFortLocalPlayer)
+            NullFuncs.push_back(NoFortLocalPlayer);
+
+
+        auto NoLocalPlayer = Memcury::Scanner::FindStringRef(L"%s - No LocalPlayer").ScanFor({ 0x48, 0x83, 0xEC }, false).Get();
+
+        if (NoLocalPlayer)
+            NullFuncs.push_back(NoLocalPlayer);
     }
 
 

@@ -208,6 +208,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
     return;
 }
 
+auto SpawnDefaultPawnForIdx = 0;
 
 void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor** Ret) 
 {
@@ -217,8 +218,12 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
     Stack.StepCompiledIn(&StartSpot);
     Stack.IncrementCode();
     auto GameMode = (AFortGameModeAthena*)Context;
-    auto Transform = StartSpot->GetTransform();
-    auto Pawn = GameMode->SpawnDefaultPawnAtTransform(NewPlayer, Transform);
+    // they only stripped it on athena for some reason
+    static auto FortGMSpawnDefaultPawnFor = (AFortPlayerPawnAthena * (*)(AFortGameModeAthena*, AFortPlayerControllerAthena*, AActor*)) DefaultObjImpl("FortGameMode")->Vft[SpawnDefaultPawnForIdx];
+    auto Pawn = FortGMSpawnDefaultPawnFor(GameMode, NewPlayer, StartSpot);
+
+    //auto Transform = StartSpot->GetTransform();
+    //auto Pawn = GameMode->SpawnDefaultPawnAtTransform(NewPlayer, Transform);
 
     auto Num = NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Num();
     if (Num != 0) {
@@ -332,7 +337,9 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
 
 void AFortGameModeAthena::Hook()
 {
+    auto spdf = GetDefaultObj()->GetFunction("SpawnDefaultPawnFor");
+    SpawnDefaultPawnForIdx = spdf->GetVTableIndex();
     Utils::ExecHook(GetDefaultObj()->GetFunction("ReadyToStartMatch"), ReadyToStartMatch_, ReadyToStartMatch_OG);
-    Utils::ExecHook(GetDefaultObj()->GetFunction("SpawnDefaultPawnFor"), SpawnDefaultPawnFor);
+    Utils::ExecHook(spdf, SpawnDefaultPawnFor);
     Utils::Hook(FindHandlePostSafeZonePhaseChanged(), HandlePostSafeZonePhaseChanged, HandlePostSafeZonePhaseChangedOG);
 }
