@@ -1,0 +1,151 @@
+#pragma once
+#include "../../pch.h"
+#include "MinHook.h"
+#include "Finders.h"
+
+
+class Utils {
+    static inline void* _NpFH = nullptr;
+public:
+    template <class _Ot = void*>
+    static void Hook(uint64_t _Ptr, void* _Detour, _Ot& _Orig = _NpFH) {
+        MH_CreateHook((LPVOID)_Ptr, _Detour, (LPVOID*)(std::is_same_v<_Ot, void*> ? nullptr : &_Orig));
+    }
+
+    __forceinline static void _HookVT(void** _Vt, uint32_t _Ind, void* _Detour)
+    {
+        DWORD _Vo;
+        VirtualProtect(_Vt + _Ind, 8, PAGE_EXECUTE_READWRITE, &_Vo);
+        _Vt[_Ind] = _Detour;
+        VirtualProtect(_Vt + _Ind, 8, _Vo, &_Vo);
+    }
+
+    template <typename _Ct, typename _Ot = void*>
+    __forceinline static void Hook(uint32_t _Ind, void* _Detour, _Ot& _Orig = _NpFH)
+    {
+        auto _Vt = _Ct::GetDefaultObj()->Vft;
+        if (!std::is_same_v<_Ot, void*>)
+            _Orig = (_Ot)_Vt[_Ind];
+
+        _HookVT(_Vt, _Ind, _Detour);
+    }
+
+    template <typename _Ct>
+    __forceinline static void HookEvery(uint32_t _Ind, void* _Detour)
+    {
+        for (int i = 0; i < TUObjectArray::Num(); i++) {
+            auto Obj = TUObjectArray::GetObjectByIndex(i);
+            if (Obj && Obj->IsA<_Ct>()) {
+                _HookVT(Obj->Vft, _Ind, _Detour);
+            }
+        }
+    }
+
+    template <typename _Ct, typename _Ot = void*>
+    __forceinline static void ExecHookEvery(const char* ShortName, void* _Detour, _Ot& _Orig = _NpFH)
+    {
+        for (int i = 0; i < TUObjectArray::Num(); i++)
+        {
+            auto Obj = TUObjectArray::GetObjectByIndex(i);
+            if (Obj && Obj->IsA<_Ct>())
+            {
+                ExecHook(Obj->Class->GetFunction(ShortName)->GetFullName().c_str(), _Detour, _Orig);
+            }
+        }
+    }
+
+    template <typename _Is>
+    static __forceinline void Patch(uintptr_t ptr, _Is byte)
+    {
+        DWORD og;
+        VirtualProtect(LPVOID(ptr), sizeof(_Is), PAGE_EXECUTE_READWRITE, &og);
+        *(_Is*)ptr = byte;
+        VirtualProtect(LPVOID(ptr), sizeof(_Is), og, &og);
+    }
+
+    __forceinline static UObject* InternalFindObject(const wchar_t* ObjectPath, const UClass* Class)
+    {
+        auto StaticFindObjectInternal = (UObject * (*)(const UClass*, UObject*, const wchar_t*, bool)) FindStaticFindObject();
+        return StaticFindObjectInternal(Class, nullptr, ObjectPath, false);
+    }
+
+    __forceinline static UObject* InternalLoadObject(const wchar_t* ObjectPath, const UClass* InClass, UObject* Outer = nullptr)
+    {
+        auto StaticLoadObjectInternal = (UObject * (*)(const UClass*, UObject*, const wchar_t*, const wchar_t*, uint32_t, UObject*, bool)) FindStaticLoadObject();
+        return StaticLoadObjectInternal(InClass, Outer, ObjectPath, nullptr, 0, nullptr, false);
+    }
+
+    static UObject* FindObject(const wchar_t* ObjectPath, const UClass* Class)
+    {
+        auto Object = InternalFindObject(ObjectPath, Class);
+        return Object ? Object : InternalLoadObject(ObjectPath, Class);
+    }
+
+    template <typename _Ot>
+    static _Ot* FindObject(const wchar_t* ObjectPath, const UClass* Class = _Ot::StaticClass())
+    {
+        return (_Ot*)FindObject(ObjectPath, Class);
+    }
+
+    template <typename _Ot>
+    static _Ot* FindObject(UEAllocatedWString ObjectPath, const UClass* Class = _Ot::StaticClass())
+    {
+        return (_Ot*)FindObject(ObjectPath.c_str(), Class);
+    }
+
+    static TArray<AActor*> GetAll(const UClass* Class)
+    {
+        TArray<AActor*> ret;
+        UGameplayStatics::GetAllActorsOfClass(UWorld::GetWorld(), Class, &ret);
+        return ret;
+    }
+
+    template <typename _At = AActor>
+    __forceinline static TArray<_At*> GetAll(const UClass* Class)
+    {
+        return GetAll(Class);
+    }
+
+    template <typename _At = AActor>
+    __forceinline static TArray<_At*> GetAll()
+    {
+        return GetAll(_At::StaticClass());
+    }
+
+    template <typename _Ot = void*>
+    __forceinline static void ExecHook(UFunction* _Fn, void* _Detour, _Ot& _Orig = _NpFH)
+    {
+        if (!_Fn)
+            return;
+        if (!std::is_same_v<_Ot, void*>)
+            _Orig = (_Ot)_Fn->ExecFunction;
+
+        _Fn->ExecFunction = _Detour;
+    }
+
+
+    template <typename _Ot = void*>
+    __forceinline static void ExecHook(const wchar_t* _Name, void* _Detour, _Ot& _Orig = _NpFH)
+    {
+        UFunction* _Fn = FindObject<UFunction>(_Name);
+        ExecHook(_Fn, _Detour, _Orig);
+    }
+
+    static double precision(double f, double places)
+    {
+        double n = pow(10., places);
+        return round(f * n) / n;
+    }
+};
+
+inline std::vector<void(*)()> _HookFuncs;
+#define DefHookOg(_Rt, _Name, ...) static inline _Rt (*_Name##OG)(##__VA_ARGS__); static _Rt _Name(##__VA_ARGS__); 
+#define DefUHookOg(_Name) static inline void (*_Name##OG)(UObject*, FFrame&); static void _Name(UObject*, FFrame&); 
+#define DefUHookOgRet(_Rt, _Name) static inline void (*_Name##OG)(UObject*, FFrame&, _Rt*); static void _Name(UObject *, FFrame&, _Rt*);
+#ifdef CLIENT
+#define InitHooks static void Hook();
+#else
+#define InitHooks static void Hook(); static int _AddHook() { _HookFuncs.push_back(Hook); return 0; }; static inline auto _HookAdder = _AddHook();
+#endif
+#define callOG(_Tr, _Fn, _Th, ...) ([&](){ _Fn->ExecFunction = _Th##_OG; _Tr->_Th(##__VA_ARGS__); _Fn->ExecFunction = _Th##_; })()
+#define callOGWithRet(_Tr, _Fn, _Th, ...) ([&](){ _Fn->ExecFunction = _Th##_OG; auto _Rt = _Tr->_Th(##__VA_ARGS__); _Fn->ExecFunction = _Th##_; return _Rt; })()

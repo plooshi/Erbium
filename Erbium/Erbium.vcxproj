@@ -136,28 +136,28 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AbilitySystemComponent.h" />
-    <ClInclude Include="BuildingFoundation.h" />
-    <ClInclude Include="CurveTable.h" />
-    <ClInclude Include="DataTable.h" />
-    <ClInclude Include="DataTableFunctionLibrary.h" />
+    <ClInclude Include="Engine\Public\AbilitySystemComponent.h" />
+    <ClInclude Include="Engine\Public\CurveTable.h" />
+    <ClInclude Include="Engine\Public\DataTable.h" />
+    <ClInclude Include="Engine\Public\DataTableFunctionLibrary.h" />
+    <ClInclude Include="Engine\Public\NetDriver.h" />
     <ClInclude Include="Finders.h" />
-    <ClInclude Include="FortGameModeAthena.h" />
-    <ClInclude Include="FortGameSessionAthena.h" />
-    <ClInclude Include="FortGameStateAthena.h" />
-    <ClInclude Include="FortInventory.h" />
-    <ClInclude Include="FortKismetLibrary.h" />
-    <ClInclude Include="FortMissionLibrary.h" />
-    <ClInclude Include="FortPlayerControllerAthena.h" />
-    <ClInclude Include="FortPlayerPawnAthena.h" />
-    <ClInclude Include="FortPlayerStateAthena.h" />
-    <ClInclude Include="FortPlaylistAthena.h" />
-    <ClInclude Include="FortSafeZoneIndicator.h" />
+    <ClInclude Include="FortniteGame\Public\BuildingFoundation.h" />
+    <ClInclude Include="FortniteGame\Public\FortGameModeAthena.h" />
+    <ClInclude Include="FortniteGame\Public\FortGameSessionAthena.h" />
+    <ClInclude Include="FortniteGame\Public\FortGameStateAthena.h" />
+    <ClInclude Include="FortniteGame\Public\FortInventory.h" />
+    <ClInclude Include="FortniteGame\Public\FortKismetLibrary.h" />
+    <ClInclude Include="FortniteGame\Public\FortMissionLibrary.h" />
+    <ClInclude Include="FortniteGame\Public\FortPlayerControllerAthena.h" />
+    <ClInclude Include="FortniteGame\Public\FortPlayerPawnAthena.h" />
+    <ClInclude Include="FortniteGame\Public\FortPlayerStateAthena.h" />
+    <ClInclude Include="FortniteGame\Public\FortPlaylistAthena.h" />
+    <ClInclude Include="FortniteGame\Public\FortSafeZoneIndicator.h" />
+    <ClInclude Include="FortniteGame\Public\LevelStreamingDynamic.h" />
     <ClInclude Include="framework.h" />
-    <ClInclude Include="LevelStreamingDynamic.h" />
     <ClInclude Include="MinHook.h" />
     <ClInclude Include="Misc.h" />
-    <ClInclude Include="NetDriver.h" />
     <ClInclude Include="Configuration.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="SDK\Containers.h" />
@@ -170,19 +170,16 @@
     <ClInclude Include="Utils.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AbilitySystemComponent.cpp" />
-    <ClCompile Include="BuildingFoundation.cpp" />
-    <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="FortGameModeAthena.cpp" />
-    <ClCompile Include="FortInventory.cpp" />
-    <ClCompile Include="FortMissionLibrary.cpp" />
-    <ClCompile Include="FortPlayerControllerAthena.cpp" />
-    <ClCompile Include="Misc.cpp" />
-    <ClCompile Include="NetDriver.cpp" />
+    <ClCompile Include="Engine\Private\AbilitySystemComponent.cpp" />
+    <ClCompile Include="Engine\Private\NetDriver.cpp" />
+    <ClCompile Include="Erbium\Private\dllmain.cpp" />
+    <ClCompile Include="Erbium\Private\Misc.cpp" />
+    <ClCompile Include="FortniteGame\Private\BuildingFoundation.cpp" />
+    <ClCompile Include="FortniteGame\Private\FortGameModeAthena.cpp" />
+    <ClCompile Include="FortniteGame\Private\FortInventory.cpp" />
+    <ClCompile Include="FortniteGame\Private\FortMissionLibrary.cpp" />
+    <ClCompile Include="FortniteGame\Private\FortPlayerControllerAthena.cpp" />
     <ClCompile Include="pch.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
