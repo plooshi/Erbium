@@ -8,6 +8,7 @@ void UAbilitySystemComponent::GiveAbility(const UObject* Ability)
         return;
 
     auto Spec = (FGameplayAbilitySpec*) malloc(FGameplayAbilitySpec::Size());
+    __stosb(PBYTE(Spec), 0, FGameplayAbilitySpec::Size());
 
     static auto ConstructAbilitySpec = FindConstructAbilitySpec();
     if (ConstructAbilitySpec)

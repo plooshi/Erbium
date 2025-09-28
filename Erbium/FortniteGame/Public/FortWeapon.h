@@ -1,0 +1,13 @@
+#pragma once
+#include "../../pch.h"
+#include "../../Erbium/Public/Utils.h"
+#include "FortInventory.h"
+
+
+class AFortWeapon : public AActor
+{
+public:
+    UCLASS_COMMON_MEMBERS(AFortWeapon);
+
+    DEFINE_PROP(ItemEntryGuid, FGuid);
+};

@@ -244,6 +244,9 @@ namespace SDK
 
 		bool IsA(const class UClass* Clss) const 
 		{
+			if (!this || !Clss)
+				return false;
+
 			if (VersionInfo.EngineVersion >= 4.22)
 			{
 				auto& BaseChain = GetFromOffset<FStructBaseChain>(Class, 0x30);
@@ -268,7 +271,7 @@ namespace SDK
 		template <class T>
 		T* Cast(const class UClass* Clss = T::StaticClass()) const
 		{
-			return this && IsA(Clss) ? (T*)this : nullptr;
+			return IsA(Clss) ? (T*)this : nullptr;
 		}
 
 		class UFunction* GetFunction(const char* Name) const

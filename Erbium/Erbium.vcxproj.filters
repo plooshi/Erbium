@@ -132,6 +132,9 @@
     <ClInclude Include="Erbium\Public\Utils.h">
       <Filter>Erbium\Public</Filter>
     </ClInclude>
+    <ClInclude Include="FortniteGame\Public\FortWeapon.h">
+      <Filter>FortniteGame\Public</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Erbium\Private\dllmain.cpp">

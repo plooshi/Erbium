@@ -46,6 +46,7 @@ public:
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);
     static void ServerAttemptAircraftJump(UObject*, FFrame&);
     static void ServerExecuteInventoryItem(UObject*, FFrame&);
+    static void ServerExecuteInventoryWeapon(UObject*, FFrame&);
 
     InitHooks;
 };

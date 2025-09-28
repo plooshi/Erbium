@@ -68,6 +68,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         {
             printf("Failed to listen!");
         }
+        free(URL);
 
         GameMode->WarmupRequiredPlayerCount = 1;
 
@@ -121,6 +122,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                     printf("Level: %s\n", Level.Get()->Name.ToString().c_str());
                     ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
                     auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
+                    __stosb((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
                     level->bIsServerOnly = true;
                     level->LevelName = Level.ObjectID.AssetPathName;
                     if (Success)
@@ -150,6 +152,8 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             *Ret = false;
             return;
         }
+        if (VersionInfo.EngineVersion >= 4.23 && VersionInfo.EngineVersion <= 4.25) 
+            GameState->OnRep_CurrentPlaylistInfo();
 
         if (VersionInfo.EngineVersion >= 4.27)
         {
@@ -285,50 +289,53 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
     
     auto NewSafeZonePhase = NewSafeZonePhase_Inp >= 0 ? NewSafeZonePhase_Inp : GameMode->SafeZonePhase + 1;
 
-    static auto DefinitionOffset = GameState->MapInfo->GetOffset("SafeZoneDefinition");
-    __int64 SafeZoneDefinition = __int64(GameState->MapInfo) + DefinitionOffset;
-
-    static auto DurationsOffset = 0;
-    if (DurationsOffset == 0)
+    if (VersionInfo.FortniteVersion >= 13.00)
     {
-        DurationsOffset = 0x258;
+        static auto DefinitionOffset = GameState->MapInfo->GetOffset("SafeZoneDefinition");
+        __int64 SafeZoneDefinition = __int64(GameState->MapInfo) + DefinitionOffset;
 
-        if (VersionInfo.FortniteVersion >= 18)
-            DurationsOffset = 0x248;
-        else if (VersionInfo.FortniteVersion < 15.20)
-            DurationsOffset = 0x1f8;
-    }
-
-    TArray<float>& Durations = *(TArray<float>*)(SafeZoneDefinition + DurationsOffset);
-    TArray<float>& HoldDurations = *(TArray<float>*)(SafeZoneDefinition + DurationsOffset - 0x10);
-
-
-    auto DurationSum = 0.f;
-    for (auto& _v : Durations) 
-        DurationSum += _v;
-
-    if (DurationSum == 0)
-    {
-        auto GameData = GameMode->HasAthenaGameDataTable() ? GameMode->AthenaGameDataTable : GameState->AthenaGameDataTable;
-
-        auto ShrinkTime = UKismetStringLibrary::Conv_StringToName(FString(L"Default.SafeZone.ShrinkTime"));
-        auto HoldTime = UKismetStringLibrary::Conv_StringToName(FString(L"Default.SafeZone.WaitTime"));
-
-        for (int i = 0; i < Durations.Num(); i++)
+        static auto DurationsOffset = 0;
+        if (DurationsOffset == 0)
         {
-            UDataTableFunctionLibrary::EvaluateCurveTableRow(GameData, ShrinkTime, (float)i, nullptr, &Durations[i], FString());
+            DurationsOffset = 0x258;
+
+            if (VersionInfo.FortniteVersion >= 18)
+                DurationsOffset = 0x248;
+            else if (VersionInfo.FortniteVersion < 15.20)
+                DurationsOffset = 0x1f8;
         }
-        for (int i = 0; i < HoldDurations.Num(); i++)
+
+        TArray<float>& Durations = *(TArray<float>*)(SafeZoneDefinition + DurationsOffset);
+        TArray<float>& HoldDurations = *(TArray<float>*)(SafeZoneDefinition + DurationsOffset - 0x10);
+
+
+        auto DurationSum = 0.f;
+        for (auto& _v : Durations)
+            DurationSum += _v;
+
+        if (DurationSum == 0)
         {
-            UDataTableFunctionLibrary::EvaluateCurveTableRow(GameData, HoldTime, (float)i, nullptr, &HoldDurations[i], FString());
+            auto GameData = GameMode->HasAthenaGameDataTable() ? GameMode->AthenaGameDataTable : GameState->AthenaGameDataTable;
+
+            auto ShrinkTime = UKismetStringLibrary::Conv_StringToName(FString(L"Default.SafeZone.ShrinkTime"));
+            auto HoldTime = UKismetStringLibrary::Conv_StringToName(FString(L"Default.SafeZone.WaitTime"));
+
+            for (int i = 0; i < Durations.Num(); i++)
+            {
+                UDataTableFunctionLibrary::EvaluateCurveTableRow(GameData, ShrinkTime, (float)i, nullptr, &Durations[i], FString());
+            }
+            for (int i = 0; i < HoldDurations.Num(); i++)
+            {
+                UDataTableFunctionLibrary::EvaluateCurveTableRow(GameData, HoldTime, (float)i, nullptr, &HoldDurations[i], FString());
+            }
         }
+
+        auto Duration = Durations[NewSafeZonePhase];
+        auto HoldDuration = HoldDurations[NewSafeZonePhase];
+
+        GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + HoldDuration;
+        GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
     }
-
-    auto Duration = Durations[NewSafeZonePhase];
-    auto HoldDuration = HoldDurations[NewSafeZonePhase];
-
-    GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = (float) UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + HoldDuration;
-    GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
 
 
     return HandlePostSafeZonePhaseChangedOG(GameMode, NewSafeZonePhase_Inp);

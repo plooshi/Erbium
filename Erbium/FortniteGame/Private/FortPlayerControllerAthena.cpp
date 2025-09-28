@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "../Public/FortPlayerControllerAthena.h"
 #include "../Public/FortGameModeAthena.h"
+#include "../Public/FortWeapon.h"
 
 
 uint64_t FindGetPlayerViewPoint()
@@ -115,6 +116,28 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryItem(UObject* Context, F
 	PlayerController->MyFortPawn->EquipWeaponDefinition(ItemDefinition, ItemGuid, entry->HasTrackerGuid() ? entry->TrackerGuid : FGuid(), false);
 }
 
+
+void AFortPlayerControllerAthena::ServerExecuteInventoryWeapon(UObject* Context, FFrame& Stack)
+{
+	AFortWeapon* Weapon;
+	Stack.StepCompiledIn(&Weapon);
+	Stack.IncrementCode();
+
+	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+	if (!PlayerController)
+		return;
+
+	auto entry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) {
+		return entry.ItemGuid == Weapon->ItemEntryGuid;
+		}, FFortItemEntry::Size());
+
+	if (!entry || !PlayerController->MyFortPawn)
+		return;
+
+	UFortItemDefinition* ItemDefinition = (UFortItemDefinition*)entry->ItemDefinition;
+	PlayerController->MyFortPawn->EquipWeaponDefinition(ItemDefinition, Weapon->ItemEntryGuid, entry->HasTrackerGuid() ? entry->TrackerGuid : FGuid(), false);
+}
+
 void AFortPlayerControllerAthena::Hook()
 {
 	auto DefaultFortPC = DefaultObjImpl("FortPlayerController");
@@ -132,6 +155,7 @@ void AFortPlayerControllerAthena::Hook()
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerAcknowledgePossession"), ServerAcknowledgePossession);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerExecuteInventoryItem"), ServerExecuteInventoryItem);
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerExecuteInventoryWeapon"), ServerExecuteInventoryWeapon); // S9 shenanigans
 
 	// same as serveracknowledgepossession
 	auto ServerReturnToMainMenuIdx = GetDefaultObj()->GetFunction("ServerReturnToMainMenu")->GetVTableIndex();
