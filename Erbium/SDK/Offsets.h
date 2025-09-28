@@ -1,0 +1,198 @@
+#pragma once
+#include "Memcury.h"
+#include <array>
+
+namespace SDK
+{
+	struct FVersionInfo
+	{
+		double EngineVersion = 0.f;
+		double FortniteVersion = 0.f;
+	};
+	struct FStringNoOps
+	{
+		wchar_t* Data;
+		int32_t NumElements;
+		int32_t MaxElements;
+	};
+	inline FVersionInfo VersionInfo{};
+
+    namespace Offsets
+    {
+		inline uint64_t Realloc = 0;
+		inline uint64_t AppendString = 0;
+		inline uint64_t ToString = 0;
+		inline uint64_t ProcessEvent = 0;
+		inline uint64_t GObjectsChunked = 0;
+		inline uint64_t GObjectsUnchunked = 0;
+		inline uint64_t Step = 0;
+		inline uint64_t StepExplicitProperty = 0;
+		inline uint64_t GetInterfaceAddress = 0;
+    }
+
+	inline void Init()
+	{
+		FStringNoOps OutVar;
+
+		auto GetEngineVersionMethod1 = Memcury::Scanner::FindPattern("40 53 48 83 EC 20 48 8B D9 E8 ? ? ? ? 48 8B C8 41 B8 04 ? ? ? 48 8B D3");
+		if (!GetEngineVersionMethod1.Get())
+			GetEngineVersionMethod1 = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC ? 65 48 8B 04 25 ? ? ? ? 48 8B D9 B9 ? ? ? ? 48 8B 10 8B 04 11 39 05 ? ? ? ? 7E ? 48 8D 0D ? ? ? ? E8 ? ? ? ? 83 3D ? ? ? ? ? 75 ? 48 8D 3D ? ? ? ? 48 8B CF E8 ? ? ? ? 48 8D 0D ? ? ? ? 48 89 3D ? ? ? ? E8 ? ? ? ? 48 8D 0D ? ? ? ? E8 ? ? ? ? 48 8B 0D ? ? ? ? 41 B8");
+
+		if (auto GetEngineVersion = (FStringNoOps * (*)(FStringNoOps * _Out)) GetEngineVersionMethod1.Get())
+		{
+			GetEngineVersion(&OutVar);
+		}
+		else
+		{
+			auto GetEngineVersionMethod2 = Memcury::Scanner::FindPattern("40 53 48 83 EC ? 33 C0 49 8B D8 48 39 42 ? 0F 95 C0 48 01 42 ? E8 ? ? ? ? 41 B8");
+			auto CopyOfMethod2 = GetEngineVersionMethod2;
+
+			auto GetStorage = (void* (*)()) GetEngineVersionMethod2.RelativeOffset(23).Get();
+			auto GetEngineVersion2 = (void (*)(void*, FStringNoOps*, int)) CopyOfMethod2.RelativeOffset(42).Get();
+
+			GetEngineVersion2(GetStorage(), &OutVar, 4); // no idea why 4 but sure
+		}
+
+		std::wstring BuildString = OutVar.Data;
+		std::wstring EngineVersion = BuildString.substr(0, BuildString.find(L'-'));
+		std::wstring FortniteCL = BuildString.substr(BuildString.find(L'-') + 1, BuildString.find(L'+') - BuildString.find(L'-') - 1);
+
+		if (EngineVersion == L"4.26.1")
+			EngineVersion = L"4.27.0";
+
+		if (EngineVersion.find_first_of(L'.') != EngineVersion.find_last_of(L'.'))
+			EngineVersion.erase(EngineVersion.rfind(L'.'));
+
+		auto FortniteCLNum = std::stoull(FortniteCL);
+
+		VersionInfo.EngineVersion = std::stod(EngineVersion);
+		// these builds were just called "Cert"
+		if (FortniteCLNum < 3901517)
+		{
+			switch (FortniteCLNum)
+			{
+			case 3668626:
+				VersionInfo.FortniteVersion = 1.64;
+				break;
+			case 3681159:
+				VersionInfo.FortniteVersion = 1.7;
+				break;
+			case 3700114:
+				VersionInfo.FortniteVersion = 1.72;
+				break;
+			case 3724489:
+				VersionInfo.FortniteVersion = 1.8;
+				break;
+			case 3729133:
+				VersionInfo.FortniteVersion = 1.81;
+				break;
+			case 3741772:
+				VersionInfo.FortniteVersion = 1.82;
+				break;
+			case 3757339:
+				VersionInfo.FortniteVersion = 1.9;
+				break;
+			case 3775276:
+				VersionInfo.FortniteVersion = 1.91;
+				break;
+			case 3790078:
+				VersionInfo.FortniteVersion = 1.10;
+				break;
+			case 3807424:
+				VersionInfo.FortniteVersion = 1.11;
+				break;
+			case 3825894:
+				VersionInfo.FortniteVersion = 2.1;
+				break;
+			case 3841827:
+				VersionInfo.FortniteVersion = 2.2;
+				break;
+			case 3847564:
+				VersionInfo.FortniteVersion = 2.3;
+				break;
+			case 3858292:
+				VersionInfo.FortniteVersion = 2.4;
+				break;
+			case 3870737:
+				VersionInfo.FortniteVersion = 2.42;
+				break;
+			case 3889387:
+				VersionInfo.FortniteVersion = 2.5;
+				break;
+			}
+		}
+		else
+			VersionInfo.FortniteVersion = std::stod(BuildString.substr(BuildString.rfind(L'-') + 1));
+
+		Offsets::Realloc = Memcury::Scanner::FindPattern("48 89 5C 24 08 48 89 74 24 10 57 48 83 EC ? 48 8B F1 41 8B D8 48 8B 0D ? ? ? ?").Get();
+
+		auto SRef = Memcury::Scanner::FindStringRef("ForwardShadingQuality_");
+		constexpr std::array<const char*, 5> sigs =
+		{
+			"48 8D ? ? 48 8D ? ? E8",
+			"48 8D ? ? ? 48 8D ? ? E8",
+			"48 8D ? ? 49 8B ? E8",
+			"48 8D ? ? ? 49 8B ? E8",
+			"48 8D ? ? 48 8B ? E8"
+		};
+
+		for (auto& sig : sigs)
+		{
+			auto Scanner = SRef;
+			Scanner.ScanFor(sig, true, 0, 1, VersionInfo.EngineVersion == 5.0 ? 0x100 : 0x50);
+
+			if (Scanner.Get() != SRef.Get())
+			{
+				auto p2b = Memcury::ASM::pattern2bytes(sig);
+
+				Offsets::AppendString = Scanner.RelativeOffset((uint32_t)p2b.size()).Get();
+				break;
+			}
+		}
+
+		Offsets::ToString = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 45 33 ED 48 8B FA 4C 89 2A").Get();
+
+		uintptr_t addr = 0;
+
+		if (VersionInfo.FortniteVersion < 14.00)
+			addr = Memcury::Scanner::FindStringRef(L"AccessNoneNoContext").ScanFor({ 0x40, 0x55 }, true, 0, 1, 2000).Get();
+		else if (VersionInfo.FortniteVersion >= 23.00)
+			addr = Memcury::Scanner::FindPattern("48 85 C9 0F 85 ? ? ? ? F7 87 ? ? ? ? ? ? ? ? ? 8B ?").ScanFor({ 0x40, 0x55 }, false).Get();
+		else
+			addr = Memcury::Scanner::FindStringRef(L"UMeshNetworkComponent::ProcessEvent: Invalid mesh network node type: %s", true, 0, VersionInfo.FortniteVersion >= 19.00).ScanFor({ 0xE8 }, true, VersionInfo.FortniteVersion < 19.00 ? 1 : 3, 0, 2000).RelativeOffset(1).Get();
+
+		Offsets::ProcessEvent = addr;
+
+		if (VersionInfo.EngineVersion >= 4.21)
+			Offsets::GObjectsChunked = Memcury::Scanner::FindPattern(VersionInfo.FortniteVersion <= 6.02 ? "48 8B 05 ? ? ? ? 48 8B 0C C8 48 8D 04 D1" : "48 8B 05 ? ? ? ? 48 8B 0C C8 48 8B 04 D1").RelativeOffset(3).Get();
+		else
+		{
+			auto Addr = Memcury::Scanner::FindPattern("48 8B 05 ? ? ? ? 48 8D 14 C8 EB 03 49 8B D6 8B 42 08 C1 E8 1D A8 01 0F 85 ? ? ? ? F7 86 ? ? ? ? ? ? ? ?", false);
+			if (!Addr.Get())
+				Addr = Memcury::Scanner::FindPattern("48 8B 05 ? ? ? ? 48 8D 1C C8 81 4B ? ? ? ? ? 49 63 76 30", false);
+
+			Offsets::GObjectsUnchunked = Addr.RelativeOffset(3).Get();
+		}
+
+		Offsets::Step = Memcury::Scanner::FindPattern("48 8B 41 20 4C 8B D2 48 8B D1 44 0F B6 08 48 FF").Get();
+		if (!Offsets::Step)
+			Offsets::Step = Memcury::Scanner::FindPattern("48 8B 41 ? 4C 8B DA 44 0F B6 08").Get();
+
+		Offsets::StepExplicitProperty = Memcury::Scanner::FindPattern("41 8B 40 ? 4D 8B C8").Get();
+
+		if (VersionInfo.EngineVersion <= 4.21)
+			Offsets::GetInterfaceAddress = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 20 33 FF 48 8B DA 48 8B F1 48").Get();
+		else
+		{
+			Offsets::GetInterfaceAddress = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 20 33 DB 48 8B FA 48 8B F1 48 85 D2 0F 84 ? ? ? ? 8B 82 ? ? ? ? C1 E8").Get();
+
+			if (!Offsets::GetInterfaceAddress)
+			{
+				Offsets::GetInterfaceAddress = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 33 DB 48 8B FA 48 8B F1 48 85 D2 74 ? F7 82").Get();
+
+				if (!Offsets::GetInterfaceAddress)
+					Offsets::GetInterfaceAddress = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 81 EC ? ? ? ? 33 DB 48 8B FA").Get();
+			}
+		}
+	}
+}

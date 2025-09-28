@@ -1,0 +1,165 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Engine">
+      <UniqueIdentifier>{bf7becbc-c9a6-4671-8262-0472d74df6ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FortniteGame">
+      <UniqueIdentifier>{6163c326-ccb9-405d-bcd3-285bb8e42761}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SDK">
+      <UniqueIdentifier>{1f3513e2-ed8b-455e-b1bb-1c8cdcb06c23}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FortniteGame\Public">
+      <UniqueIdentifier>{3db3a7d0-ca7f-418b-ac3c-22d6bd87cefe}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="FortniteGame\Private">
+      <UniqueIdentifier>{eddd993d-663c-4098-a1ec-960e7587b0d9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Public">
+      <UniqueIdentifier>{c9e77765-4e37-4a06-b72c-c9173309dfae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Engine\Private">
+      <UniqueIdentifier>{a647eefd-ad53-4a26-91ba-10fc2bdcca6c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Erbium">
+      <UniqueIdentifier>{afda8d3f-3d51-4a54-bec0-d24f09a82185}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Erbium\Public">
+      <UniqueIdentifier>{238110df-e487-4b31-bb57-26993e6458be}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Erbium\Private">
+      <UniqueIdentifier>{cbee2d3e-a608-4025-842c-261bc8d3e0d4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="SDK\Includes.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\Offsets.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\Defs.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\Core.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\Engine.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\Containers.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="SDK\Memcury.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="FortGameModeAthena.h">
+      <Filter>FortniteGame\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="FortGameStateAthena.h">
+      <Filter>FortniteGame\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="FortPlaylistAthena.h">
+      <Filter>FortniteGame\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="FortGameSessionAthena.h">
+      <Filter>FortniteGame\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="LevelStreamingDynamic.h">
+      <Filter>FortniteGame\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="MinHook.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="BuildingFoundation.h">
+      <Filter>FortniteGame\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="NetDriver.h">
+      <Filter>Engine\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="FortPlayerControllerAthena.h">
+      <Filter>FortniteGame\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="AbilitySystemComponent.h">
+      <Filter>Engine\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="FortPlayerPawnAthena.h">
+      <Filter>FortniteGame\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="FortKismetLibrary.h">
+      <Filter>FortniteGame\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="DataTable.h">
+      <Filter>Engine\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="CurveTable.h">
+      <Filter>Engine\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="FortSafeZoneIndicator.h">
+      <Filter>FortniteGame\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="DataTableFunctionLibrary.h">
+      <Filter>Engine\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Finders.h">
+      <Filter>Erbium\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="framework.h">
+      <Filter>Erbium\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Misc.h">
+      <Filter>Erbium\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Erbium\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Utils.h">
+      <Filter>Erbium\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Configuration.h">
+      <Filter>Erbium\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="FortInventory.h">
+      <Filter>FortniteGame\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="FortPlayerStateAthena.h">
+      <Filter>FortniteGame\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="FortMissionLibrary.h">
+      <Filter>FortniteGame\Public</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="FortGameModeAthena.cpp">
+      <Filter>FortniteGame\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="BuildingFoundation.cpp">
+      <Filter>FortniteGame\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="FortPlayerControllerAthena.cpp">
+      <Filter>FortniteGame\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="AbilitySystemComponent.cpp">
+      <Filter>Engine\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="NetDriver.cpp">
+      <Filter>Engine\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>Erbium\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="Misc.cpp">
+      <Filter>Erbium\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Erbium\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="FortInventory.cpp">
+      <Filter>FortniteGame\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="FortMissionLibrary.cpp">
+      <Filter>FortniteGame\Private</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

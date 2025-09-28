@@ -1,0 +1,41 @@
+#include "pch.h"
+#include "BuildingFoundation.h"
+
+void ABuildingFoundation::SetDynamicFoundationEnabled(UObject* Context, FFrame& Stack)
+{
+	auto Foundation = (ABuildingFoundation*)Context;
+	bool bEnabled;
+	Stack.StepCompiledIn(&bEnabled);
+	Stack.IncrementCode();
+	printf("SetDynamicFoundationEnabled\n");
+	if (Foundation->HasDynamicFoundationRepData())
+	{
+		Foundation->DynamicFoundationRepData.EnabledState = bEnabled ? 1 : 2;
+		Foundation->OnRep_DynamicFoundationRepData();
+	}
+	Foundation->FoundationEnabledState = bEnabled ? 1 : 2;
+}
+
+void ABuildingFoundation::SetDynamicFoundationTransform_(UObject* Context, FFrame& Stack)
+{
+	auto Foundation = (ABuildingFoundation*)Context;
+	auto& Transform = Stack.StepCompiledInRef<FTransform>();
+	Stack.IncrementCode();
+	printf("SetDynamicFoundationTransform\n");
+	Foundation->DynamicFoundationTransform = Transform;
+	if (Foundation->HasDynamicFoundationRepData())
+	{
+		Foundation->DynamicFoundationRepData.Rotation = Transform.Rotation.Rotator();
+		Foundation->DynamicFoundationRepData.Translation = Transform.Translation;
+	}
+	Foundation->StreamingData.FoundationLocation = Transform.Translation;
+	//Foundation->StreamingData.BoundingBox = Foundation->StreamingBoundingBox;
+	if (Foundation->HasDynamicFoundationRepData())
+		Foundation->OnRep_DynamicFoundationRepData();
+}
+
+void ABuildingFoundation::Hook()
+{
+	Utils::ExecHook(GetDefaultObj()->GetFunction("SetDynamicFoundationEnabled"), SetDynamicFoundationEnabled);
+	Utils::ExecHook(GetDefaultObj()->GetFunction("SetDynamicFoundationTransform"), SetDynamicFoundationTransform_);
+}
