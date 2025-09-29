@@ -5,6 +5,7 @@
 #include <iostream>
 #include "../Public/Finders.h"
 #include "../../FortniteGame/Public/FortInventory.h"
+#include <chrono>
 
 
 void Main()
@@ -20,6 +21,7 @@ void Main()
     SetConsoleTitleA(buffer);
 
     printf("Hooking & finding offsets... (this may take a while)\n");
+
     FindNullsAndRetTrues();
 
     for (auto& NullFunc : NullFuncs)
@@ -60,26 +62,6 @@ void Main()
         terrainOpen = L"open Apollo_Terrain";
 
     UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(terrainOpen), nullptr);
-    /*SDK::Init();
-
-    auto Engine = UEngine::GetEngine();
-
-    /*struct GameplayStatics_SpawnObject final
-    {
-    public:
-        class UObject* ObjectClass;
-        class UObject* Outer_0;
-        class UObject* ReturnValue;
-    };
-
-    GameplayStatics_SpawnObject Parms{};
-    Parms.ObjectClass = Engine->ConsoleClass;
-    Parms.Outer_0 = Engine->GameViewport;
-
-    UGameplayStatics::SpawnObject(&Parms);
-
-    Engine->GameViewport->ViewportConsole = Parms.ReturnValue;* g/
-    Engine->GameViewport->ViewportConsole = UGameplayStatics::SpawnObject(Engine->ConsoleClass, Engine->GameViewport);*/
 }
 
 BOOL APIENTRY DllMain( HMODULE hModule,
