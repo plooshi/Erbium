@@ -740,6 +740,23 @@ inline uint64_t FindCantBuild()
     return CantBuild;
 }
 
+inline uint64_t FindReplaceBuildingActor()
+{
+    static uint64_t ReplaceBuildingActor = 0;
+    
+    if (ReplaceBuildingActor == 0)
+    {
+        auto sRef = Memcury::Scanner::FindStringRef(L"STAT_Fort_BuildingSMActorReplaceBuildingActor", false);
+
+        if (!sRef.Get())
+            return ReplaceBuildingActor = Memcury::Scanner::FindPattern("4C 89 44 24 ? 55 56 57 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 45").Get();
+
+        return ReplaceBuildingActor = sRef.ScanFor(VersionInfo.EngineVersion == 4.20 || (VersionInfo.EngineVersion == 4.21 && VersionInfo.EngineVersion < 6.30) || VersionInfo.EngineVersion >= 4.27 ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x4C, 0x8B }, false, 0, 1, 1000).Get();
+    }
+
+    return ReplaceBuildingActor;
+}
+
 inline uint64_t FindKickPlayer()
 {
     if (VersionInfo.EngineVersion == 4.16)

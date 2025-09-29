@@ -277,6 +277,139 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 		Building->TeamIndex = Building->Team;
 }
 
+void SetEditingPlayer(ABuildingSMActor* _this, AFortPlayerStateAthena* NewEditingPlayer)
+{
+	if (_this->Role == 3 && (!_this->EditingPlayer || !NewEditingPlayer))
+	{
+		_this->SetNetDormancy(2 - (NewEditingPlayer != 0));
+		_this->ForceNetUpdate();
+
+		auto EditingPlayer = _this->EditingPlayer;
+		if (EditingPlayer)
+		{
+			auto Handle = EditingPlayer->Owner;
+
+			if (Handle)
+				if (auto PlayerController = Handle->Cast<AFortPlayerControllerAthena>())
+				{
+					_this->EditingPlayer = NewEditingPlayer;
+					return;
+				}
+		}
+		else
+		{
+			if (!NewEditingPlayer)
+			{
+				_this->EditingPlayer = NewEditingPlayer;
+				return;
+			}
+
+			auto Handle = NewEditingPlayer->Owner;
+
+			if (auto PlayerController = Handle->Cast<AFortPlayerControllerAthena>())
+				_this->EditingPlayer = NewEditingPlayer;
+		}
+	}
+}
+
+bool CanBePlacedByPlayer(TSubclassOf<AActor> BuildClass) 
+{
+	return ((AFortGameStateAthena*)UWorld::GetWorld()->GameState)->AllPlayerBuildableClasses.Contains(BuildClass);
+}
+
+void AFortPlayerControllerAthena::ServerBeginEditingBuildingActor(UObject* Context, FFrame& Stack)
+{
+	ABuildingSMActor* Building;
+	Stack.StepCompiledIn(&Building);
+	Stack.IncrementCode();
+	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+	if (!PlayerController || !PlayerController->MyFortPawn || !Building || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex)
+		return;
+
+	AFortPlayerStateAthena* PlayerState = (AFortPlayerStateAthena*)PlayerController->PlayerState;
+	if (!PlayerState)
+		return;
+
+	SetEditingPlayer(Building, PlayerState);
+
+	static auto EditToolClass = FindClass("FortEditToolItemDefinition");
+	auto EditToolEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) {
+		return entry.ItemDefinition->IsA(EditToolClass);
+		}, FFortItemEntry::Size());
+
+	PlayerController->MyFortPawn->EquipWeaponDefinition((UFortWeaponItemDefinition*)EditToolEntry->ItemDefinition, EditToolEntry->ItemGuid, EditToolEntry->HasTrackerGuid() ? EditToolEntry->TrackerGuid : FGuid(), false);
+
+	static auto EditToolWeaponClass = FindClass("FortWeap_EditingTool");
+	if (PlayerController->MyFortPawn->CurrentWeapon->IsA(EditToolWeaponClass))
+	{
+		static auto EditActorOffset = PlayerController->MyFortPawn->CurrentWeapon->GetOffset("EditActor");
+		static auto OnRep_EditActor = PlayerController->MyFortPawn->CurrentWeapon->GetFunction("OnRep_EditActor");
+		//PlayerController->MyFortPawn->CurrentWeapon->EditActor = Building;
+		//PlayerController->MyFortPawn->CurrentWeapon->OnRep_EditActor();
+		GetFromOffset<ABuildingSMActor*>(PlayerController->MyFortPawn->CurrentWeapon, EditActorOffset) = Building;
+		PlayerController->MyFortPawn->CurrentWeapon->Call(OnRep_EditActor);
+	}
+}
+
+
+void AFortPlayerControllerAthena::ServerEditBuildingActor(UObject* Context, FFrame& Stack)
+{
+	ABuildingSMActor* Building;
+	TSubclassOf<AActor> NewClass;
+	uint8 RotationIterations;
+	bool bMirrored;
+	Stack.StepCompiledIn(&Building);
+	Stack.StepCompiledIn(&NewClass);
+	Stack.StepCompiledIn(&RotationIterations);
+	Stack.StepCompiledIn(&bMirrored);
+	Stack.IncrementCode();
+
+	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+	if (!PlayerController || !Building || !NewClass || !Building->IsA<ABuildingSMActor>() || !CanBePlacedByPlayer(NewClass) || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex || Building->bDestroyed)
+		return;
+
+	SetEditingPlayer(Building, nullptr);
+
+	static auto ReplaceBuildingActor = (ABuildingSMActor * (*)(ABuildingSMActor*, unsigned int, const UClass*, unsigned int, int, bool, AFortPlayerControllerAthena*)) FindReplaceBuildingActor();
+
+	ABuildingSMActor* NewBuild = ReplaceBuildingActor(Building, 1, NewClass.Get(), Building->CurrentBuildingLevel, RotationIterations, bMirrored, PlayerController);
+
+	if (NewBuild)
+		NewBuild->bPlayerPlaced = true;
+}
+
+void AFortPlayerControllerAthena::ServerEndEditingBuildingActor(UObject* Context, FFrame& Stack)
+{
+	ABuildingSMActor* Building;
+	Stack.StepCompiledIn(&Building);
+	Stack.IncrementCode();
+
+	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+	if (!PlayerController || !PlayerController->MyFortPawn || !Building || Building->EditingPlayer != PlayerController->PlayerState || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex || Building->bDestroyed)
+		return;
+
+	SetEditingPlayer(Building, nullptr);
+
+	static auto EditToolClass = FindClass("FortEditToolItemDefinition");
+	auto EditToolEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) {
+		return entry.ItemDefinition->IsA(EditToolClass);
+		}, FFortItemEntry::Size());
+
+	PlayerController->MyFortPawn->EquipWeaponDefinition((UFortWeaponItemDefinition*)EditToolEntry->ItemDefinition, EditToolEntry->ItemGuid, EditToolEntry->HasTrackerGuid() ? EditToolEntry->TrackerGuid : FGuid(), false);
+
+	static auto EditToolWeaponClass = FindClass("FortWeap_EditingTool");
+	if (PlayerController->MyFortPawn->CurrentWeapon->IsA(EditToolWeaponClass))
+	{
+		static auto EditActorOffset = PlayerController->MyFortPawn->CurrentWeapon->GetOffset("EditActor");
+		static auto OnRep_EditActor = PlayerController->MyFortPawn->CurrentWeapon->GetFunction("OnRep_EditActor");
+		//PlayerController->MyFortPawn->CurrentWeapon->EditActor = Building;
+		//PlayerController->MyFortPawn->CurrentWeapon->OnRep_EditActor();
+		GetFromOffset<ABuildingSMActor*>(PlayerController->MyFortPawn->CurrentWeapon, EditActorOffset) = nullptr;
+		PlayerController->MyFortPawn->CurrentWeapon->Call(OnRep_EditActor);
+	}
+}
+
+
 void AFortPlayerControllerAthena::Hook()
 {
 	auto DefaultFortPC = DefaultObjImpl("FortPlayerController");
@@ -301,4 +434,7 @@ void AFortPlayerControllerAthena::Hook()
 	Utils::Hook<AFortPlayerControllerAthena>(ServerReturnToMainMenuIdx, DefaultFortPC->Vft[ServerReturnToMainMenuIdx]);
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCreateBuildingActor"), ServerCreateBuildingActor);
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerBeginEditingBuildingActor"), ServerBeginEditingBuildingActor);
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerEditBuildingActor"), ServerEditBuildingActor);
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerEndEditingBuildingActor"), ServerEndEditingBuildingActor);
 }

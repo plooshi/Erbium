@@ -472,6 +472,8 @@ namespace SDK
 		UCLASS_COMMON_MEMBERS(AActor);
 
 		DEFINE_PROP(Owner, AActor*);
+		DEFINE_PROP(Role, uint8);
+		DEFINE_PROP(RemoteRole, uint8);
 
 		DEFINE_FUNC(AddComponentByClass, UActorComponent*);
 		DEFINE_FUNC(GetComponentByClass, UActorComponent*);

@@ -50,6 +50,10 @@ public:
     static void ServerExecuteInventoryItem(UObject*, FFrame&);
     static void ServerExecuteInventoryWeapon(UObject*, FFrame&);
     static void ServerCreateBuildingActor(UObject*, FFrame&);
+    static void ServerBeginEditingBuildingActor(UObject*, FFrame&);
+    static void ServerEditBuildingActor(UObject*, FFrame&);
+    static void ServerEndEditingBuildingActor(UObject*, FFrame&);
+    static void ServerRepairBuildingActor(UObject*, FFrame&);
     
 
     InitHooks;

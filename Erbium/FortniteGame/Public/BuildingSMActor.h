@@ -23,6 +23,9 @@ public:
     DEFINE_PROP(ResourceType, EFortResourceType);
     DEFINE_PROP(Team, uint8);
     DEFINE_PROP(TeamIndex, uint8);
+    DEFINE_PROP(EditingPlayer, AFortPlayerStateAthena*);
+    DEFINE_BITFIELD_PROP(bDestroyed);
+    DEFINE_PROP(CurrentBuildingLevel, int32);
 
     DEFINE_FUNC(GetHealth, float);
     DEFINE_FUNC(GetMaxHealth, float);
