@@ -36,6 +36,9 @@ void ABuildingFoundation::SetDynamicFoundationTransform_(UObject* Context, FFram
 
 void ABuildingFoundation::Hook()
 {
+	if (!GetDefaultObj())
+		return;
+
 	Utils::ExecHook(GetDefaultObj()->GetFunction("SetDynamicFoundationEnabled"), SetDynamicFoundationEnabled);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("SetDynamicFoundationTransform"), SetDynamicFoundationTransform_);
 }
