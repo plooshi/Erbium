@@ -19,7 +19,7 @@ void Main()
     sprintf_s(buffer, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Setting up" : (VersionInfo.FortniteVersion >= 5.00 ? "Erbium (FN %.2f, UE %.2f): Setting up" : "Erbium (FN %.1f, UE %.2f): Setting up"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
     SetConsoleTitleA(buffer);
 
-    printf("Hooking & finding offsets...\n");
+    printf("Hooking & finding offsets... (this may take a while)\n");
     FindNullsAndRetTrues();
 
     for (auto& NullFunc : NullFuncs)

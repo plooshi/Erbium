@@ -398,7 +398,8 @@ namespace Memcury
 
         inline auto GetModuleBase() -> uintptr_t
         {
-            return reinterpret_cast<uintptr_t>(GetModuleHandleA(Globals::moduleName));
+            return ImageBase;
+            //return Globals::moduleName == 0 ? ImageBase : uint64_t(GetModuleHandleA(Globals::moduleName));
         }
 
         inline auto GetDOSHeader() -> PIMAGE_DOS_HEADER
@@ -711,6 +712,7 @@ namespace Memcury
             return FindPatternEx(handle, pattern, mask, module, module + Memcury::PE::GetNTHeaders()->OptionalHeader.SizeOfImage);
         }
 
+        static inline auto HasAVX2 = IsProcessorFeaturePresent(PF_AVX2_INSTRUCTIONS_AVAILABLE);
         static auto FindPattern(const char* signature, bool bWarnIfNotFound = true) -> Scanner
         {
             PE::Address add{ nullptr };
@@ -727,35 +729,75 @@ namespace Memcury
             while (startingByte == -1)
                 startingByte = d[h++];
 
-            __m128i t = _mm_set1_epi8((char)startingByte);
             auto i = 0ul;
-            for (; i < (sizeOfImage - s) - ((sizeOfImage - s) % 16); i += 16)
+            if (HasAVX2)
             {
-                auto bytes = _mm_load_si128((const __m128i*)(scanBytes + i));
-                int offset = _mm_movemask_epi8(_mm_cmpeq_epi8(bytes, t));
+                __m256i t = _mm256_set1_epi8((char)startingByte);
 
-                if (offset == 0)
-                    continue;
-
-                for (int q = 0; q < 16; q++)
+                for (; i < (sizeOfImage - s) - ((sizeOfImage - s) % 32); i += 32)
                 {
-                    int c = offset & (1 << q);
-                    if (c)
+                    auto bytes = _mm256_load_si256((const __m256i*)(scanBytes + i));
+                    int offset = _mm256_movemask_epi8(_mm256_cmpeq_epi8(bytes, t));
+
+                    if (offset == 0)
+                        continue;
+
+                    for (int q = 0; q < 32; q++)
                     {
-                        bool found = true;
-                        for (auto j = h; j < s; ++j)
+                        int c = offset & (1 << q);
+                        if (c)
                         {
-                            if (scanBytes[i + q + j] != d[j] && d[j] != -1)
+                            bool found = true;
+                            for (auto j = h; j < s; ++j)
                             {
-                                found = false;
-                                break;
+                                if (scanBytes[i + q + j] != d[j] && d[j] != -1)
+                                {
+                                    found = false;
+                                    break;
+                                }
+                            }
+
+                            if (found)
+                            {
+                                add = reinterpret_cast<uintptr_t>(&scanBytes[i + q]);
+                                goto _out;
                             }
                         }
+                    }
+                }
+            }
+            else 
+            {
+                __m128i t = _mm_set1_epi8((char)startingByte);
 
-                        if (found)
+                for (; i < (sizeOfImage - s) - ((sizeOfImage - s) % 16); i += 16)
+                {
+                    auto bytes = _mm_load_si128((const __m128i*)(scanBytes + i));
+                    int offset = _mm_movemask_epi8(_mm_cmpeq_epi8(bytes, t));
+
+                    if (offset == 0)
+                        continue;
+
+                    for (int q = 0; q < 16; q++)
+                    {
+                        int c = offset & (1 << q);
+                        if (c)
                         {
-                            add = reinterpret_cast<uintptr_t>(&scanBytes[i + q]);
-                            goto _out;
+                            bool found = true;
+                            for (auto j = h; j < s; ++j)
+                            {
+                                if (scanBytes[i + q + j] != d[j] && d[j] != -1)
+                                {
+                                    found = false;
+                                    break;
+                                }
+                            }
+
+                            if (found)
+                            {
+                                add = reinterpret_cast<uintptr_t>(&scanBytes[i + q]);
+                                goto _out;
+                            }
                         }
                     }
                 }
@@ -875,67 +917,55 @@ namespace Memcury
 
             int aa = 0;
 
-            __m128i t = _mm_set1_epi8(0x48);
-            __m128i s = _mm_set1_epi8((char)0xfb);
-            // scan only text section
             DWORD i = 0x0;
-            for (; i < textSection.GetSectionSize() - (textSection.GetSectionSize() % 16); i += 16)
-            {
-                auto bytes = _mm_load_si128((const __m128i*)(scanBytes + i));
-                __m128i masked = _mm_and_si128(bytes, s);
-                int offset = _mm_movemask_epi8(_mm_cmpeq_epi8(masked, t));
-
-                if (offset == 0)
-                    continue;
-
-                for (int q = 0; q < 16; q++)
+            if (HasAVX2)
+            { 
+                __m256i t = _mm256_set1_epi8(0x48);
+                __m256i s = _mm256_set1_epi8((char)0xfb);
+                // scan only text section
+                for (; i < textSection.GetSectionSize() - (textSection.GetSectionSize() % 32); i += 32)
                 {
-                    int c = offset & (1 << q);
-                    if (c)
+                    auto bytes = _mm256_load_si256((const __m256i*)(scanBytes + i));
+                    __m256i masked = _mm256_and_si256(bytes, s);
+                    int offset = _mm256_movemask_epi8(_mm256_cmpeq_epi8(masked, t));
+
+                    if (offset == 0)
+                        continue;
+
+                    for (int q = 0; q < 32; q++)
                     {
-                        if (scanBytes[i + q + 1] == ASM::LEA)
+                        int c = offset & (1 << q);
+                        if (c)
                         {
-                            auto stringAdd = PE::Address(&scanBytes[i + q]).RelativeOffset(3);
-
-                            // Check if the string is in the .rdata section
-                            if (rdataSection.isInSection(stringAdd))
+                            if (scanBytes[i + q + 1] == ASM::LEA)
                             {
-                                auto strBytes = stringAdd.GetAs<std::uint8_t*>();
-                                auto pointerToRef = *(LPVOID*)strBytes;
+                                auto stringAdd = PE::Address(&scanBytes[i + q]).RelativeOffset(3);
 
-                                if (rdataSection.isInSection(pointerToRef)) // Credit: Ender
+                                // Check if the string is in the .rdata section
+                                if (rdataSection.isInSection(stringAdd))
                                 {
-                                    strBytes = (std::uint8_t*)pointerToRef;
-                                    stringAdd = PE::Address(pointerToRef);
-                                }
+                                    auto strBytes = stringAdd.GetAs<std::uint8_t*>();
+                                    auto pointerToRef = *(LPVOID*)strBytes;
 
-                                // Check if the first char is printable
-                                if (ASM::byteIsAscii(strBytes[0]))
-                                {
-                                    if constexpr (!bIsPtr)
+                                    if (rdataSection.isInSection(pointerToRef)) // Credit: Ender
                                     {
-                                        // typedef T::value_type char_type;
-                                        using char_type = std::decay_t<std::remove_pointer_t<T>>;
-
-                                        auto lea = stringAdd.GetAs<char_type*>();
-
-                                        T leaT(lea);
-
-                                        if (leaT == string)
-                                        {
-                                            add = PE::Address(&scanBytes[i + q]);
-
-                                            if (++aa > useRefNum)
-                                                goto _out;
-                                        }
+                                        strBytes = (std::uint8_t*)pointerToRef;
+                                        stringAdd = PE::Address(pointerToRef);
                                     }
-                                    else
-                                    {
-                                        auto lea = stringAdd.GetAs<T>();
 
-                                        if constexpr (bIsWide)
+                                    // Check if the first char is printable
+                                    if (ASM::byteIsAscii(strBytes[0]))
+                                    {
+                                        if constexpr (!bIsPtr)
                                         {
-                                            if (wcscmp(string, lea) == 0)
+                                            // typedef T::value_type char_type;
+                                            using char_type = std::decay_t<std::remove_pointer_t<T>>;
+
+                                            auto lea = stringAdd.GetAs<char_type*>();
+
+                                            T leaT(lea);
+
+                                            if (leaT == string)
                                             {
                                                 add = PE::Address(&scanBytes[i + q]);
 
@@ -945,12 +975,114 @@ namespace Memcury
                                         }
                                         else
                                         {
-                                            if (strcmp(string, lea) == 0)
+                                            auto lea = stringAdd.GetAs<T>();
+
+                                            if constexpr (bIsWide)
+                                            {
+                                                if (wcscmp(string, lea) == 0)
+                                                {
+                                                    add = PE::Address(&scanBytes[i + q]);
+
+                                                    if (++aa > useRefNum)
+                                                        goto _out;
+                                                }
+                                            }
+                                            else
+                                            {
+                                                if (strcmp(string, lea) == 0)
+                                                {
+                                                    add = PE::Address(&scanBytes[i + q]);
+
+                                                    if (++aa > useRefNum)
+                                                        goto _out;
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                __m128i t = _mm_set1_epi8(0x48);
+                __m128i s = _mm_set1_epi8((char)0xfb);
+                // scan only text section
+                for (; i < textSection.GetSectionSize() - (textSection.GetSectionSize() % 16); i += 16)
+                {
+                    auto bytes = _mm_load_si128((const __m128i*)(scanBytes + i));
+                    __m128i masked = _mm_and_si128(bytes, s);
+                    int offset = _mm_movemask_epi8(_mm_cmpeq_epi8(masked, t));
+
+                    if (offset == 0)
+                        continue;
+
+                    for (int q = 0; q < 16; q++)
+                    {
+                        int c = offset & (1 << q);
+                        if (c)
+                        {
+                            if (scanBytes[i + q + 1] == ASM::LEA)
+                            {
+                                auto stringAdd = PE::Address(&scanBytes[i + q]).RelativeOffset(3);
+
+                                // Check if the string is in the .rdata section
+                                if (rdataSection.isInSection(stringAdd))
+                                {
+                                    auto strBytes = stringAdd.GetAs<std::uint8_t*>();
+                                    auto pointerToRef = *(LPVOID*)strBytes;
+
+                                    if (rdataSection.isInSection(pointerToRef)) // Credit: Ender
+                                    {
+                                        strBytes = (std::uint8_t*)pointerToRef;
+                                        stringAdd = PE::Address(pointerToRef);
+                                    }
+
+                                    // Check if the first char is printable
+                                    if (ASM::byteIsAscii(strBytes[0]))
+                                    {
+                                        if constexpr (!bIsPtr)
+                                        {
+                                            // typedef T::value_type char_type;
+                                            using char_type = std::decay_t<std::remove_pointer_t<T>>;
+
+                                            auto lea = stringAdd.GetAs<char_type*>();
+
+                                            T leaT(lea);
+
+                                            if (leaT == string)
                                             {
                                                 add = PE::Address(&scanBytes[i + q]);
 
                                                 if (++aa > useRefNum)
                                                     goto _out;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            auto lea = stringAdd.GetAs<T>();
+
+                                            if constexpr (bIsWide)
+                                            {
+                                                if (wcscmp(string, lea) == 0)
+                                                {
+                                                    add = PE::Address(&scanBytes[i + q]);
+
+                                                    if (++aa > useRefNum)
+                                                        goto _out;
+                                                }
+                                            }
+                                            else
+                                            {
+                                                if (strcmp(string, lea) == 0)
+                                                {
+                                                    add = PE::Address(&scanBytes[i + q]);
+
+                                                    if (++aa > useRefNum)
+                                                        goto _out;
+                                                }
                                             }
                                         }
                                     }
@@ -970,6 +1102,13 @@ namespace Memcury
                     if (rdataSection.isInSection(stringAdd))
                     {
                         auto strBytes = stringAdd.GetAs<std::uint8_t*>();
+                        auto pointerToRef = *(LPVOID*)strBytes;
+
+                        if (rdataSection.isInSection(pointerToRef)) // Credit: Ender
+                        {
+                            strBytes = (std::uint8_t*)pointerToRef;
+                            stringAdd = PE::Address(pointerToRef);
+                        }
 
                         // Check if the first char is printable
                         if (ASM::byteIsAscii(strBytes[0]))
