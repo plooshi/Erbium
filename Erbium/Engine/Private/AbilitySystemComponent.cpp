@@ -34,7 +34,7 @@ void UAbilitySystemComponent::GiveAbilitySet(UFortAbilitySet* Set)
     if (Set)
     {
         for (auto& GameplayAbility : Set->GameplayAbilities)
-            GiveAbility(DefaultObjImpl(GameplayAbility->Name.ToSDKString().c_str()));
+            GiveAbility(GameplayAbility->GetDefaultObj());
     }
 }
 
