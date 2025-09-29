@@ -41,6 +41,14 @@ struct FPlaylistPropertyArray : public FFastArraySerializer
     DEFINE_STRUCT_PROP(OverridePlaylist, const UFortPlaylistAthena*);
 };
 
+class AFortAthenaMapInfo : public AActor
+{
+public:
+    UCLASS_COMMON_MEMBERS(AFortAthenaMapInfo);
+
+    DEFINE_PROP(LlamaClass, UClass*);
+};
+
 class AFortGameStateAthena : public AActor
 {
 public:
@@ -48,7 +56,7 @@ public:
 
     DEFINE_PROP(CurrentPlaylistInfo, FPlaylistPropertyArray);
     DEFINE_PROP(CurrentPlaylistId, int32);
-    DEFINE_PROP(MapInfo, AActor*);
+    DEFINE_PROP(MapInfo, AFortAthenaMapInfo*);
     DEFINE_PROP(AdditionalPlaylistLevelsStreamed, TArray<FAdditionalLevelStreamed>);
     DEFINE_PROP(DefaultParachuteDeployTraceForGroundDistance, float);
     DEFINE_PROP(AthenaGameDataTable, UCurveTable*);

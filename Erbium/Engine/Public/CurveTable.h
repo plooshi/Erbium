@@ -36,3 +36,9 @@ public:
     __declspec(property(get = GetRowMap))
     TMap<FName, FRealCurve*> RowMap;
 };
+
+struct FCurveTableRowHandle
+{
+    UCurveTable* CurveTable;
+    FName RowName;
+};

@@ -41,6 +41,7 @@ public:
     DEFINE_FUNC(GetViewTarget, AActor*);
     DEFINE_FUNC(GetControlRotation, FRotator);
     DEFINE_FUNC(ClientSetRotation, void);
+    DEFINE_FUNC(ClientReportDamagedResourceBuilding, void);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);

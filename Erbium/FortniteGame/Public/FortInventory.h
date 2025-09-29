@@ -4,6 +4,8 @@
 #include "FortPlayerPawnAthena.h"
 #include "../../Engine/Public/AbilitySystemComponent.h"
 #include "../../Engine/Public/DataTable.h"
+#include "../../Engine/Public/DataTableFunctionLibrary.h"
+#include "../../Engine/Public/CurveTable.h"
 
 struct FGuid
 {
@@ -25,6 +27,23 @@ public:
     UCLASS_COMMON_MEMBERS(UFortItem);
 };
 
+struct FScalableFloat
+{
+public:
+    float Value;
+    uint8 _Padding[0x4];
+    FCurveTableRowHandle Curve;
+
+    inline float Evaluate()
+    {
+        if (!Curve.CurveTable)
+            return Value;
+
+        float Out;
+        UDataTableFunctionLibrary::EvaluateCurveTableRow(Curve.CurveTable, Curve.RowName, (float)0, nullptr, &Out, FString());
+        return Out;
+    }
+};
 
 class UFortItemDefinition : public UObject
 {
@@ -34,6 +53,23 @@ public:
     DEFINE_BITFIELD_PROP(bForceIntoOverflow);
 
     DEFINE_FUNC(CreateTemporaryItemInstanceBP, UFortItem*);
+    
+    int32 GetMaxStackSize()
+    {
+        static auto Prop = this->GetProperty("MaxStackSize");
+        static auto ElementSizeOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x3c : (VersionInfo.EngineVersion >= 5.2 ? 0x2c : 0x34);
+        static auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);
+
+        static auto MaxStackSizeSize = GetFromOffset<int32>(Prop, ElementSizeOff); // tuff variable name
+        static auto MaxStackSizeOffset = GetFromOffset<int32>(Prop, OffsetOff);
+
+        if (MaxStackSizeSize == 4) // sizeof(int32)
+            return GetFromOffset<int32>(this, MaxStackSizeOffset);
+
+        // scalablefloat
+        auto& ScalableFloat = GetFromOffset<FScalableFloat>(this, MaxStackSizeOffset);
+        return (int32)ScalableFloat.Evaluate();
+    }
 };
 
 struct FFortItemEntry : public FFastArraySerializerItem
@@ -162,7 +198,9 @@ public:
     void Update(FFortItemEntry*);
     void Remove(FGuid);
     static AFortPickupAthena* SpawnPickup(FVector, FFortItemEntry&, long long = EFortPickupSourceTypeFlag::GetTossed(), long long = EFortPickupSpawnSource::GetUnset(), AFortPlayerPawnAthena* = nullptr, int = -1, bool = true, bool = true, bool = true);
+    static AFortPickupAthena* SpawnPickup(FVector, UFortItemDefinition*, int, int, long long = EFortPickupSourceTypeFlag::GetTossed(), long long = EFortPickupSpawnSource::GetUnset(), AFortPlayerPawnAthena* = nullptr, bool = true, bool = true);
     static FFortItemEntry* MakeItemEntry(UFortItemDefinition*, int32, int32);
     static FFortRangedWeaponStats* GetStats(UFortWeaponItemDefinition*);
     bool IsPrimaryQuickbar(UFortItemDefinition*);
+    void UpdateEntry(FFortItemEntry&);
 };

@@ -21,8 +21,6 @@ void Main()
 
     FindNullsAndRetTrues();
 
-    printf("%lld\n", EFortPickupSourceTypeFlag::GetFishing());
-
     for (auto& NullFunc : NullFuncs)
         if (NullFunc != 0)
             Utils::Patch<uint8_t>(NullFunc, 0xc3);

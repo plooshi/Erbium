@@ -10,4 +10,5 @@ public:
     UCLASS_COMMON_MEMBERS(AFortWeapon);
 
     DEFINE_PROP(ItemEntryGuid, FGuid);
+    DEFINE_PROP(WeaponData, UFortItemDefinition*);
 };

@@ -163,6 +163,7 @@
     <ClInclude Include="FortniteGame\Public\FortPlaylistAthena.h" />
     <ClInclude Include="FortniteGame\Public\FortSafeZoneIndicator.h" />
     <ClInclude Include="FortniteGame\Public\FortWeapon.h" />
+    <ClInclude Include="FortniteGame\Public\GameplayTagContainer.h" />
     <ClInclude Include="FortniteGame\Public\LevelStreamingDynamic.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />

@@ -165,6 +165,11 @@ AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entr
     return NewPickup;
 }
 
+AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, UFortItemDefinition* ItemDefinition, int Count, int LoadedAmmo, long long SourceTypeFlag, long long SpawnSource, AFortPlayerPawnAthena* Pawn, bool Toss, bool bRandomRotation)
+{
+    return SpawnPickup(Loc, *MakeItemEntry(ItemDefinition, Count, 0), SourceTypeFlag, SpawnSource, Pawn, -1, Toss, true, bRandomRotation);
+}
+
 
 bool AFortInventory::IsPrimaryQuickbar(UFortItemDefinition* ItemDefinition)
 {
@@ -176,4 +181,20 @@ bool AFortInventory::IsPrimaryQuickbar(UFortItemDefinition* ItemDefinition)
     static auto EditToolClass = FindClass("FortEditToolItemDefinition");
 
     return ItemDefinition->IsA(MeleeClass) || ItemDefinition->IsA(ResourceClass) || ItemDefinition->IsA(AmmoClass) || ItemDefinition->IsA(TrapClass) || ItemDefinition->IsA(BuildingClass) || ItemDefinition->IsA(EditToolClass) || ItemDefinition->bForceIntoOverflow ? false : true;
+}
+
+
+void AFortInventory::UpdateEntry(FFortItemEntry& Entry)
+{
+    auto repEnt = Inventory.ReplicatedEntries.Search([&](FFortItemEntry& item)
+        { return item.ItemGuid == Entry.ItemGuid; }, FFortItemEntry::Size());
+    if (repEnt)
+        memcpy(repEnt, &Entry, FFortItemEntry::Size());
+
+    auto ent = Inventory.ItemInstances.Search([&](UFortWorldItem* item)
+        { return item->ItemEntry.ItemGuid == Entry.ItemGuid; });
+    if (ent)
+        memcpy(&(*ent)->ItemEntry, &Entry, FFortItemEntry::Size());
+
+    Update(&Entry);
 }

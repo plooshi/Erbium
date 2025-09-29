@@ -46,6 +46,12 @@
                                                                                 \
 		return _size;                                                           \
 	}                                                                           \
+                                                                                \
+    __Class& operator=(__Class& _Rhs)                                           \
+    {                                                                           \
+        __movsb((PBYTE)this, (const PBYTE)&_Rhs, Size());                       \
+        return *this;                                                           \
+    }                                                                           \
     static inline constexpr auto _StructName = #__Class + 1;
 
 #define UENUM_COMMON_MEMBERS(__Class)                                           \
