@@ -272,8 +272,9 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 			PlayerController->WorldInventory->UpdateEntry(*ItemEntry);
 	}
 
-	Building->TeamIndex = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
-	Building->Team = Building->TeamIndex;
+	Building->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+	if (Building->HasTeamIndex())
+		Building->TeamIndex = Building->Team;
 }
 
 void AFortPlayerControllerAthena::Hook()
