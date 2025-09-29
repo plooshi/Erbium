@@ -189,12 +189,12 @@ void AFortInventory::UpdateEntry(FFortItemEntry& Entry)
     auto repEnt = Inventory.ReplicatedEntries.Search([&](FFortItemEntry& item)
         { return item.ItemGuid == Entry.ItemGuid; }, FFortItemEntry::Size());
     if (repEnt)
-        memcpy(repEnt, &Entry, FFortItemEntry::Size());
+        __movsb((PBYTE)repEnt, (const PBYTE)&Entry, FFortItemEntry::Size());
 
     auto ent = Inventory.ItemInstances.Search([&](UFortWorldItem* item)
         { return item->ItemEntry.ItemGuid == Entry.ItemGuid; });
     if (ent)
-        memcpy(&(*ent)->ItemEntry, &Entry, FFortItemEntry::Size());
+        __movsb((PBYTE)&(*ent)->ItemEntry, (const PBYTE)&Entry, FFortItemEntry::Size());
 
     Update(&Entry);
 }

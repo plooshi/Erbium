@@ -14,4 +14,5 @@ public:
     DEFINE_PROP(AdditionalLevels, TArray<TSoftObjectPtr<UWorld>>);
     DEFINE_PROP(AdditionalLevelsServerOnly, TArray<TSoftObjectPtr<UWorld>>);
     DEFINE_PROP(GarbageCollectionFrequency, float);
+    DEFINE_PROP(MaxSquadSize, int32);
 };

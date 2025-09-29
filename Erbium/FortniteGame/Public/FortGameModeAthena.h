@@ -11,6 +11,9 @@
 class AFortGameModeAthena : public AActor
 {
 public:
+    static inline uint8_t CurrentTeam = 3;
+    static inline uint8_t PlayersOnCurTeam = 0;
+
     UCLASS_COMMON_MEMBERS(AFortGameModeAthena);
 
     DEFINE_PROP(CurrentPlaylistId, int32);

@@ -373,6 +373,18 @@ void AFortGameModeAthena::HandleStartingNewPlayer_(UObject* Context, FFrame& Sta
     return callOG(GameMode, Stack.GetCurrentNativeFunction(), HandleStartingNewPlayer, NewPlayer);
 }
 
+
+uint8_t AFortGameModeAthena::PickTeam(AFortGameModeAthena* GameMode, uint8_t PreferredTeam, AFortPlayerControllerAthena* Controller) {
+    uint8_t ret = CurrentTeam;
+
+    if (++PlayersOnCurTeam >= GameMode->GameState->CurrentPlaylistInfo.BasePlaylist->MaxSquadSize) {
+        CurrentTeam++;
+        PlayersOnCurTeam = 0;
+    }
+
+    return ret;
+}
+
 void AFortGameModeAthena::Hook()
 {
     auto spdf = GetDefaultObj()->GetFunction("SpawnDefaultPawnFor");
@@ -381,4 +393,5 @@ void AFortGameModeAthena::Hook()
     Utils::ExecHook(spdf, SpawnDefaultPawnFor);
     Utils::Hook(FindHandlePostSafeZonePhaseChanged(), HandlePostSafeZonePhaseChanged, HandlePostSafeZonePhaseChangedOG);
     Utils::ExecHook(GetDefaultObj()->GetFunction("HandleStartingNewPlayer"), HandleStartingNewPlayer_, HandleStartingNewPlayer_OG);
+    Utils::Hook(FindPickTeam(), PickTeam, PickTeamOG);
 }

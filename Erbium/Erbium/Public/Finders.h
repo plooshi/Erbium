@@ -681,6 +681,41 @@ inline uint64_t FindStaticLoadObject()
     return StaticLoadObject;
 }
 
+
+inline uint64_t FindPickTeam()
+{
+    static uint64_t PickTeam = 0;
+
+    if (PickTeam == 0)
+    {
+        if (VersionInfo.EngineVersion == 4.26)
+        {
+            PickTeam = Memcury::Scanner::FindPattern("88 54 24 10 53 56 41 54 41 55 41 56 48 83 EC 60 4C 8B A1", false).Get();
+
+            if (!PickTeam)
+                PickTeam = Memcury::Scanner::FindPattern("88 54 24 10 53 55 56 41 55 41 ? 48 83 EC 70 48", false).Get();
+
+            if (PickTeam)
+                return PickTeam;
+        }
+        else if (VersionInfo.EngineVersion == 5.0)
+            return PickTeam = Memcury::Scanner::FindPattern("48 89 5C 24 ? 88 54 24 10 55 56 57 41 54 41 55 41 56 41 57 48 8B EC 48 83 EC 70 45 33 ED 4D").Get();
+        else if (VersionInfo.EngineVersion == 4.27)
+            return PickTeam = Memcury::Scanner::FindPattern("48 89 5C 24 ? 88 54 24 10 55 56 57 41 54 41 55 41 56 41 57 48 8B EC 48 83 EC 70 4C 8B A1").Get();
+        else if (VersionInfo.FortniteVersion == 7.20 || VersionInfo.FortniteVersion == 7.30)
+            return PickTeam = Memcury::Scanner::FindPattern("89 54 24 10 53 56 41 54 41 55 41 56 48 81 EC").Get();
+
+        auto Addr = Memcury::Scanner::FindStringRef(L"PickTeam for [%s] used beacon value [%d]");
+
+        if (!Addr.Get())
+            Addr = Memcury::Scanner::FindStringRef(L"PickTeam for [%s] used beacon value [%s]");
+
+        PickTeam = Addr.ScanFor(VersionInfo.FortniteVersion <= 4.1 ? std::vector<uint8_t>{ 0x48, 0x89, 0x6C } : std::vector<uint8_t>{ 0x40, 0x55 }, false, 0, 1, 1000).Get();
+    }
+    
+    return PickTeam;
+}
+
 inline uint64_t FindKickPlayer()
 {
     if (VersionInfo.EngineVersion == 4.16)
