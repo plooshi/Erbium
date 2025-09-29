@@ -26,10 +26,7 @@ void Main()
 
     for (auto& NullFunc : NullFuncs)
         if (NullFunc != 0)
-        {
-            printf("%llx\n", NullFunc - ImageBase);
             Utils::Patch<uint8_t>(NullFunc, 0xc3);
-        }
 
     for (auto& RetTrueFunc : RetTrueFuncs) 
     {

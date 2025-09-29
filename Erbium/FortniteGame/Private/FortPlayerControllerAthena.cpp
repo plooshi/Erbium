@@ -81,19 +81,28 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump(UObject* Context, FF
 	AFortPlayerControllerAthena* PlayerController = nullptr;
 	auto GameMode = (AFortGameModeAthena*) UWorld::GetWorld()->AuthorityGameMode;
 
-	static auto ControllerCompClass = FindClass("FortControllerComponent_Aircraft");
-	if (Context->IsA(ControllerCompClass))
-		PlayerController = (AFortPlayerControllerAthena*)((UActorComponent*)Context)->GetOwner();
-	else
-		PlayerController = (AFortPlayerControllerAthena*)Context;
-
-	GameMode->RestartPlayer(PlayerController);
-	//PlayerController->ClientSetRotation(Rotation, true);
-
-	if (PlayerController->MyFortPawn)
+	if (VersionInfo.FortniteVersion >= 11.00)
 	{
-		PlayerController->MyFortPawn->BeginSkydiving(true);
-		PlayerController->MyFortPawn->SetHealth(100.f);
+		static auto ControllerCompClass = FindClass("FortControllerComponent_Aircraft");
+		if (Context->IsA(ControllerCompClass))
+			PlayerController = (AFortPlayerControllerAthena*)((UActorComponent*)Context)->GetOwner();
+		else
+			PlayerController = (AFortPlayerControllerAthena*)Context;
+
+		GameMode->RestartPlayer(PlayerController);
+		//PlayerController->ClientSetRotation(Rotation, true);
+
+		if (PlayerController->MyFortPawn)
+		{
+			PlayerController->MyFortPawn->BeginSkydiving(true);
+			PlayerController->MyFortPawn->SetHealth(100.f);
+		}
+	}
+	else
+	{
+		static auto ServerAttemptAircraftJumpOG = (void(*)(AFortPlayerControllerAthena*, FRotator&)) ((AFortPlayerControllerAthena*)Context)->Vft[((AFortPlayerControllerAthena*)Context)->GetFunction("ServerAttemptAircraftJump")->GetVTableIndex()];
+
+		ServerAttemptAircraftJumpOG((AFortPlayerControllerAthena*)Context, Rotation);
 	}
 }
 
@@ -419,7 +428,7 @@ void AFortPlayerControllerAthena::Hook()
 
 	auto ServerAttemptAircraftJumpPC = GetDefaultObj()->GetFunction("ServerAttemptAircraftJump");
 	if (!ServerAttemptAircraftJumpPC)
-		Utils::ExecHook(DefaultObjImpl("FortControllerComponent_Aircraft")->GetFunction("ServerAttemptAircraftJump"), ServerAttemptAircraftJump);
+		Utils::ExecHook(DefaultObjImpl("FortControllerComponent_Aircraft")->GetFunction("ServerAttemptAircraftJump"), ServerAttemptAircraftJump, ServerAttemptAircraftJumpOG);
 	else
 		Utils::ExecHook(ServerAttemptAircraftJumpPC, ServerAttemptAircraftJump);
 

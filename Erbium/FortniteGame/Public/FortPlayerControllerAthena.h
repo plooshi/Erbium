@@ -46,7 +46,7 @@ public:
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);
-    static void ServerAttemptAircraftJump(UObject*, FFrame&);
+    DefHookOg(void, ServerAttemptAircraftJump, UObject*, FFrame&);
     static void ServerExecuteInventoryItem(UObject*, FFrame&);
     static void ServerExecuteInventoryWeapon(UObject*, FFrame&);
     static void ServerCreateBuildingActor(UObject*, FFrame&);
