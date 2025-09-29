@@ -261,7 +261,8 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
             //UFortKismetLibrary::UpdatePlayerCustomCharacterPartsVisualization(NewPlayer->PlayerState);
         }
     }
-    else {
+    else
+    {
         //NewPlayer->WorldInventory->Inventory.ReplicatedEntries.ResetNum();
         //NewPlayer->WorldInventory->Inventory.ItemInstances.ResetNum();
         static auto AmmoClass = FindClass("FortAmmoItemDefinition");
