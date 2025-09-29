@@ -234,19 +234,25 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
     {
         static auto SmartItemDefClass = FindClass("FortSmartBuildingItemDefinition");
         static bool HasCosmeticLoadoutPC = NewPlayer->HasCosmeticLoadoutPC();
+        static bool HasCustomizationLoadout = NewPlayer->HasCustomizationLoadout();
+
         if (HasCosmeticLoadoutPC)
             NewPlayer->WorldInventory->GiveItem(NewPlayer->CosmeticLoadoutPC.Pickaxe->WeaponDefinition);
-        else
+        else if (HasCustomizationLoadout)
             NewPlayer->WorldInventory->GiveItem(NewPlayer->CustomizationLoadout.Pickaxe->WeaponDefinition);
+        else
+        {
+            static auto DefaultPickaxe = Utils::FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
+
+            NewPlayer->WorldInventory->GiveItem(DefaultPickaxe);
+        }
 
         for (int i = 0; i < GameMode->StartingItems.Num(); i++)
         {
             auto& StartingItem = GameMode->StartingItems.Get(i, FItemAndCount::Size());
 
             if (StartingItem.Count && (!SmartItemDefClass || !StartingItem.Item->IsA(SmartItemDefClass)))
-            {
                 NewPlayer->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
-            }
         }
 
         static auto AbilitySet = VersionInfo.FortniteVersion >= 8.30 ? Utils::FindObject<UFortAbilitySet>(L"/Game/Abilities/Player/Generic/Traits/DefaultPlayer/GAS_AthenaPlayer.GAS_AthenaPlayer") : Utils::FindObject<UFortAbilitySet>(L"/Game/Abilities/Player/Generic/Traits/DefaultPlayer/GAS_DefaultPlayer.GAS_DefaultPlayer");
@@ -267,6 +273,7 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
         //NewPlayer->WorldInventory->Inventory.ItemInstances.ResetNum();
         static auto AmmoClass = FindClass("FortAmmoItemDefinition");
         static auto ResourceClass = FindClass("FortResourceItemDefinition");
+
         for (int i = 0; i < NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
         {
             auto& Entry = NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
@@ -288,6 +295,7 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
                 i--;
             }
         }
+
         NewPlayer->WorldInventory->Update(nullptr);
 
         static bool bMatchStarted = false;
@@ -401,7 +409,8 @@ void AFortGameModeAthena::HandleStartingNewPlayer_(UObject* Context, FFrame& Sta
 uint8_t AFortGameModeAthena::PickTeam(AFortGameModeAthena* GameMode, uint8_t PreferredTeam, AFortPlayerControllerAthena* Controller) {
     uint8_t ret = CurrentTeam;
 
-    if (++PlayersOnCurTeam >= GameMode->GameState->CurrentPlaylistInfo.BasePlaylist->MaxSquadSize) {
+    if (++PlayersOnCurTeam >= GameMode->GameState->CurrentPlaylistInfo.BasePlaylist->MaxSquadSize) 
+    {
         CurrentTeam++;
         PlayersOnCurTeam = 0;
     }
