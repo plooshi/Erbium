@@ -229,30 +229,26 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
     //auto Pawn = GameMode->SpawnDefaultPawnAtTransform(NewPlayer, Transform);
 
     auto Num = NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Num();
-    if (Num != 0) {
-        NewPlayer->WorldInventory->Inventory.ReplicatedEntries.ResetNum();
-        NewPlayer->WorldInventory->Inventory.ItemInstances.ResetNum();
-    }
-
-    static auto SmartItemDefClass = FindClass("FortSmartBuildingItemDefinition");
-    static bool HasCosmeticLoadoutPC = NewPlayer->HasCosmeticLoadoutPC();
-    if (HasCosmeticLoadoutPC)
-        NewPlayer->WorldInventory->GiveItem(NewPlayer->CosmeticLoadoutPC.Pickaxe->WeaponDefinition);
-    else
-        NewPlayer->WorldInventory->GiveItem(NewPlayer->CustomizationLoadout.Pickaxe->WeaponDefinition);
-
-    for (int i = 0; i < GameMode->StartingItems.Num(); i++)
-    {
-        auto& StartingItem = GameMode->StartingItems.Get(i, FItemAndCount::Size());
-
-        if (StartingItem.Count && (!SmartItemDefClass || !StartingItem.Item->IsA(SmartItemDefClass)))
-        {
-            NewPlayer->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
-        }
-    }
 
     if (Num == 0)
     {
+        static auto SmartItemDefClass = FindClass("FortSmartBuildingItemDefinition");
+        static bool HasCosmeticLoadoutPC = NewPlayer->HasCosmeticLoadoutPC();
+        if (HasCosmeticLoadoutPC)
+            NewPlayer->WorldInventory->GiveItem(NewPlayer->CosmeticLoadoutPC.Pickaxe->WeaponDefinition);
+        else
+            NewPlayer->WorldInventory->GiveItem(NewPlayer->CustomizationLoadout.Pickaxe->WeaponDefinition);
+
+        for (int i = 0; i < GameMode->StartingItems.Num(); i++)
+        {
+            auto& StartingItem = GameMode->StartingItems.Get(i, FItemAndCount::Size());
+
+            if (StartingItem.Count && (!SmartItemDefClass || !StartingItem.Item->IsA(SmartItemDefClass)))
+            {
+                NewPlayer->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
+            }
+        }
+
         static auto AbilitySet = VersionInfo.FortniteVersion >= 8.30 ? Utils::FindObject<UFortAbilitySet>(L"/Game/Abilities/Player/Generic/Traits/DefaultPlayer/GAS_AthenaPlayer.GAS_AthenaPlayer") : Utils::FindObject<UFortAbilitySet>(L"/Game/Abilities/Player/Generic/Traits/DefaultPlayer/GAS_DefaultPlayer.GAS_DefaultPlayer");
         NewPlayer->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
 
@@ -266,6 +262,33 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
         }
     }
     else {
+        //NewPlayer->WorldInventory->Inventory.ReplicatedEntries.ResetNum();
+        //NewPlayer->WorldInventory->Inventory.ItemInstances.ResetNum();
+        static auto AmmoClass = FindClass("FortAmmoItemDefinition");
+        static auto ResourceClass = FindClass("FortResourceItemDefinition");
+        for (int i = 0; i < NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
+        {
+            auto& Entry = NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
+
+            if (AFortInventory::IsPrimaryQuickbar(Entry.ItemDefinition) || Entry.ItemDefinition->IsA(AmmoClass) || Entry.ItemDefinition->IsA(ResourceClass))
+            {
+                NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Remove(i, FFortItemEntry::Size());
+                i--;
+            }
+        }
+
+        for (int i = 0; i < NewPlayer->WorldInventory->Inventory.ItemInstances.Num(); i++)
+        {
+            auto& Entry = NewPlayer->WorldInventory->Inventory.ItemInstances[i]->ItemEntry;
+
+            if (AFortInventory::IsPrimaryQuickbar(Entry.ItemDefinition) || Entry.ItemDefinition->IsA(AmmoClass) || Entry.ItemDefinition->IsA(ResourceClass))
+            {
+                NewPlayer->WorldInventory->Inventory.ItemInstances.Remove(i);
+                i--;
+            }
+        }
+        NewPlayer->WorldInventory->Update(nullptr);
+
         static bool bMatchStarted = false;
 
         if (!bMatchStarted)

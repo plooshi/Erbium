@@ -201,6 +201,6 @@ public:
     static AFortPickupAthena* SpawnPickup(FVector, UFortItemDefinition*, int, int, long long = EFortPickupSourceTypeFlag::GetTossed(), long long = EFortPickupSpawnSource::GetUnset(), AFortPlayerPawnAthena* = nullptr, bool = true, bool = true);
     static FFortItemEntry* MakeItemEntry(UFortItemDefinition*, int32, int32);
     static FFortRangedWeaponStats* GetStats(UFortWeaponItemDefinition*);
-    bool IsPrimaryQuickbar(UFortItemDefinition*);
+    static bool IsPrimaryQuickbar(UFortItemDefinition*);
     void UpdateEntry(FFortItemEntry&);
 };

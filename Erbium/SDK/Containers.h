@@ -532,12 +532,12 @@ namespace UC
 			NumElements = 0;
 		}
 
-		inline void Clear()
+		inline void Clear(int32 Size = ElementSize)
 		{
 			NumElements = 0;
 
 			if (Data)
-				__stosb((PBYTE)Data, 0, NumElements * ElementSize);
+				__stosb((PBYTE)Data, 0, NumElements * Size);
 		}
 
 	public:
