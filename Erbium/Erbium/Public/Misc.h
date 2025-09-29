@@ -7,7 +7,7 @@ class Misc
 {
 public:
     static int GetNetMode();
-    DefHookOg(void*, DispatchRequest, void*, void*, int);
+    DefHookOg(void*, SendRequestNow, void*, void*, int);
     DefHookOg(float, GetMaxTickRate, UEngine*, float, bool);
     static uint32 CheckCheckpointHeartBeat();
 

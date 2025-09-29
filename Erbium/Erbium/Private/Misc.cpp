@@ -10,12 +10,12 @@ int Misc::GetNetMode()
 }
 
 
-void* Misc::DispatchRequest(void* Arg1, void* MCPData, int)
+void* Misc::SendRequestNow(void* Arg1, void* MCPData, int)
 {
 	if (VersionInfo.EngineVersion < 4.23)
-		*(int*)(__int64(MCPData) + (VersionInfo.FortniteVersion >= 4.2 ? 0x28 : 0x60)) = 3;
+		*(int*)(__int64(MCPData) + (VersionInfo.FortniteVersion >= 4.2 ? 0x28 : 0x60)) = 3; // CXC_Public
 
-	return DispatchRequestOG(Arg1, MCPData, 3);
+	return SendRequestNowOG(Arg1, MCPData, 3); // CXC_Public
 }
 
 
@@ -32,7 +32,7 @@ uint32 Misc::CheckCheckpointHeartBeat()
 void Misc::Hook()
 {
 	Utils::Hook(FindGetNetMode(), GetNetMode);
-	Utils::Hook(FindDispatchRequest(), DispatchRequest, DispatchRequestOG);
+	Utils::Hook(FindSendRequestNow(), SendRequestNow, SendRequestNowOG);
 	Utils::Hook(FindGetMaxTickRate(), GetMaxTickRate);
 	if (VersionInfo.FortniteVersion >= 17)
 		Utils::Hook(Memcury::Scanner::FindPattern("48 89 5C 24 10 48 89 6C 24 20 56 57 41 54 41 56 41 57 48 81 EC ? ? ? ? 65 48 8B 04 25 ? ? ? ? 4C 8B F9").Get(), CheckCheckpointHeartBeat);

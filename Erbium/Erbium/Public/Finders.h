@@ -375,10 +375,12 @@ inline uint64_t FindServerReplicateActors()
                 ServerReplicateActorsVft = 0x66;
             break;
         }
-        if (ServerReplicateActorsVft) {
+        if (ServerReplicateActorsVft) 
+        {
             ServerReplicateActors = uint64_t(DefaultObjImpl("FortReplicationGraph")->Vft[ServerReplicateActorsVft]);
         }
-        else {
+        else 
+        {
             MessageBoxA(nullptr, "This version is currently not supported.", "Erbium", MB_ICONERROR);
             ExitProcess(0);
         }
@@ -386,15 +388,18 @@ inline uint64_t FindServerReplicateActors()
     return ServerReplicateActors;
 }
 
-inline uint64_t FindDispatchRequest()
+inline uint64_t FindSendRequestNow()
 {
-    static uint64_t DispatchRequest = 0;
+    static uint64_t SendRequestNow = 0;
 
-    if (DispatchRequest == 0)
+    if (SendRequestNow == 0)
     {
         auto sRef = Memcury::Scanner::FindStringRef(L"MCP-Profile: Dispatching request to %s", true, 0, VersionInfo.FortniteVersion >= 19).Get();
         if (!sRef)
             sRef = Memcury::Scanner::FindStringRef(L"MCP-Profile: Dispatching request to %s - ContextCredentials: %s", true, 0, VersionInfo.FortniteVersion >= 19).Get();
+
+        if (!sRef)
+            return 0;
 
         for (int i = 0; i < 1000; i++) 
         {
@@ -402,18 +407,18 @@ inline uint64_t FindDispatchRequest()
 
             if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5c)
             {
-                DispatchRequest = uint64_t(Ptr);
+                SendRequestNow = uint64_t(Ptr);
                 break;
             }
             else if (*Ptr == 0x48 && *(Ptr + 1) == 0x8b && *(Ptr + 2) == 0xc4)
             {
-                DispatchRequest = uint64_t(Ptr);
+                SendRequestNow = uint64_t(Ptr);
                 break;
             }
         }
     }
 
-    return DispatchRequest;
+    return SendRequestNow;
 }
 
 inline uint64 FindGetMaxTickRate()
@@ -772,16 +777,12 @@ inline void FindNullsAndRetTrues()
         }
     }
 
-    if (VersionInfo.FortniteVersion >= 19.00) 
-        NullFuncs.push_back(Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8B EC 48 83 EC 50 4C 8B FA 48 8B F1 E8").Get());
-    else if (VersionInfo.FortniteVersion >= 16.40)
-        NullFuncs.push_back(Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 48 89 7C 24 ? 55 41 54 41 55 41 56 41 57 48 8B EC 48 83 EC 70 4C 8B FA 4C").Get());
-    else if (VersionInfo.FortniteVersion == 2.5) 
+    if (VersionInfo.FortniteVersion == 2.5) 
         NullFuncs.push_back(Memcury::Scanner::FindPattern("40 55 56 41 56 48 8B EC 48 81 EC ? ? ? ? 48 8B 01 4C 8B F2").Get());
     else 
     {
         auto sRef = Memcury::Scanner::FindStringRef(L"Changing GameSessionId from '%s' to '%s'");
-        NullFuncs.push_back(sRef.ScanFor({ 0x40, 0x55 }, false, 0, 1, 2000).Get());
+        NullFuncs.push_back(sRef.ScanFor(VersionInfo.EngineVersion >= 4.27 ? std::vector<uint8>{ 0x48, 0x89, 0x5C } : std::vector<uint8>{ 0x40, 0x55 }, false, 0, 1, 2000).Get());
     }
 
     if (VersionInfo.EngineVersion < 4.27) {

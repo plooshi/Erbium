@@ -152,7 +152,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             *Ret = false;
             return;
         }
-        GameState->OnRep_CurrentPlaylistInfo();
+        GameState->OnRep_CurrentPlaylistInfo(); 
 
         if (VersionInfo.EngineVersion >= 4.27)
         {
