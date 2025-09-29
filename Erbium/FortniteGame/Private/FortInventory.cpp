@@ -85,13 +85,13 @@ void AFortInventory::Remove(FGuid Guid)
     if (ItemEntryIdx != -1)
         Inventory.ReplicatedEntries.Remove(ItemEntryIdx, FFortItemEntry::Size());
 
-    auto ItemInstanceIdx = Inventory.ItemInstances.SearchIndex([&](UFortWorldItem* entry) { return entry->ItemEntry.ItemGuid == Guid; }, FFortItemEntry::Size());
+    auto ItemInstanceIdx = Inventory.ItemInstances.SearchIndex([&](UFortWorldItem* entry) { return entry->ItemEntry.ItemGuid == Guid; });
     auto ItemInstance = Inventory.ItemInstances.Search([&](UFortWorldItem* entry)
-        { return entry->ItemEntry.ItemGuid == Guid; }, FFortItemEntry::Size());
+        { return entry->ItemEntry.ItemGuid == Guid; });
 
     auto Instance = ItemInstance ? *ItemInstance : nullptr;
     if (ItemInstanceIdx != -1)
-        Inventory.ItemInstances.Remove(ItemInstanceIdx, FFortItemEntry::Size());
+        Inventory.ItemInstances.Remove(ItemInstanceIdx);
 
     static auto OnItemInstanceRemovedVft = FindOnItemInstanceAddedVft() + 1;
     if (ItemInstanceIdx != -1 && OnItemInstanceRemovedVft)
