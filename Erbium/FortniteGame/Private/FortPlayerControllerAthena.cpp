@@ -344,8 +344,7 @@ void AFortPlayerControllerAthena::ServerBeginEditingBuildingActor(UObject* Conte
 	{
 		static auto EditActorOffset = PlayerController->MyFortPawn->CurrentWeapon->GetOffset("EditActor");
 		static auto OnRep_EditActor = PlayerController->MyFortPawn->CurrentWeapon->GetFunction("OnRep_EditActor");
-		//PlayerController->MyFortPawn->CurrentWeapon->EditActor = Building;
-		//PlayerController->MyFortPawn->CurrentWeapon->OnRep_EditActor();
+
 		GetFromOffset<ABuildingSMActor*>(PlayerController->MyFortPawn->CurrentWeapon, EditActorOffset) = Building;
 		PlayerController->MyFortPawn->CurrentWeapon->Call(OnRep_EditActor);
 	}
@@ -402,8 +401,7 @@ void AFortPlayerControllerAthena::ServerEndEditingBuildingActor(UObject* Context
 	{
 		static auto EditActorOffset = PlayerController->MyFortPawn->CurrentWeapon->GetOffset("EditActor");
 		static auto OnRep_EditActor = PlayerController->MyFortPawn->CurrentWeapon->GetFunction("OnRep_EditActor");
-		//PlayerController->MyFortPawn->CurrentWeapon->EditActor = Building;
-		//PlayerController->MyFortPawn->CurrentWeapon->OnRep_EditActor();
+
 		GetFromOffset<ABuildingSMActor*>(PlayerController->MyFortPawn->CurrentWeapon, EditActorOffset) = nullptr;
 		PlayerController->MyFortPawn->CurrentWeapon->Call(OnRep_EditActor);
 	}
