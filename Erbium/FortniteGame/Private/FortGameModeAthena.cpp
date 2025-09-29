@@ -11,6 +11,76 @@
 #include "../../Engine/Public/DataTableFunctionLibrary.h"
 #include "../../Erbium/Public/Configuration.h"
 
+void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameState)
+{
+    static auto Playlist = Utils::FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
+
+    if (Playlist)
+    {
+        printf("Playlist: %s\n", Playlist->Name.ToString().c_str());
+        if (GameState->HasCurrentPlaylistInfo())
+        {
+            if (VersionInfo.EngineVersion >= 4.27)
+                Playlist->GarbageCollectionFrequency = 9999999999999999.f; // 4.27 needs a different GC disable method
+            GameState->CurrentPlaylistInfo.BasePlaylist = Playlist;
+            GameState->CurrentPlaylistInfo.OverridePlaylist = Playlist;
+            GameState->CurrentPlaylistInfo.PlaylistReplicationKey++;
+            GameState->CurrentPlaylistInfo.MarkArrayDirty();
+            GameState->OnRep_CurrentPlaylistInfo();
+        }
+        else if (GameState->HasCurrentPlaylistData())
+        {
+            GameState->CurrentPlaylistData = Playlist;
+            GameState->OnRep_CurrentPlaylistData();
+        }
+
+        GameState->CurrentPlaylistId = GameMode->CurrentPlaylistId = Playlist->PlaylistId;
+        if (GameMode->HasCurrentPlaylistName())
+            GameMode->CurrentPlaylistName = Playlist->PlaylistName;
+
+        if (GameMode->GameSession->HasMaxPlayers())
+            GameMode->GameSession->MaxPlayers = Playlist->MaxPlayers;
+
+
+
+        if (Playlist->HasAdditionalLevels())
+            for (auto& Level : Playlist->AdditionalLevels)
+            {
+                bool Success = false;
+                printf("Level: %s\n", Level.Get()->Name.ToString().c_str());
+                ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
+                auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
+                __stosb((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
+                level->bIsServerOnly = false;
+                level->LevelName = Level.ObjectID.AssetPathName;
+                if (Success)
+                    GameState->AdditionalPlaylistLevelsStreamed.Add(*level, FAdditionalLevelStreamed::Size());
+                free(level);
+            }
+
+        if (Playlist->HasAdditionalLevelsServerOnly())
+            for (auto& Level : Playlist->AdditionalLevelsServerOnly)
+            {
+                bool Success = false;
+                printf("Level: %s\n", Level.Get()->Name.ToString().c_str());
+                ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
+                auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
+                __stosb((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
+                level->bIsServerOnly = true;
+                level->LevelName = Level.ObjectID.AssetPathName;
+                if (Success)
+                    GameState->AdditionalPlaylistLevelsStreamed.Add(*level, FAdditionalLevelStreamed::Size());
+                free(level);
+            }
+        if (GameState->HasAdditionalPlaylistLevelsStreamed())
+            GameState->OnRep_AdditionalPlaylistLevelsStreamed();
+    }
+    else
+    {
+        GameState->CurrentPlaylistId = GameMode->CurrentPlaylistId = 0;
+    }
+}
+
 void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Ret) 
 {
     Stack.IncrementCode();
@@ -22,9 +92,8 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
     }
 
     auto GameState = GameMode->GameState;
-    static auto Playlist = Utils::FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
 
-    if (GameMode->CurrentPlaylistId == -1)
+    if (GameMode->WarmupRequiredPlayerCount != 1)
     {
         // if u listen before setting playlist it behaves the same as using proper listening iirc
         auto World = UWorld::GetWorld();
@@ -72,70 +141,8 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
         GameMode->WarmupRequiredPlayerCount = 1;
 
-        if (Playlist)
-        {
-            printf("Playlist: %s\n", Playlist->Name.ToString().c_str());
-            if (GameState->HasCurrentPlaylistInfo())
-            {
-                if (VersionInfo.EngineVersion >= 4.27)
-                    Playlist->GarbageCollectionFrequency = 9999999999999999.f; // 4.27 needs a different GC disable method
-                GameState->CurrentPlaylistInfo.BasePlaylist = Playlist;
-                GameState->CurrentPlaylistInfo.OverridePlaylist = Playlist;
-                GameState->CurrentPlaylistInfo.PlaylistReplicationKey++;
-                GameState->CurrentPlaylistInfo.MarkArrayDirty();
-                GameState->OnRep_CurrentPlaylistInfo();
-            }
-            else if (GameState->HasCurrentPlaylistData())
-            {
-                GameState->CurrentPlaylistData = Playlist;
-                GameState->OnRep_CurrentPlaylistData();
-            }
-
-            GameState->CurrentPlaylistId = GameMode->CurrentPlaylistId = Playlist->PlaylistId;
-            if (GameMode->HasCurrentPlaylistName())
-                GameMode->CurrentPlaylistName = Playlist->PlaylistName;
-
-            if (GameMode->GameSession->HasMaxPlayers())
-                GameMode->GameSession->MaxPlayers = Playlist->MaxPlayers;
-
-
-
-            if (Playlist->HasAdditionalLevels())
-                for (auto& Level : Playlist->AdditionalLevels)
-                {
-                    bool Success = false;
-                    printf("Level: %s\n", Level.Get()->Name.ToString().c_str());
-                    ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
-                    auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
-                    __stosb((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
-                    level->bIsServerOnly = false;
-                    level->LevelName = Level.ObjectID.AssetPathName;
-                    if (Success)
-                        GameState->AdditionalPlaylistLevelsStreamed.Add(*level, FAdditionalLevelStreamed::Size());
-                    free(level);
-                }
-
-            if (Playlist->HasAdditionalLevelsServerOnly())
-                for (auto& Level : Playlist->AdditionalLevelsServerOnly)
-                {
-                    bool Success = false;
-                    printf("Level: %s\n", Level.Get()->Name.ToString().c_str());
-                    ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
-                    auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
-                    __stosb((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
-                    level->bIsServerOnly = true;
-                    level->LevelName = Level.ObjectID.AssetPathName;
-                    if (Success)
-                        GameState->AdditionalPlaylistLevelsStreamed.Add(*level, FAdditionalLevelStreamed::Size());
-                    free(level);
-                }
-            if (GameState->HasAdditionalPlaylistLevelsStreamed())
-                GameState->OnRep_AdditionalPlaylistLevelsStreamed();
-        }
-        else
-        {
-            GameState->CurrentPlaylistId = GameMode->CurrentPlaylistId = 0;
-        }
+        if (VersionInfo.FortniteVersion >= 4.0)
+            SetupPlaylist(GameMode, GameState);
 
         *Ret = false;
         return;
@@ -152,7 +159,10 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             *Ret = false;
             return;
         }
-        GameState->OnRep_CurrentPlaylistInfo(); 
+        if (VersionInfo.FortniteVersion >= 3.5 && VersionInfo.FortniteVersion < 4.0)
+            SetupPlaylist(GameMode, GameState);
+        else if (GameState->HasCurrentPlaylistInfo())
+            GameState->OnRep_CurrentPlaylistInfo(); 
 
         if (VersionInfo.EngineVersion >= 4.27)
         {
@@ -409,7 +419,8 @@ void AFortGameModeAthena::HandleStartingNewPlayer_(UObject* Context, FFrame& Sta
 uint8_t AFortGameModeAthena::PickTeam(AFortGameModeAthena* GameMode, uint8_t PreferredTeam, AFortPlayerControllerAthena* Controller) {
     uint8_t ret = CurrentTeam;
 
-    if (++PlayersOnCurTeam >= GameMode->GameState->CurrentPlaylistInfo.BasePlaylist->MaxSquadSize) 
+    auto Playlist = VersionInfo.FortniteVersion >= 4.0 ? GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData : nullptr;
+    if (++PlayersOnCurTeam >= (Playlist ? Playlist->MaxSquadSize : 1))
     {
         CurrentTeam++;
         PlayersOnCurTeam = 0;

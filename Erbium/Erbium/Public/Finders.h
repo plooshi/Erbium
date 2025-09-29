@@ -280,10 +280,10 @@ inline uint64_t FindTickFlush()
 
     if (TickFlush == 0)
     {
-        TickFlush = VersionInfo.EngineVersion == 4.16 ? Memcury::Scanner::FindPattern("4C 8B DC 55 49 8D AB ? ? ? ? 48 81 EC ? ? ? ? 45 0F 29 43 ? 45 0F 29 4B ? 48 8B 05 ? ? ? ? 48").Get() : 0;
+        TickFlush = VersionInfo.EngineVersion == 4.16 ? Memcury::Scanner::FindPattern("4C 8B DC 55 53 56 57 49 8D AB ? ? ? ? 48 81 EC ? ? ? ? 41 0F 29 7B").Get() : 0;
         
         if (VersionInfo.EngineVersion == 4.19) 
-            TickFlush = Memcury::Scanner::FindPattern("4C 8B DC 55 53 56 57 49 8D AB ? ? ? ? 48 81 EC ? ? ? ? 41 0F 29 7B").Get();
+            TickFlush = Memcury::Scanner::FindPattern("4C 8B DC 55 49 8D AB ? ? ? ? 48 81 EC ? ? ? ? 45 0F 29 43 ? 45 0F 29 4B ? 48 8B 05 ? ? ? ? 48").Get();
 
         else if (VersionInfo.EngineVersion >= 4.27 && VersionInfo.EngineVersion < 5.0) 
         {
@@ -331,11 +331,18 @@ inline uint64_t FindServerReplicateActors()
     {
         int ServerReplicateActorsVft = 0;
         switch ((int)floor(VersionInfo.FortniteVersion)) {
+        case 3:
+            if (VersionInfo.FortniteVersion >= 3.4)
+                ServerReplicateActorsVft = 0x53;
+            break;
         case 4:
             ServerReplicateActorsVft = 0x53;
             break;
         case 5:
             ServerReplicateActorsVft = 0x54;
+            break;
+        case 6:
+            ServerReplicateActorsVft = 0x56;
             break;
         case 10:
         case 9:
@@ -484,7 +491,7 @@ inline uint64_t FindConstructAbilitySpec()
     if (ConstructAbilitySpec == 0)
     {
         if (VersionInfo.EngineVersion >= 4.20 && VersionInfo.EngineVersion <= 4.24)
-            return ConstructAbilitySpec = Memcury::Scanner::FindPattern("48 89 5C 24 ? 56 57 41 56 48 83 EC 20 83 B9").Get();
+            return ConstructAbilitySpec = Memcury::Scanner::FindPattern("80 61 29 F8 48 8B 44 24 ?").Get();
         else if (VersionInfo.EngineVersion == 4.25)
         {
             ConstructAbilitySpec = Memcury::Scanner::FindPattern("48 8B 44 24 ? 80 61 29 F8 80 61 31 FE 48 89 41 20 33 C0 89 41", false).Get();
@@ -772,30 +779,29 @@ inline uint64_t FindKickPlayer()
         return Memcury::Scanner::FindPattern("48 89 5C 24 08 48 89 74 24 10 57 48 83 EC ? 49 8B F0 48 8B DA 48 85 D2").Get();
     }
 
-    auto Addr = Memcury::Scanner::FindStringRef(L"Validation Failure: %s. kicking %s", false, 0, VersionInfo.FortniteVersion >= 19).Get();
+    auto sRef = Memcury::Scanner::FindStringRef(L"Validation Failure: %s. kicking %s", false, 1, VersionInfo.FortniteVersion >= 19).Get();
 
 
-    if (Addr) 
+    if (sRef) 
         for (int i = 0; i < 2000; i++) 
         {
-            if (*(uint8_t*)(Addr - i) == 0x40 && *(uint8_t*)(Addr - i + 1) == 0x53)
-                return Addr - i;
+            if (*(uint8_t*)(sRef - i) == 0x40 && *(uint8_t*)(sRef - i + 1) == 0x53)
+                return sRef - i;
 
-            else if (*(uint8_t*)(Addr - i) == 0x40 && *(uint8_t*)(Addr - i + 1) == 0x55)
-                return Addr - i;
+            else if (*(uint8_t*)(sRef - i) == 0x40 && *(uint8_t*)(sRef - i + 1) == 0x55)
+                return sRef - i;
         }
 
-    auto Addr2 = Memcury::Scanner::FindStringRef(L"Failed to kick player");
-    auto Addrr = Addr2.Get();
+    auto sRef2 = Memcury::Scanner::FindStringRef(L"Failed to kick player").Get();
 
-    if (Addrr) 
+    if (sRef2)
         for (int i = 0; i < 3000; i++) {
-            if (*(uint8_t*)(Addrr - i) == 0x48 && *(uint8_t*)(Addrr - i + 1) == 0x89 && *(uint8_t*)(Addrr - i + 2) == 0x5C)
-                return Addrr - i;
+            if (*(uint8_t*)(sRef2 - i) == 0x48 && *(uint8_t*)(sRef2 - i + 1) == 0x89 && *(uint8_t*)(sRef2 - i + 2) == 0x5C)
+                return sRef2 - i;
 
             if (VersionInfo.FortniteVersion >= 17)
-                if (*(uint8_t*)(Addrr - i) == 0x48 && *(uint8_t*)(Addrr - i + 1) == 0x8B && *(uint8_t*)(Addrr - i + 2) == 0xC4)
-                    return Addrr - i;
+                if (*(uint8_t*)(sRef2 - i) == 0x48 && *(uint8_t*)(sRef2 - i + 1) == 0x8B && *(uint8_t*)(sRef2 - i + 2) == 0xC4)
+                    return sRef2 - i;   
         }
 
     return Memcury::Scanner::FindPattern("40 53 41 56 48 81 EC ? ? ? ? 48 8B 01 48 8B DA 4C 8B F1 FF 90").Get();
@@ -808,14 +814,14 @@ inline void FindNullsAndRetTrues()
 {
     if (VersionInfo.EngineVersion == 4.16)
     {
-        NullFuncs.push_back(Memcury::Scanner::FindPattern("4C 89 44 24 ? 88 54 24 ? 48 89 4C 24 ? 56 57 48 81 EC ? ? ? ? 33 C0 83 F8 ? 0F 84 ? ? ? ? B8").Get());
+        //NullFuncs.push_back(Memcury::Scanner::FindPattern("4C 89 44 24 ? 88 54 24 ? 48 89 4C 24 ? 56 57 48 81 EC ? ? ? ? 33 C0 83 F8 ? 0F 84 ? ? ? ? B8").Get());
         NullFuncs.push_back(Memcury::Scanner::FindPattern("48 89 54 24 ? 48 89 4C 24 ? 55 53 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 8B 41 08 C1 E8 05").Get());
-        NullFuncs.push_back(Memcury::Scanner::FindPattern("48 89 54 24 ? 48 89 4C 24 ? 55 53 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 8B 41 ? C1 E8 ? A8 ? 0F 84 ? ? ? ? 80 3D").Get());
+        //NullFuncs.push_back(Memcury::Scanner::FindPattern("48 89 54 24 ? 48 89 4C 24 ? 55 53 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 8B 41 ? C1 E8 ? A8 ? 0F 84 ? ? ? ? 80 3D").Get());
     }
     else if (VersionInfo.FortniteVersion > 3.2 && VersionInfo.EngineVersion == 4.20) 
     {
-        if (VersionInfo.FortniteVersion == 4.1) 
-            NullFuncs.push_back(Memcury::Scanner::FindPattern("4C 8B DC 55 49 8D AB ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 49 89 5B 10 48 8D 05 ? ? ? ? 48 8B 1D ? ? ? ? 49 89 73 18 33 F6 40").Get());
+        //if (VersionInfo.FortniteVersion == 4.1) 
+        //    NullFuncs.push_back(Memcury::Scanner::FindPattern("4C 8B DC 55 49 8D AB ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 49 89 5B 10 48 8D 05 ? ? ? ? 48 8B 1D ? ? ? ? 49 89 73 18 33 F6 40").Get());
 
         NullFuncs.push_back(Memcury::Scanner::FindPattern("48 8B C4 57 48 81 EC ? ? ? ? 4C 8B 82 ? ? ? ? 48 8B F9 0F 29 70 E8 0F 29 78 D8").Get());
     }
@@ -861,27 +867,30 @@ inline void FindNullsAndRetTrues()
         NullFuncs.push_back(sRef.ScanFor(VersionInfo.EngineVersion >= 4.27 ? std::vector<uint8>{ 0x48, 0x89, 0x5C } : std::vector<uint8>{ 0x40, 0x55 }, false, 0, 1, 2000).Get());
     }
 
-    if (VersionInfo.EngineVersion < 4.27) {
+    if (VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.27) {
         auto sRef = Memcury::Scanner::FindStringRef(L"STAT_CollectGarbageInternal").Get();
         uint64_t CollectGarbage = 0;
 
-        for (int i = 0; i < 1000; i++) {
-            auto Ptr = (uint8_t*)(sRef - i);
+        if (sRef)
+        {
+            for (int i = 0; i < 1000; i++) {
+                auto Ptr = (uint8_t*)(sRef - i);
 
-            if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C) {
-                CollectGarbage = uint64_t(Ptr);
-                break;
+                if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C) {
+                    CollectGarbage = uint64_t(Ptr);
+                    break;
+                }
+                else if (*Ptr == 0x40 && *(Ptr + 1) == 0x55) {
+                    CollectGarbage = uint64_t(Ptr);
+                    break;
+                }
+                else if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4) {
+                    CollectGarbage = uint64_t(Ptr);
+                    break;
+                }
             }
-            else if (*Ptr == 0x40 && *(Ptr + 1) == 0x55) {
-                CollectGarbage = uint64_t(Ptr);
-                break;
-            }
-            else if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4) {
-                CollectGarbage = uint64_t(Ptr);
-                break;
-            }
+            NullFuncs.push_back(CollectGarbage);
         }
-        NullFuncs.push_back(CollectGarbage);
     }
 
     NullFuncs.push_back(FindKickPlayer());

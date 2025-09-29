@@ -4,14 +4,9 @@
 
 void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 {
-    static auto ReplicationDriverOffset = 0;
-    if (ReplicationDriverOffset == 0)
-    {
-        ReplicationDriverOffset = Driver->GetOffset("ReplicationDriver");
-    }
+    static auto HasReplicationDriver_ = Driver->HasReplicationDriver();
 
-    auto ReplicationDriver = ReplicationDriverOffset ? GetFromOffset<UObject*>(Driver, ReplicationDriverOffset) : nullptr;
-    if (ReplicationDriver)
+    if (HasReplicationDriver_ ? Driver->ReplicationDriver : nullptr)
     {
         ((void (*)(UObject*, float)) FindServerReplicateActors())(Driver->ReplicationDriver, DeltaSeconds);
     }

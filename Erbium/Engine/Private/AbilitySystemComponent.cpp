@@ -73,7 +73,7 @@ void UAbilitySystemComponent::InternalServerTryActivateAbility(UAbilitySystemCom
 
 void UAbilitySystemComponent::Hook()
 {
-    int32 istaIdx = 0;
+    uint32 istaIdx = 0;
 
     if (VersionInfo.EngineVersion > 4.20)
     {
@@ -89,7 +89,7 @@ void UAbilitySystemComponent::Hook()
         {
             if ((*(uint8_t*)(ServerTryActivateAbilityWithEventDataNativeAddr + i) == 0xFF && *(uint8_t*)(ServerTryActivateAbilityWithEventDataNativeAddr + i + 1) == 0x90) || (*(uint8_t*)(ServerTryActivateAbilityWithEventDataNativeAddr + i) == 0xFF && *(uint8_t*)(ServerTryActivateAbilityWithEventDataNativeAddr + i + 1) == 0x93))
             {
-                istaIdx = int32(Memcury::Scanner(ServerTryActivateAbilityWithEventDataNativeAddr + i).AbsoluteOffset(3).Get() / 8);
+                istaIdx = *(uint32*)(ServerTryActivateAbilityWithEventDataNativeAddr + i + 2) / 8;
                 break;
             }
         }

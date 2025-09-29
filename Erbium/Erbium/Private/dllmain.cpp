@@ -26,7 +26,11 @@ void Main()
 
     for (auto& NullFunc : NullFuncs)
         if (NullFunc != 0)
+        {
+            printf("%llx\n", NullFunc - ImageBase);
             Utils::Patch<uint8_t>(NullFunc, 0xc3);
+        }
+
     for (auto& RetTrueFunc : RetTrueFuncs) 
     {
         if (RetTrueFunc == 0)
@@ -44,7 +48,8 @@ void Main()
     MH_EnableHook(MH_ALL_HOOKS);
 
     *(bool*)FindGIsClient() = false;
-    *(bool*)FindGIsServer() = true;
+    if (VersionInfo.FortniteVersion > 4.20) // 3.6 and below have a crash on ALandscapeProxy
+        *(bool*)FindGIsServer() = true;
 
     UWorld::GetWorld()->OwningGameInstance->LocalPlayers.Remove(0);
     const wchar_t* terrainOpen = L"open Athena_Terrain";
