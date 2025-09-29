@@ -377,9 +377,9 @@ namespace SDK
 	template<typename _Ct>
 	class TSubclassOf
 	{
+	public:
 		const UClass* ClassPtr;
 
-	public:
 		TSubclassOf() = default;
 
 		inline TSubclassOf(const UClass* Class)
@@ -484,6 +484,7 @@ namespace SDK
 		DEFINE_FUNC(GetTransform, FTransform);
 		DEFINE_FUNC(SetTransform, void);
 		DEFINE_FUNC(K2_TeleportTo, bool);
+		DEFINE_FUNC(K2_DestroyActor, void);
 	};
 
 	class UGameplayStatics : public SDK::UObject
@@ -607,13 +608,13 @@ namespace SDK
 		}
 
 		template <typename T>
-		static T* SpawnActor(UClass* Class, FVector Loc, FRotator Rot = {}, AActor* Owner = nullptr)
+		static T* SpawnActor(const UClass* Class, FVector Loc, FRotator Rot = {}, AActor* Owner = nullptr)
 		{
 			return (T*)SpawnActor(Class, Loc, Rot, Owner);
 		}
 
 		template <typename T>
-		static T* SpawnActor(UClass* Class, FTransform& Transform, AActor* Owner = nullptr)
+		static T* SpawnActor(const UClass* Class, FTransform& Transform, AActor* Owner = nullptr)
 		{
 			return (T*)SpawnActor(Class, Transform, Owner);
 		}

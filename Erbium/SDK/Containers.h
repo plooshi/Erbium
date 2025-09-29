@@ -492,12 +492,12 @@ namespace UC
 			return true;
 		}
 
-		template <typename ComparisonType>
-		bool Contains(ComparisonType Item, int32 Size = ElementSize) const
+		//template <typename ComparisonType>
+		bool Contains(/*ComparisonType*/ ArrayElementType Item, int32 Size = ElementSize) const
 		{
 			for (int Idx = 0; Idx < NumElements; Idx++)
 			{
-				if (memcmp((ArrayElementType*)((uint8*)Data + Idx * Size), &Item) == 0)
+				if (memcmp((ArrayElementType*)((uint8*)Data + Idx * Size), &Item, Size) == 0)
 				{
 					return true;
 				}

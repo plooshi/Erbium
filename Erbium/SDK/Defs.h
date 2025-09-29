@@ -15,7 +15,7 @@
          static const SDK::UObject* _storage = nullptr;                         \
                                                                                 \
          if (!_storage)                                                         \
-             _storage = SDK::DefaultObjImpl(#__Class + 1);                      \
+             _storage = StaticClass()->GetDefaultObj();                         \
                                                                                 \
          return (const __Class*)_storage;                                       \
 	}                                                                           \

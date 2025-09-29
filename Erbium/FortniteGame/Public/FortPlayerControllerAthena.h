@@ -37,6 +37,7 @@ public:
     DEFINE_PROP(WorldInventory, AFortInventory*);
     DEFINE_PROP(CosmeticLoadoutPC, FFortAthenaLoadout);
     DEFINE_PROP(CustomizationLoadout, FFortAthenaLoadout);
+    DEFINE_BITFIELD_PROP(bBuildFree);
 
     DEFINE_FUNC(GetViewTarget, AActor*);
     DEFINE_FUNC(GetControlRotation, FRotator);
@@ -48,6 +49,7 @@ public:
     static void ServerAttemptAircraftJump(UObject*, FFrame&);
     static void ServerExecuteInventoryItem(UObject*, FFrame&);
     static void ServerExecuteInventoryWeapon(UObject*, FFrame&);
+    static void ServerCreateBuildingActor(UObject*, FFrame&);
     
 
     InitHooks;

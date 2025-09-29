@@ -367,6 +367,8 @@ namespace SDK
 	public:
 		uint64_t GetCastFlags() const;
 		static const UClass* StaticClass();
+
+		UObject* GetDefaultObj() const;
 	};
 
 	inline const UField* UStruct::GetProperty(const char* Name, uint64_t CastFlags) const
@@ -786,6 +788,27 @@ namespace SDK
 		}
 
 		return *(uint64_t*)(__int64(this) + Offset);
+	}
+
+	inline UObject* UClass::GetDefaultObj() const
+	{ 
+		static int32 Offset = 0;
+		if (Offset == 0)
+		{
+			auto ClassClass = TUObjectArray::FindObject("Class");
+			auto ActorClass = TUObjectArray::FindObject("Actor");
+			auto ClassObj = TUObjectArray::FindObject("Default__Class");
+			auto ActorObj = TUObjectArray::FindObject("Default__Actor");
+			for (int i = 0x28; i < 0x1a0; i += 4)
+			{
+				if (*(UObject**)(__int64(ClassClass) + i) == ClassObj && *(UObject**)(__int64(ActorClass) + i) == ActorObj)
+				{
+					Offset = i;
+					break;
+				}
+			}
+		}
+		return *(UObject**)(__int64(this) + Offset);
 	}
 
 	class UEnum : public UField

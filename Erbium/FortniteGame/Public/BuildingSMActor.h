@@ -21,9 +21,13 @@ public:
     DEFINE_BITFIELD_PROP(bPlayerPlaced);
     DEFINE_PROP(BuildingResourceAmountOverride, FCurveTableRowHandle);
     DEFINE_PROP(ResourceType, EFortResourceType);
+    DEFINE_PROP(Team, uint8);
+    DEFINE_PROP(TeamIndex, uint8);
 
     DEFINE_FUNC(GetHealth, float);
     DEFINE_FUNC(GetMaxHealth, float);
+    DEFINE_FUNC(SetMirrored, void);
+    DEFINE_FUNC(InitializeKismetSpawnedBuildingActor, void);
     
     DefHookOg(void, OnDamageServer, ABuildingSMActor*, float, FGameplayTagContainer, FVector, __int64, AFortPlayerControllerAthena*, AActor*, __int64);
 

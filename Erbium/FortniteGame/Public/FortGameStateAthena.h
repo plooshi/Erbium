@@ -62,6 +62,8 @@ public:
     DEFINE_PROP(AthenaGameDataTable, UCurveTable*);
     DEFINE_PROP(CurrentPlaylistData, const UFortPlaylistAthena*);
     DEFINE_PROP(GameMemberInfoArray, FGameMemberInfoArray);
+    DEFINE_PROP(AllPlayerBuildableClassesIndexLookup, TMap<TSubclassOf<AActor>, int32>);
+    DEFINE_PROP(AllPlayerBuildableClasses, TArray<TSubclassOf<AActor>>);
 
     DEFINE_FUNC(OnRep_CurrentPlaylistInfo, void);
     DEFINE_FUNC(OnRep_CurrentPlaylistData, void);

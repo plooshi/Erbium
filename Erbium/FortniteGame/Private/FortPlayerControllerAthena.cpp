@@ -2,6 +2,8 @@
 #include "../Public/FortPlayerControllerAthena.h"
 #include "../Public/FortGameModeAthena.h"
 #include "../Public/FortWeapon.h"
+#include "../Public/BuildingSMActor.h"
+#include "../Public/FortKismetLibrary.h"
 
 
 uint64_t FindGetPlayerViewPoint()
@@ -138,6 +140,142 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryWeapon(UObject* Context,
 	PlayerController->MyFortPawn->EquipWeaponDefinition(ItemDefinition, Weapon->ItemEntryGuid, entry->HasTrackerGuid() ? entry->TrackerGuid : FGuid(), false);
 }
 
+void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FFrame& Stack)
+{
+	const UClass* BuildingClass = nullptr;
+	FVector BuildLoc;
+	FRotator BuildRot;
+	bool bMirrored;
+	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+	struct _Pad_0xC
+	{
+		uint8_t Padding[0xC];
+	};
+	struct _Pad_0x18
+	{
+		uint8_t Padding[0x18];
+	};
+
+	auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
+	struct FBuildingClassData { UClass* BuildingClass; int PreviousBuildingLevel; int UpgradeLevel; };
+	if (VersionInfo.FortniteVersion >= 8.30)
+	{
+		struct FCreateBuildingActorData { uint32_t BuildingClassHandle; _Pad_0xC BuildLoc; _Pad_0xC BuildRot; bool bMirrored; };
+		struct FCreateBuildingActorData_New { uint32_t BuildingClassHandle; _Pad_0x18 BuildLoc; _Pad_0x18 BuildRot; bool bMirrored; };
+
+		if (VersionInfo.FortniteVersion >= 20.00)
+		{
+			FCreateBuildingActorData_New CreateBuildingData;
+			Stack.StepCompiledIn(&CreateBuildingData);
+
+			BuildLoc = *(FVector*)&CreateBuildingData.BuildLoc;
+			BuildRot = *(FRotator*)&CreateBuildingData.BuildRot;
+			bMirrored = CreateBuildingData.bMirrored;
+
+			auto BuildingClassPtr = GameState->AllPlayerBuildableClassesIndexLookup.SearchForKey([&](TSubclassOf<AActor> Class, int32 Handle) {
+				return Handle == CreateBuildingData.BuildingClassHandle;
+				});
+			if (!BuildingClassPtr)
+			{
+				Stack.IncrementCode();
+				return;
+			}
+
+			BuildingClass = BuildingClassPtr->Get();
+		}
+		else
+		{
+			FCreateBuildingActorData CreateBuildingData;
+			Stack.StepCompiledIn(&CreateBuildingData);
+
+			BuildLoc = *(FVector*)&CreateBuildingData.BuildLoc;
+			BuildRot = *(FRotator*)&CreateBuildingData.BuildRot;
+			bMirrored = CreateBuildingData.bMirrored;
+
+			auto BuildingClassPtr = GameState->AllPlayerBuildableClassesIndexLookup.SearchForKey([&](TSubclassOf<AActor> Class, int32 Handle) {
+				return Handle == CreateBuildingData.BuildingClassHandle;
+				});
+			if (!BuildingClassPtr)
+			{
+				Stack.IncrementCode();
+				return;
+			}
+
+			BuildingClass = BuildingClassPtr->Get();
+		}
+	}
+	else
+	{
+
+		FBuildingClassData BuildingClassData;
+		Stack.StepCompiledIn(&BuildingClassData);
+		Stack.StepCompiledIn(&BuildLoc);
+		Stack.StepCompiledIn(&BuildRot);
+		Stack.StepCompiledIn(&bMirrored);
+
+		if (GameState->HasAllPlayerBuildableClasses() && !GameState->AllPlayerBuildableClasses.Contains(BuildingClassData.BuildingClass))
+		{
+			Stack.IncrementCode();
+			return;
+		}
+		BuildingClass = BuildingClassData.BuildingClass;
+	}
+	Stack.IncrementCode();
+
+	if (!BuildingClass)
+		return;
+
+	auto Resource = UFortKismetLibrary::K2_GetResourceItemDefinition(((ABuildingSMActor*)BuildingClass->GetDefaultObj())->ResourceType);
+
+	FFortItemEntry* ItemEntry = nullptr;
+	if (!PlayerController->bBuildFree)
+	{
+		ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+			{ return entry.ItemDefinition == Resource; }, FFortItemEntry::Size());
+
+		if (!ItemEntry || ItemEntry->Count < 10)
+			return;
+	}
+
+	TArray<ABuildingSMActor*> RemoveBuildings;
+	char _Unk_OutVar1;
+	static auto CantBuild = (__int64 (*)(UWorld*, const UClass*, _Pad_0xC, _Pad_0xC, bool, TArray<ABuildingSMActor*> *, char*))FindCantBuild();
+	static auto CantBuildNew = (__int64 (*)(UWorld*, const UClass*, _Pad_0x18, _Pad_0x18, bool, TArray<ABuildingSMActor*> *, char*))FindCantBuild();
+	if (VersionInfo.FortniteVersion >= 20.00 ? CantBuildNew(UWorld::GetWorld(), BuildingClass, *(_Pad_0x18*)&BuildLoc, *(_Pad_0x18*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1) : CantBuild(UWorld::GetWorld(), BuildingClass, *(_Pad_0xC*)&BuildLoc, *(_Pad_0xC*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1))
+		return;
+
+	for (auto& RemoveBuilding : RemoveBuildings)
+		RemoveBuilding->K2_DestroyActor();
+	RemoveBuildings.Free();
+
+
+	ABuildingSMActor* Building = UWorld::SpawnActor<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, PlayerController);
+	if (!Building)
+		return;
+
+	//Building->CurrentBuildingLevel = CreateBuildingData.BuildingClassData.UpgradeLevel;
+	//Building->OnRep_CurrentBuildingLevel();
+
+	Building->SetMirrored(bMirrored);
+
+	Building->bPlayerPlaced = true;
+
+	Building->InitializeKismetSpawnedBuildingActor(Building, PlayerController, true, nullptr);
+
+
+	if (!PlayerController->bBuildFree)
+	{
+		ItemEntry->Count -= 10;
+		if (ItemEntry->Count <= 0)
+			PlayerController->WorldInventory->Remove(ItemEntry->ItemGuid);
+		else
+			PlayerController->WorldInventory->UpdateEntry(*ItemEntry);
+	}
+
+	Building->TeamIndex = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+	Building->Team = Building->TeamIndex;
+}
+
 void AFortPlayerControllerAthena::Hook()
 {
 	auto DefaultFortPC = DefaultObjImpl("FortPlayerController");
@@ -160,4 +298,6 @@ void AFortPlayerControllerAthena::Hook()
 	// same as serveracknowledgepossession
 	auto ServerReturnToMainMenuIdx = GetDefaultObj()->GetFunction("ServerReturnToMainMenu")->GetVTableIndex();
 	Utils::Hook<AFortPlayerControllerAthena>(ServerReturnToMainMenuIdx, DefaultFortPC->Vft[ServerReturnToMainMenuIdx]);
+
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCreateBuildingActor"), ServerCreateBuildingActor);
 }
