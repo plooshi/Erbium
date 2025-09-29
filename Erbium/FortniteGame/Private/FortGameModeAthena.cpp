@@ -341,6 +341,38 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
 }
 
 
+void AFortGameModeAthena::HandleStartingNewPlayer_(UObject* Context, FFrame& Stack) {
+    AFortPlayerControllerAthena* NewPlayer;
+    Stack.StepCompiledIn(&NewPlayer);
+    Stack.IncrementCode();
+    auto GameMode = (AFortGameModeAthena*)Context;
+    auto GameState = (AFortGameStateAthena*)GameMode->GameState;
+    AFortPlayerStateAthena* PlayerState = (AFortPlayerStateAthena*)NewPlayer->PlayerState;
+
+    PlayerState->SquadId = PlayerState->TeamIndex - 3;
+    PlayerState->OnRep_SquadId();
+
+    if (GameState->HasGameMemberInfoArray())
+    {
+        auto Member = (FGameMemberInfo*)malloc(FGameMemberInfo::Size());
+        __stosb((PBYTE)Member, 0, FGameMemberInfo::Size());
+
+        Member->MostRecentArrayReplicationKey = -1;
+        Member->ReplicationID = -1;
+        Member->ReplicationKey = -1;
+        Member->TeamIndex = PlayerState->TeamIndex;
+        Member->SquadId = PlayerState->SquadId;
+        Member->MemberUniqueId = PlayerState->UniqueId;
+
+        GameState->GameMemberInfoArray.Members.Add(*Member, FGameMemberInfo::Size());
+        GameState->GameMemberInfoArray.MarkItemDirty(*Member);
+
+        free(Member);
+    }
+
+    return callOG(GameMode, Stack.GetCurrentNativeFunction(), HandleStartingNewPlayer, NewPlayer);
+}
+
 void AFortGameModeAthena::Hook()
 {
     auto spdf = GetDefaultObj()->GetFunction("SpawnDefaultPawnFor");
@@ -348,4 +380,5 @@ void AFortGameModeAthena::Hook()
     Utils::ExecHook(GetDefaultObj()->GetFunction("ReadyToStartMatch"), ReadyToStartMatch_, ReadyToStartMatch_OG);
     Utils::ExecHook(spdf, SpawnDefaultPawnFor);
     Utils::Hook(FindHandlePostSafeZonePhaseChanged(), HandlePostSafeZonePhaseChanged, HandlePostSafeZonePhaseChangedOG);
+    Utils::ExecHook(GetDefaultObj()->GetFunction("HandleStartingNewPlayer"), HandleStartingNewPlayer_, HandleStartingNewPlayer_OG);
 }

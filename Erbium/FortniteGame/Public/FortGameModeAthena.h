@@ -6,6 +6,7 @@
 #include "FortSafeZoneIndicator.h"
 #include "FortInventory.h"
 #include "FortPlayerPawnAthena.h"
+#include "FortPlayerControllerAthena.h"
 
 class AFortGameModeAthena : public AActor
 {
@@ -29,10 +30,13 @@ public:
     DEFINE_FUNC(SpawnDefaultPawnAtTransform, AFortPlayerPawnAthena*);
     DEFINE_FUNC(RestartPlayer, void);
     DEFINE_FUNC(ReadyToStartMatch, bool);
+    DEFINE_FUNC(HandleStartingNewPlayer, void);
 
     DefUHookOgRet(bool, ReadyToStartMatch_);
     static void SpawnDefaultPawnFor(UObject*, FFrame&, AActor**);
     DefHookOg(void, HandlePostSafeZonePhaseChanged, AFortGameModeAthena*, int);
+    DefHookOg(uint8_t, PickTeam, AFortGameModeAthena*, uint8_t, AFortPlayerControllerAthena*);
+    DefUHookOg(HandleStartingNewPlayer_);
     
     InitHooks;
 };

@@ -3,8 +3,27 @@
 #include "../../Erbium/Public/Utils.h"
 #include "FortPlaylistAthena.h"
 #include "../../Engine/Public/CurveTable.h"
+#include "FortPlayerStateAthena.h"
 
-struct FAdditionalLevelStreamed final
+struct FGameMemberInfo : public FFastArraySerializerItem
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FGameMemberInfo);
+
+    DEFINE_STRUCT_PROP(TeamIndex, int32);
+    DEFINE_STRUCT_PROP(SquadId, int32);
+    DEFINE_STRUCT_PROP(MemberUniqueId, FUniqueNetIdRepl);
+};
+
+struct FGameMemberInfoArray : public FFastArraySerializer
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FGameMemberInfoArray);
+
+    DEFINE_STRUCT_PROP(Members, TArray<FGameMemberInfo>);
+};
+
+struct FAdditionalLevelStreamed
 {
 public:
     USCRIPTSTRUCT_COMMON_MEMBERS(FAdditionalLevelStreamed);
@@ -34,6 +53,7 @@ public:
     DEFINE_PROP(DefaultParachuteDeployTraceForGroundDistance, float);
     DEFINE_PROP(AthenaGameDataTable, UCurveTable*);
     DEFINE_PROP(CurrentPlaylistData, const UFortPlaylistAthena*);
+    DEFINE_PROP(GameMemberInfoArray, FGameMemberInfoArray);
 
     DEFINE_FUNC(OnRep_CurrentPlaylistInfo, void);
     DEFINE_FUNC(OnRep_CurrentPlaylistData, void);
