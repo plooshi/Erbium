@@ -726,7 +726,7 @@ namespace Memcury
             const auto d = patternBytes.data();
             auto startingByte = d[0];
             uint32_t h = 1;
-            while (startingByte == -1)
+            while (startingByte == -1 && h < s)
                 startingByte = d[h++];
 
             auto i = 0ul;
