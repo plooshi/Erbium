@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "../Public/FortInventory.h"
 #include "../Public/FortPlayerPawnAthena.h"
+#include "../Public/FortPlayerControllerAthena.h"
 
 // OnItemInstanceRemoved is always + 1
 inline uint32_t FindOnItemInstanceAddedVft()
@@ -62,7 +63,7 @@ UFortWorldItem* AFortInventory::GiveItem(UFortItemDefinition* Def, int Count, in
     return Item;
 }
 
-UFortWorldItem* AFortInventory::GiveItem(FFortItemEntry entry, int Count, bool ShowPickupNoti, bool updateInventory)
+UFortWorldItem* AFortInventory::GiveItem(FFortItemEntry& entry, int Count, bool ShowPickupNoti, bool updateInventory)
 {
     if (Count == -1)
         Count = entry.Count;
@@ -152,6 +153,8 @@ AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entr
 
     if (NewPickup->HasbRandomRotation())
         NewPickup->bRandomRotation = RandomRotation;
+    if (Entry.Level != -1)
+        NewPickup->PrimaryPickupItemEntry.Level = Entry.Level;
     NewPickup->PrimaryPickupItemEntry.ItemDefinition = Entry.ItemDefinition;
     NewPickup->PrimaryPickupItemEntry.LoadedAmmo = Entry.LoadedAmmo;
     NewPickup->PrimaryPickupItemEntry.Count = OverrideCount != -1 ? OverrideCount : Entry.Count;
@@ -167,12 +170,18 @@ AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entr
     if (NewPickup->bTossedFromContainer)
         NewPickup->OnRep_TossedFromContainer();
 
+    if (VersionInfo.FortniteVersion < 6)
+    {
+        static auto ProjectileMovementClass = FindClass("ProjectileMovementComponent");
+        NewPickup->MovementComponent = UGameplayStatics::SpawnObject(ProjectileMovementClass, NewPickup);
+    }
+
     return NewPickup;
 }
 
 AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, UFortItemDefinition* ItemDefinition, int Count, int LoadedAmmo, long long SourceTypeFlag, long long SpawnSource, AFortPlayerPawnAthena* Pawn, bool Toss, bool bRandomRotation)
 {
-    return SpawnPickup(Loc, *MakeItemEntry(ItemDefinition, Count, 0), SourceTypeFlag, SpawnSource, Pawn, -1, Toss, true, bRandomRotation);
+    return SpawnPickup(Loc, *MakeItemEntry(ItemDefinition, Count, -1), SourceTypeFlag, SpawnSource, Pawn, -1, Toss, true, bRandomRotation);
 }
 
 
@@ -189,6 +198,7 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
 
     if (NewPickup->HasbRandomRotation())
         NewPickup->bRandomRotation = true;
+    NewPickup->PrimaryPickupItemEntry.Level = Entry.Level;
     NewPickup->PrimaryPickupItemEntry.ItemDefinition = Entry.ItemDefinition;
     NewPickup->PrimaryPickupItemEntry.LoadedAmmo = Entry.LoadedAmmo;
     NewPickup->PrimaryPickupItemEntry.Count = OverrideCount != -1 ? OverrideCount : Entry.Count;
@@ -234,4 +244,73 @@ void AFortInventory::UpdateEntry(FFortItemEntry& Entry)
         __movsb((PBYTE)&(*ent)->ItemEntry, (const PBYTE)&Entry, FFortItemEntry::Size());
 
     Update(&Entry);
+}
+
+bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool bForceRemoval)
+{
+    static auto InterfaceOffset = FindClass("FortPlayerController")->GetSuper()->GetPropertiesSize() + (VersionInfo.EngineVersion >= 4.27 ? 16 : 8);
+    auto PlayerController = (AFortPlayerControllerAthena*)(__int64(Interface) - InterfaceOffset);
+
+    auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+        { return entry.ItemGuid == ItemGuid; }, FFortItemEntry::Size());
+
+    if (ItemEntry)
+    {
+        ItemEntry->Count -= Count;
+        if (ItemEntry->Count <= 0 || bForceRemoval)
+            PlayerController->WorldInventory->Remove(ItemGuid);
+        else
+            PlayerController->WorldInventory->UpdateEntry(*ItemEntry);
+
+        return true;
+    }
+
+    return false;
+}
+
+void SetLoadedAmmo(UFortWorldItem* Item, int LoadedAmmo)
+{
+    Item->ItemEntry.LoadedAmmo = LoadedAmmo;
+
+    auto OwnerInventory = (AFortInventory*) Item->OwnerInventory;
+    OwnerInventory->UpdateEntry(Item->ItemEntry);
+}
+
+void SetPhantomReserveAmmo(UFortWorldItem* Item, unsigned int PhantomReserveAmmo)
+{
+    Item->ItemEntry.PhantomReserveAmmo = PhantomReserveAmmo;
+
+    auto OwnerInventory = (AFortInventory*)Item->OwnerInventory;
+    OwnerInventory->UpdateEntry(Item->ItemEntry);
+}
+
+void AFortInventory::Hook()
+{
+    Utils::Hook(FindRemoveInventoryItem(), RemoveInventoryItem);
+
+    auto SetOwningInventory = Memcury::Scanner::FindPattern("48 85 D2 74 ? 80 BA ? ? ? ? ? 75 ? 48 89 91").Get(); // finds on 4.1, 10.40, 14.40, 19.10
+
+    if (SetOwningInventory)
+    {
+        auto WorldItemVft = UFortWorldItem::GetDefaultObj()->Vft;
+        int SetOwningInventoryIdx = 0;
+
+        for (int i = 0; i < 500; i++)
+        {
+            if (WorldItemVft[i] == (void*)SetOwningInventory)
+            {
+                SetOwningInventoryIdx = i;
+                break;
+            }
+        }
+
+        if (SetOwningInventoryIdx)
+        {
+            auto HasPhantomReserveAmmo = FFortItemEntry::HasPhantomReserveAmmo();
+
+            Utils::Hook<UFortWorldItem>(uint32(SetOwningInventoryIdx - (HasPhantomReserveAmmo ? 2 : 1)), SetLoadedAmmo);
+            if (HasPhantomReserveAmmo)
+                Utils::Hook<UFortWorldItem>(uint32(SetOwningInventoryIdx - 1), SetLoadedAmmo);
+        }
+    }
 }

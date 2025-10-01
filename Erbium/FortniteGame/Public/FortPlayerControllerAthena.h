@@ -6,7 +6,7 @@
 #include "FortPlayerStateAthena.h"
 
 
-class UAthenaPickaxeItemDefinition : public UObject
+class UAthenaPickaxeItemDefinition : public UFortItemDefinition
 {
 public:
     UCLASS_COMMON_MEMBERS(UAthenaPickaxeItemDefinition);
@@ -38,6 +38,7 @@ public:
     DEFINE_PROP(CosmeticLoadoutPC, FFortAthenaLoadout);
     DEFINE_PROP(CustomizationLoadout, FFortAthenaLoadout);
     DEFINE_BITFIELD_PROP(bBuildFree);
+    DEFINE_PROP(SwappingItemDefinition, FFortItemEntry*); // scuffness
 
     DEFINE_FUNC(GetViewTarget, AActor*);
     DEFINE_FUNC(GetControlRotation, FRotator);

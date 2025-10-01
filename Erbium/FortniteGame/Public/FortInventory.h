@@ -55,6 +55,9 @@ public:
     DEFINE_PROP(MinLevel, int32);
     DEFINE_PROP(MaxLevel, int32);
     DEFINE_PROP(DropCount, int32);
+    DEFINE_PROP(NumberOfSlotsToTake, uint8);
+    DEFINE_BITFIELD_PROP(bAllowMultipleStacks);
+    DEFINE_PROP(LootLevelData, FDataTableCategoryHandle);
 
     DEFINE_FUNC(CreateTemporaryItemInstanceBP, UFortItem*);
     
@@ -99,6 +102,7 @@ public:
     UCLASS_COMMON_MEMBERS(UFortWorldItem);
 
     DEFINE_PROP(ItemEntry, FFortItemEntry);
+    DEFINE_PROP(OwnerInventory, AActor*);
 
     DEFINE_FUNC(SetOwningControllerForTemporaryItem, void);
 };
@@ -154,6 +158,18 @@ public:
     DEFINE_ENUM_PROP(TossedByPlayer);
 };
 
+struct FFortPickupLocationData
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FFortPickupLocationData);
+
+    DEFINE_STRUCT_PROP(bPlayPickupSound, bool);
+    DEFINE_STRUCT_PROP(FlyTime, float);
+    DEFINE_STRUCT_PROP(ItemOwner, AFortPlayerPawnAthena*);
+    DEFINE_STRUCT_PROP(PickupGuid, FGuid);
+    DEFINE_STRUCT_PROP(PickupTarget, AFortPlayerPawnAthena*);
+};
+
 class AFortPickupAthena : public AActor
 {
 public:
@@ -163,10 +179,15 @@ public:
     DEFINE_PROP(PrimaryPickupItemEntry, FFortItemEntry);
     DEFINE_PROP(PawnWhoDroppedPickup, AFortPlayerPawnAthena*);
     DEFINE_PROP(bTossedFromContainer, bool);
+    DEFINE_PROP(bPickedUp, bool);
+    DEFINE_PROP(PickupLocationData, FFortPickupLocationData);
+    DEFINE_PROP(MovementComponent, UObject*);
 
     DEFINE_FUNC(OnRep_PrimaryPickupItemEntry, void);
     DEFINE_FUNC(OnRep_TossedFromContainer, void);
     DEFINE_FUNC(TossPickup, void);
+    DEFINE_FUNC(OnRep_bPickedUp, void);
+    DEFINE_FUNC(OnRep_PickupLocationData, void);
 };
 
 class UFortWeaponItemDefinition : public UObject
@@ -200,7 +221,7 @@ public:
     DEFINE_FUNC(HandleInventoryLocalUpdate, void);
 
     UFortWorldItem* GiveItem(UFortItemDefinition*, int = 1, int = 0, int = 0, bool = true, bool = true, int = 0);
-    UFortWorldItem* GiveItem(FFortItemEntry, int = -1, bool = true, bool = true);
+    UFortWorldItem* GiveItem(FFortItemEntry&, int = -1, bool = true, bool = true);
     void Update(FFortItemEntry*);
     void Remove(FGuid);
     static AFortPickupAthena* SpawnPickup(FVector, FFortItemEntry&, long long = EFortPickupSourceTypeFlag::GetTossed(), long long = EFortPickupSpawnSource::GetUnset(), AFortPlayerPawnAthena* = nullptr, int = -1, bool = true, bool = true, bool = true);
@@ -210,4 +231,6 @@ public:
     static FFortRangedWeaponStats* GetStats(UFortWeaponItemDefinition*);
     static bool IsPrimaryQuickbar(UFortItemDefinition*);
     void UpdateEntry(FFortItemEntry&);
+
+    InitHooks;
 };

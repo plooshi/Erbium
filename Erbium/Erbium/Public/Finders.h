@@ -635,6 +635,62 @@ inline uint64 FindSpawnLoot()
     return SpawnLoot;
 }
 
+inline uint64_t FindFinishedTargetSpline()
+{
+    static uint64 FinishedTargetSpline = 0;
+
+    if (FinishedTargetSpline == 0)
+    {
+        if (VersionInfo.EngineVersion == 4.16 || VersionInfo.EngineVersion == 4.19)
+            return Memcury::Scanner::FindPattern("4C 8B DC 53 55 56 48 83 EC 60 48 8B F1 48 8B 89 ? ? ? ? 48 85 C9").Get();
+        else if (VersionInfo.EngineVersion == 4.20)
+        {
+            FinishedTargetSpline = Memcury::Scanner::FindPattern("4C 8B DC 53 55 56 48 83 EC 60 48 8B F1 48 8B 89", false).Get();
+
+            if (!FinishedTargetSpline)
+                FinishedTargetSpline = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC 20 48 8B D9 48 8B 89 ? ? ? ? 48 85 C9 74 20 48 8D 44 24").Get();
+
+            return FinishedTargetSpline;
+        }
+        else if (VersionInfo.EngineVersion == 4.21)
+        {
+            FinishedTargetSpline = Memcury::Scanner::FindPattern("40 53 56 48 83 EC 38 4C 89 6C 24 ? 48 8B F1 4C 8B A9", false).Get();
+
+            if (!FinishedTargetSpline)
+                FinishedTargetSpline = Memcury::Scanner::FindPattern("40 53 56 57 48 83 EC 30 4C 89 6C 24 ? 48 8B F1 4C 8B A9 ? ? ? ? 4D 85 ED 0F 84").Get();
+
+            return FinishedTargetSpline;
+        }
+        else if (VersionInfo.EngineVersion == 4.22)
+            return FinishedTargetSpline = Memcury::Scanner::FindPattern("40 53 56 57 48 83 EC 30 4C 89 6C 24 ? 48 8B F1 4C 8B A9 ? ? ? ? 4D 85 ED 0F 84").Get();
+        else if (VersionInfo.EngineVersion >= 4.23 && VersionInfo.EngineVersion <= 4.26)
+            return FinishedTargetSpline = Memcury::Scanner::FindPattern("40 53 56 48 83 EC 38 4C 89 6C 24 ? 48 8B F1 4C 8B A9 ? ? ? ? 4D 85 ED").Get();
+        else if (VersionInfo.EngineVersion == 4.27)
+        {
+            FinishedTargetSpline = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 08 48 89 68 10 48 89 70 18 48 89 78 20 41 54 41 56 41 57 48 83 EC 20 48 8B B1 ? ? ? ? 48 8B D9 48 85 F6", false).Get();
+
+            if (!FinishedTargetSpline)
+                FinishedTargetSpline = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 55 57 41 54 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 8B B9 ? ? ? ? 48 8B D9 48 85 FF 74 16 48 89", false).Get();
+
+            if (!FinishedTargetSpline)
+                FinishedTargetSpline = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 10 48 89 68 18 57 48 83 EC 20 48 8B D9 48 8B 89 ? ? ? ? 48 85").Get();
+
+            return FinishedTargetSpline;
+        }
+        else if (VersionInfo.EngineVersion == 5.0)
+        {
+            FinishedTargetSpline = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 55 57 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 8B B9", false).Get();
+
+            if (!FinishedTargetSpline)
+                FinishedTargetSpline = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 10 48 89 70 18 48 89 78 20 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 8B B9 ? ? ? ? 45 33 E4 48 8B D9 48 85 FF 74 0F").Get();
+
+            return FinishedTargetSpline;
+        }
+    }
+
+    return FinishedTargetSpline;
+}
+
 inline uint64_t FindStaticFindObject()
 {
     static uint64_t StaticFindObject = 0;
@@ -838,6 +894,60 @@ inline uint64_t FindKickPlayer()
         }
 
     return Memcury::Scanner::FindPattern("40 53 41 56 48 81 EC ? ? ? ? 48 8B 01 48 8B DA 4C 8B F1 FF 90").Get();
+}
+
+inline uint64_t FindEncryptionPatch()
+{
+    static uint64_t EncryptionPatch = 0;
+
+    if (EncryptionPatch == 0)
+    {
+        auto EncryptionPatchPoint = Memcury::Scanner::FindPattern("83 BD ? ? ? ? 01 7F 18 49 8D 4D D8 48 8B D6 E8 ? ? ? ? 48", false).Get();
+
+        if (!EncryptionPatchPoint)
+            EncryptionPatchPoint = Memcury::Scanner::FindPattern("83 7D 88 01 7F 0D 48 8B CE E8", false).Get();
+
+        if (!EncryptionPatchPoint)
+            EncryptionPatchPoint = Memcury::Scanner::FindPattern("83 7C 24 ?? 01 7F 0D 48 8B CF E8", false).Get();
+
+        if (!EncryptionPatchPoint)
+            EncryptionPatchPoint = Memcury::Scanner::FindPattern("83 BD ? ? ? ? ? 7F 18 49 8D 4D D8 48 8B D7 E8").Get();
+
+        if (!EncryptionPatchPoint)
+            EncryptionPatchPoint = Memcury::Scanner::FindPattern("83 7C 24 ? ? 7F ? 49 8B CE").Get();
+
+        if (EncryptionPatchPoint) 
+            for (int i = 0; i < 9; i++) 
+            {
+                if (*(uint8_t*)(EncryptionPatchPoint + i) == 0x7f)
+                    EncryptionPatch = EncryptionPatchPoint + i;
+            }
+    }
+
+    return EncryptionPatch;
+}
+
+inline uint64_t FindRemoveInventoryItem()
+{
+    static uint64_t RemoveInventoryItem = 0;
+
+    if (RemoveInventoryItem == 0)
+    {
+        std::vector<uint8_t> funcStart = VersionInfo.EngineVersion == 4.16 ? std::vector<uint8_t>{ 0x44, 0x88, 0x4C } : (VersionInfo.FortniteVersion >= 16 && VersionInfo.FortniteVersion < 20 ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
+
+        auto uFuncCall = FindFunctionCall(L"ServerRemoveInventoryItem", funcStart);
+        auto ServerRemoveInventoryItemCall = Memcury::Scanner::FindPointerRef((PVOID)uFuncCall, 0, true);
+
+        for (int i = 0; i < 400; i++)
+        {
+            if (*(uint8_t*)(ServerRemoveInventoryItemCall.Get() - i) == 0x48 && *(uint8_t*)(ServerRemoveInventoryItemCall.Get() - i + 1) == 0x89 && *(uint8_t*)(ServerRemoveInventoryItemCall.Get() - i + 2) == 0x5C)
+                return RemoveInventoryItem = ServerRemoveInventoryItemCall.Get() - i;
+            else if (*(uint8_t*)(ServerRemoveInventoryItemCall.Get() - i) == 0x48 && *(uint8_t*)(ServerRemoveInventoryItemCall.Get() - i + 1) == 0x83 && *(uint8_t*)(ServerRemoveInventoryItemCall.Get() - i + 2) == 0xEC)
+                return RemoveInventoryItem = ServerRemoveInventoryItemCall.Get() - i;
+        }
+    }
+
+    return RemoveInventoryItem;
 }
 
 static inline std::vector<uint64_t> NullFuncs = {};

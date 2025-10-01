@@ -112,21 +112,21 @@
 
 #define DEFINE_STRUCT_PROP(Name, ...)                                           \
     static inline int32 Name##__Offset = -2;                                    \
-    __VA_ARGS__& Get##Name()                                                    \
+    __VA_ARGS__& Get##Name() const                                              \
     {                                                                           \
         if (Name##__Offset == -2)                                               \
             Name##__Offset = StaticStruct()->GetOffset(#Name);                  \
         return GetFromOffset<__VA_ARGS__>(this, Name##__Offset);                \
     }                                                                           \
                                                                                 \
-    bool Has##Name()                                                            \
+    static bool Has##Name()                                                     \
     {                                                                           \
         if (Name##__Offset == -2)                                               \
             Name##__Offset = StaticStruct()->GetOffset(#Name);                  \
         return Name##__Offset != -1;                                            \
     }                                                                           \
                                                                                 \
-    __VA_ARGS__ Set##Name(__VA_ARGS__ Value)                                    \
+    __VA_ARGS__ Set##Name(__VA_ARGS__ Value) const                              \
     {                                                                           \
         if (Name##__Offset == -2)                                               \
             Name##__Offset = StaticStruct()->GetOffset(#Name);                  \

@@ -25,6 +25,17 @@ public:
 
 struct FDataTableRowHandle
 {
+public:
     UDataTable* DataTable;
     FName RowName;
+};
+
+struct FDataTableCategoryHandle
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FDataTableCategoryHandle);
+
+    DEFINE_STRUCT_PROP(DataTable, UDataTable*);
+    DEFINE_STRUCT_PROP(ColumnName, FName);
+    DEFINE_STRUCT_PROP(RowContents, FName);
 };

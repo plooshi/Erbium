@@ -1,7 +1,63 @@
 #include "pch.h"
 #include "../Public/FortLootPackage.h"
-#include <FortniteGame/Public/BuildingContainer.h>
-#include <FortniteGame/Public/FortGameModeAthena.h>
+#include "../Public/BuildingContainer.h"
+#include "../Public/FortGameModeAthena.h"
+#include <algorithm>
+
+struct FFortLootLevelData
+{
+public:
+	USCRIPTSTRUCT_COMMON_MEMBERS(FFortLootLevelData);
+
+	DEFINE_STRUCT_PROP(Category, FName);
+	DEFINE_STRUCT_PROP(LootLevel, int32);
+	DEFINE_STRUCT_PROP(MinItemLevel, int32);
+	DEFINE_STRUCT_PROP(MaxItemLevel, int32);
+};
+
+int GetLevel(const FDataTableCategoryHandle& CategoryHandle)
+{
+	auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+	auto GameState = (AFortGameStateAthena*)GameMode->GameState;
+
+	if (!CategoryHandle.DataTable)
+		return 0;
+
+	if (!CategoryHandle.ColumnName)
+		return 0;
+
+	if (!CategoryHandle.RowContents.ComparisonIndex)
+		return 0;
+
+	int Level = 0;
+	FFortLootLevelData* LootLevelData = nullptr;
+	for (auto& LootLevelDataPair : (TMap<FName, FFortLootLevelData*>)CategoryHandle.DataTable->RowMap)
+	{
+		if (LootLevelDataPair.Value()->Category != CategoryHandle.RowContents || LootLevelDataPair.Value()->LootLevel > GameState->WorldLevel || LootLevelDataPair.Value()->LootLevel <= Level)
+			continue;
+
+		Level = LootLevelDataPair.Value()->LootLevel;
+		LootLevelData = LootLevelDataPair.Value();
+	}
+
+	if (LootLevelData)
+	{
+		auto subbed = LootLevelData->MaxItemLevel - LootLevelData->MinItemLevel;
+
+		if (subbed <= -1)
+			subbed = 0;
+		else
+		{
+			auto calc = (int)(((float)rand() / 32767) * (float)(subbed + 1));
+			if (calc <= subbed)
+				subbed = calc;
+		}
+
+		return subbed + LootLevelData->MinItemLevel;
+	}
+
+	return 0;
+}
 
 void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SDK::FName Package, int i, FName TierGroup, int WorldLevel)
 {
@@ -61,7 +117,7 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 				LootDrop->Count = ItemDefinition->GetMaxStackSize();
 
 				//if (Inventory::GetQuickbar(LootDrop.ItemDefinition) == EFortQuickBars::Secondary)
-				LootDrops.Add(AFortInventory::MakeItemEntry(ItemDefinition, OGCount - (int32)ItemDefinition->GetMaxStackSize(), /*std::clamp(Inventory::GetLevel(ItemDefinition->LootLevelData), ItemDefinition->MinLevel, ItemDefinition->MaxLevel))*/ ItemDefinition->MaxLevel));
+				LootDrops.Add(AFortInventory::MakeItemEntry(ItemDefinition, OGCount - (int32)ItemDefinition->GetMaxStackSize(), std::clamp(GetLevel(ItemDefinition->LootLevelData), ItemDefinition->MinLevel, ItemDefinition->MaxLevel)));
 			}
 
 			//if (Inventory::GetQuickbar(LootDrop.ItemDefinition) == EFortQuickBars::Secondary)
@@ -77,7 +133,7 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 				LootDrop->Count = AmmoDef->GetMaxStackSize();
 
 				//if (!AFortInventory::IsPrimaryQuickbar(LootDrop->ItemDefinition))
-				LootDrops.Add(AFortInventory::MakeItemEntry(AmmoDef, OGCount - AmmoDef->GetMaxStackSize(), /*std::clamp(Inventory::GetLevel(AmmoDef->LootLevelData), AmmoDef->MinLevel, AmmoDef->MaxLevel)*/ ItemDefinition->MaxLevel));
+				LootDrops.Add(AFortInventory::MakeItemEntry(AmmoDef, OGCount - AmmoDef->GetMaxStackSize(), std::clamp(GetLevel(AmmoDef->LootLevelData), AmmoDef->MinLevel, AmmoDef->MaxLevel)));
 			}
 
 			//if (Inventory::GetQuickbar(LootDrop.ItemDefinition) == EFortQuickBars::Secondary)
@@ -86,20 +142,22 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 	}
 
 	if (!found && LootPackage->Count > 0)
-		LootDrops.Add(AFortInventory::MakeItemEntry(ItemDefinition, LootPackage->Count, /*std::clamp(Inventory::GetLevel(ItemDefinition->LootLevelData), ItemDefinition->MinLevel, ItemDefinition->MaxLevel)*/ ItemDefinition->MaxLevel));
+		LootDrops.Add(AFortInventory::MakeItemEntry(ItemDefinition, LootPackage->Count, std::clamp(GetLevel(ItemDefinition->LootLevelData), ItemDefinition->MinLevel, ItemDefinition->MaxLevel)));
 
 	if (AmmoDef && AmmoDef->DropCount > 0 && !foundAmmo && LootPackage->Count > 0)
-		LootDrops.Add(AFortInventory::MakeItemEntry(AmmoDef, AmmoDef->DropCount, /*std::clamp(Inventory::GetLevel(AmmoDef->LootLevelData), AmmoDef->MinLevel, AmmoDef->MaxLevel)*/ ItemDefinition->MaxLevel));
+		LootDrops.Add(AFortInventory::MakeItemEntry(AmmoDef, AmmoDef->DropCount, std::clamp(GetLevel(AmmoDef->LootLevelData), AmmoDef->MinLevel, AmmoDef->MaxLevel)));
 }
 
 TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup, int LootTier, int WorldLevel)
 {
 	TArray<FFortLootTierData*> TierDataGroups;
 
-	for (auto const& Val : TierDataAllGroups) {
+	for (auto const& Val : TierDataAllGroups) 
+	{
 		if (Val->TierGroup == TierGroup && (LootTier == -1 ? true : LootTier == Val->LootTier))
 			TierDataGroups.Add(Val);
 	}
+
 	auto LootTierData = PickWeighted(TierDataGroups, [](float Total) { return ((float)rand() / 32767.f) * Total; });
 	if (!LootTierData)
 		return {};
@@ -148,9 +206,6 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 			SumWeights--;
 		}
 
-	//if (!AmountOfLootDrops)
-	//	AmountOfLootDrops = AmountOfLootDrops;
-
 	if (!AmountOfLootDrops)
 		return {};
 
@@ -168,39 +223,6 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 		CurrentCategory++;
 		SpawnedItems += LootTierData->LootPackageCategoryMinArray[CurrentCategory];
 	}
-
-	/*std::map<UFortWorldItemDefinition*, int32> AmmoMap;
-	for (auto& Item : LootDrops)
-		if (Item.ItemDefinition->IsA<UFortWeaponRangedItemDefinition>() && !Item.ItemDefinition->IsStackable() && ((UFortWorldItemDefinition*)Item.ItemDefinition)->GetAmmoWorldItemDefinition_BP())
-		{
-			auto AmmoDefinition = ((UFortWorldItemDefinition*)Item.ItemDefinition)->GetAmmoWorldItemDefinition_BP();
-			int i = 0;
-			auto AmmoEntry = LootDrops.Search([&](FFortItemEntry& Entry)
-				{
-					if (AmmoMap[AmmoDefinition] > 0 && i < AmmoMap[AmmoDefinition])
-					{
-						i++;
-						return false;
-					}
-					AmmoMap[AmmoDefinition]++;
-					return Entry.ItemDefinition == AmmoDefinition;
-				});
-
-			if (AmmoEntry)
-				continue;
-
-			FFortLootPackageData* Group = nullptr;
-			static auto AmmoSmall = FName(L"WorldList.AthenaAmmoSmall");
-			for (auto const& Val : LPGroupsAll)
-				if (Val->LootPackageID == AmmoSmall && Val->ItemDefinition == AmmoDefinition)
-				{
-					Group = Val;
-					break;
-				}
-
-			if (Group)
-				LootDrops.Add(*Inventory::MakeItemEntry(AmmoDefinition, Group->Count, 0));
-		}*/
 
 	return LootDrops;
 }
@@ -272,8 +294,8 @@ void SpawnLoot(FName& TierGroup, FVector Loc)
 	{
 		static auto Loot_Treasure = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_Treasure"));
 		static auto Loot_Ammo = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_Ammo"));
-		static auto Loot_AthenaTreasure = UKismetStringLibrary::Conv_StringToName(FString("Loot_AthenaTreasure"));
-		static auto Loot_AthenaAmmoLarge = UKismetStringLibrary::Conv_StringToName(FString("Loot_AthenaAmmoLarge"));
+		static auto Loot_AthenaTreasure = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_AthenaTreasure"));
+		static auto Loot_AthenaAmmoLarge = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_AthenaAmmoLarge"));
 
 		if (TierGroup == Loot_Treasure)
 			RealTierGroup = Loot_AthenaTreasure;
@@ -298,8 +320,9 @@ bool ServerOnAttemptInteract(ABuildingContainer* BuildingContainer, AFortPlayerP
 	if (BuildingContainer->bAlreadySearched)
 		return true;
 
-	SpawnLoot(BuildingContainer->SearchLootTierGroup, BuildingContainer->K2_GetActorLocation() + BuildingContainer->GetActorRightVector() * 70.f + FVector{ 0, 0, 50 });
-
+	//SpawnLoot(BuildingContainer->SearchLootTierGroup, BuildingContainer->K2_GetActorLocation() + BuildingContainer->GetActorRightVector() * 70.f + FVector{ 0, 0, 50 });
+	SpawnLootHook(BuildingContainer);
+	
 	BuildingContainer->bAlreadySearched = true;
 	BuildingContainer->OnRep_bAlreadySearched();
 	BuildingContainer->SearchBounceData.SearchAnimationCount++;
@@ -315,10 +338,14 @@ void UFortLootPackage::SpawnFloorLootForContainer(UClass* ContainerType)
 	for (auto& BuildingContainer : Containers)
 	{
 		if (VersionInfo.FortniteVersion >= 11.00)
-			SpawnLootHook(BuildingContainer);
+		{
+			BuildingContainer->K2_DestroyActor();
+		}
+			//SpawnLootHook(BuildingContainer);
 		else
 		{
-			SpawnLoot(BuildingContainer->SearchLootTierGroup, BuildingContainer->K2_GetActorLocation() + BuildingContainer->GetActorForwardVector() * BuildingContainer->LootSpawnLocation_Athena.X + BuildingContainer->GetActorRightVector() * BuildingContainer->LootSpawnLocation_Athena.Y + BuildingContainer->GetActorUpVector() * BuildingContainer->LootSpawnLocation_Athena.Z);
+			SpawnLootHook(BuildingContainer);
+			//SpawnLoot(BuildingContainer->SearchLootTierGroup, BuildingContainer->K2_GetActorLocation() + BuildingContainer->GetActorForwardVector() * BuildingContainer->LootSpawnLocation_Athena.X + BuildingContainer->GetActorRightVector() * BuildingContainer->LootSpawnLocation_Athena.Y + BuildingContainer->GetActorUpVector() * BuildingContainer->LootSpawnLocation_Athena.Z);
 			BuildingContainer->K2_DestroyActor();
 		}
 	}

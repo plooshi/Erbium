@@ -37,6 +37,12 @@ void Main()
         Utils::Patch<uint8_t>(RetTrueFunc + 4, 0xc3);
     }
 
+    auto EncryptionPatch = FindEncryptionPatch();
+    if (EncryptionPatch)
+        Utils::Patch<uint8_t>(EncryptionPatch, 0x74);
+    else
+        printf("Matchmaking is NOT supported on this version, please make a github issue.\n");
+
     MH_Initialize();
 
     for (auto& HookFunc : _HookFuncs) 
