@@ -1,6 +1,8 @@
 #pragma once
 #include "../../pch.h"
 
+// credit to milxnor for a lot of these
+
 inline uint64_t FindGIsClient()
 {
     static uintptr_t GIsClient = 0;
@@ -807,7 +809,7 @@ inline uint64_t FindKickPlayer()
         return Memcury::Scanner::FindPattern("48 89 5C 24 08 48 89 74 24 10 57 48 83 EC ? 49 8B F0 48 8B DA 48 85 D2").Get();
     }
 
-    auto sRef = Memcury::Scanner::FindStringRef(L"Validation Failure: %s. kicking %s", false, 1, VersionInfo.FortniteVersion >= 19).Get();
+    auto sRef = Memcury::Scanner::FindStringRef(L"Validation Failure: %s. kicking %s", false, VersionInfo.FortniteVersion == 4.20, VersionInfo.FortniteVersion >= 19).Get();
 
 
     if (sRef) 
