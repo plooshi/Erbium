@@ -560,7 +560,7 @@ inline uint64 FindApplyCharacterCustomization()
             if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
                 return ApplyCharacterCustomization = sRef - i;
 
-            if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x54)
+            if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x54 && *(uint8_t*)(sRef - i + 5) == 0x55) // 10.40
                 return ApplyCharacterCustomization = sRef - i;
         }
 

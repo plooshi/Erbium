@@ -149,6 +149,7 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryWeapon(UObject* Context,
 	PlayerController->MyFortPawn->EquipWeaponDefinition(ItemDefinition, Weapon->ItemEntryGuid, entry->HasTrackerGuid() ? entry->TrackerGuid : FGuid(), false);
 }
 
+uint64_t CantBuild_ = 0;
 void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FFrame& Stack)
 {
 	const UClass* BuildingClass = nullptr;
@@ -222,7 +223,8 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 		Stack.StepCompiledIn(&BuildRot);
 		Stack.StepCompiledIn(&bMirrored);
 
-		if (GameState->HasAllPlayerBuildableClasses() && !GameState->AllPlayerBuildableClasses.Contains(BuildingClassData.BuildingClass))
+		static auto HasAllPlayerBuildableClasses = GameState->HasAllPlayerBuildableClasses();
+		if (HasAllPlayerBuildableClasses && !GameState->AllPlayerBuildableClasses.Contains(BuildingClassData.BuildingClass))
 		{
 			Stack.IncrementCode();
 			return;
@@ -248,8 +250,8 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 
 	TArray<ABuildingSMActor*> RemoveBuildings;
 	char _Unk_OutVar1;
-	static auto CantBuild = (__int64 (*)(UWorld*, const UClass*, _Pad_0xC, _Pad_0xC, bool, TArray<ABuildingSMActor*> *, char*))FindCantBuild();
-	static auto CantBuildNew = (__int64 (*)(UWorld*, const UClass*, _Pad_0x18, _Pad_0x18, bool, TArray<ABuildingSMActor*> *, char*))FindCantBuild();
+	static auto CantBuild = (__int64 (*)(UWorld*, const UClass*, _Pad_0xC, _Pad_0xC, bool, TArray<ABuildingSMActor*> *, char*))CantBuild_;
+	static auto CantBuildNew = (__int64 (*)(UWorld*, const UClass*, _Pad_0x18, _Pad_0x18, bool, TArray<ABuildingSMActor*> *, char*))CantBuild_;
 	if (VersionInfo.FortniteVersion >= 20.00 ? CantBuildNew(UWorld::GetWorld(), BuildingClass, *(_Pad_0x18*)&BuildLoc, *(_Pad_0x18*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1) : CantBuild(UWorld::GetWorld(), BuildingClass, *(_Pad_0xC*)&BuildLoc, *(_Pad_0xC*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1))
 		return;
 
@@ -323,7 +325,9 @@ void SetEditingPlayer(ABuildingSMActor* _this, AFortPlayerStateAthena* NewEditin
 
 bool CanBePlacedByPlayer(TSubclassOf<AActor> BuildClass) 
 {
-	return ((AFortGameStateAthena*)UWorld::GetWorld()->GameState)->AllPlayerBuildableClasses.Contains(BuildClass);
+	auto GameState = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState);
+	static auto HasAllPlayerBuildableClasses = GameState->HasAllPlayerBuildableClasses();
+	return HasAllPlayerBuildableClasses ? GameState->AllPlayerBuildableClasses.Search([BuildClass](TSubclassOf<AActor> Class) { return Class == BuildClass; }) : true;
 }
 
 void AFortPlayerControllerAthena::ServerBeginEditingBuildingActor(UObject* Context, FFrame& Stack)
@@ -335,6 +339,7 @@ void AFortPlayerControllerAthena::ServerBeginEditingBuildingActor(UObject* Conte
 	if (!PlayerController || !PlayerController->MyFortPawn || !Building || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex)
 		return;
 
+
 	AFortPlayerStateAthena* PlayerState = (AFortPlayerStateAthena*)PlayerController->PlayerState;
 	if (!PlayerState)
 		return;
@@ -345,6 +350,7 @@ void AFortPlayerControllerAthena::ServerBeginEditingBuildingActor(UObject* Conte
 	auto EditToolEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) {
 		return entry.ItemDefinition->IsA(EditToolClass);
 		}, FFortItemEntry::Size());
+
 
 	PlayerController->MyFortPawn->EquipWeaponDefinition((UFortWeaponItemDefinition*)EditToolEntry->ItemDefinition, EditToolEntry->ItemGuid, EditToolEntry->HasTrackerGuid() ? EditToolEntry->TrackerGuid : FGuid(), false);
 
@@ -360,6 +366,7 @@ void AFortPlayerControllerAthena::ServerBeginEditingBuildingActor(UObject* Conte
 }
 
 
+uint64_t ReplaceBuildingActor_ = 0;
 void AFortPlayerControllerAthena::ServerEditBuildingActor(UObject* Context, FFrame& Stack)
 {
 	ABuildingSMActor* Building;
@@ -374,16 +381,21 @@ void AFortPlayerControllerAthena::ServerEditBuildingActor(UObject* Context, FFra
 
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
 	if (!PlayerController || !Building || !NewClass || !Building->IsA<ABuildingSMActor>() || !CanBePlacedByPlayer(NewClass) || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex || Building->bDestroyed)
+	{
 		return;
+	}
+
 
 	SetEditingPlayer(Building, nullptr);
 
-	static auto ReplaceBuildingActor = (ABuildingSMActor * (*)(ABuildingSMActor*, unsigned int, const UClass*, unsigned int, int, bool, AFortPlayerControllerAthena*)) FindReplaceBuildingActor();
+	static auto ReplaceBuildingActor = (ABuildingSMActor * (*)(ABuildingSMActor*, unsigned int, const UClass*, unsigned int, int, bool, AFortPlayerControllerAthena*)) ReplaceBuildingActor_;
 
 	ABuildingSMActor* NewBuild = ReplaceBuildingActor(Building, 1, NewClass.Get(), Building->CurrentBuildingLevel, RotationIterations, bMirrored, PlayerController);
 
 	if (NewBuild)
+	{
 		NewBuild->bPlayerPlaced = true;
+	}
 }
 
 void AFortPlayerControllerAthena::ServerEndEditingBuildingActor(UObject* Context, FFrame& Stack)
@@ -419,6 +431,9 @@ void AFortPlayerControllerAthena::ServerEndEditingBuildingActor(UObject* Context
 
 void AFortPlayerControllerAthena::Hook()
 {
+	CantBuild_ = FindCantBuild();
+	ReplaceBuildingActor_ = FindReplaceBuildingActor(); // pre-cache building offsets
+
 	auto DefaultFortPC = DefaultObjImpl("FortPlayerController");
 
 	Utils::Hook(FindGetPlayerViewPoint(), GetPlayerViewPoint, GetPlayerViewPointOG);

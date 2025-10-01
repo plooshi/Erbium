@@ -118,7 +118,8 @@ FFortRangedWeaponStats* AFortInventory::GetStats(UFortWeaponItemDefinition* Def)
 
 FFortItemEntry* AFortInventory::MakeItemEntry(UFortItemDefinition* ItemDefinition, int32 Count, int32 Level)
 {
-    FFortItemEntry* ItemEntry = new FFortItemEntry();
+    auto ItemEntry = (FFortItemEntry*) malloc(FFortItemEntry::Size());
+    __stosb((PBYTE)ItemEntry, 0, FFortItemEntry::Size());
 
     ItemEntry->MostRecentArrayReplicationKey = -1;
     ItemEntry->ReplicationID = -1;
@@ -149,16 +150,20 @@ AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entr
     if (!NewPickup)
         return nullptr;
 
-    NewPickup->bRandomRotation = RandomRotation;
+    if (NewPickup->HasbRandomRotation())
+        NewPickup->bRandomRotation = RandomRotation;
     NewPickup->PrimaryPickupItemEntry.ItemDefinition = Entry.ItemDefinition;
     NewPickup->PrimaryPickupItemEntry.LoadedAmmo = Entry.LoadedAmmo;
     NewPickup->PrimaryPickupItemEntry.Count = OverrideCount != -1 ? OverrideCount : Entry.Count;
-    NewPickup->PrimaryPickupItemEntry.PhantomReserveAmmo = Entry.PhantomReserveAmmo;
+    static auto HasPhantomReserveAmmo = Entry.HasPhantomReserveAmmo();
+    if (HasPhantomReserveAmmo)
+        NewPickup->PrimaryPickupItemEntry.PhantomReserveAmmo = Entry.PhantomReserveAmmo;
     NewPickup->OnRep_PrimaryPickupItemEntry();
     NewPickup->PawnWhoDroppedPickup = Pawn;
 
     NewPickup->TossPickup(Loc, Pawn, -1, Toss, true, (uint8) SourceTypeFlag, (uint8) SpawnSource);
-    NewPickup->bTossedFromContainer = SpawnSource == EFortPickupSpawnSource::GetChest() || SpawnSource == EFortPickupSpawnSource::GetAmmoBox();
+    if (SpawnSource != -1)
+        NewPickup->bTossedFromContainer = SpawnSource == EFortPickupSpawnSource::GetChest() || SpawnSource == EFortPickupSpawnSource::GetAmmoBox();
     if (NewPickup->bTossedFromContainer)
         NewPickup->OnRep_TossedFromContainer();
 
@@ -182,11 +187,14 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
     if (!NewPickup)
         return nullptr;
 
-    NewPickup->bRandomRotation = true;
+    if (NewPickup->HasbRandomRotation())
+        NewPickup->bRandomRotation = true;
     NewPickup->PrimaryPickupItemEntry.ItemDefinition = Entry.ItemDefinition;
     NewPickup->PrimaryPickupItemEntry.LoadedAmmo = Entry.LoadedAmmo;
     NewPickup->PrimaryPickupItemEntry.Count = OverrideCount != -1 ? OverrideCount : Entry.Count;
-    NewPickup->PrimaryPickupItemEntry.PhantomReserveAmmo = Entry.PhantomReserveAmmo;
+    static auto HasPhantomReserveAmmo = Entry.HasPhantomReserveAmmo();
+    if (HasPhantomReserveAmmo)
+        NewPickup->PrimaryPickupItemEntry.PhantomReserveAmmo = Entry.PhantomReserveAmmo;
     NewPickup->OnRep_PrimaryPickupItemEntry();
     NewPickup->PawnWhoDroppedPickup = Pawn;
     NewPickup->TossPickup(Loc, Pawn, -1, true, true, EFortPickupSourceTypeFlag::GetContainer(), EFortPickupSpawnSource::GetChest());

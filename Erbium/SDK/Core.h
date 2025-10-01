@@ -401,7 +401,11 @@ namespace SDK
 		uint32_t GetOffset(const char* Name) const
 		{
 			static auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);
-			return GetFromOffset<uint32>(GetProperty(Name), OffsetOff);
+			auto Prop = GetProperty(Name);
+			if (!Prop)
+				return -1;
+
+			return GetFromOffset<uint32>(Prop, OffsetOff);
 		}
 	};
 

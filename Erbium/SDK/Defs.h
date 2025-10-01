@@ -38,11 +38,10 @@
                                                                                 \
 	static const int32 Size()                                                   \
 	{                                                                           \
-		static int32 _size = 0;                                                 \
+		static int32 _size = -1;                                                \
                                                                                 \
-		if (!_size) {                                                           \
+		if (_size == -1)                                                        \
             _size = StaticStruct()->GetPropertiesSize();                        \
-        }                                                                       \
                                                                                 \
 		return _size;                                                           \
 	}                                                                           \
@@ -66,22 +65,24 @@
 	}
 
 #define DEFINE_PROP(Name, ...)                                                  \
-    static inline int32 Name##__Offset = -1;                                    \
+    static inline int32 Name##__Offset = -2;                                    \
     __VA_ARGS__& Get##Name() const                                              \
     {                                                                           \
-        if (Name##__Offset == -1)                                               \
+        if (Name##__Offset == -2)                                               \
             Name##__Offset = this->GetOffset(#Name);                            \
         return GetFromOffset<__VA_ARGS__>(this, Name##__Offset);                \
     }                                                                           \
                                                                                 \
     bool Has##Name() const                                                      \
     {                                                                           \
-        return this->Has<#Name>();                                              \
+        if (Name##__Offset == -2)                                               \
+            Name##__Offset = this->GetOffset(#Name);                            \
+        return Name##__Offset != -1;                                            \
     }                                                                           \
                                                                                 \
     __VA_ARGS__& Set##Name(__VA_ARGS__ Value) const                             \
     {                                                                           \
-        if (Name##__Offset == -1)                                               \
+        if (Name##__Offset == -2)                                               \
             Name##__Offset = this->GetOffset(#Name);                            \
         return GetFromOffset<__VA_ARGS__>(this, Name##__Offset) = Value;        \
     }                                                                           \
@@ -110,22 +111,24 @@
 
 
 #define DEFINE_STRUCT_PROP(Name, ...)                                           \
-    static inline int32 Name##__Offset = -1;                                    \
+    static inline int32 Name##__Offset = -2;                                    \
     __VA_ARGS__& Get##Name()                                                    \
     {                                                                           \
-        if (Name##__Offset == -1)                                               \
+        if (Name##__Offset == -2)                                               \
             Name##__Offset = StaticStruct()->GetOffset(#Name);                  \
         return GetFromOffset<__VA_ARGS__>(this, Name##__Offset);                \
     }                                                                           \
                                                                                 \
     bool Has##Name()                                                            \
     {                                                                           \
-        return StructHas(this, _StructName, #Name);                             \
+        if (Name##__Offset == -2)                                               \
+            Name##__Offset = StaticStruct()->GetOffset(#Name);                  \
+        return Name##__Offset != -1;                                            \
     }                                                                           \
                                                                                 \
     __VA_ARGS__ Set##Name(__VA_ARGS__ Value)                                    \
     {                                                                           \
-        if (Name##__Offset == -1)                                               \
+        if (Name##__Offset == -2)                                               \
             Name##__Offset = StaticStruct()->GetOffset(#Name);                  \
         return GetFromOffset<__VA_ARGS__>(this, Name##__Offset) = Value;        \
     }                                                                           \

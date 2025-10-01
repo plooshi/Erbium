@@ -71,6 +71,7 @@ class UFortLootPackage
 public:
     static void SetupLDSForPackage(TArray<FFortItemEntry*>&, SDK::FName, int, FName, int WorldLevel = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState)->WorldLevel);
     static TArray<FFortItemEntry*> ChooseLootForContainer(FName, int = -1, int = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState)->WorldLevel);
+    static void SpawnFloorLootForContainer(UClass*);
 
     InitHooks;
 };

@@ -157,6 +157,8 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 	TArray<FFortItemEntry*> LootDrops;
 	LootDrops.Reserve((int)AmountOfLootDrops);
 
+	printf("67");
+
 	int SpawnedItems = 0;
 	int CurrentCategory = 0;
 	while (SpawnedItems < AmountOfLootDrops && CurrentCategory < LootTierData->LootPackageCategoryMinArray.Num())
@@ -211,13 +213,29 @@ bool SpawnLootHook(ABuildingContainer* Container)
 		return false;
 
 	auto& RealTierGroup = Container->SearchLootTierGroup;
-	for (const auto& [OldTierGroup, RedirectedTierGroup] : ((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->RedirectAthenaLootTierGroups)
+	auto GameMode = ((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode);
+	if (GameMode->HasRedirectAthenaLootTierGroups())
 	{
-		if (OldTierGroup == Container->SearchLootTierGroup)
+		for (const auto& [OldTierGroup, RedirectedTierGroup] : GameMode->RedirectAthenaLootTierGroups)
 		{
-			RealTierGroup = RedirectedTierGroup;
-			break;
+			if (OldTierGroup == Container->SearchLootTierGroup)
+			{
+				RealTierGroup = RedirectedTierGroup;
+				break;
+			}
 		}
+	}
+	else 
+	{
+		static auto Loot_Treasure = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_Treasure"));
+		static auto Loot_Ammo = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_Ammo"));
+		static auto Loot_AthenaTreasure = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_AthenaTreasure"));
+		static auto Loot_AthenaAmmoLarge = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_AthenaAmmoLarge"));
+
+		if (Container->SearchLootTierGroup == Loot_Treasure)
+			RealTierGroup = Loot_AthenaTreasure;
+		else if (Container->SearchLootTierGroup == Loot_Ammo)
+			RealTierGroup = Loot_AthenaAmmoLarge;
 	}
 
 	for (auto& LootDrop : UFortLootPackage::ChooseLootForContainer(RealTierGroup))
@@ -231,8 +249,106 @@ bool SpawnLootHook(ABuildingContainer* Container)
 	return true;
 }
 
+
+void SpawnLoot(FName& TierGroup, FVector Loc)
+{
+	auto& RealTierGroup = TierGroup;
+
+	auto GameMode = ((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode);
+	if (GameMode->HasRedirectAthenaLootTierGroups())
+	{
+		for (const auto& [OldTierGroup, RedirectedTierGroup] : GameMode->RedirectAthenaLootTierGroups)
+		{
+			if (OldTierGroup == TierGroup)
+			{
+				RealTierGroup = RedirectedTierGroup;
+				break;
+			}
+		}
+	}
+	else
+	{
+		static auto Loot_Treasure = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_Treasure"));
+		static auto Loot_Ammo = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_Ammo"));
+		static auto Loot_AthenaTreasure = UKismetStringLibrary::Conv_StringToName(FString("Loot_AthenaTreasure"));
+		static auto Loot_AthenaAmmoLarge = UKismetStringLibrary::Conv_StringToName(FString("Loot_AthenaAmmoLarge"));
+
+		if (TierGroup == Loot_Treasure)
+			RealTierGroup = Loot_AthenaTreasure;
+		else if (TierGroup == Loot_Ammo)
+			RealTierGroup = Loot_AthenaAmmoLarge;
+	}
+
+	for (auto& LootDrop : UFortLootPackage::ChooseLootForContainer(RealTierGroup))
+		AFortInventory::SpawnPickup(Loc, *LootDrop);
+}
+
+
+bool ServerOnAttemptInteract(ABuildingContainer* BuildingContainer, AFortPlayerPawnAthena*)
+{
+
+	if (!BuildingContainer)
+		return false;
+
+	if (BuildingContainer->bAlreadySearched)
+		return true;
+
+	SpawnLoot(BuildingContainer->SearchLootTierGroup, BuildingContainer->K2_GetActorLocation() + BuildingContainer->GetActorRightVector() * 70.f + FVector{ 0, 0, 50 });
+
+	BuildingContainer->bAlreadySearched = true;
+	BuildingContainer->OnRep_bAlreadySearched();
+	BuildingContainer->SearchBounceData.SearchAnimationCount++;
+	BuildingContainer->BounceContainer();
+
+	return true;
+}
+
+void UFortLootPackage::SpawnFloorLootForContainer(UClass* ContainerType)
+{
+	auto Containers = Utils::GetAll<ABuildingContainer>(ContainerType);
+
+	for (auto& BuildingContainer : Containers)
+	{
+		if (VersionInfo.FortniteVersion >= 11.00)
+			SpawnLootHook(BuildingContainer);
+		else
+		{
+			SpawnLoot(BuildingContainer->SearchLootTierGroup, BuildingContainer->K2_GetActorLocation() + BuildingContainer->GetActorForwardVector() * BuildingContainer->LootSpawnLocation_Athena.X + BuildingContainer->GetActorRightVector() * BuildingContainer->LootSpawnLocation_Athena.Y + BuildingContainer->GetActorUpVector() * BuildingContainer->LootSpawnLocation_Athena.Z);
+			BuildingContainer->K2_DestroyActor();
+		}
+	}
+
+	Containers.Free();
+}
+
 void UFortLootPackage::Hook()
 {
 	if (VersionInfo.FortniteVersion >= 11.00)
 		Utils::Hook(FindSpawnLoot(), SpawnLootHook);
+	else
+	{
+		auto ServerOnAttemptInteractRef = Memcury::Scanner::FindStringRef(L"ABuildingContainer::ServerOnAttemptInteract %s failed for %s");
+
+		if (ServerOnAttemptInteractRef.Get())
+		{
+			auto UnderlyingCall = ServerOnAttemptInteractRef;
+			UnderlyingCall.ScanFor({ 0x41, 0xFF }, false);
+
+			if (UnderlyingCall.Get() != ServerOnAttemptInteractRef.Get())
+			{
+				auto VFTIndex = *(uint32*)(UnderlyingCall.Get() + 3);
+
+				if (VFTIndex != 0)
+				{
+					Utils::Hook<ABuildingContainer>(VFTIndex / 8, ServerOnAttemptInteract);
+
+					goto _;
+				}
+			}
+		}
+	}
+
+	// if we cant find serveronattemptinteract
+_:
+	return;
 }
