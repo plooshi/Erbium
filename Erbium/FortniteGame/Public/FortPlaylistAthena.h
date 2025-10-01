@@ -1,6 +1,7 @@
 #pragma once
 #include "../../pch.h"
 #include "../../Erbium/Public/Utils.h"
+#include "../../Engine/Public/DataTable.h"
 
 
 class UFortPlaylistAthena : public UObject
@@ -15,4 +16,6 @@ public:
     DEFINE_PROP(AdditionalLevelsServerOnly, TArray<TSoftObjectPtr<UWorld>>);
     DEFINE_PROP(GarbageCollectionFrequency, float);
     DEFINE_PROP(MaxSquadSize, int32);
+    DEFINE_PROP(LootTierData, TSoftObjectPtr<UDataTable>);
+    DEFINE_PROP(LootPackages, TSoftObjectPtr<UDataTable>);
 };

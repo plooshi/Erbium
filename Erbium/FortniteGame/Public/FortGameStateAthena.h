@@ -64,6 +64,7 @@ public:
     DEFINE_PROP(GameMemberInfoArray, FGameMemberInfoArray);
     DEFINE_PROP(AllPlayerBuildableClassesIndexLookup, TMap<TSubclassOf<AActor>, int32>);
     DEFINE_PROP(AllPlayerBuildableClasses, TArray<TSubclassOf<AActor>>);
+    DEFINE_PROP(WorldLevel, int32);
 
     DEFINE_FUNC(OnRep_CurrentPlaylistInfo, void);
     DEFINE_FUNC(OnRep_CurrentPlaylistData, void);

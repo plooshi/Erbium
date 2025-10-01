@@ -601,6 +601,34 @@ inline uint64 FindHandlePostSafeZonePhaseChanged()
     return HandlePostSafeZonePhaseChanged;
 }
 
+inline uint64 FindSpawnLoot()
+{
+    static uint64 SpawnLoot = 0;
+
+    if (SpawnLoot == 0)
+    {
+        auto sRef = Memcury::Scanner::FindStringRef(L"ABuildingContainer::SpawnLoot() called on %s (%s)...", false, 0, VersionInfo.FortniteVersion >= 19).Get();
+
+        if (!sRef)
+            sRef = Memcury::Scanner::FindStringRef(L"ABuildingContainer::SpawnLoot() called on %s (%s)", false, 0, VersionInfo.FortniteVersion >= 19).Get();
+
+        if (!sRef)
+            sRef = Memcury::Scanner::FindStringRef(L"ABuildingContainer::SpawnLoot() >>> START called on %s (%s)", false, 0, VersionInfo.FortniteVersion >= 19).Get();
+
+        if (!sRef)
+            return 0;
+
+        for (int i = 0; i < 500; i++)
+        {
+            if (*(uint8_t*)(sRef - i) == 0x40 && (*(uint8_t*)(sRef - i + 1) == 0x53 || *(uint8_t*)(sRef - i + 1) == 0x55))
+                return SpawnLoot = sRef - i;
+            else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x5C)
+                return SpawnLoot = sRef - i;
+        }
+    }
+
+    return SpawnLoot;
+}
 
 inline uint64_t FindStaticFindObject()
 {

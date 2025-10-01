@@ -487,6 +487,9 @@ namespace SDK
 		DEFINE_FUNC(SetTransform, void);
 		DEFINE_FUNC(K2_TeleportTo, bool);
 		DEFINE_FUNC(K2_DestroyActor, void);
+		DEFINE_FUNC(GetActorForwardVector, FVector);
+		DEFINE_FUNC(GetActorUpVector, FVector);
+		DEFINE_FUNC(GetActorRightVector, FVector);
 	};
 
 	class UGameplayStatics : public SDK::UObject

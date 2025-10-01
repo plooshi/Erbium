@@ -6,6 +6,7 @@
 #include "../../Engine/Public/DataTable.h"
 #include "../../Engine/Public/DataTableFunctionLibrary.h"
 #include "../../Engine/Public/CurveTable.h"
+#include "BuildingContainer.h"
 
 struct FGuid
 {
@@ -51,6 +52,9 @@ public:
     UCLASS_COMMON_MEMBERS(UFortItemDefinition);
 
     DEFINE_BITFIELD_PROP(bForceIntoOverflow);
+    DEFINE_PROP(MinLevel, int32);
+    DEFINE_PROP(MaxLevel, int32);
+    DEFINE_PROP(DropCount, int32);
 
     DEFINE_FUNC(CreateTemporaryItemInstanceBP, UFortItem*);
     
@@ -160,8 +164,8 @@ public:
     DEFINE_PROP(PawnWhoDroppedPickup, AFortPlayerPawnAthena*);
     DEFINE_PROP(bTossedFromContainer, bool);
 
-    DEFINE_FUNC(OnRep_PrimaryPickupItemEntry, bool);
-    DEFINE_FUNC(OnRep_TossedFromContainer, bool);
+    DEFINE_FUNC(OnRep_PrimaryPickupItemEntry, void);
+    DEFINE_FUNC(OnRep_TossedFromContainer, void);
     DEFINE_FUNC(TossPickup, void);
 };
 
@@ -172,6 +176,8 @@ public:
 
     DEFINE_BITFIELD_PROP(bUsesPhantomReserveAmmo);
     DEFINE_PROP(WeaponStatHandle, FDataTableRowHandle);
+    
+    DEFINE_FUNC(GetAmmoWorldItemDefinition_BP, UFortItemDefinition*);
 };
 
 struct FFortRangedWeaponStats
@@ -199,6 +205,7 @@ public:
     void Remove(FGuid);
     static AFortPickupAthena* SpawnPickup(FVector, FFortItemEntry&, long long = EFortPickupSourceTypeFlag::GetTossed(), long long = EFortPickupSpawnSource::GetUnset(), AFortPlayerPawnAthena* = nullptr, int = -1, bool = true, bool = true, bool = true);
     static AFortPickupAthena* SpawnPickup(FVector, UFortItemDefinition*, int, int, long long = EFortPickupSourceTypeFlag::GetTossed(), long long = EFortPickupSpawnSource::GetUnset(), AFortPlayerPawnAthena* = nullptr, bool = true, bool = true);
+    static AFortPickupAthena* SpawnPickup(ABuildingContainer*, FFortItemEntry&, AFortPlayerPawnAthena* = nullptr, int = -1);
     static FFortItemEntry* MakeItemEntry(UFortItemDefinition*, int32, int32);
     static FFortRangedWeaponStats* GetStats(UFortWeaponItemDefinition*);
     static bool IsPrimaryQuickbar(UFortItemDefinition*);

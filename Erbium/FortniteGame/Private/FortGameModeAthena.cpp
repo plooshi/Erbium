@@ -10,6 +10,7 @@
 #include "../Public/FortSafeZoneIndicator.h"
 #include "../../Engine/Public/DataTableFunctionLibrary.h"
 #include "../../Erbium/Public/Configuration.h"
+#include "../Public/FortLootPackage.h"
 
 void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameState)
 {
@@ -161,9 +162,115 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         }
         if (VersionInfo.FortniteVersion >= 3.5 && VersionInfo.FortniteVersion < 4.0)
             SetupPlaylist(GameMode, GameState);
-        else if (GameState->HasCurrentPlaylistInfo())
+        else if (VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.36)
             GameState->OnRep_CurrentPlaylistInfo(); 
 
+
+        auto AddToTierData = [&](const UDataTable* Table, UEAllocatedVector<FFortLootTierData*>& TempArr) {
+            if (!Table)
+                return;
+
+            Table->AddToRoot();
+            if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
+                for (auto& ParentTable : CompositeTable->ParentTables)
+                    for (auto& [Key, Val] : (TMap<FName, FFortLootTierData*>) ParentTable->RowMap) {
+                        TempArr.push_back(Val);
+                    }
+
+            for (auto& [Key, Val] : (TMap<FName, FFortLootTierData*>) Table->RowMap) {
+                TempArr.push_back(Val);
+            }
+            };
+
+        auto AddToPackages = [&](const UDataTable* Table, UEAllocatedVector<FFortLootPackageData*>& TempArr) {
+            if (!Table)
+                return;
+
+            Table->AddToRoot();
+            if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
+                for (auto& ParentTable : CompositeTable->ParentTables)
+                    for (auto& [Key, Val] : (TMap<FName, FFortLootPackageData*>) ParentTable->RowMap) {
+                        TempArr.push_back(Val);
+                    }
+
+            for (auto& [Key, Val] : (TMap<FName, FFortLootPackageData*>) Table->RowMap) {
+                TempArr.push_back(Val);
+            }
+            };
+
+
+        auto Playlist = Utils::FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
+
+        UEAllocatedVector<FFortLootTierData*> LootTierDataTempArr;
+        auto LootTierData = Playlist ? Playlist->LootTierData.Get() : nullptr;
+        if (!LootTierData)
+            LootTierData = Utils::FindObject<UDataTable>(L"/Game/Items/Datatables/AthenaLootTierData_Client.AthenaLootTierData_Client");
+        if (LootTierData)
+            AddToTierData(LootTierData, LootTierDataTempArr);
+        for (auto& Val : LootTierDataTempArr)
+        {
+            TierDataAllGroups.Add(Val);
+        }
+
+        UEAllocatedVector<FFortLootPackageData*> LootPackageTempArr;
+        auto LootPackages = Playlist ? Playlist->LootPackages.Get() : nullptr;
+        if (!LootPackages) LootPackages = Utils::FindObject<UDataTable>(L"/Game/Items/Datatables/AthenaLootPackages_Client.AthenaLootPackages_Client");
+        if (LootPackages)
+            AddToPackages(LootPackages, LootPackageTempArr);
+        for (auto& Val : LootPackageTempArr)
+        {
+            LPGroupsAll.Add(Val);
+        }
+
+
+        auto GameFeatureDataClass = FindClass("FortGameFeatureData");
+        for (int i = 0; i < TUObjectArray::Num(); i++)
+        {
+            auto Object = TUObjectArray::GetObjectByIndex(i);
+
+            if (!Object || !Object->Class || Object->IsDefaultObject())
+                continue;
+
+            if (Object->IsA(GameFeatureDataClass))
+            {
+                static auto DefaultLootTableDataOffset = Object->GetOffset("DefaultLootTableData");
+
+                auto& LootTableData = GetFromOffset<FFortGameFeatureLootTableData>(Object, DefaultLootTableDataOffset);
+                auto LTDFeatureData = Utils::FindObject<UDataTable>(LootTableData.LootTierData.ObjectID.AssetPathName.ToWString().c_str());
+                auto LootPackageData = Utils::FindObject<UDataTable>(LootTableData.LootPackageData.ObjectID.AssetPathName.ToWString().c_str());
+
+
+                if (LTDFeatureData)
+                {
+                    UEAllocatedVector<FFortLootTierData*> LTDTempData;
+
+                    AddToTierData(LTDFeatureData, LTDTempData);
+
+                    /*for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
+                        for (auto& Override : Object->PlaylistOverrideLootTableData)
+                            if (Tag.TagName == Override.First.TagName)
+                                AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);*/
+
+                    for (auto& Val : LTDTempData)
+                        TierDataAllGroups.Add(Val);
+                }
+
+                if (LootPackageData)
+                {
+                    UEAllocatedVector<FFortLootPackageData*> LPTempData;
+
+                    AddToPackages(LootPackageData, LPTempData);
+
+                    /*for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
+                        for (auto& Override : Object->PlaylistOverrideLootTableData)
+                            if (Tag.TagName == Override.First.TagName)
+                                AddToPackages(Override.Second.LootPackageData.Get(), LPTempData);*/
+
+                    for (auto& Val : LPTempData)
+                        LPGroupsAll.Add(Val);
+                }
+            }
+        }
         if (VersionInfo.EngineVersion >= 4.27)
         {
             GameMode->bDisableGCOnServerDuringMatch = true;

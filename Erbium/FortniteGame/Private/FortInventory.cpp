@@ -171,6 +171,35 @@ AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, UFortItemDefinition*
 }
 
 
+AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FFortItemEntry& Entry, AFortPlayerPawnAthena* Pawn, int OverrideCount)
+{
+    if (!&Entry)
+        return nullptr;
+
+    auto ContainerLoc = Container->K2_GetActorLocation();
+    auto Loc = ContainerLoc + (Container->GetActorForwardVector() * Container->LootSpawnLocation_Athena.X) + (Container->GetActorRightVector() * Container->LootSpawnLocation_Athena.Y) + (Container->GetActorUpVector() * Container->LootSpawnLocation_Athena.Z);
+    AFortPickupAthena* NewPickup = UWorld::SpawnActor<AFortPickupAthena>(Loc, {});
+    if (!NewPickup)
+        return nullptr;
+
+    NewPickup->bRandomRotation = true;
+    NewPickup->PrimaryPickupItemEntry.ItemDefinition = Entry.ItemDefinition;
+    NewPickup->PrimaryPickupItemEntry.LoadedAmmo = Entry.LoadedAmmo;
+    NewPickup->PrimaryPickupItemEntry.Count = OverrideCount != -1 ? OverrideCount : Entry.Count;
+    NewPickup->PrimaryPickupItemEntry.PhantomReserveAmmo = Entry.PhantomReserveAmmo;
+    NewPickup->OnRep_PrimaryPickupItemEntry();
+    NewPickup->PawnWhoDroppedPickup = Pawn;
+    NewPickup->TossPickup(Loc, Pawn, -1, true, true, EFortPickupSourceTypeFlag::GetContainer(), EFortPickupSpawnSource::GetChest());
+    //auto bFloorLoot = Container->IsA<ATiered_Athena_FloorLoot_01_C>() || Container->IsA<ATiered_Athena_FloorLoot_Warmup_C>();
+    //UFortKismetLibrary::TossPickupFromContainer(UWorld::GetWorld(), Container, NewPickup, 1, 0, Container->LootTossConeHalfAngle_Athena, Container->LootTossDirection_Athena, Container->LootTossSpeed_Athena, false);
+    NewPickup->bTossedFromContainer = true;
+    NewPickup->OnRep_TossedFromContainer();
+
+
+    return NewPickup;
+}
+
+
 bool AFortInventory::IsPrimaryQuickbar(UFortItemDefinition* ItemDefinition)
 {
     static auto MeleeClass = FindClass("FortWeaponMeleeItemDefinition");

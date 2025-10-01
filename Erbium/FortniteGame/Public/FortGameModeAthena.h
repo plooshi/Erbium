@@ -29,6 +29,7 @@ public:
     DEFINE_PROP(bDisableGCOnServerDuringMatch, bool);
     DEFINE_PROP(bPlaylistHotfixChangedGCDisabling, bool);
     DEFINE_PROP(AthenaGameDataTable, UCurveTable*);
+    DEFINE_PROP(RedirectAthenaLootTierGroups, TMap<FName, FName>);
 
     DEFINE_FUNC(SpawnDefaultPawnAtTransform, AFortPlayerPawnAthena*);
     DEFINE_FUNC(RestartPlayer, void);

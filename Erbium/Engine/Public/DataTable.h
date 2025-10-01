@@ -7,7 +7,20 @@ class UDataTable : public UObject
 public:
     UCLASS_COMMON_MEMBERS(UDataTable);
 
-    DEFINE_PROP(RowMap, TMap<FName, uint8*>);
+    TMap<FName, uint8_t*>& GetRowMap() const
+    {
+        return *(TMap<FName, uint8*>*)(__int64(this) + 0x30);
+    }
+    __declspec(property(get = GetRowMap))
+    TMap<FName, uint8_t*> RowMap;
+};
+
+class UCompositeDataTable : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UCompositeDataTable);
+    
+    DEFINE_PROP(ParentTables, TArray<UDataTable*>);
 };
 
 struct FDataTableRowHandle

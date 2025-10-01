@@ -29,7 +29,7 @@ class UCurveTable : public UObject
 public:
     UCLASS_COMMON_MEMBERS(UCurveTable);
 
-    TMap<FName, FRealCurve*>& GetRowMap()
+    TMap<FName, FRealCurve*>& GetRowMap() const
     {
         return *(TMap<FName, FRealCurve*>*)(__int64(this) + 0x30);
     }

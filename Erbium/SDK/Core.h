@@ -65,6 +65,47 @@ namespace SDK
 			return OutputString.substr(pos + 1);
 		}
 
+		UEAllocatedWString ToWString() const
+		{
+			if (!Offsets::AppendString)
+			{
+				if (IsBadReadPtr((void*)this))
+					return L"";
+				FString TempString(1024);
+
+				auto ToString = (void(*&)(const FName*, FString&)) Offsets::ToString;
+				ToString(this, TempString);
+
+				UEAllocatedWString OutputString = TempString.ToWString();
+				TempString.Free();
+
+				return OutputString;
+			}
+
+			thread_local FString TempString(1024);
+
+			auto AppendString = (void(*&)(const FName*, FString&)) Offsets::AppendString;
+			AppendString(this, TempString);
+
+			UEAllocatedWString OutputString = TempString.ToWString();
+			TempString.Clear();
+
+			return OutputString;
+		}
+
+
+		UEAllocatedWString ToSDKWString() const
+		{
+			UEAllocatedWString OutputString = ToWString();
+
+			size_t pos = OutputString.rfind('/');
+
+			if (pos == UEAllocatedWString::npos)
+				return OutputString;
+
+			return OutputString.substr(pos + 1);
+		}
+
 		bool operator==(const FName& Other) const
 		{
 			return ComparisonIndex == Other.ComparisonIndex && (VersionInfo.FortniteVersion >= 20.00 || Number == Other.Number);
@@ -301,6 +342,8 @@ namespace SDK
 		static const UClass* StaticClass();
 
 		const class IInterface* GetInterface(const class UClass*) const;
+		
+		void AddToRoot() const;
 	};
 
 	class UField : public UObject
@@ -769,6 +812,17 @@ namespace SDK
 			return nullptr;
 		}
 	};
+
+
+	inline void UObject::AddToRoot() const
+	{
+		auto Item = (FUObjectItem*)TUObjectArray::GetItemByIndex(Index);
+
+		if (Item)
+		{
+			Item->Flags |= 1 << 30;
+		}
+	}
 
 	inline uint64_t UClass::GetCastFlags() const
 	{
