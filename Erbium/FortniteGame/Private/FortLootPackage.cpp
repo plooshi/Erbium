@@ -238,7 +238,10 @@ bool SpawnLootHook(ABuildingContainer* Container)
 	}
 
 	for (auto& LootDrop : UFortLootPackage::ChooseLootForContainer(RealTierGroup))
+	{
 		AFortInventory::SpawnPickup(Container, *LootDrop);
+		free(LootDrop);
+	}
 
 	Container->bAlreadySearched = true;
 	Container->OnRep_bAlreadySearched();
@@ -279,7 +282,10 @@ void SpawnLoot(FName& TierGroup, FVector Loc)
 	}
 
 	for (auto& LootDrop : UFortLootPackage::ChooseLootForContainer(RealTierGroup))
+	{
 		AFortInventory::SpawnPickup(Loc, *LootDrop);
+		free(LootDrop);
+	}
 }
 
 
