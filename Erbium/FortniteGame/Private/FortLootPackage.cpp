@@ -157,7 +157,6 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 	TArray<FFortItemEntry*> LootDrops;
 	LootDrops.Reserve((int)AmountOfLootDrops);
 
-	printf("67");
 
 	int SpawnedItems = 0;
 	int CurrentCategory = 0;
