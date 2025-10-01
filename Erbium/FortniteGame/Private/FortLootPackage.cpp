@@ -46,7 +46,7 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 		return;
 
 	static auto WeaponRangedItemDefinitionClass = FindClass("FortWeaponRangedItemDefinition");
-	auto AmmoDef = _Id->IsA(WeaponRangedItemDefinitionClass) ? ((UFortWeaponItemDefinition*)_Id)->GetAmmoWorldItemDefinition_BP() : nullptr;
+	auto AmmoDef = _Id->IsA(WeaponRangedItemDefinitionClass) && VersionInfo.FortniteVersion >= 11.00 ? ((UFortWeaponItemDefinition*)_Id)->GetAmmoWorldItemDefinition_BP() : nullptr;
 
 	bool found = false;
 	bool foundAmmo = false;
