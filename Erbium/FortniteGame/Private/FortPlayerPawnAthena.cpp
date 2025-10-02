@@ -114,16 +114,18 @@ void InternalPickup(AFortPlayerControllerAthena* PlayerController, FFortItemEntr
 		auto& Item = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
 
 		if (AFortInventory::IsPrimaryQuickbar(Item.ItemDefinition))
-			ItemCount += Item.ItemDefinition->HasNumberOfSlotsToTake() ? Item.ItemDefinition->NumberOfSlotsToTake : 2;
+			ItemCount += Item.ItemDefinition->HasNumberOfSlotsToTake() ? Item.ItemDefinition->NumberOfSlotsToTake : 1;
 	}
 
 	auto GiveOrSwap = [&]() 
 	{
-		if (ItemCount == 5 && AFortInventory::IsPrimaryQuickbar(PickupEntry->ItemDefinition)) {
+		if (ItemCount >= 5 && AFortInventory::IsPrimaryQuickbar(PickupEntry->ItemDefinition)) 
+		{
 			if (AFortInventory::IsPrimaryQuickbar(((AFortWeapon*)PlayerController->MyFortPawn->CurrentWeapon)->WeaponData)) 
 			{
 				auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([PlayerController](FFortItemEntry& entry)
 					{ return entry.ItemGuid == ((AFortWeapon*)PlayerController->MyFortPawn->CurrentWeapon)->ItemEntryGuid; }, FFortItemEntry::Size());
+
 
 				AFortInventory::SpawnPickup(PlayerController->GetViewTarget()->K2_GetActorLocation(), *itemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn);
 				PlayerController->WorldInventory->Remove(((AFortWeapon*)PlayerController->MyFortPawn->CurrentWeapon)->ItemEntryGuid);
@@ -136,7 +138,7 @@ void InternalPickup(AFortPlayerControllerAthena* PlayerController, FFortItemEntr
 			PlayerController->WorldInventory->GiveItem(*PickupEntry, PickupEntry->Count, true);
 	};
 
-	auto GiveOrSwapStack = [&](int32 OriginalCount) 
+	auto GiveOrSwapStack = [&](int32 OriginalCount)
 	{
 		if (PickupEntry->ItemDefinition->bAllowMultipleStacks && ItemCount < 5)
 			PlayerController->WorldInventory->GiveItem(*PickupEntry, OriginalCount - MaxStack, true);
@@ -205,8 +207,75 @@ bool AFortPlayerPawnAthena::FinishedTargetSpline(void* _Pickup) {
 	return FinishedTargetSplineOG(Pickup);
 }
 
+
+uint64_t OnRep_ZiplineState = 0;
+void AFortPlayerPawnAthena::ServerSendZiplineState(UObject* Context, FFrame& Stack)
+{
+	FZiplinePawnState State;
+
+	Stack.StepCompiledIn(&State);
+	Stack.IncrementCode();
+
+	auto Pawn = (AFortPlayerPawnAthena*)Context;
+
+	if (!Pawn)
+		return;
+
+	__movsb((PBYTE) &Pawn->ZiplineState, (const PBYTE)&State, FZiplinePawnState::Size());
+
+	((void (*)(AFortPlayerPawnAthena*)) OnRep_ZiplineState)(Pawn);
+
+	if (State.bJumped)
+	{
+		auto Velocity = Pawn->CharacterMovement->Velocity;
+		auto VelocityX = Velocity.X * -0.5f;
+		auto VelocityY = Velocity.Y * -0.5f;
+		Pawn->LaunchCharacterJump(FVector{ VelocityX >= -750 ? min(VelocityX, 750) : -750, VelocityY >= -750 ? min(VelocityY, 750) : -750, 1200 }, false, false, true, true);
+	}
+}
+
+
+void AFortPlayerPawnAthena::OnCapsuleBeginOverlap_(UObject* Context, FFrame& Stack)
+{
+	UObject* OverlappedComp;
+	AActor* OtherActor;
+	UObject* OtherComp;
+	int32 OtherBodyIndex;
+	bool bFromSweep;
+	struct { uint8_t Padding[0x100]; } SweepResult;
+	Stack.StepCompiledIn(&OverlappedComp);
+	Stack.StepCompiledIn(&OtherActor);
+	Stack.StepCompiledIn(&OtherComp);
+	Stack.StepCompiledIn(&OtherBodyIndex);
+	Stack.StepCompiledIn(&bFromSweep);
+	Stack.StepCompiledIn(&SweepResult);
+	Stack.IncrementCode();
+
+	auto Pawn = (AFortPlayerPawnAthena*)Context;
+	if (!Pawn || !Pawn->Controller)
+		return callOG(Pawn, Stack.GetCurrentNativeFunction(), OnCapsuleBeginOverlap, OverlappedComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
+
+	auto Pickup = OtherActor->Cast<AFortPickupAthena>();
+	if (!Pickup || !Pickup->PrimaryPickupItemEntry.ItemDefinition)
+		return callOG(Pawn, Stack.GetCurrentNativeFunction(), OnCapsuleBeginOverlap, OverlappedComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
+
+	auto MaxStack = Pickup->PrimaryPickupItemEntry.ItemDefinition->GetMaxStackSize();
+	auto itemEntry = ((AFortPlayerControllerAthena*)Pawn->Controller)->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+		{ return entry.ItemDefinition == Pickup->PrimaryPickupItemEntry.ItemDefinition && entry.Count <= MaxStack; }, FFortItemEntry::Size());
+
+	if (Pickup && Pickup->PawnWhoDroppedPickup != Pawn)
+	{
+		if ((!itemEntry && !AFortInventory::IsPrimaryQuickbar(Pickup->PrimaryPickupItemEntry.ItemDefinition)) || (itemEntry && itemEntry->Count < MaxStack))
+			Pawn->ServerHandlePickup(Pickup, 0.4f, FVector(), true);
+	}
+
+	return callOG(Pawn, Stack.GetCurrentNativeFunction(), OnCapsuleBeginOverlap, OverlappedComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
+}
+
 void AFortPlayerPawnAthena::Hook()
 {
+	OnRep_ZiplineState = FindOnRep_ZiplineState();
+
 	auto ServerHandlePickupInfoFn = GetDefaultObj()->GetFunction("ServerHandlePickupInfo");
 
 	if (ServerHandlePickupInfoFn)
@@ -217,4 +286,8 @@ void AFortPlayerPawnAthena::Hook()
 	}
 	
 	Utils::Hook(FindFinishedTargetSpline(), FinishedTargetSpline, FinishedTargetSplineOG);
+	Utils::ExecHook(GetDefaultObj()->GetFunction("OnCapsuleBeginOverlap"), OnCapsuleBeginOverlap_, OnCapsuleBeginOverlap_OG);
+
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerSendZiplineState"), ServerSendZiplineState);
+
 }

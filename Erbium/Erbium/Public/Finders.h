@@ -950,6 +950,37 @@ inline uint64_t FindRemoveInventoryItem()
     return RemoveInventoryItem;
 }
 
+inline uint64_t FindOnRep_ZiplineState()
+{
+    static uint64_t OnRep_ZiplineState = 0;
+
+    if (OnRep_ZiplineState == 0)
+    {
+        auto sRef = Memcury::Scanner::FindStringRef(L"ZIPLINES!! Role(%s)  AFortPlayerPawn::OnRep_ZiplineState ZiplineState.bIsZiplining=%d", false).Get();
+        if (!sRef)
+            sRef = Memcury::Scanner::FindStringRef(L"ZIPLINES!! GetLocalRole()(%s)  AFortPlayerPawn::OnRep_ZiplineState ZiplineState.bIsZiplining=%d", false).Get();
+        if (!sRef)
+            sRef = Memcury::Scanner::FindStringRef("AFortPlayerPawn::HandleZiplineStateChanged").Get();
+
+        if (sRef)
+        {
+            for (int i = 0; i < 400; i++)
+            {
+                if (*(uint8_t*)(sRef - i) == 0x40 && *(uint8_t*)(sRef - i + 1) == 0x53)
+                    return OnRep_ZiplineState = sRef - i;
+
+                if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x5C)
+                    return OnRep_ZiplineState = sRef - i;
+
+                if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
+                    return OnRep_ZiplineState = sRef - i;
+            }
+        }
+    }
+
+    return OnRep_ZiplineState;
+}
+
 static inline std::vector<uint64_t> NullFuncs = {};
 static inline std::vector<uint64_t> RetTrueFuncs = {};
 
