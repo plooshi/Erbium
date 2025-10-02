@@ -602,6 +602,9 @@ namespace SDK
 	template <typename Ret, typename... Args, size_t... Is>
 	Ret _InternalCall(const UObject* Object, UFunction* Function, std::tuple<Args...>& argTuple, std::index_sequence<Is...>)
 	{
+		if (!Function)
+			return Ret();
+
 		auto Params = Function->GetParams();
 		auto Mem = FMemory::Malloc(Params.Size);
 		__stosb((PBYTE)Mem, 0, Params.Size);
