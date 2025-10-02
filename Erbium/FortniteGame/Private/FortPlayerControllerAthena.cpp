@@ -570,8 +570,6 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 	auto KillerPlayerState = (AFortPlayerStateAthena*)DeathReport.KillerPlayerState;
 	auto KillerPawn = (AFortPlayerPawnAthena*)DeathReport.KillerPawn;
 
-	//Log(L"DBNO: %d\n", PlayerController->MyFortPawn ? PlayerController->MyFortPawn->IsDBNO() : false);
-
 
 	/*PlayerState->PawnDeathLocation = PlayerController->MyFortPawn ? PlayerController->MyFortPawn->K2_GetActorLocation() : FVector();
 	PlayerState->DeathInfo.bDBNO = PlayerController->MyFortPawn ? PlayerController->MyFortPawn->IsDBNO() : false;

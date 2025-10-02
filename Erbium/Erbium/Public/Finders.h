@@ -1013,6 +1013,52 @@ static inline uint64 FindGiveAbilityAndActivateOnce()
     return GiveAbilityAndActivateOnce;
 }
 
+inline uint64 FindGameSessionPatch()
+{
+    auto sRef = Memcury::Scanner::FindStringRef(L"Gamephase Step: %s", false).Get();
+    uint64 Beginning = 0;
+
+    if (!sRef) 
+    {
+        Beginning = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC 20 E8 ? ? ? ? 48 8B D8 48 85 C0 0F 84 ? ? ? ? E8").Get();
+
+        if (!Beginning) 
+            return 0;
+    }
+    else
+    {
+        for (int i = 0; i < 3000; i++) 
+        {
+            if (*(uint8_t*)(sRef - i) == 0x40 && *(uint8_t*)(sRef - i + 1) == 0x55) 
+            {
+                Beginning = sRef - i;
+                break;
+            }
+            else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 &&
+                *(uint8_t*)(sRef - i + 2) == 0x5C) 
+            {
+                Beginning = sRef - i;
+                break;
+            }
+            else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B &&
+                *(uint8_t*)(sRef - i + 2) == 0xC4) 
+            {
+                Beginning = sRef - i;
+                break;
+            }
+        }
+    }
+
+    if (!Beginning)
+        return 0;
+
+    for (int i = 0; i < 500; i++)
+        if (*(uint8_t*)(Beginning + i) == 0x0F && *(uint8_t*)(Beginning + i + 1) == 0x84)
+            return Beginning + i + 1;
+
+    return 0;
+}
+
 static inline std::vector<uint64_t> NullFuncs = {};
 static inline std::vector<uint64_t> RetTrueFuncs = {};
 

@@ -43,6 +43,10 @@ void Main()
     else
         printf("Matchmaking is NOT supported on this version, please make a github issue.\n");
 
+    auto GameSessionPatch = FindGameSessionPatch();
+    if (GameSessionPatch)
+        Utils::Patch<uint8_t>(GameSessionPatch, 0x85);
+
     MH_Initialize();
 
     for (auto& HookFunc : _HookFuncs) 
