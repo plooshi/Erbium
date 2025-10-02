@@ -126,7 +126,7 @@
         return Name##__Offset != -1;                                            \
     }                                                                           \
                                                                                 \
-    __VA_ARGS__ Set##Name(__VA_ARGS__ Value) const                              \
+    __VA_ARGS__& Set##Name(__VA_ARGS__ Value) const                             \
     {                                                                           \
         if (Name##__Offset == -2)                                               \
             Name##__Offset = StaticStruct()->GetOffset(#Name);                  \

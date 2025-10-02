@@ -29,7 +29,7 @@ void ABuildingFoundation::SetDynamicFoundationTransform_(UObject* Context, FFram
 		Foundation->DynamicFoundationRepData.Translation = Transform.Translation;
 	}
 	Foundation->StreamingData.FoundationLocation = Transform.Translation;
-	//Foundation->StreamingData.BoundingBox = Foundation->StreamingBoundingBox;
+	__movsb((PBYTE)&Foundation->StreamingData.BoundingBox, (const PBYTE)&Foundation->StreamingBoundingBox, VersionInfo.FortniteVersion >= 20.00 ? 0x38 : 0x1c);
 	if (Foundation->HasDynamicFoundationRepData())
 		Foundation->OnRep_DynamicFoundationRepData();
 }
