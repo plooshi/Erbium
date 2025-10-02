@@ -278,7 +278,6 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
 
 void SetLoadedAmmo(UFortWorldItem* Item, int LoadedAmmo)
 {
-    printf("ud\n");
     Item->ItemEntry.LoadedAmmo = LoadedAmmo;
 
     auto OwnerInventory = (AFortInventory*) Item->OwnerInventory;

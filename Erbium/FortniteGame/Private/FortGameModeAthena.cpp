@@ -166,7 +166,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             GameState->OnRep_CurrentPlaylistInfo(); 
 
 
-        auto AddToTierData = [&](const UDataTable* Table, UEAllocatedVector<FFortLootTierData*>& TempArr) {
+        auto AddToTierData = [&](const UDataTable* Table, UEAllocatedMap<FName, FFortLootTierData*>& TempArr) {
             if (!Table)
                 return;
 
@@ -174,15 +174,15 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
                 for (auto& ParentTable : CompositeTable->ParentTables)
                     for (auto& [Key, Val] : (TMap<FName, FFortLootTierData*>) ParentTable->RowMap) {
-                        TempArr.push_back(Val);
+                        TempArr[Key] = Val;
                     }
 
             for (auto& [Key, Val] : (TMap<FName, FFortLootTierData*>) Table->RowMap) {
-                TempArr.push_back(Val);
+                TempArr[Key] = Val;
             }
-            };
+        };
 
-        auto AddToPackages = [&](const UDataTable* Table, UEAllocatedVector<FFortLootPackageData*>& TempArr) {
+        auto AddToPackages = [&](const UDataTable* Table, UEAllocatedMap<FName, FFortLootPackageData*>& TempArr) {
             if (!Table)
                 return;
 
@@ -190,34 +190,35 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
                 for (auto& ParentTable : CompositeTable->ParentTables)
                     for (auto& [Key, Val] : (TMap<FName, FFortLootPackageData*>) ParentTable->RowMap) {
-                        TempArr.push_back(Val);
+                        TempArr[Key] = Val;
                     }
 
             for (auto& [Key, Val] : (TMap<FName, FFortLootPackageData*>) Table->RowMap) {
-                TempArr.push_back(Val);
+                TempArr[Key] = Val;
             }
-            };
+        };
 
 
         auto Playlist = Utils::FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
 
-        UEAllocatedVector<FFortLootTierData*> LootTierDataTempArr;
+        UEAllocatedMap<FName, FFortLootTierData*> LootTierDataTempArr;
         auto LootTierData = Playlist ? Playlist->LootTierData.Get() : nullptr;
         if (!LootTierData)
             LootTierData = Utils::FindObject<UDataTable>(L"/Game/Items/Datatables/AthenaLootTierData_Client.AthenaLootTierData_Client");
         if (LootTierData)
             AddToTierData(LootTierData, LootTierDataTempArr);
-        for (auto& Val : LootTierDataTempArr)
+        for (auto& [_, Val] : LootTierDataTempArr)
         {
             TierDataAllGroups.Add(Val);
         }
 
-        UEAllocatedVector<FFortLootPackageData*> LootPackageTempArr;
+        UEAllocatedMap<FName, FFortLootPackageData*> LootPackageTempArr;
         auto LootPackages = Playlist ? Playlist->LootPackages.Get() : nullptr;
-        if (!LootPackages) LootPackages = Utils::FindObject<UDataTable>(L"/Game/Items/Datatables/AthenaLootPackages_Client.AthenaLootPackages_Client");
+        if (!LootPackages) 
+            LootPackages = Utils::FindObject<UDataTable>(L"/Game/Items/Datatables/AthenaLootPackages_Client.AthenaLootPackages_Client");
         if (LootPackages)
             AddToPackages(LootPackages, LootPackageTempArr);
-        for (auto& Val : LootPackageTempArr)
+        for (auto& [_, Val] : LootPackageTempArr)
         {
             LPGroupsAll.Add(Val);
         }
@@ -242,7 +243,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
                 if (LTDFeatureData)
                 {
-                    UEAllocatedVector<FFortLootTierData*> LTDTempData;
+                    UEAllocatedMap<FName, FFortLootTierData*> LTDTempData;
 
                     AddToTierData(LTDFeatureData, LTDTempData);
 
@@ -251,13 +252,13 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                             if (Tag.TagName == Override.First.TagName)
                                 AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);*/
 
-                    for (auto& Val : LTDTempData)
+                    for (auto& [_, Val] : LTDTempData)
                         TierDataAllGroups.Add(Val);
                 }
 
                 if (LootPackageData)
                 {
-                    UEAllocatedVector<FFortLootPackageData*> LPTempData;
+                    UEAllocatedMap<FName, FFortLootPackageData*> LPTempData;
 
                     AddToPackages(LootPackageData, LPTempData);
 
@@ -266,7 +267,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                             if (Tag.TagName == Override.First.TagName)
                                 AddToPackages(Override.Second.LootPackageData.Get(), LPTempData);*/
 
-                    for (auto& Val : LPTempData)
+                    for (auto& [_, Val] : LPTempData)
                         LPGroupsAll.Add(Val);
                 }
             }
