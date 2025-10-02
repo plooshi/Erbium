@@ -52,7 +52,7 @@ UFortWorldItem* AFortInventory::GiveItem(UFortItemDefinition* Def, int Count, in
     this->Inventory.ItemInstances.Add(Item);
 
     static auto OnItemInstanceAddedVft = FindOnItemInstanceAddedVft();
-    if (OnItemInstanceAddedVft)
+    if (OnItemInstanceAddedVft && VersionInfo.FortniteVersion >= 4)
     {
         static auto InterfaceClass = FindClass("FortInventoryOwnerInterface");
         ((bool(*)(UFortItemDefinition*, const IInterface*, UFortWorldItem*, uint8)) Def->Vft[OnItemInstanceAddedVft])(Def, Owner->GetInterface(InterfaceClass), Item, 1);
@@ -95,7 +95,7 @@ void AFortInventory::Remove(FGuid Guid)
         Inventory.ItemInstances.Remove(ItemInstanceIdx);
 
     static auto OnItemInstanceRemovedVft = FindOnItemInstanceAddedVft() + 1;
-    if (ItemInstanceIdx != -1 && OnItemInstanceRemovedVft)
+    if (ItemInstanceIdx != -1 && OnItemInstanceRemovedVft && VersionInfo.FortniteVersion >= 4)
     {
         static auto InterfaceClass = FindClass("FortInventoryOwnerInterface");
         ((bool(*)(UFortItemDefinition*, const IInterface*, UFortWorldItem*)) Instance->ItemEntry.ItemDefinition->Vft[OnItemInstanceRemovedVft])(Instance->ItemEntry.ItemDefinition, Owner->GetInterface(InterfaceClass), Instance);
@@ -213,6 +213,11 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
     NewPickup->bTossedFromContainer = true;
     NewPickup->OnRep_TossedFromContainer();
 
+    if (VersionInfo.FortniteVersion < 6)
+    {
+        static auto ProjectileMovementClass = FindClass("ProjectileMovementComponent");
+        NewPickup->MovementComponent = UGameplayStatics::SpawnObject(ProjectileMovementClass, NewPickup);
+    }
 
     return NewPickup;
 }
@@ -227,12 +232,15 @@ bool AFortInventory::IsPrimaryQuickbar(UFortItemDefinition* ItemDefinition)
     static auto BuildingClass = FindClass("FortBuildingItemDefinition");
     static auto EditToolClass = FindClass("FortEditToolItemDefinition");
 
-    return ItemDefinition->IsA(MeleeClass) || ItemDefinition->IsA(ResourceClass) || ItemDefinition->IsA(AmmoClass) || ItemDefinition->IsA(TrapClass) || ItemDefinition->IsA(BuildingClass) || ItemDefinition->IsA(EditToolClass) || ItemDefinition->bForceIntoOverflow ? false : true;
+    return ItemDefinition->IsA(MeleeClass) || ItemDefinition->IsA(ResourceClass) || ItemDefinition->IsA(AmmoClass) || ItemDefinition->IsA(TrapClass) || ItemDefinition->IsA(BuildingClass) || ItemDefinition->IsA(EditToolClass) || (ItemDefinition->HasbForceIntoOverflow() && ItemDefinition->bForceIntoOverflow) ? false : true;
 }
 
 
 void AFortInventory::UpdateEntry(FFortItemEntry& Entry)
 {
+    if (!this)
+        return; // wtf 3.5
+
     auto repEnt = Inventory.ReplicatedEntries.Search([&](FFortItemEntry& item)
         { return item.ItemGuid == Entry.ItemGuid; }, FFortItemEntry::Size());
     if (repEnt)

@@ -19,6 +19,8 @@ public:
     DEFINE_PROP(SquadId, int32);
     DEFINE_PROP(TeamIndex, int32);
     DEFINE_PROP(UniqueId, FUniqueNetIdRepl);
+    DEFINE_PROP(PawnDeathLocation, FVector);
 
     DEFINE_FUNC(OnRep_SquadId, void);
+    DEFINE_FUNC(OnRep_DeathInfo, void);
 };

@@ -536,6 +536,57 @@ void AFortPlayerControllerAthena::ServerPlayEmoteItem(UObject* Context, FFrame& 
 	}
 }
 
+
+
+void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* PlayerController, FFortPlayerDeathReport& DeathReport)
+{
+	if (!PlayerController)
+		return ClientOnPawnDiedOG(PlayerController, DeathReport);
+	auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+	auto GameState = (AFortGameStateAthena*)GameMode->GameState;
+	auto PlayerState = (AFortPlayerStateAthena*)PlayerController->PlayerState;
+
+	static auto MeleeClass = FindClass("FortWeaponMeleeItemDefinition");
+	static auto ResourceClass = FindClass("FortResourceItemDefinition");
+	static auto RangedWeaponClass = FindClass("FortWeaponRangedItemDefinition");
+	static auto ConsumableClass = FindClass("FortConsumableItemDefinition");
+	static auto AmmoClass = FindClass("FortAmmoItemDefinition");
+
+	if (!GameState->IsRespawningAllowed(PlayerState) && PlayerController->WorldInventory && PlayerController->MyFortPawn)
+	{
+		bool bHasMats = false;
+		for (int i = 0; i < PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
+		{
+			auto& entry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
+
+			if (!entry.ItemDefinition->IsA(MeleeClass) && (entry.ItemDefinition->IsA(ResourceClass) || entry.ItemDefinition->IsA(RangedWeaponClass) || entry.ItemDefinition->IsA(ConsumableClass) || entry.ItemDefinition->IsA(AmmoClass)))
+			{
+				AFortInventory::SpawnPickup(PlayerController->MyFortPawn->K2_GetActorLocation(), entry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetPlayerElimination(), PlayerController->MyFortPawn);
+			}
+		}
+	}
+
+
+	auto KillerPlayerState = (AFortPlayerStateAthena*)DeathReport.KillerPlayerState;
+	auto KillerPawn = (AFortPlayerPawnAthena*)DeathReport.KillerPawn;
+
+	//Log(L"DBNO: %d\n", PlayerController->MyFortPawn ? PlayerController->MyFortPawn->IsDBNO() : false);
+
+
+	/*PlayerState->PawnDeathLocation = PlayerController->MyFortPawn ? PlayerController->MyFortPawn->K2_GetActorLocation() : FVector();
+	PlayerState->DeathInfo.bDBNO = PlayerController->MyFortPawn ? PlayerController->MyFortPawn->IsDBNO() : false;
+	PlayerState->DeathInfo.DeathLocation = PlayerState->PawnDeathLocation;
+	PlayerState->DeathInfo.DeathTags = DeathReport.Tags;
+	PlayerState->DeathInfo.DeathCause = AFortPlayerStateAthena::ToDeathCause(PlayerState->DeathInfo.DeathTags, PlayerState->DeathInfo.bDBNO);
+	//PlayerState->DeathInfo.Downer = KillerPlayerState;
+	PlayerState->DeathInfo.FinisherOrDowner = KillerPlayerState ? KillerPlayerState : PlayerState;
+	PlayerState->DeathInfo.Distance = PlayerController->MyFortPawn ? (PlayerState->DeathInfo.DeathCause != EDeathCause::FallDamage ? (KillerPawn ? KillerPawn->GetDistanceTo(PlayerController->MyFortPawn) : 0) : PlayerController->MyFortPawn->Cast<AFortPlayerPawnAthena>()->LastFallDistance) : 0;
+	PlayerState->DeathInfo.bInitialized = true;
+	PlayerState->OnRep_DeathInfo();*/
+
+	return ClientOnPawnDiedOG(PlayerController, DeathReport);
+}
+
 void AFortPlayerControllerAthena::Hook()
 {
 	CantBuild_ = FindCantBuild();
@@ -570,4 +621,7 @@ void AFortPlayerControllerAthena::Hook()
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerAttemptInventoryDrop"), ServerAttemptInventoryDrop);
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerPlayEmoteItem"), ServerPlayEmoteItem);
+
+	auto ClientOnPawnDiedAddr = FindFunctionCall(L"ClientOnPawnDied", VersionInfo.EngineVersion == 4.16 ? std::vector<uint8_t>{ 0x48, 0x89, 0x54 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
+	Utils::Hook(ClientOnPawnDiedAddr, ClientOnPawnDied, ClientOnPawnDiedOG);
 }

@@ -34,6 +34,7 @@ public:
     DEFINE_PROP(EmoteWalkSpeed, float);
     DEFINE_BITFIELD_PROP(bMovingEmoteForwardOnly);
     DEFINE_BITFIELD_PROP(bMovingEmoteFollowingOnly);
+    DEFINE_PROP(LastFallDistance, float);
 
     DEFINE_FUNC(BeginSkydiving, void);
     DEFINE_FUNC(SetHealth, void);
@@ -42,6 +43,7 @@ public:
     DEFINE_FUNC(LaunchCharacterJump, void);
     DEFINE_FUNC(OnCapsuleBeginOverlap, void);
     DEFINE_FUNC(ServerHandlePickup, void);
+    DEFINE_FUNC(IsDBNO, bool);
 
     DefUHookOg(ServerHandlePickup_);
     DefUHookOg(ServerHandlePickupInfo);

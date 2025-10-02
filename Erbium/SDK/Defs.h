@@ -137,10 +137,10 @@
     __VA_ARGS__ Name;
 
 #define DEFINE_ENUM_PROP(Name)                                                  \
-    static inline __int64 Name##__Value = -1;                                   \
+    static inline __int64 Name##__Value = -2;                                   \
     static __int64 Get##Name()                                                  \
     {                                                                           \
-        if (Name##__Value == -1)                                                \
+        if (Name##__Value == -2)                                                \
             Name##__Value = StaticEnum()->GetValue(#Name);                      \
         return Name##__Value;                                                   \
     }                                                                           \

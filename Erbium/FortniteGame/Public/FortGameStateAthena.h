@@ -69,6 +69,6 @@ public:
     DEFINE_FUNC(OnRep_CurrentPlaylistInfo, void);
     DEFINE_FUNC(OnRep_CurrentPlaylistData, void);
     DEFINE_FUNC(OnRep_CurrentPlaylistId, void);
-
     DEFINE_FUNC(OnRep_AdditionalPlaylistLevelsStreamed, void);
+    DEFINE_FUNC(IsRespawningAllowed, bool);
 };

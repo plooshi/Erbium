@@ -4,6 +4,7 @@
 #include "FortPlayerPawnAthena.h"
 #include "FortInventory.h"
 #include "FortPlayerStateAthena.h"
+#include "GameplayTagContainer.h"
 
 
 class UAthenaPickaxeItemDefinition : public UFortItemDefinition
@@ -20,6 +21,16 @@ public:
     USCRIPTSTRUCT_COMMON_MEMBERS(FFortAthenaLoadout);
 
     DEFINE_STRUCT_PROP(Pickaxe, UAthenaPickaxeItemDefinition*);
+};
+
+struct FFortPlayerDeathReport
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FFortPlayerDeathReport);
+
+    DEFINE_STRUCT_PROP(KillerPlayerState, AFortPlayerStateAthena*);
+    DEFINE_STRUCT_PROP(KillerPawn, AFortPlayerPawnAthena*);
+    DEFINE_STRUCT_PROP(Tags, FGameplayTagContainer);
 };
 
 class AFortPlayerControllerAthena : public AActor
@@ -57,6 +68,7 @@ public:
     static void ServerRepairBuildingActor(UObject*, FFrame&);
     static void ServerAttemptInventoryDrop(UObject*, FFrame&);
     static void ServerPlayEmoteItem(UObject*, FFrame&);
+    DefHookOg(void, ClientOnPawnDied, AFortPlayerControllerAthena*, FFortPlayerDeathReport&);
     
 
     InitHooks;

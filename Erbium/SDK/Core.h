@@ -874,6 +874,9 @@ namespace SDK
 	public:
 		int64 GetValue(const char *EnumMemberName) const
 		{
+			if (!this)
+				return -1;
+
 			auto Names = *(TArray<TPair<FName, int64>>*)(__int64(this) + 0x40);
 
 			for (int i = 0; i < Names.Num(); i++)
