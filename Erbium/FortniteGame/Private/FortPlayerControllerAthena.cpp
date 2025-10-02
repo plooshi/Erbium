@@ -429,6 +429,35 @@ void AFortPlayerControllerAthena::ServerEndEditingBuildingActor(UObject* Context
 }
 
 
+void AFortPlayerControllerAthena::ServerAttemptInventoryDrop(UObject* Context, FFrame& Stack)
+{
+	FGuid Guid;
+	int32 Count;
+	bool bTrash = false;
+	Stack.StepCompiledIn(&Guid);
+	Stack.StepCompiledIn(&Count);
+	Stack.StepCompiledIn(&bTrash);
+	Stack.IncrementCode();
+	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+
+	if (!PlayerController || !PlayerController->Pawn)
+		return;
+
+	auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+		{ return entry.ItemGuid == Guid; }, FFortItemEntry::Size());
+	if (!ItemEntry || (ItemEntry->Count - Count) < 0)
+		return;
+
+	ItemEntry->Count -= Count;
+	AFortInventory::SpawnPickup(PlayerController->Pawn->K2_GetActorLocation() + PlayerController->Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), *ItemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn, Count);
+	if (ItemEntry->Count == 0)
+		PlayerController->WorldInventory->Remove(Guid);
+	else
+		PlayerController->WorldInventory->UpdateEntry(*ItemEntry);
+}
+
+
+
 void AFortPlayerControllerAthena::Hook()
 {
 	CantBuild_ = FindCantBuild();
@@ -459,4 +488,6 @@ void AFortPlayerControllerAthena::Hook()
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerBeginEditingBuildingActor"), ServerBeginEditingBuildingActor);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerEditBuildingActor"), ServerEditBuildingActor);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerEndEditingBuildingActor"), ServerEndEditingBuildingActor);
+
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerAttemptInventoryDrop"), ServerAttemptInventoryDrop);
 }

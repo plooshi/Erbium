@@ -55,6 +55,7 @@ public:
     static void ServerEditBuildingActor(UObject*, FFrame&);
     static void ServerEndEditingBuildingActor(UObject*, FFrame&);
     static void ServerRepairBuildingActor(UObject*, FFrame&);
+    static void ServerAttemptInventoryDrop(UObject*, FFrame&);
     
 
     InitHooks;

@@ -739,8 +739,11 @@ namespace SDK
 			else
 			{
 				const UField* _Prop = *(const UField**)(__int64(this) + (VersionInfo.FortniteVersion >= 20 ? 0x88 : 0x80));
-				*(const UField**)(__int64(this) + (VersionInfo.FortniteVersion >= 20 ? 0x88 : 0x80)) = _Prop->GetNext(VersionInfo.EngineVersion >= 4.25);
-				((void (*)(FFrame*, void* const, const UField*)) Offsets::StepExplicitProperty)(this, Result, _Prop);
+				if (_Prop)
+				{
+					*(const UField**)(__int64(this) + (VersionInfo.FortniteVersion >= 20 ? 0x88 : 0x80)) = _Prop->GetNext(VersionInfo.EngineVersion >= 4.25);
+					((void (*)(FFrame*, void* const, const UField*)) Offsets::StepExplicitProperty)(this, Result, _Prop);
+				}
 			}
 		}
 
