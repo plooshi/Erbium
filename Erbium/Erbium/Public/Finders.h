@@ -194,6 +194,9 @@ inline uint64_t FindCreateNetDriverWorldContext()
     if (CreateNetDriver == 0)
     {
         auto Ptr = Memcury::Scanner::FindPattern("C7 44 24 ? 00 20 00 00 33 D2 48 8B C8 E8 ? ? ? ? 48 ?? 4C");
+        
+        if (!Ptr.Get())
+            Ptr = Memcury::Scanner::FindPattern("C7 44 24 ? 00 20 00 00 48 8B C8 E8 ? ? ? ? 48 ?? 4C");
 
         if (!Ptr.Get())
             return 0;
@@ -541,12 +544,12 @@ inline uint64 FindApplyCharacterCustomization()
 
     if (ApplyCharacterCustomization == 0)
     {
-        auto sRef = Memcury::Scanner::FindStringRef(L"AFortPlayerState::ApplyCharacterCustomization - Failed initialization, using default parts. Player Controller: %s PlayerState: %s, HeroId: %s", false, 0, VersionInfo.FortniteVersion >= 19, true).Get();
+        auto sRef = Memcury::Scanner::FindStringRef(L"AFortPlayerState::ApplyCharacterCustomization - Failed initialization, using default parts. Player Controller: %s PlayerState: %s, HeroId: %s", false, 0, VersionInfo.FortniteVersion >= 17, true).Get();
 
         if (!sRef)
             return 0;
 
-        for (int i = 0; i < 7000; i++)
+        for (int i = 100; i < 7000; i++)
         {
             if (*(uint8_t*)(sRef - i) == 0x40 && (*(uint8_t*)(sRef - i + 1) == 0x53 || *(uint8_t*)(sRef - i + 1) == 0x55))
                 return ApplyCharacterCustomization = sRef - i;
@@ -1111,8 +1114,19 @@ inline void FindNullsAndRetTrues()
         }
     }
 
-    if (VersionInfo.FortniteVersion == 2.5) 
+    if (VersionInfo.FortniteVersion == 2.5)
         NullFuncs.push_back(Memcury::Scanner::FindPattern("40 55 56 41 56 48 8B EC 48 81 EC ? ? ? ? 48 8B 01 4C 8B F2").Get());
+    else if (VersionInfo.EngineVersion == 5.0)
+        NullFuncs.push_back(Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8B EC 48 83 EC 50 4C 8B FA 48 8B F1 E8").Get());
+    else if (VersionInfo.EngineVersion == 4.27)
+    {
+        auto pattern = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 48 89 7C 24 ? 55 41 54 41 55 41 56 41 57 48 8B EC 48 83 EC 70 4C 8B FA 4C").Get();
+
+        if (!pattern)
+            pattern = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 48 89 7C 24 ? 55 41 54 41 55 41 56 41 57 48 8B EC 48 83 EC ? 4C 8B FA 4C 8B F1 E8 ? ? ? ? 48 8B 0D").Get();
+
+        NullFuncs.push_back(pattern);
+    }
     else 
     {
         auto sRef = Memcury::Scanner::FindStringRef(L"Changing GameSessionId from '%s' to '%s'");
@@ -1159,6 +1173,8 @@ inline void FindNullsAndRetTrues()
         auto RequestExit = Memcury::Scanner::FindPattern("40 53 48 83 EC ? 80 3D ? ? ? ? ? 0F B6 D9 72 ? 48 8D 05 ? ? ? ? 89 5C 24 ? 41 B9 ? ? ? ? 48 89 44 24 ? 4C 8D 05 ? ? ? ? 33 D2 33 C9 E8 ? ? ? ? 48 8D 0D").Get();
         if (!RequestExit)
             RequestExit = Memcury::Scanner::FindPattern("88 4C 24 ? 53 48 83 EC ? 80 3D ? ? ? ? ? 8A D9").Get();
+        if (!RequestExit)
+            RequestExit = Memcury::Scanner::FindPattern("40 53 48 83 EC ? 41 B9 ? ? ? ? 0F B6 D9").Get();
 
         if (RequestExit)
             NullFuncs.push_back(RequestExit);

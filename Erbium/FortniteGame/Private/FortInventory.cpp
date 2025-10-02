@@ -316,9 +316,9 @@ void AFortInventory::Hook()
         {
             auto HasPhantomReserveAmmo = FFortItemEntry::HasPhantomReserveAmmo();
 
-            Utils::Hook<UFortWorldItem>(uint32(SetOwningInventoryIdx - (HasPhantomReserveAmmo ? 3 : 1)), SetLoadedAmmo);
+            Utils::Hook<UFortWorldItem>(uint32(SetOwningInventoryIdx - (HasPhantomReserveAmmo ? (VersionInfo.EngineVersion < 4.27 ? 2 : 3) : 1)), SetLoadedAmmo);
             if (HasPhantomReserveAmmo)
-                Utils::Hook<UFortWorldItem>(uint32(SetOwningInventoryIdx - 2), SetLoadedAmmo);
+                Utils::Hook<UFortWorldItem>(uint32(SetOwningInventoryIdx - (VersionInfo.EngineVersion < 4.27 ? 1 : 2)), SetPhantomReserveAmmo);
         }
     }
 }

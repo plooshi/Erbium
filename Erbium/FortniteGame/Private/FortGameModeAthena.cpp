@@ -162,7 +162,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         }
         if (VersionInfo.FortniteVersion >= 3.5 && VersionInfo.FortniteVersion < 4.0)
             SetupPlaylist(GameMode, GameState);
-        else if (VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.36)
+        else if (VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.26)
             GameState->OnRep_CurrentPlaylistInfo(); 
 
 
@@ -331,6 +331,16 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
     }
 
     *Ret = VersionInfo.EngineVersion < 4.24 ? callOGWithRet(GameMode, Stack.GetCurrentNativeFunction(), ReadyToStartMatch) : GameMode->AlivePlayers.Num() >= GameMode->WarmupRequiredPlayerCount;
+    if (VersionInfo.FortniteVersion >= 15 && VersionInfo.FortniteVersion < 18 && !*Ret)
+    {
+        auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
+        auto WarmupDuration = 60.f;
+
+        GameState->WarmupCountdownStartTime = Time;
+        GameState->WarmupCountdownEndTime = Time + WarmupDuration;
+        GameMode->WarmupCountdownDuration = WarmupDuration;
+        GameMode->WarmupEarlyCountdownDuration = WarmupDuration;
+    }
     return;
 }
 

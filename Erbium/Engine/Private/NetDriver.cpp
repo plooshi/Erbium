@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "../Public/NetDriver.h"
 #include "../../Erbium/Public/Finders.h"
+#include "../../FortniteGame/Public/FortGameModeAthena.h"
 
 void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 {
@@ -9,6 +10,19 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
     if (HasReplicationDriver_ ? Driver->ReplicationDriver : nullptr)
     {
         ((void (*)(UObject*, float)) FindServerReplicateActors())(Driver->ReplicationDriver, DeltaSeconds);
+    }
+
+    static bool bStartedBus = false;
+    if (!bStartedBus)
+    { 
+
+        auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
+        if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->bWorldIsReady && ((AFortGameStateAthena*)UWorld::GetWorld()->GameState)->WarmupCountdownEndTime <= Time)
+        {
+            bStartedBus = true;
+
+            UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
+        }
     }
 
     return TickFlushOG(Driver, DeltaSeconds);
