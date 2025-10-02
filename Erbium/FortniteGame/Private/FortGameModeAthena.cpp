@@ -11,6 +11,20 @@
 #include "../../Engine/Public/DataTableFunctionLibrary.h"
 #include "../../Erbium/Public/Configuration.h"
 #include "../Public/FortLootPackage.h"
+#include "../Public/BuildingFoundation.h"
+
+
+__declspec(noinline) void ShowFoundation(const ABuildingFoundation* Foundation)
+{
+    if (!Foundation) 
+        return;
+
+    Foundation->StreamingData.BoundingBox = Foundation->StreamingBoundingBox;
+    Foundation->StreamingData.SetFoundationLocation(Foundation->GetTransform().Translation);
+    Foundation->SetDynamicFoundationEnabled(true);
+    //Foundation->SetDynamicFoundationTransform(Foundation->GetTransform());
+}
+
 
 void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameState)
 {
@@ -42,6 +56,12 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
         if (GameMode->GameSession->HasMaxPlayers())
             GameMode->GameSession->MaxPlayers = Playlist->MaxPlayers;
 
+        if (VersionInfo.FortniteVersion >= 8 && VersionInfo.FortniteVersion < 10)
+        {
+            auto Volcano = Utils::FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.LF_Athena_POI_50x53_Volcano");
+            ShowFoundation(Volcano);
+        }
+        ShowFoundation(Utils::FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.SLAB_2"));
 
 
         if (Playlist->HasAdditionalLevels())

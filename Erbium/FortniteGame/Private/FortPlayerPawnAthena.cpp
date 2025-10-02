@@ -104,84 +104,6 @@ void AFortPlayerPawnAthena::ServerHandlePickupInfo(UObject* Context, FFrame& Sta
 }
 
 
-void InternalPickup(AFortPlayerControllerAthena* PlayerController, FFortItemEntry* PickupEntry)
-{
-	auto MaxStack = (int32)PickupEntry->ItemDefinition->GetMaxStackSize();
-	int ItemCount = 0;
-
-	for (int i = 0; i < PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
-	{
-		auto& Item = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
-
-		if (AFortInventory::IsPrimaryQuickbar(Item.ItemDefinition))
-			ItemCount += Item.ItemDefinition->HasNumberOfSlotsToTake() ? Item.ItemDefinition->NumberOfSlotsToTake : 1;
-	}
-
-	auto GiveOrSwap = [&]() 
-	{
-		if (ItemCount >= 5 && AFortInventory::IsPrimaryQuickbar(PickupEntry->ItemDefinition)) 
-		{
-			if (AFortInventory::IsPrimaryQuickbar(((AFortWeapon*)PlayerController->MyFortPawn->CurrentWeapon)->WeaponData)) 
-			{
-				auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([PlayerController](FFortItemEntry& entry)
-					{ return entry.ItemGuid == ((AFortWeapon*)PlayerController->MyFortPawn->CurrentWeapon)->ItemEntryGuid; }, FFortItemEntry::Size());
-
-
-				AFortInventory::SpawnPickup(PlayerController->GetViewTarget()->K2_GetActorLocation(), *itemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn);
-				PlayerController->WorldInventory->Remove(((AFortWeapon*)PlayerController->MyFortPawn->CurrentWeapon)->ItemEntryGuid);
-				PlayerController->WorldInventory->GiveItem(*PickupEntry, PickupEntry->Count, true);
-			}
-			else
-				AFortInventory::SpawnPickup(PlayerController->GetViewTarget()->K2_GetActorLocation(), (FFortItemEntry&)PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn);
-		}
-		else
-			PlayerController->WorldInventory->GiveItem(*PickupEntry, PickupEntry->Count, true);
-	};
-
-	auto GiveOrSwapStack = [&](int32 OriginalCount)
-	{
-		if (PickupEntry->ItemDefinition->bAllowMultipleStacks && ItemCount < 5)
-			PlayerController->WorldInventory->GiveItem(*PickupEntry, OriginalCount - MaxStack, true);
-		else
-			AFortInventory::SpawnPickup(PlayerController->GetViewTarget()->K2_GetActorLocation(), (FFortItemEntry&)PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn, OriginalCount - MaxStack);
-	};
-
-	if (MaxStack > 1)
-	{
-		auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([PickupEntry, MaxStack](FFortItemEntry& entry)
-			{ return entry.ItemDefinition == PickupEntry->ItemDefinition && entry.Count < MaxStack; }, FFortItemEntry::Size());
-
-		if (itemEntry) 
-		{
-			if ((itemEntry->Count += PickupEntry->Count) > MaxStack) 
-			{
-				auto OriginalCount = itemEntry->Count;
-				itemEntry->Count = MaxStack;
-
-				GiveOrSwapStack(OriginalCount);
-			}
-
-			PlayerController->WorldInventory->UpdateEntry(*itemEntry);
-		}
-		else 
-		{
-			if (PickupEntry->Count > MaxStack) 
-			{
-				auto OriginalCount = PickupEntry->Count;
-				PickupEntry->Count = MaxStack;
-
-				GiveOrSwapStack(OriginalCount);
-			}
-
-			GiveOrSwap();
-		}
-	}
-	else
-		GiveOrSwap();
-}
-
-
-
 bool AFortPlayerPawnAthena::FinishedTargetSpline(void* _Pickup) {
 	auto Pickup = (AFortPickupAthena*)_Pickup;
 
@@ -202,7 +124,7 @@ bool AFortPlayerPawnAthena::FinishedTargetSpline(void* _Pickup) {
 		PlayerController->SwappingItemDefinition = nullptr;
 	}
 	else
-		InternalPickup(PlayerController, &Pickup->PrimaryPickupItemEntry);
+		PlayerController->InternalPickup(&Pickup->PrimaryPickupItemEntry);
 
 	return FinishedTargetSplineOG(Pickup);
 }

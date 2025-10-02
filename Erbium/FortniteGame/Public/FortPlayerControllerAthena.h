@@ -69,6 +69,7 @@ public:
     static void ServerAttemptInventoryDrop(UObject*, FFrame&);
     static void ServerPlayEmoteItem(UObject*, FFrame&);
     DefHookOg(void, ClientOnPawnDied, AFortPlayerControllerAthena*, FFortPlayerDeathReport&);
+    void InternalPickup(FFortItemEntry*);
     
 
     InitHooks;

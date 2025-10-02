@@ -60,8 +60,9 @@ public:
     DEFINE_PROP(LootLevelData, FDataTableCategoryHandle);
 
     DEFINE_FUNC(CreateTemporaryItemInstanceBP, UFortItem*);
+    DEFINE_FUNC(GetWeaponItemDefinition, UFortItemDefinition*);
     
-    int32 GetMaxStackSize()
+    int32 GetMaxStackSize() const
     {
         static auto Prop = this->GetProperty("MaxStackSize");
         static auto ElementSizeOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x3c : (VersionInfo.EngineVersion >= 5.2 ? 0x2c : 0x34);
@@ -88,7 +89,7 @@ public:
     DEFINE_STRUCT_PROP(PhantomReserveAmmo, int32);
     DEFINE_STRUCT_PROP(ItemGuid, FGuid);
     DEFINE_STRUCT_PROP(TrackerGuid, FGuid);
-    DEFINE_STRUCT_PROP(ItemDefinition, UFortItemDefinition*);
+    DEFINE_STRUCT_PROP(ItemDefinition, const UFortItemDefinition*);
     DEFINE_STRUCT_PROP(Count, int32);
     DEFINE_STRUCT_PROP(Durability, float);
     DEFINE_STRUCT_PROP(GameplayAbilitySpecHandle, FGameplayAbilitySpecHandle);
@@ -220,16 +221,16 @@ public:
     
     DEFINE_FUNC(HandleInventoryLocalUpdate, void);
 
-    UFortWorldItem* GiveItem(UFortItemDefinition*, int = 1, int = 0, int = 0, bool = true, bool = true, int = 0);
+    UFortWorldItem* GiveItem(const UFortItemDefinition*, int = 1, int = 0, int = 0, bool = true, bool = true, int = 0);
     UFortWorldItem* GiveItem(FFortItemEntry&, int = -1, bool = true, bool = true);
     void Update(FFortItemEntry*);
     void Remove(FGuid);
     static AFortPickupAthena* SpawnPickup(FVector, FFortItemEntry&, long long = EFortPickupSourceTypeFlag::GetTossed(), long long = EFortPickupSpawnSource::GetUnset(), AFortPlayerPawnAthena* = nullptr, int = -1, bool = true, bool = true, bool = true);
-    static AFortPickupAthena* SpawnPickup(FVector, UFortItemDefinition*, int, int, long long = EFortPickupSourceTypeFlag::GetTossed(), long long = EFortPickupSpawnSource::GetUnset(), AFortPlayerPawnAthena* = nullptr, bool = true, bool = true);
+    static AFortPickupAthena* SpawnPickup(FVector, const UFortItemDefinition*, int, int, long long = EFortPickupSourceTypeFlag::GetTossed(), long long = EFortPickupSpawnSource::GetUnset(), AFortPlayerPawnAthena* = nullptr, bool = true, bool = true);
     static AFortPickupAthena* SpawnPickup(ABuildingContainer*, FFortItemEntry&, AFortPlayerPawnAthena* = nullptr, int = -1);
-    static FFortItemEntry* MakeItemEntry(UFortItemDefinition*, int32, int32);
+    static FFortItemEntry* MakeItemEntry(const UFortItemDefinition*, int32, int32);
     static FFortRangedWeaponStats* GetStats(UFortWeaponItemDefinition*);
-    static bool IsPrimaryQuickbar(UFortItemDefinition*);
+    static bool IsPrimaryQuickbar(const UFortItemDefinition*);
     void UpdateEntry(FFortItemEntry&);
 
     InitHooks;

@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "../Public/BuildingFoundation.h"
 
-void ABuildingFoundation::SetDynamicFoundationEnabled(UObject* Context, FFrame& Stack)
+void ABuildingFoundation::SetDynamicFoundationEnabled_(UObject* Context, FFrame& Stack)
 {
 	auto Foundation = (ABuildingFoundation*)Context;
 	bool bEnabled;
@@ -29,7 +29,7 @@ void ABuildingFoundation::SetDynamicFoundationTransform_(UObject* Context, FFram
 		Foundation->DynamicFoundationRepData.Translation = Transform.Translation;
 	}
 	Foundation->StreamingData.FoundationLocation = Transform.Translation;
-	__movsb((PBYTE)&Foundation->StreamingData.BoundingBox, (const PBYTE)&Foundation->StreamingBoundingBox, VersionInfo.FortniteVersion >= 20.00 ? 0x38 : 0x1c);
+	//Foundation->StreamingData.BoundingBox = Foundation->StreamingBoundingBox;
 	if (Foundation->HasDynamicFoundationRepData())
 		Foundation->OnRep_DynamicFoundationRepData();
 }
@@ -39,6 +39,6 @@ void ABuildingFoundation::Hook()
 	if (!GetDefaultObj())
 		return;
 
-	Utils::ExecHook(GetDefaultObj()->GetFunction("SetDynamicFoundationEnabled"), SetDynamicFoundationEnabled);
+	Utils::ExecHook(GetDefaultObj()->GetFunction("SetDynamicFoundationEnabled"), SetDynamicFoundationEnabled_);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("SetDynamicFoundationTransform"), SetDynamicFoundationTransform_);
 }

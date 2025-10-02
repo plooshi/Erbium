@@ -124,6 +124,24 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryItem(UObject* Context, F
 		return;
 
 	UFortItemDefinition* ItemDefinition = (UFortItemDefinition*) entry->ItemDefinition;
+
+	static auto GadgetClass = FindClass("FortGadgetItemDefinition");
+	static auto DecoClass = FindClass("FortDecoItemDefinition");
+	static auto ContextTrapClass = FindClass("FortDecoTool_ContextTrap");
+
+	if (ItemDefinition->IsA(GadgetClass))
+		ItemDefinition = ItemDefinition->GetWeaponItemDefinition();
+	else if (ItemDefinition->IsA(DecoClass))
+	{
+		PlayerController->MyFortPawn->PickUpActor(nullptr, ItemDefinition);
+		((AFortWeapon*)PlayerController->MyFortPawn->CurrentWeapon)->ItemEntryGuid = ItemGuid;
+
+		if (PlayerController->MyFortPawn->CurrentWeapon->IsA(ContextTrapClass))
+			((AFortWeapon*)PlayerController->MyFortPawn->CurrentWeapon)->ContextTrapItemDefinition = ItemDefinition;
+
+		return;
+	}
+
 	PlayerController->MyFortPawn->EquipWeaponDefinition(ItemDefinition, ItemGuid, entry->HasTrackerGuid() ? entry->TrackerGuid : FGuid(), false);
 }
 
@@ -146,6 +164,7 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryWeapon(UObject* Context,
 		return;
 
 	UFortItemDefinition* ItemDefinition = (UFortItemDefinition*)entry->ItemDefinition;
+
 	PlayerController->MyFortPawn->EquipWeaponDefinition(ItemDefinition, Weapon->ItemEntryGuid, entry->HasTrackerGuid() ? entry->TrackerGuid : FGuid(), false);
 }
 
@@ -584,6 +603,84 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 
 	return ClientOnPawnDiedOG(PlayerController, DeathReport);
 }
+
+
+void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
+{
+	auto MaxStack = (int32)PickupEntry->ItemDefinition->GetMaxStackSize();
+	int ItemCount = 0;
+
+	for (int i = 0; i < WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
+	{
+		auto& Item = WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
+
+		if (AFortInventory::IsPrimaryQuickbar(Item.ItemDefinition))
+			ItemCount += Item.ItemDefinition->HasNumberOfSlotsToTake() ? Item.ItemDefinition->NumberOfSlotsToTake : 1;
+	}
+
+	auto GiveOrSwap = [&]()
+		{
+			if (ItemCount >= 5 && AFortInventory::IsPrimaryQuickbar(PickupEntry->ItemDefinition))
+			{
+				if (AFortInventory::IsPrimaryQuickbar(((AFortWeapon*)MyFortPawn->CurrentWeapon)->WeaponData))
+				{
+					auto itemEntry = WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+						{ return entry.ItemGuid == ((AFortWeapon*)MyFortPawn->CurrentWeapon)->ItemEntryGuid; }, FFortItemEntry::Size());
+
+
+					AFortInventory::SpawnPickup(GetViewTarget()->K2_GetActorLocation(), *itemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn);
+					WorldInventory->Remove(((AFortWeapon*)MyFortPawn->CurrentWeapon)->ItemEntryGuid);
+					WorldInventory->GiveItem(*PickupEntry, PickupEntry->Count, true);
+				}
+				else
+					AFortInventory::SpawnPickup(GetViewTarget()->K2_GetActorLocation(), (FFortItemEntry&)PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn);
+			}
+			else
+				WorldInventory->GiveItem(*PickupEntry, PickupEntry->Count, true);
+		};
+
+	auto GiveOrSwapStack = [&](int32 OriginalCount)
+		{
+			if (PickupEntry->ItemDefinition->bAllowMultipleStacks && ItemCount < 5)
+				WorldInventory->GiveItem(*PickupEntry, OriginalCount - MaxStack, true);
+			else
+				AFortInventory::SpawnPickup(GetViewTarget()->K2_GetActorLocation(), (FFortItemEntry&)PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn, OriginalCount - MaxStack);
+		};
+
+	if (MaxStack > 1)
+	{
+		auto itemEntry = WorldInventory->Inventory.ReplicatedEntries.Search([PickupEntry, MaxStack](FFortItemEntry& entry)
+			{ return entry.ItemDefinition == PickupEntry->ItemDefinition && entry.Count < MaxStack; }, FFortItemEntry::Size());
+
+		if (itemEntry)
+		{
+			if ((itemEntry->Count += PickupEntry->Count) > MaxStack)
+			{
+				auto OriginalCount = itemEntry->Count;
+				itemEntry->Count = MaxStack;
+
+				GiveOrSwapStack(OriginalCount);
+			}
+
+			WorldInventory->UpdateEntry(*itemEntry);
+		}
+		else
+		{
+			if (PickupEntry->Count > MaxStack)
+			{
+				auto OriginalCount = PickupEntry->Count;
+				PickupEntry->Count = MaxStack;
+
+				GiveOrSwapStack(OriginalCount);
+			}
+
+			GiveOrSwap();
+		}
+	}
+	else
+		GiveOrSwap();
+}
+
 
 void AFortPlayerControllerAthena::Hook()
 {

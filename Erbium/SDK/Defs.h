@@ -80,7 +80,14 @@
         return Name##__Offset != -1;                                            \
     }                                                                           \
                                                                                 \
-    __VA_ARGS__& Set##Name(__VA_ARGS__ Value) const                             \
+    __VA_ARGS__& Set##Name(__VA_ARGS__&& Value) const                           \
+    {                                                                           \
+        if (Name##__Offset == -2)                                               \
+            Name##__Offset = this->GetOffset(#Name);                            \
+        return GetFromOffset<__VA_ARGS__>(this, Name##__Offset) = Value;        \
+    }                                                                           \
+                                                                                \
+    __VA_ARGS__& Set##Name(__VA_ARGS__& Value) const                            \
     {                                                                           \
         if (Name##__Offset == -2)                                               \
             Name##__Offset = this->GetOffset(#Name);                            \
@@ -126,7 +133,14 @@
         return Name##__Offset != -1;                                            \
     }                                                                           \
                                                                                 \
-    __VA_ARGS__& Set##Name(__VA_ARGS__ Value) const                             \
+    __VA_ARGS__& Set##Name(__VA_ARGS__&& Value) const                           \
+    {                                                                           \
+        if (Name##__Offset == -2)                                               \
+            Name##__Offset = StaticStruct()->GetOffset(#Name);                  \
+        return GetFromOffset<__VA_ARGS__>(this, Name##__Offset) = Value;        \
+    }                                                                           \
+                                                                                \
+    __VA_ARGS__& Set##Name(__VA_ARGS__& Value) const                            \
     {                                                                           \
         if (Name##__Offset == -2)                                               \
             Name##__Offset = StaticStruct()->GetOffset(#Name);                  \
@@ -159,7 +173,7 @@
     }*/                                                                         \
                                                                                 \
     template <typename... Args>                                                 \
-    __VA_ARGS__ Name(Args... Params)                                            \
+    __VA_ARGS__ Name(Args... Params) const                                      \
     {                                                                           \
         if (!Name##__Ptr)                                                       \
             Name##__Ptr = GetFunction(#Name);                                   \

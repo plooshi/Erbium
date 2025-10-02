@@ -43,8 +43,10 @@ public:
     DEFINE_PROP(StreamingBoundingBox, int32);
 
     DEFINE_FUNC(OnRep_DynamicFoundationRepData, void);
+    //DEFINE_FUNC(SetDynamicFoundationTransform, void);
+    DEFINE_FUNC(SetDynamicFoundationEnabled, void);
 
-    static void SetDynamicFoundationEnabled(UObject*, FFrame&);
+    static void SetDynamicFoundationEnabled_(UObject*, FFrame&);
     static void SetDynamicFoundationTransform_(UObject*, FFrame&);
 
     InitHooks;

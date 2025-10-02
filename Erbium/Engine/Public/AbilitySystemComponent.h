@@ -62,7 +62,7 @@ public:
     DEFINE_FUNC(ClientActivateAbilityFailed, void);
 
     void GiveAbility(const UObject* Ability);
-    void GiveAbilitySet(UFortAbilitySet* Set);
+    void GiveAbilitySet(const UFortAbilitySet* Set);
     static void InternalServerTryActivateAbility(UAbilitySystemComponent*, FGameplayAbilitySpecHandle, bool, FPredictionKey*, void*);
 
     InitHooks;

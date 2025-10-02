@@ -186,6 +186,7 @@
     <ClCompile Include="FortniteGame\Private\BuildingSMActor.cpp" />
     <ClCompile Include="FortniteGame\Private\FortGameModeAthena.cpp" />
     <ClCompile Include="FortniteGame\Private\FortInventory.cpp" />
+    <ClCompile Include="FortniteGame\Private\FortKismetLibrary.cpp" />
     <ClCompile Include="FortniteGame\Private\FortLootPackage.cpp" />
     <ClCompile Include="FortniteGame\Private\FortMissionLibrary.cpp" />
     <ClCompile Include="FortniteGame\Private\FortPlayerControllerAthena.cpp" />

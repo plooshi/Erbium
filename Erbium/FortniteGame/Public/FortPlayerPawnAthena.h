@@ -44,6 +44,7 @@ public:
     DEFINE_FUNC(OnCapsuleBeginOverlap, void);
     DEFINE_FUNC(ServerHandlePickup, void);
     DEFINE_FUNC(IsDBNO, bool);
+    DEFINE_FUNC(PickUpActor, void);
 
     DefUHookOg(ServerHandlePickup_);
     DefUHookOg(ServerHandlePickupInfo);

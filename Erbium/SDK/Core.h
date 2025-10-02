@@ -979,7 +979,7 @@ namespace SDK
 		{
 		}
 
-		FWeakObjectPtr(UObject* Object) 
+		FWeakObjectPtr(const UObject* Object) 
 		{
 			if (Object)
 			{
@@ -1130,6 +1130,18 @@ namespace SDK
 	};
 
 	class IInterface : public UObject
+	{
+	};
+
+	class FScriptInterface
+	{
+	public:
+		UObject* ObjectPointer = nullptr;
+		IInterface* InterfacePointer = nullptr;
+	};
+
+	template<class InterfaceType>
+	class TScriptInterface : public FScriptInterface
 	{
 	};
 

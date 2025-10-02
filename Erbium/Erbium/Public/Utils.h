@@ -63,34 +63,34 @@ public:
         VirtualProtect(LPVOID(ptr), sizeof(_Is), og, &og);
     }
 
-    __forceinline static UObject* InternalFindObject(const wchar_t* ObjectPath, const UClass* Class)
+    __forceinline static const UObject* InternalFindObject(const wchar_t* ObjectPath, const UClass* Class)
     {
         auto StaticFindObjectInternal = (UObject * (*)(const UClass*, UObject*, const wchar_t*, bool)) FindStaticFindObject();
         return StaticFindObjectInternal(Class, nullptr, ObjectPath, false);
     }
 
-    __forceinline static UObject* InternalLoadObject(const wchar_t* ObjectPath, const UClass* InClass, UObject* Outer = nullptr)
+    __forceinline static const UObject* InternalLoadObject(const wchar_t* ObjectPath, const UClass* InClass, UObject* Outer = nullptr)
     {
         auto StaticLoadObjectInternal = (UObject * (*)(const UClass*, UObject*, const wchar_t*, const wchar_t*, uint32_t, UObject*, bool)) FindStaticLoadObject();
         return StaticLoadObjectInternal(InClass, Outer, ObjectPath, nullptr, 0, nullptr, false);
     }
 
-    static UObject* FindObject(const wchar_t* ObjectPath, const UClass* Class)
+    static const UObject* FindObject(const wchar_t* ObjectPath, const UClass* Class)
     {
         auto Object = InternalFindObject(ObjectPath, Class);
         return Object ? Object : InternalLoadObject(ObjectPath, Class);
     }
 
     template <typename _Ot>
-    static _Ot* FindObject(const wchar_t* ObjectPath, const UClass* Class = _Ot::StaticClass())
+    static const _Ot* FindObject(const wchar_t* ObjectPath, const UClass* Class = _Ot::StaticClass())
     {
-        return (_Ot*)FindObject(ObjectPath, Class);
+        return (const _Ot*)FindObject(ObjectPath, Class);
     }
 
     template <typename _Ot>
-    static _Ot* FindObject(UEAllocatedWString ObjectPath, const UClass* Class = _Ot::StaticClass())
+    static const _Ot* FindObject(UEAllocatedWString ObjectPath, const UClass* Class = _Ot::StaticClass())
     {
-        return (_Ot*)FindObject(ObjectPath.c_str(), Class);
+        return (const _Ot*)FindObject(ObjectPath.c_str(), Class);
     }
 
     static TArray<AActor*> GetAll(const UClass* Class)

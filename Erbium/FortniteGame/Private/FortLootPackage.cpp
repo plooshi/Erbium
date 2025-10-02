@@ -331,7 +331,7 @@ bool ServerOnAttemptInteract(ABuildingContainer* BuildingContainer, AFortPlayerP
 	return true;
 }
 
-void UFortLootPackage::SpawnFloorLootForContainer(UClass* ContainerType)
+void UFortLootPackage::SpawnFloorLootForContainer(const UClass* ContainerType)
 {
 	auto Containers = Utils::GetAll<ABuildingContainer>(ContainerType);
 

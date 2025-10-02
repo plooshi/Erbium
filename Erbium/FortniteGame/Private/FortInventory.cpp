@@ -38,7 +38,7 @@ inline uint32_t FindOnItemInstanceAddedVft()
     return OnItemInstanceAddedVft;
 }
 
-UFortWorldItem* AFortInventory::GiveItem(UFortItemDefinition* Def, int Count, int LoadedAmmo, int Level, bool ShowPickupNoti, bool updateInventory, int PhantomReserveAmmo)
+UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Count, int LoadedAmmo, int Level, bool ShowPickupNoti, bool updateInventory, int PhantomReserveAmmo)
 {
     if (!this || !Def || !Count)
         return nullptr;
@@ -55,7 +55,7 @@ UFortWorldItem* AFortInventory::GiveItem(UFortItemDefinition* Def, int Count, in
     if (OnItemInstanceAddedVft && VersionInfo.FortniteVersion >= 4)
     {
         static auto InterfaceClass = FindClass("FortInventoryOwnerInterface");
-        ((bool(*)(UFortItemDefinition*, const IInterface*, UFortWorldItem*, uint8)) Def->Vft[OnItemInstanceAddedVft])(Def, Owner->GetInterface(InterfaceClass), Item, 1);
+        ((bool(*)(const UFortItemDefinition*, const IInterface*, UFortWorldItem*, uint8)) Def->Vft[OnItemInstanceAddedVft])(Def, Owner->GetInterface(InterfaceClass), Item, 1);
     }
 
     if (updateInventory)
@@ -98,7 +98,7 @@ void AFortInventory::Remove(FGuid Guid)
     if (ItemInstanceIdx != -1 && OnItemInstanceRemovedVft && VersionInfo.FortniteVersion >= 4)
     {
         static auto InterfaceClass = FindClass("FortInventoryOwnerInterface");
-        ((bool(*)(UFortItemDefinition*, const IInterface*, UFortWorldItem*)) Instance->ItemEntry.ItemDefinition->Vft[OnItemInstanceRemovedVft])(Instance->ItemEntry.ItemDefinition, Owner->GetInterface(InterfaceClass), Instance);
+        ((bool(*)(const UFortItemDefinition*, const IInterface*, UFortWorldItem*)) Instance->ItemEntry.ItemDefinition->Vft[OnItemInstanceRemovedVft])(Instance->ItemEntry.ItemDefinition, Owner->GetInterface(InterfaceClass), Instance);
     }
 
     Update(nullptr);
@@ -117,7 +117,7 @@ FFortRangedWeaponStats* AFortInventory::GetStats(UFortWeaponItemDefinition* Def)
 }
 
 
-FFortItemEntry* AFortInventory::MakeItemEntry(UFortItemDefinition* ItemDefinition, int32 Count, int32 Level)
+FFortItemEntry* AFortInventory::MakeItemEntry(const UFortItemDefinition* ItemDefinition, int32 Count, int32 Level)
 {
     auto ItemEntry = (FFortItemEntry*) malloc(FFortItemEntry::Size());
     __stosb((PBYTE)ItemEntry, 0, FFortItemEntry::Size());
@@ -179,9 +179,11 @@ AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entr
     return NewPickup;
 }
 
-AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, UFortItemDefinition* ItemDefinition, int Count, int LoadedAmmo, long long SourceTypeFlag, long long SpawnSource, AFortPlayerPawnAthena* Pawn, bool Toss, bool bRandomRotation)
+AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, const UFortItemDefinition* ItemDefinition, int Count, int LoadedAmmo, long long SourceTypeFlag, long long SpawnSource, AFortPlayerPawnAthena* Pawn, bool Toss, bool bRandomRotation)
 {
-    return SpawnPickup(Loc, *MakeItemEntry(ItemDefinition, Count, -1), SourceTypeFlag, SpawnSource, Pawn, -1, Toss, true, bRandomRotation);
+    auto ItemEntry = MakeItemEntry(ItemDefinition, Count, -1);
+    auto Pickup = SpawnPickup(Loc, *ItemEntry, SourceTypeFlag, SpawnSource, Pawn, -1, Toss, true, bRandomRotation);
+    return Pickup;
 }
 
 
@@ -223,7 +225,7 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
 }
 
 
-bool AFortInventory::IsPrimaryQuickbar(UFortItemDefinition* ItemDefinition)
+bool AFortInventory::IsPrimaryQuickbar(const UFortItemDefinition* ItemDefinition)
 {
     static auto MeleeClass = FindClass("FortWeaponMeleeItemDefinition");
     static auto ResourceClass = FindClass("FortResourceItemDefinition");
@@ -244,12 +246,14 @@ void AFortInventory::UpdateEntry(FFortItemEntry& Entry)
     auto repEnt = Inventory.ReplicatedEntries.Search([&](FFortItemEntry& item)
         { return item.ItemGuid == Entry.ItemGuid; }, FFortItemEntry::Size());
     if (repEnt)
-        __movsb((PBYTE)repEnt, (const PBYTE)&Entry, FFortItemEntry::Size());
+        *repEnt = Entry;
+        //__movsb((PBYTE)repEnt, (const PBYTE)&Entry, FFortItemEntry::Size());
 
     auto ent = Inventory.ItemInstances.Search([&](UFortWorldItem* item)
         { return item->ItemEntry.ItemGuid == Entry.ItemGuid; });
     if (ent)
-        __movsb((PBYTE)&(*ent)->ItemEntry, (const PBYTE)&Entry, FFortItemEntry::Size());
+        (*ent)->ItemEntry = Entry;
+        //__movsb((PBYTE)&(*ent)->ItemEntry, (const PBYTE)&Entry, FFortItemEntry::Size());
 
     Update(&Entry);
 }

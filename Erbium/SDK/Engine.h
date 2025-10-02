@@ -63,15 +63,15 @@ namespace SDK
 		}
 	};
 
-#define DefineLWCProp(Name, NonLWCOffset, TypeLWC, TypeNonLWC) \
-	TypeLWC Get##Name() const \
+#define DefineLWCProp(Name, NonLWCOffset, TypeLWC, TypeNonLWC, Ret) \
+	Ret Get##Name() const \
 	{ \
 		if (VersionInfo.FortniteVersion >= 20) \
 			return *(TypeLWC*)(__int64(this) + (NonLWCOffset * 2)); \
 		else \
 			return *(TypeNonLWC*)(__int64(this) + NonLWCOffset); \
 	} \
-	void Set##Name(TypeLWC New) const \
+	void Set##Name(Ret New) const \
 	{ \
 		if (VersionInfo.FortniteVersion >= 20) \
 			*(TypeLWC*)(__int64(this) + (NonLWCOffset * 2)) = New; \
@@ -87,9 +87,9 @@ namespace SDK
 		using UnderlayingType = double;                                                                   // 0x0000(0x0008)(NOT AUTO-GENERATED PROPERTY)
 
 		uint8 Padding[0x18];
-		DefineLWCProp(X, 0x0, double, float);
-		DefineLWCProp(Y, 0x4, double, float);
-		DefineLWCProp(Z, 0x8, double, float);
+		DefineLWCProp(X, 0x0, double, float, double);
+		DefineLWCProp(Y, 0x4, double, float, double);
+		DefineLWCProp(Z, 0x8, double, float, double);
 		//float X;
 		//float Y;
 		//float Z;
@@ -101,16 +101,24 @@ namespace SDK
 			Z = _Z;
 		}
 
-		int32 Size()
+		int32 Size() const
 		{
 			return VersionInfo.FortniteVersion >= 20.00 ? 0x18 : 0xc;
 		}
 
-		FVector& operator=(FVector Rhs)
+		FVector& operator=(FVector& Rhs)
 		{
 			__movsb((PBYTE)this, (const PBYTE)&Rhs, Size());
 			return *this;
 		}
+
+		FVector& operator=(FVector&& Rhs)
+		{
+			__movsb((PBYTE)this, (const PBYTE)&Rhs, Size());
+			return *this;
+		}
+
+		FVector(const FVector&) = default;
 
 	public:
 		FVector& Normalize()
@@ -218,17 +226,27 @@ namespace SDK
 	{
 	public:
 		uint8 Padding[0x20];
-		DefineLWCProp(X, 0x0, double, float);
-		DefineLWCProp(Y, 0x4, double, float);
-		DefineLWCProp(Z, 0x8, double, float);
-		DefineLWCProp(W, 0xC, double, float);
+		DefineLWCProp(X, 0x0, double, float, double);
+		DefineLWCProp(Y, 0x4, double, float, double);
+		DefineLWCProp(Z, 0x8, double, float, double);
+		DefineLWCProp(W, 0xC, double, float, double);
 
 		int32 Size()
 		{
 			return VersionInfo.FortniteVersion >= 20.00 ? 0x20 : 0x10;
 		}
 
-		FQuat& operator=(FQuat Rhs)
+		FQuat() = default;
+		FQuat(const FQuat&) = default;
+
+
+		FQuat& operator=(FQuat&& Rhs)
+		{
+			__movsb((PBYTE)this, (const PBYTE)&Rhs, Size());
+			return *this;
+		}
+
+		FQuat& operator=(FQuat& Rhs)
 		{
 			__movsb((PBYTE)this, (const PBYTE)&Rhs, Size());
 			return *this;
@@ -241,16 +259,25 @@ namespace SDK
 	{
 	public:
 		uint8 Padding[0x18];
-		DefineLWCProp(Pitch, 0x0, double, float);
-		DefineLWCProp(Yaw, 0x4, double, float);
-		DefineLWCProp(Roll, 0x8, double, float);
+		DefineLWCProp(Pitch, 0x0, double, float, double);
+		DefineLWCProp(Yaw, 0x4, double, float, double);
+		DefineLWCProp(Roll, 0x8, double, float, double);
+
+		FRotator() = default;
+		FRotator(const FRotator&) = default;
 
 		int32 Size()
 		{
 			return VersionInfo.FortniteVersion >= 20.00 ? 0x18 : 0xc;
 		}
 
-		FRotator& operator=(FRotator Rhs)
+		FRotator& operator=(FRotator& Rhs)
+		{
+			__movsb((PBYTE)this, (const PBYTE)&Rhs, Size());
+			return *this;
+		}
+
+		FRotator& operator=(FRotator&& Rhs)
 		{
 			__movsb((PBYTE)this, (const PBYTE)&Rhs, Size());
 			return *this;
@@ -350,20 +377,28 @@ namespace SDK
 	{
 	public:
 		uint8 Padding[0x60];
-		DefineLWCProp(Rotation, 0x0, FQuat, FQuat);
-		DefineLWCProp(Translation, 0x10, FVector, FVector);
-		DefineLWCProp(Scale3D, 0x20, FVector, FVector);
+		DefineLWCProp(Rotation, 0x0, FQuat, FQuat, FQuat&);
+		DefineLWCProp(Translation, 0x10, FVector, FVector, FVector&);
+		DefineLWCProp(Scale3D, 0x20, FVector, FVector, FVector&);
 
 		int32 Size()
 		{
 			return VersionInfo.FortniteVersion >= 20.00 ? 0x60 : 0x30;
 		}
 
-		FTransform& operator=(FTransform Rhs)
+		FTransform& operator=(FTransform&& Rhs)
 		{
 			__movsb((PBYTE)this, (const PBYTE)&Rhs, Size());
 			return *this;
 		}
+
+		FTransform& operator=(FTransform& Rhs)
+		{
+			__movsb((PBYTE)this, (const PBYTE)&Rhs, Size());
+			return *this;
+		}
+
+		FTransform(const FTransform&) = default;
 
 		FTransform(FVector loc = {}, FQuat rot = {}, FVector scale = { 1, 1, 1 })
 		{

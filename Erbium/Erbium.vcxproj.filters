@@ -185,5 +185,8 @@
     <ClCompile Include="FortniteGame\Private\FortLootPackage.cpp">
       <Filter>FortniteGame\Private</Filter>
     </ClCompile>
+    <ClCompile Include="FortniteGame\Private\FortKismetLibrary.cpp">
+      <Filter>FortniteGame\Private</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

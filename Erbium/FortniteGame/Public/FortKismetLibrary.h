@@ -12,7 +12,7 @@ public:
     DEFINE_STATIC_FUNC(UpdatePlayerCustomCharacterPartsVisualization, void);
     //DEFINE_STATIC_FUNC(K2_GetResourceItemDefinition, UFortItemDefinition*);
 
-	static UFortItemDefinition* K2_GetResourceItemDefinition(EFortResourceType Type)
+	static const UFortItemDefinition* K2_GetResourceItemDefinition(EFortResourceType Type)
 	{
 		// exec func doesnt exist on rlly old builds
 		static auto WoodItemData = Utils::FindObject<UFortItemDefinition>(L"/Game/Items/ResourcePickups/WoodItemData.WoodItemData");
@@ -28,4 +28,11 @@ public:
 
 		return nullptr;
 	}
+
+	static void K2_SpawnPickupInWorld(UObject*, FFrame&, AFortPickupAthena**);
+	static void GiveItemToInventoryOwner(UObject*, FFrame&);
+	static void K2_RemoveItemFromPlayer(UObject*, FFrame&, int32*);
+	static void K2_RemoveItemFromPlayerByGuid(UObject*, FFrame&, int32*);
+
+	InitHooks;
 };

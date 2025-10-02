@@ -29,7 +29,7 @@ void UAbilitySystemComponent::GiveAbility(const UObject* Ability)
     free(Spec);
 }
 
-void UAbilitySystemComponent::GiveAbilitySet(UFortAbilitySet* Set)
+void UAbilitySystemComponent::GiveAbilitySet(const UFortAbilitySet* Set)
 {
     if (Set)
     {
