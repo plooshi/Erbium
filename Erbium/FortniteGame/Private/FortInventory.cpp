@@ -278,6 +278,7 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
 
 void SetLoadedAmmo(UFortWorldItem* Item, int LoadedAmmo)
 {
+    printf("ud\n");
     Item->ItemEntry.LoadedAmmo = LoadedAmmo;
 
     auto OwnerInventory = (AFortInventory*) Item->OwnerInventory;
@@ -316,9 +317,9 @@ void AFortInventory::Hook()
         {
             auto HasPhantomReserveAmmo = FFortItemEntry::HasPhantomReserveAmmo();
 
-            Utils::Hook<UFortWorldItem>(uint32(SetOwningInventoryIdx - (HasPhantomReserveAmmo ? 2 : 1)), SetLoadedAmmo);
+            Utils::Hook<UFortWorldItem>(uint32(SetOwningInventoryIdx - (HasPhantomReserveAmmo ? 3 : 1)), SetLoadedAmmo);
             if (HasPhantomReserveAmmo)
-                Utils::Hook<UFortWorldItem>(uint32(SetOwningInventoryIdx - 1), SetLoadedAmmo);
+                Utils::Hook<UFortWorldItem>(uint32(SetOwningInventoryIdx - 2), SetLoadedAmmo);
         }
     }
 }
