@@ -12,7 +12,7 @@ void UAbilitySystemComponent::GiveAbility(const UObject* Ability)
 
     static auto ConstructAbilitySpec = FindConstructAbilitySpec();
     if (ConstructAbilitySpec)
-        ((void (*)(FGameplayAbilitySpec*, const UObject*, int, int, UObject*)) FindConstructAbilitySpec())(Spec, Ability, 1, -1, nullptr);
+        ((void (*)(FGameplayAbilitySpec*, const UObject*, int, int, UObject*)) ConstructAbilitySpec)(Spec, Ability, 1, -1, nullptr);
     else
     {
         Spec->MostRecentArrayReplicationKey = -1;

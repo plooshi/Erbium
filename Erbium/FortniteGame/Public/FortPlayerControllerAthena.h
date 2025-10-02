@@ -56,6 +56,7 @@ public:
     static void ServerEndEditingBuildingActor(UObject*, FFrame&);
     static void ServerRepairBuildingActor(UObject*, FFrame&);
     static void ServerAttemptInventoryDrop(UObject*, FFrame&);
+    static void ServerPlayEmoteItem(UObject*, FFrame&);
     
 
     InitHooks;

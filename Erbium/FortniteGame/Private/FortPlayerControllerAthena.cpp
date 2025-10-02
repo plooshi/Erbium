@@ -433,7 +433,7 @@ void AFortPlayerControllerAthena::ServerAttemptInventoryDrop(UObject* Context, F
 {
 	FGuid Guid;
 	int32 Count;
-	bool bTrash = false;
+	bool bTrash = false; // this only exists on some newer builds
 	Stack.StepCompiledIn(&Guid);
 	Stack.StepCompiledIn(&Count);
 	Stack.StepCompiledIn(&bTrash);
@@ -456,7 +456,85 @@ void AFortPlayerControllerAthena::ServerAttemptInventoryDrop(UObject* Context, F
 		PlayerController->WorldInventory->UpdateEntry(*ItemEntry);
 }
 
+class UAthenaDanceItemDefinition : public UObject
+{
+public:
+	UCLASS_COMMON_MEMBERS(UAthenaDanceItemDefinition);
 
+	DEFINE_BITFIELD_PROP(bMovingEmote);
+	DEFINE_PROP(WalkForwardSpeed, float);
+	DEFINE_BITFIELD_PROP(bMoveForwardOnly);
+	DEFINE_BITFIELD_PROP(bMoveFollowingOnly);
+};
+
+void AFortPlayerControllerAthena::ServerPlayEmoteItem(UObject* Context, FFrame& Stack)
+{
+	UObject* Asset;
+	float RandomNumber = 0.f;
+	Stack.StepCompiledIn(&Asset);
+	Stack.StepCompiledIn(&RandomNumber);
+	Stack.IncrementCode();
+	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+
+	if (!PlayerController || !PlayerController->MyFortPawn || !Asset)
+		return;
+
+	auto* AbilitySystemComponent = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->AbilitySystemComponent;
+	auto Spec = (FGameplayAbilitySpec*)malloc(FGameplayAbilitySpec::Size());
+	__stosb(PBYTE(Spec), 0, FGameplayAbilitySpec::Size());
+	UObject* AbilityToUse = nullptr;
+
+	static auto SprayClass = FindClass("AthenaSprayItemDefinition");
+	if (Asset->IsA(SprayClass)) 
+	{
+		static auto SprayAbilityClass = Utils::FindObject<UClass>(L"/Game/Abilities/Sprays/GAB_Spray_Generic.GAB_Spray_Generic_C");
+		AbilityToUse = SprayAbilityClass->GetDefaultObj();
+	}
+	//else if (auto ToyAsset = Asset->Cast<UAthenaToyItemDefinition>()) {
+	//	AbilityToUse = ToyAsset->ToySpawnAbility->DefaultObject;
+	//}
+	else if (auto DanceAsset = Asset->Cast<UAthenaDanceItemDefinition>())
+	{
+		static auto HasbMovingEmote = PlayerController->MyFortPawn->HasbMovingEmote();
+		if (HasbMovingEmote)
+			PlayerController->MyFortPawn->bMovingEmote = DanceAsset->bMovingEmote;
+
+		static auto HasWalkForwardSpeed = PlayerController->MyFortPawn->HasEmoteWalkSpeed();
+		if (HasWalkForwardSpeed)
+			PlayerController->MyFortPawn->EmoteWalkSpeed = DanceAsset->WalkForwardSpeed;
+
+		static auto HasbMovingEmoteForwardOnly = PlayerController->MyFortPawn->HasbMovingEmoteForwardOnly();
+		if (HasbMovingEmoteForwardOnly)
+			PlayerController->MyFortPawn->bMovingEmoteForwardOnly = DanceAsset->bMoveForwardOnly;
+
+		static auto HasbMovingEmoteFollowingOnly = PlayerController->MyFortPawn->HasbMovingEmoteFollowingOnly();
+		if (HasbMovingEmoteFollowingOnly)
+			PlayerController->MyFortPawn->bMovingEmoteFollowingOnly = DanceAsset->bMoveFollowingOnly;
+
+		static auto EmoteAbilityClass = Utils::FindObject<UClass>(L"/Game/Abilities/Emotes/GAB_Emote_Generic.GAB_Emote_Generic_C");
+		AbilityToUse = EmoteAbilityClass->GetDefaultObj();
+	}
+
+	if (AbilityToUse) 
+	{
+		static auto ConstructAbilitySpec = FindConstructAbilitySpec();
+		if (ConstructAbilitySpec)
+			((void (*)(FGameplayAbilitySpec*, const UObject*, int, int, UObject*)) ConstructAbilitySpec)(Spec, AbilityToUse, 1, -1, Asset);
+		else
+		{
+			Spec->MostRecentArrayReplicationKey = -1;
+			Spec->ReplicationID = -1;
+			Spec->ReplicationKey = -1;
+			Spec->Ability = (UFortGameplayAbility*)AbilityToUse;
+			Spec->Level = 1;
+			Spec->InputID = -1;
+			Spec->Handle.Handle = rand();
+			Spec->SourceObject = Asset;
+		}
+		FGameplayAbilitySpecHandle handle;
+		((void (*)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle*, FGameplayAbilitySpec*, void*)) FindGiveAbilityAndActivateOnce())(AbilitySystemComponent, &handle, Spec, nullptr);
+	}
+}
 
 void AFortPlayerControllerAthena::Hook()
 {
@@ -490,4 +568,6 @@ void AFortPlayerControllerAthena::Hook()
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerEndEditingBuildingActor"), ServerEndEditingBuildingActor);
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerAttemptInventoryDrop"), ServerAttemptInventoryDrop);
+
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerPlayEmoteItem"), ServerPlayEmoteItem);
 }

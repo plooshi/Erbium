@@ -981,6 +981,38 @@ inline uint64_t FindOnRep_ZiplineState()
     return OnRep_ZiplineState;
 }
 
+static inline uint64 FindGiveAbilityAndActivateOnce()
+{
+    static uint64_t GiveAbilityAndActivateOnce = 0;
+
+    if (GiveAbilityAndActivateOnce == 0)
+    {
+        if (VersionInfo.EngineVersion == 4.26)
+        {
+            GiveAbilityAndActivateOnce = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 40 49 8B 40 10 49 8B D8 48 8B FA 48 8B F1", false).Get();
+
+            if (!GiveAbilityAndActivateOnce)
+                GiveAbilityAndActivateOnce = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 48 83 EC 40 49 8B 40 10 49").Get();
+
+            return GiveAbilityAndActivateOnce;
+        }
+
+        auto sRef = Memcury::Scanner::FindStringRef(L"GiveAbilityAndActivateOnce called on ability %s on the client, not allowed!", true, 0, VersionInfo.EngineVersion >= 5.0).Get();
+
+        for (int i = 0; i < 1000; i++)
+        {
+            if (*(uint8_t*)(sRef - i) == 0x40 && *(uint8_t*)(sRef - i + 1) == 0x55)
+                return GiveAbilityAndActivateOnce = sRef - i;
+            else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x5C)
+                return GiveAbilityAndActivateOnce = sRef - i;
+        }
+
+        return 0;
+    }
+
+    return GiveAbilityAndActivateOnce;
+}
+
 static inline std::vector<uint64_t> NullFuncs = {};
 static inline std::vector<uint64_t> RetTrueFuncs = {};
 

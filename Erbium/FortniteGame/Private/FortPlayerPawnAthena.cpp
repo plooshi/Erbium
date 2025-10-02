@@ -272,6 +272,25 @@ void AFortPlayerPawnAthena::OnCapsuleBeginOverlap_(UObject* Context, FFrame& Sta
 	return callOG(Pawn, Stack.GetCurrentNativeFunction(), OnCapsuleBeginOverlap, OverlappedComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 }
 
+
+void AFortPlayerPawnAthena::MovingEmoteStopped(UObject* Context, FFrame& Stack)
+{
+	Stack.IncrementCode();
+
+	auto Pawn = (AFortPlayerPawnAthena*)Context;
+	static auto HasbMovingEmote = Pawn->HasbMovingEmote();
+	if (HasbMovingEmote)
+		Pawn->bMovingEmote = false;
+
+	static auto HasbMovingEmoteForwardOnly = Pawn->HasbMovingEmoteForwardOnly();
+	if (HasbMovingEmoteForwardOnly)
+		Pawn->bMovingEmoteForwardOnly = false;
+
+	static auto HasbMovingEmoteFollowingOnly = Pawn->HasbMovingEmoteFollowingOnly();
+	if (HasbMovingEmoteFollowingOnly)
+		Pawn->bMovingEmoteFollowingOnly = false;
+}
+
 void AFortPlayerPawnAthena::Hook()
 {
 	OnRep_ZiplineState = FindOnRep_ZiplineState();
@@ -289,5 +308,6 @@ void AFortPlayerPawnAthena::Hook()
 	Utils::ExecHook(GetDefaultObj()->GetFunction("OnCapsuleBeginOverlap"), OnCapsuleBeginOverlap_, OnCapsuleBeginOverlap_OG);
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerSendZiplineState"), ServerSendZiplineState);
+	Utils::ExecHook(GetDefaultObj()->GetFunction("MovingEmoteStopped"), MovingEmoteStopped);
 
 }

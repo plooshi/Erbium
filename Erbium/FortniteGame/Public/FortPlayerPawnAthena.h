@@ -30,6 +30,10 @@ public:
     DEFINE_PROP(IncomingPickups, TArray<AActor*>);
     DEFINE_PROP(CharacterMovement, UCharacterMovementComponent*);
     DEFINE_PROP(ZiplineState, FZiplinePawnState);
+    DEFINE_BITFIELD_PROP(bMovingEmote);
+    DEFINE_PROP(EmoteWalkSpeed, float);
+    DEFINE_BITFIELD_PROP(bMovingEmoteForwardOnly);
+    DEFINE_BITFIELD_PROP(bMovingEmoteFollowingOnly);
 
     DEFINE_FUNC(BeginSkydiving, void);
     DEFINE_FUNC(SetHealth, void);
@@ -44,6 +48,7 @@ public:
     DefHookOg(bool, FinishedTargetSpline, void*);
     DefUHookOg(ServerSendZiplineState);
     DefUHookOg(OnCapsuleBeginOverlap_);
+    static void MovingEmoteStopped(UObject*, FFrame&);
 
     InitHooks;
 };
