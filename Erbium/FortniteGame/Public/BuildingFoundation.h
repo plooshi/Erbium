@@ -41,10 +41,14 @@ public:
     DEFINE_PROP(DynamicFoundationTransform, FTransform);
     DEFINE_PROP(StreamingData, FBuildingFoundationStreamingData);
     DEFINE_PROP(StreamingBoundingBox, int32);
+    DEFINE_PROP(DynamicFoundationType, int32);
+    DEFINE_BITFIELD_PROP(bServerStreamedInLevel);
 
     DEFINE_FUNC(OnRep_DynamicFoundationRepData, void);
     //DEFINE_FUNC(SetDynamicFoundationTransform, void);
     DEFINE_FUNC(SetDynamicFoundationEnabled, void);
+    DEFINE_FUNC(OnRep_ServerStreamedInLevel, void);
+    DEFINE_FUNC(OnRep_LevelToStream, void);
 
     static void SetDynamicFoundationEnabled_(UObject*, FFrame&);
     static void SetDynamicFoundationTransform_(UObject*, FFrame&);

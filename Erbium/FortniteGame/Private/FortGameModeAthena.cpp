@@ -20,10 +20,10 @@ __declspec(noinline) void ShowFoundation(const ABuildingFoundation* Foundation)
     if (!Foundation) 
         return;
 
-    Foundation->StreamingData.BoundingBox = Foundation->StreamingBoundingBox;
-    Foundation->StreamingData.SetFoundationLocation(Foundation->GetTransform().Translation);
+    Foundation->bServerStreamedInLevel = true;
+    Foundation->DynamicFoundationType = 0; // static
     Foundation->SetDynamicFoundationEnabled(true);
-    //Foundation->SetDynamicFoundationTransform(Foundation->GetTransform());
+    Foundation->OnRep_ServerStreamedInLevel();
 }
 
 
@@ -55,6 +55,12 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
 
         if (GameMode->GameSession->HasMaxPlayers())
             GameMode->GameSession->MaxPlayers = Playlist->MaxPlayers;
+
+        if (VersionInfo.FortniteVersion >= 8 && VersionInfo.FortniteVersion < 10)
+        {
+            auto Volcano = Utils::FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.LF_Athena_POI_50x53_Volcano");
+            ShowFoundation(Volcano);
+        }
 
         if (VersionInfo.FortniteVersion >= 7 && VersionInfo.FortniteVersion <= 10)
             ShowFoundation(Utils::FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.SLAB_2"));
