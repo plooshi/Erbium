@@ -674,7 +674,10 @@ bool AFortGameModeAthena::StartAircraftPhase(AFortGameModeAthena* GameMode, char
 
         auto Aircraft = GameState->HasAircrafts() ? GameState->Aircrafts[0] : GameState->Aircraft;
         if (GameMode->SafeZoneLocations.Num() < 4)
+        {
+            printf("LateGame is not supported on this version!\n");
             return Ret;
+        }
         FVector Loc = GameMode->SafeZoneLocations.Get(3, FVector::Size());
         Loc.Z = 17500.f;
         
