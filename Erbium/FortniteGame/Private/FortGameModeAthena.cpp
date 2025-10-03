@@ -450,6 +450,8 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
             }
         }
 
+        NewPlayer->WorldInventory->Update(nullptr);
+
 
         if (FConfiguration::bLateGame)
         {
@@ -478,14 +480,12 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
             NewPlayer->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Rocket), 6);
             NewPlayer->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Sniper), 20);
 
-            NewPlayer->WorldInventory->GiveItem(AssaultRifle.Item, AssaultRifle.Count, AssaultRifleClipSize, true);
-            NewPlayer->WorldInventory->GiveItem(Shotgun.Item, Shotgun.Count, ShotgunClipSize, true);
-            NewPlayer->WorldInventory->GiveItem(Sniper.Item, Sniper.Count, SniperClipSize, true);
-            NewPlayer->WorldInventory->GiveItem(Heal.Item, Heal.Count, HealClipSize, true);
-            NewPlayer->WorldInventory->GiveItem(HealSlot2.Item, HealSlot2.Count, HealSlot2ClipSize, true);
+            NewPlayer->WorldInventory->GiveItem(Shotgun.Item, Shotgun.Count, ShotgunClipSize);
+            NewPlayer->WorldInventory->GiveItem(AssaultRifle.Item, AssaultRifle.Count, AssaultRifleClipSize);
+            NewPlayer->WorldInventory->GiveItem(Sniper.Item, Sniper.Count, SniperClipSize);
+            NewPlayer->WorldInventory->GiveItem(Heal.Item, Heal.Count, HealClipSize);
+            NewPlayer->WorldInventory->GiveItem(HealSlot2.Item, HealSlot2.Count, HealSlot2ClipSize);
         }
-
-        NewPlayer->WorldInventory->Update(nullptr);
 
         static bool bMatchStarted = false;
 

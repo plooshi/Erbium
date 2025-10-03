@@ -2,6 +2,8 @@
 
 Erbium is a WIP universal gameserver for Fortnite.
 
+[**Join our Discord!**](https://discord.gg/WxNEGBxfKq)
+
 ## Features
 - **Version support**: Erbium supports version 3.4 (season 3) to 19.40 (chapter 3 season 1).
 - **Easy to use**: Erbium is designed to be fast & easy to configure for new users.
