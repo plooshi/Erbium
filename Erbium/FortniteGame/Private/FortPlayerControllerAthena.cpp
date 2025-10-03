@@ -792,7 +792,6 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 		GiveOrSwap();
 }
 
-
 void AFortPlayerControllerAthena::Hook()
 {
 	CantBuild_ = FindCantBuild();
@@ -805,6 +804,13 @@ void AFortPlayerControllerAthena::Hook()
 	// they only stripped it on athena for some reason
 	auto ServerAcknowledgePossessionIdx = GetDefaultObj()->GetFunction("ServerAcknowledgePossession")->GetVTableIndex();
 	Utils::Hook<AFortPlayerControllerAthena>(ServerAcknowledgePossessionIdx, DefaultFortPC->Vft[ServerAcknowledgePossessionIdx]);
+
+	if (VersionInfo.FortniteVersion >= 11)
+	{
+		auto ServerRestartPlayerIdx = GetDefaultObj()->GetFunction("ServerRestartPlayer")->GetVTableIndex();
+		auto DefaultFortPCZone = DefaultObjImpl("FortPlayerControllerZone");
+		Utils::Hook<AFortPlayerControllerAthena>(ServerRestartPlayerIdx, DefaultFortPCZone->Vft[ServerRestartPlayerIdx]);
+	}
 
 	auto ServerAttemptAircraftJumpPC = GetDefaultObj()->GetFunction("ServerAttemptAircraftJump");
 	if (!ServerAttemptAircraftJumpPC)
