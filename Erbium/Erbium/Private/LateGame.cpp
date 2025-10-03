@@ -45,6 +45,18 @@ FLateGameItem LateGame::GetHeals()
         FLateGameItem(6, Utils::FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Consumables/ShieldSmall/Athena_ShieldSmall.Athena_ShieldSmall")) // minis
     };
 
+    if (Heals.size() == 2)
+    {
+        auto ChugSplash = FLateGameItem(6, Utils::FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Consumables/ChillBronco/Athena_ChillBronco.Athena_ChillBronco"));
+        auto SlurpJuice = FLateGameItem(2, Utils::FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Consumables/PurpleStuff/Athena_PurpleStuff.Athena_PurpleStuff"));
+
+        if (ChugSplash.Item)
+            Heals.push_back(ChugSplash);
+
+        if (SlurpJuice.Item)
+            Heals.push_back(SlurpJuice);
+    }
+
     return Heals[rand() % (Heals.size() - 1)];
 }
 
