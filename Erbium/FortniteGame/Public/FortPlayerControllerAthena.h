@@ -70,6 +70,7 @@ public:
     DEFINE_FUNC(PlayWinEffects, void);
     DEFINE_FUNC(ClientNotifyWon, void);
     DEFINE_FUNC(ClientNotifyTeamWon, void);
+    DEFINE_FUNC(ClientMessage, void);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);
@@ -83,6 +84,7 @@ public:
     static void ServerRepairBuildingActor(UObject*, FFrame&);
     static void ServerAttemptInventoryDrop(UObject*, FFrame&);
     static void ServerPlayEmoteItem(UObject*, FFrame&);
+    static void ServerCheat(UObject*, FFrame&);
     DefHookOg(void, ClientOnPawnDied, AFortPlayerControllerAthena*, FFortPlayerDeathReport&);
     void InternalPickup(FFortItemEntry*);
     

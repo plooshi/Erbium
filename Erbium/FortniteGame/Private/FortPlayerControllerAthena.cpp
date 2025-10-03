@@ -4,6 +4,8 @@
 #include "../Public/FortWeapon.h"
 #include "../Public/BuildingSMActor.h"
 #include "../Public/FortKismetLibrary.h"
+#include "../../Erbium/Public/Configuration.h"
+#include <algorithm>
 
 
 uint64_t FindGetPlayerViewPoint()
@@ -792,6 +794,108 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 		GiveOrSwap();
 }
 
+void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
+{
+	FString Msg;
+	Stack.StepCompiledIn(&Msg);
+	Stack.IncrementCode();
+	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+
+	auto fullCommand = Msg.ToString();
+
+	std::vector<UEAllocatedString> args;
+
+	size_t pos = 0, lastPos = 0;
+	while ((pos = fullCommand.find(' ', lastPos)) != std::string::npos)
+	{
+		args.push_back(fullCommand.substr(lastPos, pos - lastPos));
+
+		lastPos = pos + 1;
+	}
+	
+	args.push_back(fullCommand.substr(lastPos));
+
+	if (args.size() == 0)
+	{
+_help:
+		PlayerController->ClientMessage(FString(LR"(Command List:
+    cheat startaircraft - Starts the battle bus
+    cheat pausesafezone - Pauses the storm
+	cheat giveitem <WID/path> <Count = 1> - Gives you an item
+	cheat spawnpickup <WID/path> <Count = 1> - Spawns a pickup at your player's location
+    cheat tp <X> <Y> <Z> - Teleports to a location)"), FName(), 1);
+	}
+	else
+	{
+		auto& command = args[0];
+		std::transform(command.begin(), command.end(), command.begin(), tolower);
+
+		if (command == "startaircraft")
+			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
+		else if (command == "pausesafezone")
+			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"pausesafezone"), nullptr);
+		else if (command == "spawnbot")
+		{
+			// todo
+		}
+		else if (command == "bugitgo" || command == "tp")
+		{
+			if (args.size() != 4)
+				PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1);
+
+			double X = 0., Y = 0., Z = 0.;
+
+			X = strtod(args[1].c_str(), nullptr);
+			Y = strtod(args[2].c_str(), nullptr);
+			Z = strtod(args[3].c_str(), nullptr);
+
+			if (PlayerController->Pawn)
+				PlayerController->Pawn->K2_SetActorLocation(FVector(X, Y, Z));
+		}
+		else if (command == "giveitem")
+		{
+			if (args.size() != 2 && args.size() != 3)
+				PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1);
+
+			auto ItemDefinition = Utils::FindObject<UFortItemDefinition>(UEAllocatedWString(args[1].begin(), args[1].end()));
+			if (!ItemDefinition)
+				ItemDefinition = TUObjectArray::FindObject<UFortItemDefinition>(args[1].c_str());
+
+			if (!ItemDefinition)
+				return PlayerController->ClientMessage(FString(L"Failed to find item! Try passing it as a path or check your spelling & casing"), FName(), 1);
+
+			int32 Count = 1;
+
+			if (args.size() == 3)
+				Count = strtol(args[2].c_str(), nullptr, 10);
+
+			PlayerController->WorldInventory->GiveItem(ItemDefinition, Count);
+		}
+		else if (command == "spawnpickup")
+		{
+			if (args.size() != 2 && args.size() != 3)
+				PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1);
+
+			auto ItemDefinition = Utils::FindObject<UFortItemDefinition>(UEAllocatedWString(args[1].begin(), args[1].end()));
+			if (!ItemDefinition)
+				ItemDefinition = TUObjectArray::FindObject<UFortItemDefinition>(args[1].c_str());
+
+			if (!ItemDefinition)
+				return PlayerController->ClientMessage(FString(L"Failed to find item! Try passing it as a path or check your spelling & casing"), FName(), 1);
+
+			long Count = 1;
+
+			if (args.size() == 3)
+				Count = strtol(args[2].c_str(), nullptr, 10);
+
+			if (PlayerController->Pawn)
+				AFortInventory::SpawnPickup(PlayerController->Pawn->K2_GetActorLocation(), ItemDefinition, Count, 0, EFortPickupSourceTypeFlag::GetTossed(), EFortPickupSpawnSource::GetUnset(), PlayerController->Pawn);
+		}
+		else
+			goto _help;
+	}
+}
+
 void AFortPlayerControllerAthena::Hook()
 {
 	CantBuild_ = FindCantBuild();
@@ -837,4 +941,7 @@ void AFortPlayerControllerAthena::Hook()
 
 	auto ClientOnPawnDiedAddr = FindFunctionCall(L"ClientOnPawnDied", VersionInfo.EngineVersion == 4.16 ? std::vector<uint8_t>{ 0x48, 0x89, 0x54 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
 	Utils::Hook(ClientOnPawnDiedAddr, ClientOnPawnDied, ClientOnPawnDiedOG);
+
+	if (FConfiguration::bEnableCheats)
+		Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCheat"), ServerCheat);
 }

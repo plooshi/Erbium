@@ -183,6 +183,7 @@ AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, const UFortItemDefin
 {
     auto ItemEntry = MakeItemEntry(ItemDefinition, Count, -1);
     auto Pickup = SpawnPickup(Loc, *ItemEntry, SourceTypeFlag, SpawnSource, Pawn, -1, Toss, true, bRandomRotation);
+    free(ItemEntry);
     return Pickup;
 }
 
