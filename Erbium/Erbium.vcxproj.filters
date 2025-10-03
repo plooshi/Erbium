@@ -144,6 +144,9 @@
     <ClInclude Include="FortniteGame\Public\BuildingContainer.h">
       <Filter>FortniteGame\Public</Filter>
     </ClInclude>
+    <ClInclude Include="Erbium\Public\LateGame.h">
+      <Filter>Erbium\Public</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Erbium\Private\dllmain.cpp">
@@ -187,6 +190,9 @@
     </ClCompile>
     <ClCompile Include="FortniteGame\Private\FortKismetLibrary.cpp">
       <Filter>FortniteGame\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="Erbium\Private\LateGame.cpp">
+      <Filter>Erbium\Private</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -146,6 +146,7 @@
     <ClInclude Include="Engine\Public\NetDriver.h" />
     <ClInclude Include="Erbium\Public\Configuration.h" />
     <ClInclude Include="Erbium\Public\Finders.h" />
+    <ClInclude Include="Erbium\Public\LateGame.h" />
     <ClInclude Include="Erbium\Public\MinHook.h" />
     <ClInclude Include="Erbium\Public\Misc.h" />
     <ClInclude Include="Erbium\Public\Utils.h" />
@@ -181,6 +182,7 @@
     <ClCompile Include="Engine\Private\AbilitySystemComponent.cpp" />
     <ClCompile Include="Engine\Private\NetDriver.cpp" />
     <ClCompile Include="Erbium\Private\dllmain.cpp" />
+    <ClCompile Include="Erbium\Private\LateGame.cpp" />
     <ClCompile Include="Erbium\Private\Misc.cpp" />
     <ClCompile Include="FortniteGame\Private\BuildingFoundation.cpp" />
     <ClCompile Include="FortniteGame\Private\BuildingSMActor.cpp" />

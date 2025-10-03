@@ -12,6 +12,7 @@
 #include "../../Erbium/Public/Configuration.h"
 #include "../Public/FortLootPackage.h"
 #include "../Public/BuildingFoundation.h"
+#include "../../Erbium/Public/LateGame.h"
 
 
 __declspec(noinline) void ShowFoundation(const ABuildingFoundation* Foundation)
@@ -449,6 +450,41 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
             }
         }
 
+
+        if (FConfiguration::bLateGame)
+        {
+            Pawn->SetShield(100);
+
+            auto Shotgun = LateGame::GetShotguns();
+            auto AssaultRifle = LateGame::GetAssaultRifles();
+            auto Sniper = LateGame::GetSnipers();
+            auto Heal = LateGame::GetHeals();
+            auto HealSlot2 = LateGame::GetHeals();
+
+            int ShotgunClipSize = AFortInventory::GetStats((UFortWeaponItemDefinition*)Shotgun.Item)->ClipSize;
+            int AssaultRifleClipSize = AFortInventory::GetStats((UFortWeaponItemDefinition*)AssaultRifle.Item)->ClipSize;
+            int SniperClipSize = AFortInventory::GetStats((UFortWeaponItemDefinition*)Sniper.Item)->ClipSize;
+            // for grappler
+            int HealClipSize = Heal.Item->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)Heal.Item)->ClipSize : 0;
+            int HealSlot2ClipSize = HealSlot2.Item->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)HealSlot2.Item)->ClipSize : 0;
+
+            NewPlayer->WorldInventory->GiveItem(LateGame::GetResource(EFortResourceType::Wood), 500);
+            NewPlayer->WorldInventory->GiveItem(LateGame::GetResource(EFortResourceType::Stone), 500);
+            NewPlayer->WorldInventory->GiveItem(LateGame::GetResource(EFortResourceType::Metal), 500);
+
+            NewPlayer->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Assault), 250);
+            NewPlayer->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Shotgun), 50);
+            NewPlayer->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Submachine), 400);
+            NewPlayer->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Rocket), 6);
+            NewPlayer->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Sniper), 20);
+
+            NewPlayer->WorldInventory->GiveItem(AssaultRifle.Item, AssaultRifle.Count, AssaultRifleClipSize, true);
+            NewPlayer->WorldInventory->GiveItem(Shotgun.Item, Shotgun.Count, ShotgunClipSize, true);
+            NewPlayer->WorldInventory->GiveItem(Sniper.Item, Sniper.Count, SniperClipSize, true);
+            NewPlayer->WorldInventory->GiveItem(Heal.Item, Heal.Count, HealClipSize, true);
+            NewPlayer->WorldInventory->GiveItem(HealSlot2.Item, HealSlot2.Count, HealSlot2ClipSize, true);
+        }
+
         NewPlayer->WorldInventory->Update(nullptr);
 
         static bool bMatchStarted = false;
@@ -456,6 +492,11 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
         if (!bMatchStarted)
         {
             bMatchStarted = true;
+            auto GameState = (AFortGameStateAthena*)GameMode->GameState;
+
+            GameState->GamePhase = 4;
+            GameState->GamePhaseStep = 7;
+            GameState->OnRep_GamePhase(3);
 
             char buffer[67];
             sprintf_s(buffer, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Match started" : (VersionInfo.FortniteVersion >= 5.00 ? "Erbium (FN %.2f, UE %.2f): Match started" : "Erbium (FN %.1f, UE %.2f): Match started"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
@@ -472,6 +513,28 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
     
     auto NewSafeZonePhase = NewSafeZonePhase_Inp >= 0 ? NewSafeZonePhase_Inp : GameMode->SafeZonePhase + 1;
+
+    constexpr static std::array<float, 8> LateGameDurations{
+        0.f,
+        65.f,
+        60.f,
+        50.f,
+        45.f,
+        35.f,
+        30.f,
+        40.f,
+    };
+
+    constexpr static std::array<float, 8> LateGameHoldDurations{
+        0.f,
+        60.f,
+        55.f,
+        50.f,
+        45.f,
+        30.f,
+        0.f,
+        0.f,
+    };
 
     if (VersionInfo.FortniteVersion >= 13.00)
     {
@@ -514,10 +577,35 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
             }
         }
 
-        auto Duration = Durations[NewSafeZonePhase];
-        auto HoldDuration = HoldDurations[NewSafeZonePhase];
+        if (!FConfiguration::bLateGame || GameMode->SafeZonePhase > 3)
+        {
+            auto Duration = FConfiguration::bLateGame ? LateGameDurations[GameMode->SafeZonePhase - 1] : Durations[GameMode->SafeZonePhase + 1];
+            auto HoldDuration = FConfiguration::bLateGame ? LateGameHoldDurations[GameMode->SafeZonePhase - 1] : HoldDurations[GameMode->SafeZonePhase + 1];
+
+            GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + HoldDuration;
+            GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
+        }
+    } 
+    else if (FConfiguration::bLateGame && GameMode->SafeZonePhase > 3)
+    {
+        auto Duration = LateGameDurations[NewSafeZonePhase];
+        auto HoldDuration = LateGameHoldDurations[NewSafeZonePhase];
 
         GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + HoldDuration;
+        GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
+    }
+
+
+    if (FConfiguration::bLateGame && GameMode->SafeZonePhase < 3)
+    {
+        GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = (float) UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
+        GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + 0.15f;
+    }
+    else if (FConfiguration::bLateGame && GameMode->SafeZonePhase == 3)
+    {
+        auto Duration = LateGameDurations[GameMode->SafeZonePhase - 1];
+
+        GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = (float) UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + 30.f;
         GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
     }
 
@@ -572,6 +660,53 @@ uint8_t AFortGameModeAthena::PickTeam(AFortGameModeAthena* GameMode, uint8_t Pre
     return ret;
 }
 
+bool AFortGameModeAthena::StartAircraftPhase(AFortGameModeAthena* GameMode, char a2)
+{
+    auto Ret = StartAircraftPhaseOG(GameMode, a2);
+
+    auto GameState = (AFortGameStateAthena*)GameMode->GameState;
+
+    if (FConfiguration::bLateGame)
+    {
+        /*GameState->GamePhase = 4;
+        GameState->GamePhaseStep = 7;
+        GameState->OnRep_GamePhase(3);*/
+
+        auto Aircraft = GameState->HasAircrafts() ? GameState->Aircrafts[0] : GameState->Aircraft;
+        if (GameMode->SafeZoneLocations.Num() < 4)
+            return Ret;
+        FVector Loc = GameMode->SafeZoneLocations.Get(3, FVector::Size());
+        Loc.Z = 17500.f;
+        
+        if (Aircraft->HasFlightInfo())
+        {
+            Aircraft->FlightInfo.FlightSpeed = 0.f;
+
+            Aircraft->FlightInfo.FlightStartLocation = Loc;
+
+            Aircraft->FlightInfo.TimeTillFlightEnd = 7.f;
+            Aircraft->FlightInfo.TimeTillDropEnd = 0.f;
+            Aircraft->FlightInfo.TimeTillDropStart = 0.f;
+        }
+        else
+        {
+            Aircraft->FlightSpeed = 0.f;
+
+            Aircraft->FlightStartLocation = Loc;
+
+            Aircraft->TimeTillFlightEnd = 7.f;
+            Aircraft->TimeTillDropEnd = 0.f;
+            Aircraft->TimeTillDropStart = 0.f;
+        }
+        Aircraft->FlightStartTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
+        Aircraft->FlightEndTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + 7.f;
+        //GameState->bAircraftIsLocked = false;
+        GameState->SafeZonesStartTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + 8.f;
+    }
+
+    return Ret;
+}
+
 void AFortGameModeAthena::Hook()
 {
     auto spdf = GetDefaultObj()->GetFunction("SpawnDefaultPawnFor");
@@ -581,4 +716,5 @@ void AFortGameModeAthena::Hook()
     Utils::Hook(FindHandlePostSafeZonePhaseChanged(), HandlePostSafeZonePhaseChanged, HandlePostSafeZonePhaseChangedOG);
     Utils::ExecHook(GetDefaultObj()->GetFunction("HandleStartingNewPlayer"), HandleStartingNewPlayer_, HandleStartingNewPlayer_OG);
     Utils::Hook(FindPickTeam(), PickTeam, PickTeamOG);
+    Utils::Hook(FindStartAircraftPhase(), StartAircraftPhase, StartAircraftPhaseOG);
 }

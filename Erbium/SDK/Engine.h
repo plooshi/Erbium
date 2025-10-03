@@ -101,7 +101,7 @@ namespace SDK
 			Z = _Z;
 		}
 
-		int32 Size() const
+		static int32 Size()
 		{
 			return VersionInfo.FortniteVersion >= 20.00 ? 0x18 : 0xc;
 		}
@@ -231,7 +231,7 @@ namespace SDK
 		DefineLWCProp(Z, 0x8, double, float, double);
 		DefineLWCProp(W, 0xC, double, float, double);
 
-		int32 Size()
+		static int32 Size()
 		{
 			return VersionInfo.FortniteVersion >= 20.00 ? 0x20 : 0x10;
 		}
@@ -266,7 +266,7 @@ namespace SDK
 		FRotator() = default;
 		FRotator(const FRotator&) = default;
 
-		int32 Size()
+		static int32 Size()
 		{
 			return VersionInfo.FortniteVersion >= 20.00 ? 0x18 : 0xc;
 		}
@@ -381,7 +381,7 @@ namespace SDK
 		DefineLWCProp(Translation, 0x10, FVector, FVector, FVector&);
 		DefineLWCProp(Scale3D, 0x20, FVector, FVector, FVector&);
 
-		int32 Size()
+		static int32 Size()
 		{
 			return VersionInfo.FortniteVersion >= 20.00 ? 0x60 : 0x30;
 		}

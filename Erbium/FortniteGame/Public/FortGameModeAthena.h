@@ -32,6 +32,7 @@ public:
     DEFINE_PROP(RedirectAthenaLootTierGroups, TMap<FName, FName>);
     DEFINE_PROP(WarmupCountdownDuration, float);
     DEFINE_PROP(WarmupEarlyCountdownDuration, float);
+    DEFINE_PROP(SafeZoneLocations, TArray<FVector>);
 
     DEFINE_FUNC(SpawnDefaultPawnAtTransform, AFortPlayerPawnAthena*);
     DEFINE_FUNC(RestartPlayer, void);
@@ -43,6 +44,7 @@ public:
     DefHookOg(void, HandlePostSafeZonePhaseChanged, AFortGameModeAthena*, int);
     DefHookOg(uint8_t, PickTeam, AFortGameModeAthena*, uint8_t, AFortPlayerControllerAthena*);
     DefUHookOg(HandleStartingNewPlayer_);
+    DefHookOg(bool, StartAircraftPhase, AFortGameModeAthena*, char);
     
     InitHooks;
 };

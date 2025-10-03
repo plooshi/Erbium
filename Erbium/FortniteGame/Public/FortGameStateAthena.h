@@ -49,6 +49,33 @@ public:
     DEFINE_PROP(LlamaClass, UClass*);
 };
 
+struct FAircraftFlightInfo
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FAircraftFlightInfo);
+
+    DEFINE_STRUCT_PROP(FlightSpeed, float);
+    DEFINE_STRUCT_PROP(FlightStartLocation, FVector);
+    DEFINE_STRUCT_PROP(TimeTillFlightEnd, float);
+    DEFINE_STRUCT_PROP(TimeTillDropStart, float);
+    DEFINE_STRUCT_PROP(TimeTillDropEnd, float);
+};
+
+class AFortAthenaAircraft : public AActor
+{
+public:
+    UCLASS_COMMON_MEMBERS(AFortAthenaAircraft);
+
+    DEFINE_PROP(FlightInfo, FAircraftFlightInfo);
+    DEFINE_PROP(FlightStartTime, float);
+    DEFINE_PROP(FlightEndTime, float);
+    DEFINE_PROP(FlightSpeed, float);
+    DEFINE_PROP(FlightStartLocation, FVector);
+    DEFINE_PROP(TimeTillFlightEnd, float);
+    DEFINE_PROP(TimeTillDropStart, float);
+    DEFINE_PROP(TimeTillDropEnd, float);
+};
+
 class AFortGameStateAthena : public AActor
 {
 public:
@@ -70,6 +97,11 @@ public:
     DEFINE_PROP(PlayersLeft, int32);
     DEFINE_PROP(WinningTeam, int32);
     DEFINE_PROP(WinningPlayerState, AFortPlayerStateAthena*);
+    DEFINE_PROP(GamePhase, uint8);
+    DEFINE_PROP(GamePhaseStep, uint8);
+    DEFINE_PROP(Aircrafts, TArray<AFortAthenaAircraft*>);
+    DEFINE_PROP(Aircraft, AFortAthenaAircraft*);
+    DEFINE_PROP(SafeZonesStartTime, float);
 
     DEFINE_FUNC(OnRep_CurrentPlaylistInfo, void);
     DEFINE_FUNC(OnRep_CurrentPlaylistData, void);
@@ -78,4 +110,5 @@ public:
     DEFINE_FUNC(IsRespawningAllowed, bool);
     DEFINE_FUNC(OnRep_WinningTeam, void);
     DEFINE_FUNC(OnRep_WinningPlayerState, void);
+    DEFINE_FUNC(OnRep_GamePhase, void);
 };

@@ -1098,6 +1098,42 @@ inline uint64 FindRemoveFromAlivePlayers()
     return RemoveFromAlivePlayers;
 }
 
+
+inline uint64 FindStartAircraftPhase()
+{
+    static uint64_t StartAircraftPhase = 0;
+
+    if (StartAircraftPhase == 0)
+    {
+        if (VersionInfo.EngineVersion < 4.27)
+        {
+            auto sRef = Memcury::Scanner::FindStringRef(L"STARTAIRCRAFT").Get();
+
+            if (!sRef)
+                return 0;
+
+            int numCalls = 0;
+
+            for (int i = 0; i < 150; i++)
+                if (*(uint8_t*)(sRef + i) == 0xE8)
+                    if (++numCalls == 2)
+                        return StartAircraftPhase = Memcury::Scanner(sRef + i).RelativeOffset(1).Get();
+        }
+        else
+        {
+            auto sRef = Memcury::Scanner::FindStringRef(L"STAT_StartAircraftPhase").Get();
+
+            for (int i = 0; i < 1000; i++)
+                if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
+                    return StartAircraftPhase = sRef - i;
+        }
+
+        return 0;
+    }
+
+    return StartAircraftPhase;
+}
+
 static inline std::vector<uint64_t> NullFuncs = {};
 static inline std::vector<uint64_t> RetTrueFuncs = {};
 
