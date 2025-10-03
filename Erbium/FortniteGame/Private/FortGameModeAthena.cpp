@@ -56,12 +56,11 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
         if (GameMode->GameSession->HasMaxPlayers())
             GameMode->GameSession->MaxPlayers = Playlist->MaxPlayers;
 
-        if (VersionInfo.FortniteVersion >= 8 && VersionInfo.FortniteVersion < 10)
-        {
-            auto Volcano = Utils::FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.LF_Athena_POI_50x53_Volcano");
-            ShowFoundation(Volcano);
-        }
-        ShowFoundation(Utils::FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.SLAB_2"));
+        if (VersionInfo.FortniteVersion >= 7 && VersionInfo.FortniteVersion <= 10)
+            ShowFoundation(Utils::FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.SLAB_2"));
+        else if (VersionInfo.EngineVersion == 4.23) // rest of S10
+            ShowFoundation(Utils::FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.SLAB_4"));
+
 
 
         if (Playlist->HasAdditionalLevels())
