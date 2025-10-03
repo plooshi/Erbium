@@ -15,7 +15,7 @@ Erbium is a WIP universal gameserver for Fortnite.
 ## Configuration
 - In order to change options, go to Erbium/Public/Configuration.h & configure to your liking!
 
-> If you have issues with a specific version, please make an issue.
+> If you have issues with a specific version or find a bug, please make an issue.
 
 > Contributions are highly appreciated!
 > If you use this, please give me credit.
