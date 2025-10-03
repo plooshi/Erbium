@@ -33,7 +33,6 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
 
     if (Playlist)
     {
-        printf("Playlist: %s\n", Playlist->Name.ToString().c_str());
         if (GameState->HasCurrentPlaylistInfo())
         {
             if (VersionInfo.EngineVersion >= 4.27)

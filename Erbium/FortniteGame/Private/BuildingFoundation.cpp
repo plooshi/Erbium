@@ -7,7 +7,7 @@ void ABuildingFoundation::SetDynamicFoundationEnabled_(UObject* Context, FFrame&
 	bool bEnabled;
 	Stack.StepCompiledIn(&bEnabled);
 	Stack.IncrementCode();
-	printf("SetDynamicFoundationEnabled\n");
+	
 	if (Foundation->HasDynamicFoundationRepData())
 	{
 		Foundation->DynamicFoundationRepData.EnabledState = bEnabled ? 1 : 2;
@@ -21,7 +21,7 @@ void ABuildingFoundation::SetDynamicFoundationTransform_(UObject* Context, FFram
 	auto Foundation = (ABuildingFoundation*)Context;
 	auto& Transform = Stack.StepCompiledInRef<FTransform>();
 	Stack.IncrementCode();
-	printf("SetDynamicFoundationTransform\n");
+
 	Foundation->DynamicFoundationTransform = Transform;
 	if (Foundation->HasDynamicFoundationRepData())
 	{
