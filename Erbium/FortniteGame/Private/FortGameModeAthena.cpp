@@ -455,11 +455,11 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
         {
             Pawn->SetShield(100);
 
-            auto Shotgun = LateGame::GetShotguns();
-            auto AssaultRifle = LateGame::GetAssaultRifles();
-            auto Sniper = LateGame::GetSnipers();
-            auto Heal = LateGame::GetHeals();
-            auto HealSlot2 = LateGame::GetHeals();
+            auto Shotgun = LateGame::GetShotgun();
+            auto AssaultRifle = LateGame::GetAssaultRifle();
+            auto Sniper = LateGame::GetSniper();
+            auto Heal = LateGame::GetHeal();
+            auto HealSlot2 = LateGame::GetHeal();
 
             int ShotgunClipSize = AFortInventory::GetStats((UFortWeaponItemDefinition*)Shotgun.Item)->ClipSize;
             int AssaultRifleClipSize = AFortInventory::GetStats((UFortWeaponItemDefinition*)AssaultRifle.Item)->ClipSize;

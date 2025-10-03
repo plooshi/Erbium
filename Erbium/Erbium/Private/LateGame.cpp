@@ -3,7 +3,7 @@
 #include "../Public/Utils.h"
 #include "../../FortniteGame/Public/FortInventory.h"
 
-FLateGameItem LateGame::GetShotguns()
+FLateGameItem LateGame::GetShotgun()
 {
     static UEAllocatedVector<FLateGameItem> Shotguns
     {
@@ -11,10 +11,10 @@ FLateGameItem LateGame::GetShotguns()
         FLateGameItem(1, Utils::FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Shotgun_Standard_Athena_SR_Ore_T03.WID_Shotgun_Standard_Athena_SR_Ore_T03")), // pump 
     };
 
-    return Shotguns[rand() % (Shotguns.size() - 1)];
+    return Shotguns[rand() % Shotguns.size()];
 }
 
-FLateGameItem LateGame::GetAssaultRifles()
+FLateGameItem LateGame::GetAssaultRifle()
 {
     static UEAllocatedVector<FLateGameItem> AssaultRifles
     {
@@ -22,22 +22,22 @@ FLateGameItem LateGame::GetAssaultRifles()
         FLateGameItem(1, Utils::FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Assault_AutoHigh_Athena_VR_Ore_T03.WID_Assault_AutoHigh_Athena_VR_Ore_T03")), // scar
     };
 
-    return AssaultRifles[rand() % (AssaultRifles.size() - 1)];
+    return AssaultRifles[rand() % AssaultRifles.size()];
 }
 
 
-FLateGameItem LateGame::GetSnipers()
+FLateGameItem LateGame::GetSniper()
 {
-    static UEAllocatedVector<FLateGameItem> Heals
+    static UEAllocatedVector<FLateGameItem> Snipers
     {
         FLateGameItem(1, Utils::FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Sniper_BoltAction_Scope_Athena_SR_Ore_T03.WID_Sniper_BoltAction_Scope_Athena_SR_Ore_T03")), // bolt
-        FLateGameItem(1, Utils::FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Sniper_BoltAction_Scope_Athena_VR_Ore_T03.WID_Sniper_BoltAction_Scope_Athena_VR_Ore_T03")), // bolt
+        FLateGameItem(1, Utils::FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Pistol_Scavenger_Athena_SR_Ore_T03.WID_Pistol_Scavenger_Athena_SR_Ore_T03")) // tac smg
     };
 
-    return Heals[rand() % (Heals.size() - 1)];
+    return Snipers[rand() % Snipers.size()];
 }
 
-FLateGameItem LateGame::GetHeals()
+FLateGameItem LateGame::GetHeal()
 {
     static UEAllocatedVector<FLateGameItem> Heals
     {
@@ -45,8 +45,11 @@ FLateGameItem LateGame::GetHeals()
         FLateGameItem(6, Utils::FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Consumables/ShieldSmall/Athena_ShieldSmall.Athena_ShieldSmall")) // minis
     };
 
-    if (Heals.size() == 2)
+    static bool bAdded = false;
+    if (!bAdded)
     {
+        bAdded = true;
+
         auto ChugSplash = FLateGameItem(6, Utils::FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Consumables/ChillBronco/Athena_ChillBronco.Athena_ChillBronco"));
         auto SlurpJuice = FLateGameItem(2, Utils::FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Consumables/PurpleStuff/Athena_PurpleStuff.Athena_PurpleStuff"));
 
@@ -57,7 +60,7 @@ FLateGameItem LateGame::GetHeals()
             Heals.push_back(SlurpJuice);
     }
 
-    return Heals[rand() % (Heals.size() - 1)];
+    return Heals[rand() % Heals.size()];
 }
 
 const UFortItemDefinition* LateGame::GetAmmo(EAmmoType AmmoType)

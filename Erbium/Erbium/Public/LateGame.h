@@ -21,10 +21,10 @@ enum class EAmmoType : uint8
 class LateGame
 {
 public:
-    static FLateGameItem GetShotguns();
-    static FLateGameItem GetAssaultRifles();
-    static FLateGameItem GetSnipers();
-    static FLateGameItem GetHeals();
+    static FLateGameItem GetShotgun();
+    static FLateGameItem GetAssaultRifle();
+    static FLateGameItem GetSniper();
+    static FLateGameItem GetHeal();
 
     static const UFortItemDefinition* GetAmmo(EAmmoType);
     static const UFortItemDefinition* GetResource(EFortResourceType);
