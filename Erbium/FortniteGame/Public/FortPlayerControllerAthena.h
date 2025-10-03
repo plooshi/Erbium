@@ -31,6 +31,18 @@ public:
     DEFINE_STRUCT_PROP(KillerPlayerState, AFortPlayerStateAthena*);
     DEFINE_STRUCT_PROP(KillerPawn, AFortPlayerPawnAthena*);
     DEFINE_STRUCT_PROP(Tags, FGameplayTagContainer);
+    DEFINE_STRUCT_PROP(DamageCauser, AActor*);
+};
+
+class UAthenaDanceItemDefinition : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UAthenaDanceItemDefinition);
+
+    DEFINE_BITFIELD_PROP(bMovingEmote);
+    DEFINE_PROP(WalkForwardSpeed, float);
+    DEFINE_BITFIELD_PROP(bMoveForwardOnly);
+    DEFINE_BITFIELD_PROP(bMoveFollowingOnly);
 };
 
 class AFortPlayerControllerAthena : public AActor
@@ -55,6 +67,9 @@ public:
     DEFINE_FUNC(GetControlRotation, FRotator);
     DEFINE_FUNC(ClientSetRotation, void);
     DEFINE_FUNC(ClientReportDamagedResourceBuilding, void);
+    DEFINE_FUNC(PlayWinEffects, void);
+    DEFINE_FUNC(ClientNotifyWon, void);
+    DEFINE_FUNC(ClientNotifyTeamWon, void);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);

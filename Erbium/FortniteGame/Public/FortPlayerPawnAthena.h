@@ -1,6 +1,7 @@
 #pragma once
 #include "../../pch.h"
 #include "../../Erbium/Public/Utils.h"
+#include "GameplayTagContainer.h"
 
 class UCharacterMovementComponent : public UObject
 {
@@ -35,6 +36,7 @@ public:
     DEFINE_BITFIELD_PROP(bMovingEmoteForwardOnly);
     DEFINE_BITFIELD_PROP(bMovingEmoteFollowingOnly);
     DEFINE_PROP(LastFallDistance, float);
+    DEFINE_PROP(GameplayTags, FGameplayTagContainer);
 
     DEFINE_FUNC(BeginSkydiving, void);
     DEFINE_FUNC(SetHealth, void);

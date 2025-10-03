@@ -1062,6 +1062,42 @@ inline uint64 FindGameSessionPatch()
     return 0;
 }
 
+inline uint64 FindRemoveFromAlivePlayers()
+{
+    static uint64 RemoveFromAlivePlayers = 0;
+
+    if (RemoveFromAlivePlayers == 0)
+    {
+        auto sRef = Memcury::Scanner::FindStringRef(L"FortGameModeAthena: Player [%s] removed from alive players list (Team [%d]).  Player count is now [%d].  Team count is now [%d].", false).Get();
+
+        if (!sRef)
+            sRef = Memcury::Scanner::FindStringRef(L"FortGameModeAthena: Player [%s] removed from alive players list (Team [%d]).  Player count is now [%d]. PlayerBots count is now [%d]. Team count is now [%d].", false).Get();
+
+        if (!sRef)
+            sRef = Memcury::Scanner::FindStringRef(L"FortGameModeAthena::RemoveFromAlivePlayers: Player [%s] PC [%s] removed from alive players list (Team [%d]).  Player count is now [%d]. PlayerBots count is now [%d]. Team count is now [%d].", true, 0, VersionInfo.FortniteVersion >= 16).Get();
+
+        for (int i = 0; i < 2000; i++)
+        {
+            if (*(uint8_t*)(sRef - i) == 0x4C && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x4C)
+                return RemoveFromAlivePlayers = sRef - i;
+            else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x54)
+            {
+                for (int z = 3; z < 50; z++)
+                    if (*(uint8_t*)(sRef - i - z) == 0x4C && *(uint8_t*)(sRef - i - z + 1) == 0x89 && *(uint8_t*)(sRef - i - z + 2) == 0x4C)
+                        return RemoveFromAlivePlayers = sRef - i - z;
+
+                return RemoveFromAlivePlayers = sRef - i;
+            }
+            else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
+                return RemoveFromAlivePlayers = sRef - i;
+        }
+
+        return 0;
+    }
+
+    return RemoveFromAlivePlayers;
+}
+
 static inline std::vector<uint64_t> NullFuncs = {};
 static inline std::vector<uint64_t> RetTrueFuncs = {};
 

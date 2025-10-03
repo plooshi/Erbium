@@ -67,10 +67,15 @@ public:
     DEFINE_PROP(WorldLevel, int32);
     DEFINE_PROP(WarmupCountdownStartTime, float);
     DEFINE_PROP(WarmupCountdownEndTime, float);
+    DEFINE_PROP(PlayersLeft, int32);
+    DEFINE_PROP(WinningTeam, int32);
+    DEFINE_PROP(WinningPlayerState, AFortPlayerStateAthena*);
 
     DEFINE_FUNC(OnRep_CurrentPlaylistInfo, void);
     DEFINE_FUNC(OnRep_CurrentPlaylistData, void);
     DEFINE_FUNC(OnRep_CurrentPlaylistId, void);
     DEFINE_FUNC(OnRep_AdditionalPlaylistLevelsStreamed, void);
     DEFINE_FUNC(IsRespawningAllowed, bool);
+    DEFINE_FUNC(OnRep_WinningTeam, void);
+    DEFINE_FUNC(OnRep_WinningPlayerState, void);
 };
