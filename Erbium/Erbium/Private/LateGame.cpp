@@ -31,7 +31,7 @@ FLateGameItem LateGame::GetSnipers()
     static UEAllocatedVector<FLateGameItem> Heals
     {
         FLateGameItem(1, Utils::FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Sniper_BoltAction_Scope_Athena_SR_Ore_T03.WID_Sniper_BoltAction_Scope_Athena_SR_Ore_T03")), // bolt
-        FLateGameItem(1, Utils::FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Sniper_BoltAction_Scope_Athena_SR_Ore_T03.WID_Sniper_BoltAction_Scope_Athena_SR_Ore_T03")), // bolt
+        FLateGameItem(1, Utils::FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Sniper_BoltAction_Scope_Athena_VR_Ore_T03.WID_Sniper_BoltAction_Scope_Athena_VR_Ore_T03")), // bolt
     };
 
     return Heals[rand() % (Heals.size() - 1)];
