@@ -449,6 +449,30 @@ void AFortPlayerControllerAthena::ServerEndEditingBuildingActor(UObject* Context
 }
 
 
+void AFortPlayerControllerAthena::ServerRepairBuildingActor(UObject* Context, FFrame& Stack)
+{
+	ABuildingSMActor* Building;
+	Stack.StepCompiledIn(&Building);
+	Stack.IncrementCode();
+	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+	if (!PlayerController)
+		return;
+
+	auto Price = (int32)std::floor((10.f * (1.f - Building->GetHealthPercent())) * 0.75f);
+	auto res = UFortKismetLibrary::K2_GetResourceItemDefinition(Building->ResourceType);
+	auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([res](FFortItemEntry& entry) {
+		return entry.ItemDefinition == res;
+		}, FFortItemEntry::Size());
+
+	itemEntry->Count -= Price;
+	if (itemEntry->Count <= 0)
+		PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
+	else
+		PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+
+	Building->RepairBuilding(PlayerController, Price);
+}
+
 void AFortPlayerControllerAthena::ServerAttemptInventoryDrop(UObject* Context, FFrame& Stack)
 {
 	FGuid Guid;
@@ -933,10 +957,12 @@ void AFortPlayerControllerAthena::Hook()
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerBeginEditingBuildingActor"), ServerBeginEditingBuildingActor);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerEditBuildingActor"), ServerEditBuildingActor);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerEndEditingBuildingActor"), ServerEndEditingBuildingActor);
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerRepairBuildingActor"), ServerRepairBuildingActor);
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerAttemptInventoryDrop"), ServerAttemptInventoryDrop);
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerPlayEmoteItem"), ServerPlayEmoteItem);
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerPlaySprayItem"), ServerPlayEmoteItem);
 
 	auto ClientOnPawnDiedAddr = FindFunctionCall(L"ClientOnPawnDied", VersionInfo.EngineVersion == 4.16 ? std::vector<uint8_t>{ 0x48, 0x89, 0x54 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
 	Utils::Hook(ClientOnPawnDiedAddr, ClientOnPawnDied, ClientOnPawnDiedOG);

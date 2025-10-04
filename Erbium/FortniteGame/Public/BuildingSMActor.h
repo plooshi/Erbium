@@ -30,6 +30,8 @@ public:
     DEFINE_FUNC(GetMaxHealth, float);
     DEFINE_FUNC(SetMirrored, void);
     DEFINE_FUNC(InitializeKismetSpawnedBuildingActor, void);
+    DEFINE_FUNC(GetHealthPercent, float);
+    DEFINE_FUNC(RepairBuilding, void);
     
     DefHookOg(void, OnDamageServer, ABuildingSMActor*, float, FGameplayTagContainer, FVector, __int64, AFortPlayerControllerAthena*, AActor*, __int64);
 
