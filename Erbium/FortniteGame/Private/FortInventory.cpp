@@ -285,16 +285,16 @@ void SetLoadedAmmo(UFortWorldItem* Item, int LoadedAmmo)
 {
     Item->ItemEntry.LoadedAmmo = LoadedAmmo;
 
-    auto OwnerInventory = (AFortInventory*) Item->OwnerInventory;
-    OwnerInventory->UpdateEntry(Item->ItemEntry);
+    auto PlayerController = (AFortPlayerControllerAthena*)Item->GetOwningController();
+    PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
 }
 
 void SetPhantomReserveAmmo(UFortWorldItem* Item, unsigned int PhantomReserveAmmo)
 {
     Item->ItemEntry.PhantomReserveAmmo = PhantomReserveAmmo;
 
-    auto OwnerInventory = (AFortInventory*)Item->OwnerInventory;
-    OwnerInventory->UpdateEntry(Item->ItemEntry);
+    auto PlayerController = (AFortPlayerControllerAthena*)Item->GetOwningController();
+    PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
 }
 
 void AFortInventory::Hook()
@@ -308,7 +308,7 @@ void AFortInventory::Hook()
         auto WorldItemVft = UFortWorldItem::GetDefaultObj()->Vft;
         int SetOwningInventoryIdx = 0;
 
-        for (int i = 0; i < 500; i++)
+        for (int i = 0; i < 0x200; i++)
         {
             if (WorldItemVft[i] == (void*)SetOwningInventory)
             {

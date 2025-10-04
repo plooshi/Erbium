@@ -3,6 +3,7 @@
 #include "../Public/BuildingContainer.h"
 #include "../Public/FortGameModeAthena.h"
 #include <algorithm>
+#include <Erbium/Public/Configuration.h>
 
 struct FFortLootLevelData
 {
@@ -62,23 +63,55 @@ int GetLevel(const FDataTableCategoryHandle& CategoryHandle)
 void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SDK::FName Package, int i, FName TierGroup, int WorldLevel)
 {
 	TArray<FFortLootPackageData*> LPGroups;
-	for (auto const& Val : LPGroupsAll)
+	if (VersionInfo.EngineVersion == 4.21)
 	{
-		if (!Val)
-			continue;
+		auto Playlist = Utils::FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
 
-		if (Val->LootPackageID != Package)
-			continue;
-		if (i != -1 && Val->LootPackageCategory != i)
-			continue;
-		if (WorldLevel >= 0) {
-			if (Val->MaxWorldLevel >= 0 && WorldLevel > Val->MaxWorldLevel)
+		auto LootPackages = Playlist ? Playlist->LootPackages.Get() : nullptr;
+		if (!LootPackages)
+			LootPackages = Utils::FindObject<UDataTable>(L"/Game/Items/Datatables/AthenaLootPackages_Client.AthenaLootPackages_Client");
+
+		for (auto& [_, _Val] : LootPackages->RowMap)
+		{
+			auto Val = (FFortLootPackageData*)_Val;
+
+			if (!Val)
 				continue;
-			if (Val->MinWorldLevel >= 0 && WorldLevel < Val->MinWorldLevel)
+
+			if (Val->LootPackageID != Package)
 				continue;
+			if (i != -1 && Val->LootPackageCategory != i)
+				continue;
+			if (WorldLevel >= 0) {
+				if (Val->MaxWorldLevel >= 0 && WorldLevel > Val->MaxWorldLevel)
+					continue;
+				if (Val->MinWorldLevel >= 0 && WorldLevel < Val->MinWorldLevel)
+					continue;
+			}
+
+			LPGroups.Add(Val);
 		}
+	}
+	else 
+	{
+		for (auto const& Val : LPGroupsAll)
+		{
+			if (!Val)
+				continue;
 
-		LPGroups.Add(Val);
+			if (Val->LootPackageID != Package)
+				continue;
+			if (i != -1 && Val->LootPackageCategory != i)
+				continue;
+			if (WorldLevel >= 0) {
+				if (Val->MaxWorldLevel >= 0 && WorldLevel > Val->MaxWorldLevel)
+					continue;
+				if (Val->MinWorldLevel >= 0 && WorldLevel < Val->MinWorldLevel)
+					continue;
+			}
+
+			LPGroups.Add(Val);
+		}
 	}
 	if (LPGroups.Num() == 0)
 		return;
@@ -152,10 +185,30 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 {
 	TArray<FFortLootTierData*> TierDataGroups;
 
-	for (auto const& Val : TierDataAllGroups) 
+
+	if (VersionInfo.EngineVersion == 4.21)
 	{
-		if (Val->TierGroup == TierGroup && (LootTier == -1 ? true : LootTier == Val->LootTier))
-			TierDataGroups.Add(Val);
+		auto Playlist = Utils::FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
+
+		auto LootTierData = Playlist ? Playlist->LootTierData.Get() : nullptr;
+		if (!LootTierData)
+			LootTierData = Utils::FindObject<UDataTable>(L"/Game/Items/Datatables/AthenaLootTierData_Client.AthenaLootTierData_Client");
+
+		for (auto& [_, _Val] : LootTierData->RowMap)
+		{
+			auto Val = (FFortLootTierData*)_Val;
+
+			if (Val->TierGroup == TierGroup && (LootTier == -1 ? true : LootTier == Val->LootTier))
+				TierDataGroups.Add(Val);
+		}
+	}
+	else 
+	{
+		for (auto const& Val : TierDataAllGroups)
+		{
+			if (Val->TierGroup == TierGroup && (LootTier == -1 ? true : LootTier == Val->LootTier))
+				TierDataGroups.Add(Val);
+		}
 	}
 
 	auto LootTierData = PickWeighted(TierDataGroups, [](float Total) { return ((float)rand() / 32767.f) * Total; });

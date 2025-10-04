@@ -532,7 +532,7 @@ namespace SDK
 
 		Params GetParams() 
 		{
-			Params p;
+			Params p{};
 			static auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);
 			static auto PropertyFlagsOff = OffsetOff - 0xc;
 			static auto ElementSizeOff = OffsetOff - 0x10;

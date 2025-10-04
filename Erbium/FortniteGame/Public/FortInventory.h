@@ -106,6 +106,7 @@ public:
     DEFINE_PROP(OwnerInventory, AActor*);
 
     DEFINE_FUNC(SetOwningControllerForTemporaryItem, void);
+    DEFINE_FUNC(GetOwningController, AActor*);
 };
 
 struct FFortItemList : public FFastArraySerializer

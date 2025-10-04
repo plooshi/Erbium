@@ -49,12 +49,32 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
             GameState->OnRep_CurrentPlaylistData();
         }
 
-        GameState->CurrentPlaylistId = GameMode->CurrentPlaylistId = Playlist->PlaylistId;
+        GameMode->CurrentPlaylistId = Playlist->PlaylistId;
+        if (GameState->HasCurrentPlaylistId())
+            GameState->CurrentPlaylistId = Playlist->PlaylistId;
         if (GameMode->HasCurrentPlaylistName())
             GameMode->CurrentPlaylistName = Playlist->PlaylistName;
 
         if (GameMode->GameSession->HasMaxPlayers())
             GameMode->GameSession->MaxPlayers = Playlist->MaxPlayers;
+
+        if (VersionInfo.FortniteVersion >= 6 && VersionInfo.FortniteVersion < 7)
+        {
+            if (VersionInfo.FortniteVersion > 6.10)
+                ShowFoundation(VersionInfo.FortniteVersion <= 6.21 ? Utils::FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.LF_Lake1") : Utils::FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.LF_Lake2"));
+            else
+                ShowFoundation(Utils::FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.LF_Athena_StreamingTest12"));
+
+            ShowFoundation(VersionInfo.FortniteVersion <= 6.10 ? Utils::FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.LF_Athena_StreamingTest13") : Utils::FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.LF_FloatingIsland"));
+
+            auto IslandScripting = TUObjectArray::FindFirstObject("BP_IslandScripting_C");
+            auto UpdateMapOffset = IslandScripting->GetOffset("UpdateMap");
+            if (UpdateMapOffset != -1)
+            {
+                *(bool*)(__int64(IslandScripting) + UpdateMapOffset) = true;
+                IslandScripting->ProcessEvent(IslandScripting->GetFunction("OnRep_UpdateMap"), nullptr);
+            }
+        }
 
         if (VersionInfo.FortniteVersion >= 8 && VersionInfo.FortniteVersion < 10)
         {
@@ -233,9 +253,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         if (LootTierData)
             AddToTierData(LootTierData, LootTierDataTempArr);
         for (auto& [_, Val] : LootTierDataTempArr)
-        {
             TierDataAllGroups.Add(Val);
-        }
 
         UEAllocatedMap<FName, FFortLootPackageData*> LootPackageTempArr;
         auto LootPackages = Playlist ? Playlist->LootPackages.Get() : nullptr;
@@ -244,59 +262,58 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         if (LootPackages)
             AddToPackages(LootPackages, LootPackageTempArr);
         for (auto& [_, Val] : LootPackageTempArr)
-        {
             LPGroupsAll.Add(Val);
-        }
 
 
         auto GameFeatureDataClass = FindClass("FortGameFeatureData");
-        for (int i = 0; i < TUObjectArray::Num(); i++)
-        {
-            auto Object = TUObjectArray::GetObjectByIndex(i);
-
-            if (!Object || !Object->Class || Object->IsDefaultObject())
-                continue;
-
-            if (Object->IsA(GameFeatureDataClass))
+        if (GameFeatureDataClass)
+            for (int i = 0; i < TUObjectArray::Num(); i++)
             {
-                static auto DefaultLootTableDataOffset = Object->GetOffset("DefaultLootTableData");
+                auto Object = TUObjectArray::GetObjectByIndex(i);
 
-                auto& LootTableData = GetFromOffset<FFortGameFeatureLootTableData>(Object, DefaultLootTableDataOffset);
-                auto LTDFeatureData = Utils::FindObject<UDataTable>(LootTableData.LootTierData.ObjectID.AssetPathName.ToWString().c_str());
-                auto LootPackageData = Utils::FindObject<UDataTable>(LootTableData.LootPackageData.ObjectID.AssetPathName.ToWString().c_str());
+                if (!Object || !Object->Class || Object->IsDefaultObject())
+                    continue;
 
-
-                if (LTDFeatureData)
+                if (Object->IsA(GameFeatureDataClass))
                 {
-                    UEAllocatedMap<FName, FFortLootTierData*> LTDTempData;
+                    static auto DefaultLootTableDataOffset = Object->GetOffset("DefaultLootTableData");
 
-                    AddToTierData(LTDFeatureData, LTDTempData);
+                    auto& LootTableData = GetFromOffset<FFortGameFeatureLootTableData>(Object, DefaultLootTableDataOffset);
+                    auto LTDFeatureData = Utils::FindObject<UDataTable>(LootTableData.LootTierData.ObjectID.AssetPathName.ToWString().c_str());
+                    auto LootPackageData = Utils::FindObject<UDataTable>(LootTableData.LootPackageData.ObjectID.AssetPathName.ToWString().c_str());
 
-                    /*for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
-                        for (auto& Override : Object->PlaylistOverrideLootTableData)
-                            if (Tag.TagName == Override.First.TagName)
-                                AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);*/
 
-                    for (auto& [_, Val] : LTDTempData)
-                        TierDataAllGroups.Add(Val);
-                }
+                    if (LTDFeatureData)
+                    {
+                        UEAllocatedMap<FName, FFortLootTierData*> LTDTempData;
 
-                if (LootPackageData)
-                {
-                    UEAllocatedMap<FName, FFortLootPackageData*> LPTempData;
+                        AddToTierData(LTDFeatureData, LTDTempData);
 
-                    AddToPackages(LootPackageData, LPTempData);
+                        /*for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
+                            for (auto& Override : Object->PlaylistOverrideLootTableData)
+                                if (Tag.TagName == Override.First.TagName)
+                                    AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);*/
 
-                    /*for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
-                        for (auto& Override : Object->PlaylistOverrideLootTableData)
-                            if (Tag.TagName == Override.First.TagName)
-                                AddToPackages(Override.Second.LootPackageData.Get(), LPTempData);*/
+                        for (auto& [_, Val] : LTDTempData)
+                            TierDataAllGroups.Add(Val);
+                    }
 
-                    for (auto& [_, Val] : LPTempData)
-                        LPGroupsAll.Add(Val);
+                    if (LootPackageData)
+                    {
+                        UEAllocatedMap<FName, FFortLootPackageData*> LPTempData;
+
+                        AddToPackages(LootPackageData, LPTempData);
+
+                        /*for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
+                            for (auto& Override : Object->PlaylistOverrideLootTableData)
+                                if (Tag.TagName == Override.First.TagName)
+                                    AddToPackages(Override.Second.LootPackageData.Get(), LPTempData);*/
+
+                        for (auto& [_, Val] : LPTempData)
+                            LPGroupsAll.Add(Val);
+                    }
                 }
             }
-        }
 
 
         UFortLootPackage::SpawnFloorLootForContainer(Utils::FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_Warmup.Tiered_Athena_FloorLoot_Warmup_C"));
