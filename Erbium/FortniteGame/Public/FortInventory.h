@@ -57,6 +57,7 @@ public:
     DEFINE_PROP(NumberOfSlotsToTake, uint8);
     DEFINE_BITFIELD_PROP(bAllowMultipleStacks);
     DEFINE_PROP(LootLevelData, FDataTableCategoryHandle);
+    DEFINE_PROP(Tier, uint8);
 
     DEFINE_FUNC(CreateTemporaryItemInstanceBP, UFortItem*);
     DEFINE_FUNC(GetWeaponItemDefinition, UFortItemDefinition*);
@@ -225,8 +226,8 @@ public:
     UFortWorldItem* GiveItem(FFortItemEntry&, int = -1, bool = true, bool = true);
     void Update(FFortItemEntry*);
     void Remove(FGuid);
-    static AFortPickupAthena* SpawnPickup(FVector, FFortItemEntry&, long long = EFortPickupSourceTypeFlag::GetTossed(), long long = EFortPickupSpawnSource::GetUnset(), AFortPlayerPawnAthena* = nullptr, int = -1, bool = true, bool = true, bool = true);
-    static AFortPickupAthena* SpawnPickup(FVector, const UFortItemDefinition*, int, int, long long = EFortPickupSourceTypeFlag::GetTossed(), long long = EFortPickupSpawnSource::GetUnset(), AFortPlayerPawnAthena* = nullptr, bool = true, bool = true);
+    static AFortPickupAthena* SpawnPickup(FVector, FFortItemEntry&, long long = EFortPickupSourceTypeFlag::GetOther(), long long = EFortPickupSpawnSource::GetUnset(), AFortPlayerPawnAthena* = nullptr, int = -1, bool = true, bool = true, bool = true);
+    static AFortPickupAthena* SpawnPickup(FVector, const UFortItemDefinition*, int, int, long long = EFortPickupSourceTypeFlag::GetOther(), long long = EFortPickupSpawnSource::GetUnset(), AFortPlayerPawnAthena* = nullptr, bool = true, bool = true);
     static AFortPickupAthena* SpawnPickup(ABuildingContainer*, FFortItemEntry&, AFortPlayerPawnAthena* = nullptr, int = -1);
     static FFortItemEntry* MakeItemEntry(const UFortItemDefinition*, int32, int32);
     static FFortRangedWeaponStats* GetStats(UFortWeaponItemDefinition*);

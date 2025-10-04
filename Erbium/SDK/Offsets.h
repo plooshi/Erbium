@@ -28,6 +28,8 @@ namespace SDK
 		inline uint64_t Step = 0;
 		inline uint64_t StepExplicitProperty = 0;
 		inline uint64_t GetInterfaceAddress = 0;
+		inline uint64_t StaticFindObject = 0;
+		inline uint64_t StaticLoadObject = 0;
     }
 
 	inline void Init()
@@ -192,6 +194,82 @@ namespace SDK
 
 				if (!Offsets::GetInterfaceAddress)
 					Offsets::GetInterfaceAddress = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 81 EC ? ? ? ? 33 DB 48 8B FA").Get();
+			}
+		}
+
+
+		if (VersionInfo.EngineVersion >= 5.0)
+		{
+			Offsets::StaticFindObject = Memcury::Scanner::FindPattern("40 55 53 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 45 33 F6 4C 8B E1 45 0F B6 E9 49 8B F8 41 8B C6", false).Get();
+
+			if (!Offsets::StaticFindObject)
+			{
+				Offsets::StaticFindObject = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 4C 89 64 24 ? 55 41 55 41 57 48 8B EC 48 83 EC 60 45 8A E1 4C 8B E9 48 83 FA").Get();
+
+				if (!Offsets::StaticFindObject)
+				{
+					Offsets::StaticFindObject = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 4C 89 64 24 ? 55 41 55 41 57 48 8B EC 48 83 EC 50 4C 8B E9").Get();
+
+					if (!Offsets::StaticFindObject)
+						Offsets::StaticFindObject = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 7C 24 ? 4C 89 64 24 ? 55 41 56 41 57 48 8B EC 48 83 EC 60 33 FF 4C 8B E1 48 8D 4D E8 45 8A").Get();
+				}
+			}
+		}
+		else if (VersionInfo.EngineVersion >= 4.27)
+		{
+			if (floor(VersionInfo.FortniteVersion) == 18)
+				Offsets::StaticFindObject = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 48 89 7C 24 ? 55 41 54 41 55 41 56 41 57 48 8B EC 48 83 EC 60 45 33 ED 45 8A F9 44 38 2D ? ? ? ? 49 8B F8 48 8B").Get();
+			else if (VersionInfo.FortniteVersion == 16.50)
+				Offsets::StaticFindObject = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 48 89 7C 24 ? 55 41 54 41 55 41 56 41 57 48 8B EC 48 83 EC 60 45 33 ED 45 8A F9 44 38 2D ? ? ? ? 49 8B F8 48 8B F2 4C 8B E1").Get();
+			else
+				Offsets::StaticFindObject = Memcury::Scanner::FindPattern("40 55 53 57 41 54 41 55 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85").Get();
+		}
+		else if (VersionInfo.EngineVersion == 4.16)
+			Offsets::StaticFindObject = Memcury::Scanner::FindPattern("4C 8B DC 57 48 81 EC ? ? ? ? 80 3D ? ? ? ? ? 49 89 6B F0 49 89 73 E8").Get();
+		else if (VersionInfo.EngineVersion == 4.19)
+		{
+			Offsets::StaticFindObject = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 55 57 41 54 41 56 41 57 48 8B EC 48 83 EC 60 80 3D ? ? ? ? ? 45 0F B6 F1 49 8B F8").Get();
+
+			if (!Offsets::StaticFindObject)
+				Offsets::StaticFindObject = Memcury::Scanner::FindPattern("4C 8B DC 49 89 5B 08 49 89 6B 18 49 89 73 20 57 41 56 41 57 48 83 EC 60 80 3D").Get();
+		}
+		else 
+		{
+			auto sRef = Memcury::Scanner::FindStringRef(L"Illegal call to StaticFindObject() while serializing object data!", false, 1).Get();
+
+			for (int i = 0; i < 1000; i++)
+			{
+				auto Ptr = (uint8_t*)(sRef - i);
+
+				if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5c)
+				{
+					Offsets::StaticFindObject = uint64_t(Ptr);
+					break;
+				}
+			}
+		}
+
+		auto sRef = Memcury::Scanner::FindStringRef(L"STAT_LoadObject", false).Get();
+
+		if (!sRef)
+		{
+			auto sRef2 = Memcury::Scanner::FindStringRef(L"Calling StaticLoadObject during PostLoad may result in hitches during streaming.");
+			Offsets::StaticLoadObject = sRef2.ScanFor({ 0x40, 0x55 }, false).Get();
+		}
+		else
+		{
+			for (int i = 0; i < 400; i++)
+			{
+				if (*(uint8_t*)(sRef - i) == 0x4C && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x4C)
+				{
+					Offsets::StaticLoadObject = sRef - i;
+					break;
+				}
+				else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
+				{
+					Offsets::StaticLoadObject = sRef - i;
+					break;
+				}
 			}
 		}
 	}

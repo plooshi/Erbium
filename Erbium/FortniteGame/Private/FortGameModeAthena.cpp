@@ -279,8 +279,8 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                     static auto DefaultLootTableDataOffset = Object->GetOffset("DefaultLootTableData");
 
                     auto& LootTableData = GetFromOffset<FFortGameFeatureLootTableData>(Object, DefaultLootTableDataOffset);
-                    auto LTDFeatureData = Utils::FindObject<UDataTable>(LootTableData.LootTierData.ObjectID.AssetPathName.ToWString().c_str());
-                    auto LootPackageData = Utils::FindObject<UDataTable>(LootTableData.LootPackageData.ObjectID.AssetPathName.ToWString().c_str());
+                    auto LTDFeatureData = LootTableData.LootTierData.Get();
+                    auto LootPackageData = LootTableData.LootPackageData.Get();
 
 
                     if (LTDFeatureData)

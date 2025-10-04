@@ -70,6 +70,7 @@ public:
     DEFINE_FUNC(ClientNotifyWon, void);
     DEFINE_FUNC(ClientNotifyTeamWon, void);
     DEFINE_FUNC(ClientMessage, void);
+    DEFINE_FUNC(ClientGotoState, void);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);

@@ -976,7 +976,7 @@ namespace SDK
 		{
 		}
 
-		FWeakObjectPtr(const UObject* Object) 
+		FWeakObjectPtr(const UObject* Object)
 		{
 			if (Object)
 			{
@@ -1068,11 +1068,40 @@ namespace SDK
 		class FString SubPathString;
 	};
 
+
+	__forceinline static const UObject* StaticFindObject(const wchar_t* ObjectPath, const UClass* Class)
+	{
+		auto StaticFindObjectInternal = (UObject * (*)(const UClass*, UObject*, const wchar_t*, bool)) SDK::Offsets::StaticFindObject;
+		return StaticFindObjectInternal(Class, nullptr, ObjectPath, false);
+	}
+
+	__forceinline static const UObject* StaticLoadObject(const wchar_t* ObjectPath, const UClass* InClass, UObject* Outer = nullptr)
+	{
+		auto StaticLoadObjectInternal = (UObject * (*)(const UClass*, UObject*, const wchar_t*, const wchar_t*, uint32_t, UObject*, bool)) SDK::Offsets::StaticFindObject;
+		return StaticLoadObjectInternal(InClass, Outer, ObjectPath, nullptr, 0, nullptr, false);
+	}
+
+	static const UObject* FindObject(const wchar_t* ObjectPath, const UClass* Class)
+	{
+		auto Object = StaticFindObject(ObjectPath, Class);
+		return Object ? Object : StaticLoadObject(ObjectPath, Class);
+	}
+
 	class FSoftObjectPtr : public TPersistentObjectPtr<FSoftObjectPath>
 	{
-	};
+	public:
+		const UObject* InternalGet(const UClass* Class)
+		{
+			if (!this)
+				return nullptr;
 
-	UObject* InternalGet(FSoftObjectPtr* Ptr, UClass* Class);
+			auto Ret = WeakPtr.ObjectIndex && WeakPtr.ObjectSerialNumber ? Get() : nullptr;
+			if ((!Ret || !Ret->IsA(Class)) && ObjectID.AssetPathName.ComparisonIndex > 0) {
+				WeakPtr = Ret = FindObject(ObjectID.AssetPathName.ToWString().c_str(), Class);
+			}
+			return Ret;
+		}
+	};
 
 	template<typename UEType>
 	class TSoftObjectPtr : public FSoftObjectPtr
@@ -1086,15 +1115,16 @@ namespace SDK
 			ObjectID.AssetPathName = FName(0);
 		}
 
-		const UEType* Get() const
+		const UEType* Get()
 		{
-			return static_cast<const UEType*>(TPersistentObjectPtr::Get());
+			return (UEType*)InternalGet(UEType::StaticClass());
+			//return static_cast<const UEType*>(TPersistentObjectPtr::Get());
 		}
-		const UEType* operator->() const
+		const UEType* operator->()
 		{
 			return Get();
 		}
-		operator UEType* () const
+		operator UEType* ()
 		{
 			return Get();
 		}
@@ -1112,15 +1142,16 @@ namespace SDK
 			ObjectID.AssetPathName = FName(0);
 		}
 
-		UClass* Get() const
+		UClass* Get()
 		{
-			return static_cast<UClass*>(TPersistentObjectPtr::Get());
+			return (UEType*)InternalGet(UClass::StaticClass());
+			//return static_cast<UClass*>(TPersistentObjectPtr::Get());
 		}
-		UClass* operator->() const
+		UClass* operator->()
 		{
 			return Get();
 		}
-		operator UClass* () const
+		operator UClass* ()
 		{
 			return Get();
 		}

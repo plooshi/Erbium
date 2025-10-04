@@ -127,14 +127,12 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 		return;
 	}
 
-	auto _Id = Utils::FindObject<UFortItemDefinition>(LootPackage->ItemDefinition.ObjectID.AssetPathName.ToWString().c_str());
-	LootPackage->ItemDefinition.WeakPtr = _Id;
-	auto ItemDefinition = _Id;
+	auto ItemDefinition = LootPackage->ItemDefinition.Get();
 	if (!ItemDefinition)
 		return;
 
 	static auto WeaponRangedItemDefinitionClass = FindClass("FortWeaponRangedItemDefinition");
-	auto AmmoDef = _Id->IsA(WeaponRangedItemDefinitionClass) && VersionInfo.FortniteVersion >= 11.00 ? ((UFortWeaponItemDefinition*)_Id)->GetAmmoWorldItemDefinition_BP() : nullptr;
+	auto AmmoDef = ItemDefinition->IsA(WeaponRangedItemDefinitionClass) && VersionInfo.FortniteVersion >= 11.00 ? ((UFortWeaponItemDefinition*)ItemDefinition)->GetAmmoWorldItemDefinition_BP() : nullptr;
 
 	bool found = false;
 	bool foundAmmo = false;

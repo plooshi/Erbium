@@ -706,7 +706,8 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 		if (VersionInfo.FortniteVersion >= 15)
 		{
 			static auto SpectatingName = UKismetStringLibrary::Conv_StringToName(FString(L"Spectating"));
-			PlayerController->StateName = SpectatingName;
+			//PlayerController->StateName = SpectatingName;
+			PlayerController->ClientGotoState(SpectatingName);
 		}
 
 

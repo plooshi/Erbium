@@ -65,13 +65,13 @@ public:
 
     __forceinline static const UObject* InternalFindObject(const wchar_t* ObjectPath, const UClass* Class)
     {
-        auto StaticFindObjectInternal = (UObject * (*)(const UClass*, UObject*, const wchar_t*, bool)) FindStaticFindObject();
+        auto StaticFindObjectInternal = (UObject * (*)(const UClass*, UObject*, const wchar_t*, bool)) SDK::Offsets::StaticFindObject;
         return StaticFindObjectInternal(Class, nullptr, ObjectPath, false);
     }
 
     __forceinline static const UObject* InternalLoadObject(const wchar_t* ObjectPath, const UClass* InClass, UObject* Outer = nullptr)
     {
-        auto StaticLoadObjectInternal = (UObject * (*)(const UClass*, UObject*, const wchar_t*, const wchar_t*, uint32_t, UObject*, bool)) FindStaticLoadObject();
+        auto StaticLoadObjectInternal = (UObject * (*)(const UClass*, UObject*, const wchar_t*, const wchar_t*, uint32_t, UObject*, bool)) SDK::Offsets::StaticFindObject;
         return StaticLoadObjectInternal(InClass, Outer, ObjectPath, nullptr, 0, nullptr, false);
     }
 
