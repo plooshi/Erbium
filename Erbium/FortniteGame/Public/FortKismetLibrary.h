@@ -4,6 +4,20 @@
 #include "FortInventory.h"
 #include "BuildingSMActor.h"
 
+struct FSpawnItemVariantParams
+{
+public:
+	USCRIPTSTRUCT_COMMON_MEMBERS(FSpawnItemVariantParams);
+
+	DEFINE_STRUCT_PROP(Position, FVector);
+	DEFINE_STRUCT_PROP(WorldItemDefinition, UFortItemDefinition*);
+	DEFINE_STRUCT_PROP(NumberToSpawn, int32);
+	DEFINE_STRUCT_PROP(SourceType, uint8);
+	DEFINE_STRUCT_PROP(Source, uint8);
+	DEFINE_STRUCT_PROP(bToss, bool);
+	DEFINE_STRUCT_PROP(bRandomRotation, bool);
+};
+
 class UFortKismetLibrary : public UObject
 {
 public:
@@ -33,6 +47,7 @@ public:
 	static void GiveItemToInventoryOwner(UObject*, FFrame&);
 	static void K2_RemoveItemFromPlayer(UObject*, FFrame&, int32*);
 	static void K2_RemoveItemFromPlayerByGuid(UObject*, FFrame&, int32*);
+	static void SpawnItemVariantPickupInWorld(UObject*, FFrame&, AFortPickupAthena**);
 
 	InitHooks;
 };

@@ -297,6 +297,24 @@ void SetPhantomReserveAmmo(UFortWorldItem* Item, unsigned int PhantomReserveAmmo
     PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
 }
 
+
+void SpawnPickup_(UObject* Object, FFrame& Stack, AFortPickupAthena** Ret)
+{
+    UFortItemDefinition* ItemDefinition;
+    int32 NumberToSpawn;
+    AFortPlayerPawnAthena* TriggeringPawn;
+    FVector Position;
+    FVector Direction;
+    Stack.StepCompiledIn(&ItemDefinition);
+    Stack.StepCompiledIn(&NumberToSpawn);
+    Stack.StepCompiledIn(&TriggeringPawn);
+    Stack.StepCompiledIn(&Position);
+    Stack.StepCompiledIn(&Direction);
+    Stack.IncrementCode();
+
+    *Ret = AFortInventory::SpawnPickup(Position, ItemDefinition, NumberToSpawn, ItemDefinition->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)ItemDefinition)->ClipSize : 0, EFortPickupSourceTypeFlag::GetOther(), EFortPickupSpawnSource::GetSupplyDrop());
+}
+
 void AFortInventory::Hook()
 {
     Utils::Hook(FindRemoveInventoryItem(), RemoveInventoryItem);
@@ -326,4 +344,6 @@ void AFortInventory::Hook()
                 Utils::Hook<UFortWorldItem>(uint32(SetOwningInventoryIdx - (VersionInfo.EngineVersion < 4.27 ? 1 : 2)), SetPhantomReserveAmmo);
         }
     }
+    
+    Utils::ExecHook(DefaultObjImpl("FortAthenaSupplyDrop")->GetFunction("SpawnPickup"), SpawnPickup_);
 }

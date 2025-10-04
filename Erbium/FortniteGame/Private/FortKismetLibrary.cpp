@@ -152,6 +152,17 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayerByGuid(UObject* Context, FFrame&
 	return;
 }
 
+void UFortKismetLibrary::SpawnItemVariantPickupInWorld(UObject* Object, FFrame& Stack, AFortPickupAthena** Ret)
+{
+	UObject* WorldContextObject;
+	FSpawnItemVariantParams Params;
+	Stack.StepCompiledIn(&WorldContextObject);
+	Stack.StepCompiledIn(&Params);
+	Stack.IncrementCode();
+
+	*Ret = AFortInventory::SpawnPickup(Params.Position, Params.WorldItemDefinition, Params.NumberToSpawn, 0, Params.SourceType, Params.Source, nullptr, Params.bToss, Params.bRandomRotation);
+}
+
 
 void UFortKismetLibrary::Hook()
 {
@@ -182,4 +193,5 @@ void UFortKismetLibrary::Hook()
 	Utils::ExecHook(K2_RemoveItemFromPlayerFn, K2_RemoveItemFromPlayer);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("K2_RemoveItemFromPlayerByGuid"), K2_RemoveItemFromPlayerByGuid);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("K2_SpawnPickupInWorld"), K2_SpawnPickupInWorld);
+	Utils::ExecHook(GetDefaultObj()->GetFunction("SpawnItemVariantPickupInWorld"), SpawnItemVariantPickupInWorld);
 }
