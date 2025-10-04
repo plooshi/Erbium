@@ -37,6 +37,7 @@ public:
     DEFINE_FUNC(RestartPlayer, void);
     DEFINE_FUNC(ReadyToStartMatch, bool);
     DEFINE_FUNC(HandleStartingNewPlayer, void);
+    DEFINE_FUNC(OnAircraftExitedDropZone, void);
 
     DefUHookOgRet(bool, ReadyToStartMatch_);
     static void SpawnDefaultPawnFor(UObject*, FFrame&, AActor**);
@@ -44,6 +45,7 @@ public:
     DefHookOg(uint8_t, PickTeam, AFortGameModeAthena*, uint8_t, AFortPlayerControllerAthena*);
     DefUHookOg(HandleStartingNewPlayer_);
     DefHookOg(bool, StartAircraftPhase, AFortGameModeAthena*, char);
+    DefUHookOg(OnAircraftExitedDropZone_);
     
     InitHooks;
 };
