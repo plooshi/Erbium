@@ -711,6 +711,40 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 		}
 
 
+		if (FConfiguration::bEnableSiphon && PlayerController->MyFortPawn && KillerPlayerState && KillerPawn && KillerPawn->Controller != PlayerController)
+		{
+			auto Handle = KillerPlayerState->AbilitySystemComponent->MakeEffectContext();
+			FGameplayTag Tag;
+			static auto Cue = UKismetStringLibrary::Conv_StringToName(FString(L"GameplayCue.Shield.PotionConsumed"));
+			Tag.TagName = Cue;
+			auto PredictionKey = (FPredictionKey*)malloc(FPredictionKey::Size());
+			__stosb((PBYTE)PredictionKey, 0, FPredictionKey::Size());
+			KillerPlayerState->AbilitySystemComponent->NetMulticast_InvokeGameplayCueAdded(Tag, *PredictionKey, Handle);
+			KillerPlayerState->AbilitySystemComponent->NetMulticast_InvokeGameplayCueExecuted(Tag, *PredictionKey, Handle);
+			free(PredictionKey);
+
+			auto Health = KillerPawn->GetHealth();
+			auto Shield = KillerPawn->GetShield();
+
+			if (Health == 100)
+			{
+				Shield += Shield + 50;
+			}
+			else if (Health + 50 > 100)
+			{
+				Health = 100;
+				Shield += (Health + 50) - 100;
+			}
+			else if (Health + 50 <= 100)
+			{
+				Health += 50;
+			}
+
+			KillerPawn->SetHealth(Health);
+			KillerPawn->SetShield(Shield);
+			//forgot to add this back
+		}
+
 		if (PlayerController->MyFortPawn && ((KillerPlayerState && KillerPlayerState->Place == 1) || PlayerState->Place == 1))
 		{
 			if (PlayerState->Place == 1)

@@ -38,6 +38,8 @@ public:
     DEFINE_PROP(GameplayTags, FGameplayTagContainer);
 
     DEFINE_FUNC(BeginSkydiving, void);
+    DEFINE_FUNC(GetHealth, float);
+    DEFINE_FUNC(GetShield, float);
     DEFINE_FUNC(SetHealth, void);
     DEFINE_FUNC(SetShield, void);
     DEFINE_FUNC(EquipWeaponDefinition, AActor*);

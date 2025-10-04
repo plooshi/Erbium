@@ -50,6 +50,11 @@ public:
     DEFINE_PROP(GameplayAbilities, TArray<TSubclassOf<UFortGameplayAbility>>);
 };
 
+struct FGameplayEffectContextHandle
+{
+    uint8_t Padding[0x18];
+};
+
 class UAbilitySystemComponent : public UObject
 {
 public:
@@ -58,6 +63,9 @@ public:
     DEFINE_PROP(ActivatableAbilities, FGameplayAbilitySpecContainer);
 
     DEFINE_FUNC(ClientActivateAbilityFailed, void);
+    DEFINE_FUNC(NetMulticast_InvokeGameplayCueAdded, void);
+    DEFINE_FUNC(NetMulticast_InvokeGameplayCueExecuted, void);
+    DEFINE_FUNC(MakeEffectContext, FGameplayEffectContextHandle);
 
     void GiveAbility(const UObject* Ability);
     void GiveAbilitySet(const UFortAbilitySet* Set);
