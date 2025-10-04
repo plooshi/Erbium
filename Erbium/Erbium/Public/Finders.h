@@ -166,7 +166,7 @@ inline uint64_t FindCreateNetDriver()
 
         if (CreateNetDriver) 
         {
-            for (int i = 0; i < 0x100; i++) 
+            for (int i = 0; i < 0x200; i++) 
             {
                 auto Ptr = (uint8_t*)(CreateNetDriver - i);
 
