@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "../Public/FortKismetLibrary.h"
 #include "../Public/FortInventory.h"
+#include "../Public/FortLootPackage.h"
 
 void UFortKismetLibrary::K2_SpawnPickupInWorld(UObject* Object, FFrame& Stack, AFortPickupAthena** Ret)
 {
@@ -164,6 +165,35 @@ void UFortKismetLibrary::SpawnItemVariantPickupInWorld(UObject* Object, FFrame& 
 }
 
 
+void UFortKismetLibrary::PickLootDrops(UObject* Object, FFrame& Stack, bool* Ret)
+{
+	UObject* WorldContextObject;
+	FName TierGroupName;
+	int32 WorldLevel;
+	int32 ForcedLootTier;
+	FGameplayTagContainer OptionalLootTags;
+
+	Stack.StepCompiledIn(&WorldContextObject);
+	auto& OutLootToDrop = Stack.StepCompiledInRef<TArray<FFortItemEntry>>();
+	Stack.StepCompiledIn(&TierGroupName);
+	Stack.StepCompiledIn(&WorldLevel);
+	Stack.StepCompiledIn(&ForcedLootTier);
+	Stack.StepCompiledIn(&OptionalLootTags);
+	Stack.IncrementCode();
+
+	printf("PickLootDrops for TierGroup %s\n", TierGroupName.ToString().c_str());
+
+	auto LootDrops = UFortLootPackage::ChooseLootForContainer(TierGroupName, ForcedLootTier, WorldLevel);
+
+	for (auto& LootDrop : LootDrops)
+	{
+		OutLootToDrop.Add(*LootDrop, FFortItemEntry::Size());
+		free(LootDrop);
+	}
+
+	*Ret = LootDrops.Num() > 0;
+}
+
 void UFortKismetLibrary::Hook()
 {
 	auto GiveItemToInventoryOwnerFn = GetDefaultObj()->GetFunction("GiveItemToInventoryOwner");
@@ -194,4 +224,5 @@ void UFortKismetLibrary::Hook()
 	Utils::ExecHook(GetDefaultObj()->GetFunction("K2_RemoveItemFromPlayerByGuid"), K2_RemoveItemFromPlayerByGuid);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("K2_SpawnPickupInWorld"), K2_SpawnPickupInWorld);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("SpawnItemVariantPickupInWorld"), SpawnItemVariantPickupInWorld);
+	Utils::ExecHook(GetDefaultObj()->GetFunction("PickLootDrops"), PickLootDrops);
 }
