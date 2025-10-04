@@ -599,18 +599,23 @@ namespace SDK
 		ProcessEvent(Function, Function->CreateParams(Params));
 	}
 
-	template <typename Ret, typename... Args, size_t... Is>
-	Ret _InternalCall(const UObject* Object, UFunction* Function, std::tuple<Args...>& argTuple, std::index_sequence<Is...>)
+	template <typename Ret, typename... Args>
+	Ret UObject::Call(UFunction* Function, Args... args) const
 	{
+
 		if (!Function)
 			return Ret();
+
+		if constexpr (sizeof...(args) == 0 && std::is_void_v<Ret>)
+			return ProcessEvent(Function, nullptr);
 
 		auto Params = Function->GetParams();
 		auto Mem = FMemory::Malloc(Params.Size);
 		__stosb((PBYTE)Mem, 0, Params.Size);
 
 		size_t i = 0;
-		([&] {
+		([&] 
+		{
 			if (i >= Params.NameOffsetMap.size())
 				return;
 
@@ -622,13 +627,13 @@ namespace SDK
 				return;
 			}
 
-			const auto& Arg = std::get<Is>(argTuple);
+			const auto& Arg = args;
 
-			__movsb(PBYTE(__int64(Mem) + Param.Offset), (const PBYTE) &Arg, Param.ElementSize);
+			__movsb(PBYTE(__int64(Mem) + Param.Offset), (const PBYTE)&Arg, Param.ElementSize);
 			i++;
 		}(), ...);
 
-		Object->ProcessEvent(Function, Mem);
+		ProcessEvent(Function, Mem);
 
 		i = 0;
 		([&] {
@@ -643,14 +648,14 @@ namespace SDK
 				return;
 			}
 
-			const auto& Arg = std::get<Is>(argTuple);
+			const auto& Arg = args;
 
-			if constexpr (std::is_pointer_v<typename std::tuple_element<Is, std::tuple<Args...>>::type>)
+			if constexpr (std::is_pointer_v<decltype(args)>)
 			{
 				if (Arg != nullptr)
 					__movsb((PBYTE)Arg, (const PBYTE)(__int64(Mem) + Param.Offset), Param.ElementSize);
 			}
-			else if constexpr (std::is_reference_v<typename std::tuple_element<Is, std::tuple<Args...>>::type>)
+			else if constexpr (std::is_reference_v<decltype(args)>)
 			{
 				if ((Param.PropertyFlags & 0x2) != 0)
 					__movsb((PBYTE)&Arg, (const PBYTE)(__int64(Mem) + Param.Offset), Param.ElementSize);
@@ -677,14 +682,6 @@ namespace SDK
 		}
 
 		FMemory::Free(Mem);
-	}
-
-	template <typename Ret, typename... Args>
-	Ret UObject::Call(UFunction* Function, Args... args) const
-	{
-		auto argTuple = std::make_tuple(std::forward<Args>(args)...);
-
-		return _InternalCall<Ret>(this, Function, argTuple, std::index_sequence_for<Args...>{});
 	}
 
 
