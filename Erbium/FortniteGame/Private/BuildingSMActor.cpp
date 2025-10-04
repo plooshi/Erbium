@@ -35,7 +35,7 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 	FCurveTableRowHandle& BuildingResourceAmountOverride = Actor->BuildingResourceAmountOverride;
 	int ResCount = 0;
 
-	if (Actor->BuildingResourceAmountOverride.RowName.ComparisonIndex > 0)
+	if (Actor->BuildingResourceAmountOverride.CurveTable && Actor->BuildingResourceAmountOverride.RowName.ComparisonIndex > 0)
 	{
 		float Out;
 		UDataTableFunctionLibrary::EvaluateCurveTableRow(Actor->BuildingResourceAmountOverride.CurveTable, Actor->BuildingResourceAmountOverride.RowName, 0.f, nullptr, &Out, FString());
