@@ -5,7 +5,6 @@
 #include "../Public/BuildingSMActor.h"
 #include "../Public/FortKismetLibrary.h"
 #include "../../Erbium/Public/Configuration.h"
-#include <algorithm>
 
 
 uint64_t FindGetPlayerViewPoint()

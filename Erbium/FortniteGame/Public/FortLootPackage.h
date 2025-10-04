@@ -1,8 +1,6 @@
 #pragma once
 #include "pch.h"
-#include "../../Erbium/Public/Utils.h"
 #include "FortInventory.h"
-#include <numeric>
 #include "FortGameStateAthena.h"
 #include "../../Engine/Public/DataTable.h"
 

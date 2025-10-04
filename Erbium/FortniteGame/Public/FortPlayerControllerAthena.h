@@ -1,6 +1,5 @@
 #pragma once
 #include "../../pch.h"
-#include "../../Erbium/Public/Utils.h"
 #include "FortPlayerPawnAthena.h"
 #include "FortInventory.h"
 #include "FortPlayerStateAthena.h"

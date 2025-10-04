@@ -2,8 +2,7 @@
 #include "../Public/FortLootPackage.h"
 #include "../Public/BuildingContainer.h"
 #include "../Public/FortGameModeAthena.h"
-#include <algorithm>
-#include <Erbium/Public/Configuration.h>
+#include "../../Erbium/Public/Configuration.h"
 
 struct FFortLootLevelData
 {
