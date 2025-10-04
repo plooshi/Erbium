@@ -515,9 +515,12 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
             bMatchStarted = true;
             auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 
-            GameState->GamePhase = 4;
-            GameState->GamePhaseStep = 7;
-            GameState->OnRep_GamePhase(3);
+            if (FConfiguration::bLateGame)
+            {
+                GameState->GamePhase = 4;
+                GameState->GamePhaseStep = 7;
+                GameState->OnRep_GamePhase(3);
+            }
 
             char buffer[67];
             sprintf_s(buffer, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Match started" : (VersionInfo.FortniteVersion >= 5.00 ? "Erbium (FN %.2f, UE %.2f): Match started" : "Erbium (FN %.1f, UE %.2f): Match started"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
