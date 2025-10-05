@@ -666,6 +666,8 @@ void AFortGameModeAthena::HandleStartingNewPlayer_(UObject* Context, FFrame& Sta
         free(Member);
     }
 
+    NewPlayer->bBuildFree = FConfiguration::bInfiniteMats;
+
     return callOG(GameMode, Stack.GetCurrentNativeFunction(), HandleStartingNewPlayer, NewPlayer);
 }
 
