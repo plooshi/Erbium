@@ -1076,8 +1076,19 @@ inline uint64_t FindSetPickupItems()
             return SetPickupItems = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 41 56 41 57 48 83 EC 30 80 B9 ? ? ? ? ? 45 0F B6 F1").Get();
         else if (VersionInfo.EngineVersion == 4.23)
             return SetPickupItems = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 41 56 41 57 48 83 EC 30 80 B9 ? ? ? ? ? 45 0F B6 F1 4D").Get();
-        else if (VersionInfo.EngineVersion == 5.0)
-            return SetPickupItems = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC ? 80 B9 ? ? ? ? ? 45 8A F9").Get();
+        else if (VersionInfo.EngineVersion == 4.24 || VersionInfo.EngineVersion == 4.25)
+            return SetPickupItems = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 57 41 57 48 83 EC ? 80 B9").Get();
+        else if (VersionInfo.EngineVersion == 4.26)
+        {
+            SetPickupItems = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 57 41 57 48 83 EC ? 80 B9").Get();
+
+            if (!SetPickupItems)
+                SetPickupItems = Memcury::Scanner::FindPattern("48 89 5C 24 ? 56 57 41 57 48 83 EC ? 80 B9").Get();
+
+            return SetPickupItems;
+        }
+        else if (VersionInfo.EngineVersion == 4.27 || VersionInfo.EngineVersion == 5.0)
+            return SetPickupItems = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC ? 80 B9 ? ? ? ? ? 45 8A").Get();
     }
 
     return SetPickupItems;

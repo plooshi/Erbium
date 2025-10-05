@@ -38,7 +38,7 @@ inline uint32_t FindOnItemInstanceAddedVft()
     return OnItemInstanceAddedVft;
 }
 
-UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Count, int LoadedAmmo, int Level, bool ShowPickupNoti, bool updateInventory, int PhantomReserveAmmo)
+UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Count, int LoadedAmmo, int Level, bool ShowPickupNoti, bool updateInventory, int PhantomReserveAmmo, TArray<uint8_t> StateValues)
 {
     if (!this || !Def || !Count)
         return nullptr;
@@ -47,6 +47,8 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
     Item->ItemEntry.LoadedAmmo = LoadedAmmo;
     if (Item->ItemEntry.HasPhantomReserveAmmo())
         Item->ItemEntry.PhantomReserveAmmo = PhantomReserveAmmo;
+    if (Item->ItemEntry.HasStateValues()) // dk
+        Item->ItemEntry.StateValues = StateValues;
 
     this->Inventory.ReplicatedEntries.Add(Item->ItemEntry, FFortItemEntry::Size());
     this->Inventory.ItemInstances.Add(Item);
@@ -68,7 +70,7 @@ UFortWorldItem* AFortInventory::GiveItem(FFortItemEntry& entry, int Count, bool 
     if (Count == -1)
         Count = entry.Count;
 
-    return GiveItem(entry.ItemDefinition, Count, entry.LoadedAmmo, entry.Level, ShowPickupNoti, updateInventory, entry.HasPhantomReserveAmmo() ? entry.PhantomReserveAmmo : 0);
+    return GiveItem(entry.ItemDefinition, Count, entry.LoadedAmmo, entry.Level, ShowPickupNoti, updateInventory, entry.HasPhantomReserveAmmo() ? entry.PhantomReserveAmmo : 0, entry.HasStateValues() ? entry.StateValues : TArray<uint8_t>{});
 }
 
 void AFortInventory::Update(FFortItemEntry* Entry)
@@ -162,7 +164,18 @@ AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entr
     if (HasPhantomReserveAmmo)
         NewPickup->PrimaryPickupItemEntry.PhantomReserveAmmo = Entry.PhantomReserveAmmo;
 
-    NewPickup->OnRep_PrimaryPickupItemEntry();
+    auto SetPickupItems = FindSetPickupItems();
+    if (SetPickupItems)
+    {
+        TArray<FFortItemEntry> a{};
+        if (VersionInfo.FortniteVersion >= 16)
+            ((void(*)(AFortPickupAthena*, FFortItemEntry*, TArray<FFortItemEntry>*, uint8_t, bool, uint8_t)) SetPickupItems)(NewPickup, &NewPickup->PrimaryPickupItemEntry, &a, (uint8_t)EFortPickupSourceTypeFlag::GetContainer(), false, (uint8_t)EFortPickupSpawnSource::GetChest());
+        else
+            ((void(*)(AFortPickupAthena*, FFortItemEntry*, TArray<FFortItemEntry>*, bool)) SetPickupItems)(NewPickup, &NewPickup->PrimaryPickupItemEntry, &a, false);
+    }
+    else
+        NewPickup->OnRep_PrimaryPickupItemEntry();
+    //NewPickup->OnRep_PrimaryPickupItemEntry();
     NewPickup->PawnWhoDroppedPickup = Pawn;
 
     NewPickup->TossPickup(Loc, Pawn, -1, Toss, true, (uint8) SourceTypeFlag, (uint8) SpawnSource);
@@ -209,7 +222,18 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
     static auto HasPhantomReserveAmmo = Entry.HasPhantomReserveAmmo();
     if (HasPhantomReserveAmmo)
         NewPickup->PrimaryPickupItemEntry.PhantomReserveAmmo = Entry.PhantomReserveAmmo;
-    NewPickup->OnRep_PrimaryPickupItemEntry();
+    auto SetPickupItems = FindSetPickupItems();
+    if (SetPickupItems)
+    {
+        TArray<FFortItemEntry> a{};
+        if (VersionInfo.FortniteVersion >= 16)
+            ((void(*)(AFortPickupAthena*, FFortItemEntry*, TArray<FFortItemEntry>*, uint8_t, bool, uint8_t)) SetPickupItems)(NewPickup, &NewPickup->PrimaryPickupItemEntry, &a, (uint8_t)EFortPickupSourceTypeFlag::GetContainer(), false, (uint8_t)EFortPickupSpawnSource::GetChest());
+        else
+            ((void(*)(AFortPickupAthena*, FFortItemEntry*, TArray<FFortItemEntry>*, bool)) SetPickupItems)(NewPickup, &NewPickup->PrimaryPickupItemEntry, &a, false);
+    }
+    else
+        NewPickup->OnRep_PrimaryPickupItemEntry();
+    //NewPickup->OnRep_PrimaryPickupItemEntry();
 
     NewPickup->PawnWhoDroppedPickup = Pawn;
     NewPickup->TossPickup(Loc, Pawn, -1, true, true, EFortPickupSourceTypeFlag::GetContainer(), EFortPickupSpawnSource::GetChest());

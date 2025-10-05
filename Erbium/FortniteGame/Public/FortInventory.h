@@ -78,6 +78,7 @@ public:
     DEFINE_STRUCT_PROP(GameplayAbilitySpecHandle, FGameplayAbilitySpecHandle);
     DEFINE_STRUCT_PROP(ParentInventory, TWeakObjectPtr<class AFortInventory>);
     DEFINE_STRUCT_PROP(Level, int32);
+    DEFINE_STRUCT_PROP(StateValues, TArray<uint8_t>);
 };
 
 class UFortWorldItem : public UObject
@@ -205,7 +206,7 @@ public:
     
     DEFINE_FUNC(HandleInventoryLocalUpdate, void);
 
-    UFortWorldItem* GiveItem(const UFortItemDefinition*, int = 1, int = 0, int = 0, bool = true, bool = true, int = 0);
+    UFortWorldItem* GiveItem(const UFortItemDefinition*, int = 1, int = 0, int = 0, bool = true, bool = true, int = 0, TArray<uint8_t> = {});
     UFortWorldItem* GiveItem(FFortItemEntry&, int = -1, bool = true, bool = true);
     void Update(FFortItemEntry*);
     void Remove(FGuid);
