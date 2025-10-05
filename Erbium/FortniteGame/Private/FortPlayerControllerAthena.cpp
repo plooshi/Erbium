@@ -804,7 +804,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 					WorldInventory->GiveItem(*PickupEntry, PickupEntry->Count, true);
 				}
 				else
-					AFortInventory::SpawnPickup(GetViewTarget()->K2_GetActorLocation(), (FFortItemEntry&)PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn);
+					AFortInventory::SpawnPickup(GetViewTarget()->K2_GetActorLocation(), *PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn);
 			}
 			else
 				WorldInventory->GiveItem(*PickupEntry, PickupEntry->Count, true);
@@ -815,7 +815,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 			if (PickupEntry->ItemDefinition->bAllowMultipleStacks && ItemCount < 5)
 				WorldInventory->GiveItem(*PickupEntry, OriginalCount - MaxStack, true);
 			else
-				AFortInventory::SpawnPickup(GetViewTarget()->K2_GetActorLocation(), (FFortItemEntry&)PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn, OriginalCount - MaxStack);
+				AFortInventory::SpawnPickup(GetViewTarget()->K2_GetActorLocation(), *PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn, OriginalCount - MaxStack);
 		};
 
 	if (MaxStack > 1)
