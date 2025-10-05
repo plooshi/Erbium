@@ -5,7 +5,8 @@ struct FConfiguration
     static inline auto Playlist = L"/Game/Athena/Playlists/Playlist_DefaultSolo.Playlist_DefaultSolo";
     static inline auto MaxTickRate = 30.f;
     static inline auto bLateGame = false;
-    static inline bool bEnableCheats = true;
-    static inline int SiphonAmount = 50; // set to 0 to disable
-    static inline bool bInfiniteMats = false;
+    static inline auto bEnableCheats = true;
+    static inline auto SiphonAmount = 50; // set to 0 to disable
+    static inline auto bInfiniteMats = false;
+    static inline auto bForceRespawns = false;
 };

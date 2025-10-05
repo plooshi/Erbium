@@ -716,8 +716,8 @@ namespace SDK
 	public:
 		UCLASS_COMMON_MEMBERS(UKismetTextLibrary);
 
-		DEFINE_STATIC_FUNC(Conv_TextToString, FText);
-		DEFINE_STATIC_FUNC(Conv_StringToText, FString);
+		DEFINE_STATIC_FUNC(Conv_TextToString, FString);
+		DEFINE_STATIC_FUNC(Conv_StringToText, FText);
 
 		struct KismetTextLibrary_Conv_TextToString final
 		{

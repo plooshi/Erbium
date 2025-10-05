@@ -6,6 +6,7 @@
 #include "../../Engine/Public/DataTableFunctionLibrary.h"
 #include "../../Engine/Public/CurveTable.h"
 #include "BuildingContainer.h"
+#include "FortPlaylistAthena.h"
 
 struct FGuid
 {
@@ -25,24 +26,6 @@ class UFortItem : public UObject
 {
 public:
     UCLASS_COMMON_MEMBERS(UFortItem);
-};
-
-struct FScalableFloat
-{
-public:
-    float Value;
-    uint8 _Padding[0x4];
-    FCurveTableRowHandle Curve;
-
-    inline float Evaluate()
-    {
-        if (!Curve.CurveTable)
-            return Value;
-
-        float Out;
-        UDataTableFunctionLibrary::EvaluateCurveTableRow(Curve.CurveTable, Curve.RowName, (float)0, nullptr, &Out, FString());
-        return Out;
-    }
 };
 
 class UFortItemDefinition : public UObject

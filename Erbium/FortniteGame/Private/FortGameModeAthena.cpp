@@ -33,6 +33,16 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
 
     if (Playlist)
     {
+        if (FConfiguration::bForceRespawns)
+        {
+            Playlist->bRespawnInAir = true;
+            Playlist->RespawnHeight.Curve.CurveTable = nullptr;
+            Playlist->RespawnHeight.Value = 20000;
+            Playlist->RespawnTime.Curve.CurveTable = nullptr;
+            Playlist->RespawnTime.Value = 3;
+            Playlist->RespawnType = 1; // InfiniteRespawns
+            Playlist->bAllowJoinInProgress = true;
+        }
         if (GameState->HasCurrentPlaylistInfo())
         {
             if (VersionInfo.EngineVersion >= 4.27)

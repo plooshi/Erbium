@@ -1,7 +1,26 @@
 #pragma once
 #include "../../pch.h"
 #include "../../Engine/Public/DataTable.h"
+#include "../../Engine/Public/DataTableFunctionLibrary.h"
+#include "../../Engine/Public/CurveTable.h"
 
+struct FScalableFloat
+{
+public:
+    float Value;
+    uint8 _Padding[0x4];
+    FCurveTableRowHandle Curve;
+
+    inline float Evaluate()
+    {
+        if (!Curve.CurveTable)
+            return Value;
+
+        float Out;
+        UDataTableFunctionLibrary::EvaluateCurveTableRow(Curve.CurveTable, Curve.RowName, (float)0, nullptr, &Out, FString());
+        return Out;
+    }
+};
 
 class UFortPlaylistAthena : public UObject
 {
@@ -19,4 +38,9 @@ public:
     DEFINE_PROP(LootPackages, TSoftObjectPtr<UDataTable>);
     DEFINE_PROP(AirCraftBehavior, uint8);
     DEFINE_PROP(SafeZoneStartUp, uint8);
+    DEFINE_PROP(bRespawnInAir, bool);
+    DEFINE_PROP(RespawnHeight, FScalableFloat);
+    DEFINE_PROP(RespawnTime, FScalableFloat);
+    DEFINE_PROP(RespawnType, uint8);
+    DEFINE_PROP(bAllowJoinInProgress, bool);
 };
