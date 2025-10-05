@@ -30,6 +30,7 @@ public:
     DEFINE_PROP(EditingPlayer, AFortPlayerStateAthena*);
     DEFINE_BITFIELD_PROP(bDestroyed);
     DEFINE_PROP(CurrentBuildingLevel, int32);
+    DEFINE_BITFIELD_PROP(bAllowResourceDrop);
 
     DEFINE_FUNC(GetHealth, float);
     DEFINE_FUNC(GetMaxHealth, float);

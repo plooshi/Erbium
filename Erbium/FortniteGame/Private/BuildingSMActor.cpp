@@ -8,14 +8,9 @@
 
 void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGameplayTagContainer DamageTags, FVector Momentum, __int64 HitInfo, AFortPlayerControllerAthena* InstigatedBy, AActor* DamageCauser, __int64 EffectContext) {
 	auto GameState = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState);
-	static auto VMClass = FindClass("B_Athena_VendingMachine_C");
-	static int HasLlamaClass = -1;
 	static auto MeleeClass = FindClass("FortWeaponMeleeItemDefinition");
-	if (HasLlamaClass == -1 && GameState->MapInfo)
-	{
-		HasLlamaClass = GameState->MapInfo->HasLlamaClass();
-	}
-	if (!InstigatedBy || Actor->bPlayerPlaced || Actor->GetHealth() == 1 || Actor->IsA(VMClass) || (HasLlamaClass == 1 && Actor->IsA(GameState->MapInfo->LlamaClass))) 
+
+	if (!InstigatedBy || Actor->bPlayerPlaced || Actor->GetHealth() == 1 || !Actor->bAllowResourceDrop)
 		return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
 	if (!DamageCauser || !DamageCauser->IsA<AFortWeapon>() || !((AFortWeapon*)DamageCauser)->WeaponData->IsA(MeleeClass)) 
 		return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
