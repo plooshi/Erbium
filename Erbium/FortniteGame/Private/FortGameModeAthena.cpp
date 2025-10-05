@@ -497,9 +497,9 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
             int HealClipSize = Heal.Item->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)Heal.Item)->ClipSize : 0;
             int HealSlot2ClipSize = HealSlot2.Item->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)HealSlot2.Item)->ClipSize : 0;
 
-            NewPlayer->WorldInventory->GiveItem(LateGame::GetResource(EFortResourceType::Wood), 500);
-            NewPlayer->WorldInventory->GiveItem(LateGame::GetResource(EFortResourceType::Stone), 500);
-            NewPlayer->WorldInventory->GiveItem(LateGame::GetResource(EFortResourceType::Metal), 500);
+            NewPlayer->WorldInventory->GiveItem(LateGame::GetResource(EFortResourceType::GetWood()), 500);
+            NewPlayer->WorldInventory->GiveItem(LateGame::GetResource(EFortResourceType::GetStone()), 500);
+            NewPlayer->WorldInventory->GiveItem(LateGame::GetResource(EFortResourceType::GetMetal()), 500);
 
             NewPlayer->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Assault), 250);
             NewPlayer->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Shotgun), 50);

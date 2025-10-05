@@ -25,18 +25,18 @@ public:
     DEFINE_STATIC_FUNC(UpdatePlayerCustomCharacterPartsVisualization, void);
     //DEFINE_STATIC_FUNC(K2_GetResourceItemDefinition, UFortItemDefinition*);
 
-	static const UFortItemDefinition* K2_GetResourceItemDefinition(EFortResourceType Type)
+	static const UFortItemDefinition* K2_GetResourceItemDefinition(long long Type)
 	{
 		// exec func doesnt exist on rlly old builds
 		static auto WoodItemData = Utils::FindObject<UFortItemDefinition>(L"/Game/Items/ResourcePickups/WoodItemData.WoodItemData");
 		static auto StoneItemData = Utils::FindObject<UFortItemDefinition>(L"/Game/Items/ResourcePickups/StoneItemData.StoneItemData");
 		static auto MetalItemData = Utils::FindObject<UFortItemDefinition>(L"/Game/Items/ResourcePickups/MetalItemData.MetalItemData");
 
-		if (Type == EFortResourceType::Wood)
+		if (Type == EFortResourceType::GetWood())
 			return WoodItemData;
-		else if (Type == EFortResourceType::Stone)
+		else if (Type == EFortResourceType::GetStone())
 			return StoneItemData;
-		else if (Type == EFortResourceType::Metal)
+		else if (Type == EFortResourceType::GetMetal())
 			return MetalItemData;
 
 		return nullptr;

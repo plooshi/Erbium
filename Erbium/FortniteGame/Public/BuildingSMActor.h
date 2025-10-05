@@ -3,13 +3,18 @@
 #include "FortPlayerControllerAthena.h"
 #include "GameplayTagContainer.h"
 
-enum EFortResourceType : uint8_t
+class EFortResourceType
 {
-    Wood = 0,
-    Stone = 1,
-    Metal = 2,
-    Permanite = 3,
-    None = 4
+public:
+    UENUM_COMMON_MEMBERS(EFortResourceType);
+
+    DEFINE_ENUM_PROP(Wood);
+    DEFINE_ENUM_PROP(Stone);
+    DEFINE_ENUM_PROP(Metal);
+    DEFINE_ENUM_PROP(Permanite);
+    DEFINE_ENUM_PROP(GoldCurrency);
+    DEFINE_ENUM_PROP(Ingredient);
+    DEFINE_ENUM_PROP(None);
 };
 
 class ABuildingSMActor : public AActor
@@ -19,7 +24,7 @@ public:
 
     DEFINE_BITFIELD_PROP(bPlayerPlaced);
     DEFINE_PROP(BuildingResourceAmountOverride, FCurveTableRowHandle);
-    DEFINE_PROP(ResourceType, EFortResourceType);
+    DEFINE_PROP(ResourceType, uint8_t);
     DEFINE_PROP(Team, uint8);
     DEFINE_PROP(TeamIndex, uint8);
     DEFINE_PROP(EditingPlayer, AFortPlayerStateAthena*);

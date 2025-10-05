@@ -77,7 +77,7 @@ const UFortItemDefinition* LateGame::GetAmmo(EAmmoType AmmoType)
     return Ammos[(uint8)AmmoType];
 }
 
-const UFortItemDefinition* LateGame::GetResource(EFortResourceType ResourceType)
+const UFortItemDefinition* LateGame::GetResource(long long ResourceType)
 {
     static UEAllocatedVector<const UFortItemDefinition*> Resources
     {
