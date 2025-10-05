@@ -101,6 +101,8 @@ public:
     DEFINE_PROP(Aircrafts, TArray<AFortAthenaAircraft*>);
     DEFINE_PROP(Aircraft, AFortAthenaAircraft*);
     DEFINE_PROP(SafeZonesStartTime, float);
+    DEFINE_PROP(AirCraftBehavior, uint8);
+    DEFINE_PROP(CachedSafeZoneStartUp, uint8);
 
     DEFINE_FUNC(OnRep_CurrentPlaylistInfo, void);
     DEFINE_FUNC(OnRep_CurrentPlaylistData, void);

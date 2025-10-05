@@ -58,6 +58,12 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
         if (GameMode->GameSession->HasMaxPlayers())
             GameMode->GameSession->MaxPlayers = Playlist->MaxPlayers;
 
+
+        if (GameState->HasAirCraftBehavior())
+            GameState->AirCraftBehavior = Playlist->AirCraftBehavior;
+        if (GameState->HasCachedSafeZoneStartUp())
+            GameState->CachedSafeZoneStartUp = Playlist->SafeZoneStartUp;
+
         if (VersionInfo.FortniteVersion >= 6 && VersionInfo.FortniteVersion < 7)
         {
             if (VersionInfo.FortniteVersion > 6.10)
@@ -373,7 +379,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
     }
 
     *Ret = VersionInfo.EngineVersion < 4.24 ? callOGWithRet(GameMode, Stack.GetCurrentNativeFunction(), ReadyToStartMatch) : GameMode->AlivePlayers.Num() >= GameMode->WarmupRequiredPlayerCount;
-    if (VersionInfo.FortniteVersion >= 15.00 && !*Ret)
+    if (VersionInfo.FortniteVersion >= 11.00 && !*Ret)
     {
         auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
         auto WarmupDuration = 60.f;
