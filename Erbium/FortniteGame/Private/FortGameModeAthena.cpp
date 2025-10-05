@@ -109,7 +109,6 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
             for (auto& Level : Playlist->AdditionalLevels)
             {
                 bool Success = false;
-                printf("Level: %s\n", Level.Get()->Name.ToString().c_str());
                 ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
                 auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
                 __stosb((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
@@ -124,7 +123,6 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
             for (auto& Level : Playlist->AdditionalLevelsServerOnly)
             {
                 bool Success = false;
-                printf("Level: %s\n", Level.Get()->Name.ToString().c_str());
                 ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
                 auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
                 __stosb((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
