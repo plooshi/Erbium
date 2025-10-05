@@ -711,7 +711,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 		}
 
 
-		if (FConfiguration::bEnableSiphon && PlayerController->MyFortPawn && KillerPlayerState && KillerPawn && KillerPawn->Controller != PlayerController)
+		if (FConfiguration::SiphonAmount > 0 && PlayerController->MyFortPawn && KillerPlayerState && KillerPawn && KillerPawn->Controller != PlayerController)
 		{
 			auto Handle = KillerPlayerState->AbilitySystemComponent->MakeEffectContext();
 			FGameplayTag Tag;
@@ -728,16 +728,16 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 
 			if (Health == 100)
 			{
-				Shield += Shield + 50;
+				Shield += Shield + FConfiguration::SiphonAmount;
 			}
-			else if (Health + 50 > 100)
+			else if (Health + FConfiguration::SiphonAmount > 100)
 			{
 				Health = 100;
-				Shield += (Health + 50) - 100;
+				Shield += (Health + FConfiguration::SiphonAmount) - 100;
 			}
-			else if (Health + 50 <= 100)
+			else if (Health + FConfiguration::SiphonAmount <= 100)
 			{
-				Health += 50;
+				Health += FConfiguration::SiphonAmount;
 			}
 
 			KillerPawn->SetHealth(Health);

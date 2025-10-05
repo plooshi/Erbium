@@ -6,6 +6,6 @@ struct FConfiguration
     static inline auto MaxTickRate = 30.f;
     static inline auto bLateGame = false;
     static inline bool bEnableCheats = true;
-    static inline bool bEnableSiphon = true;
+    static inline int SiphonAmount = 50; // set to 0 to disable
     static inline bool bInfiniteMats = false;
 };
