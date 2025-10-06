@@ -106,25 +106,6 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 
 		ServerAttemptAircraftJumpOG((AFortPlayerControllerAthena*)Context, Rotation);
 	}
-	if (FConfiguration::bLateGame)
-	{
-		FVector AircraftLocation = GameState->Aircrafts[0]->K2_GetActorLocation();
-
-		float Angle = (float)rand() / 5215.03002625f;
-		float Radius = (float)(rand() % 1000);
-
-		float OffsetX = cosf(Angle) * Radius;
-		float OffsetY = sinf(Angle) * Radius;
-
-		FVector Offset;
-		Offset.X = OffsetX;
-		Offset.Y = OffsetY;
-		Offset.Z = 0.0f;
-
-		FVector NewLoc = AircraftLocation + Offset;
-
-		PlayerController->MyFortPawn->K2_SetActorLocation(NewLoc, false, nullptr, false);
-	}
 }
 
 void AFortPlayerControllerAthena::ServerExecuteInventoryItem(UObject* Context, FFrame& Stack)
@@ -998,11 +979,14 @@ void AFortPlayerControllerAthena::Hook()
 		Utils::Hook<AFortPlayerControllerAthena>(ServerRestartPlayerIdx, DefaultFortPCZone->Vft[ServerRestartPlayerIdx]);
 	}
 
-	auto ServerAttemptAircraftJumpPC = GetDefaultObj()->GetFunction("ServerAttemptAircraftJump");
-	if (!ServerAttemptAircraftJumpPC)
-		Utils::ExecHook(DefaultObjImpl("FortControllerComponent_Aircraft")->GetFunction("ServerAttemptAircraftJump"), ServerAttemptAircraftJump_, ServerAttemptAircraftJump_OG);
-	else
-		Utils::ExecHook(ServerAttemptAircraftJumpPC, ServerAttemptAircraftJump_);
+	if (VersionInfo.FortniteVersion >= 11)
+	{
+		auto ServerAttemptAircraftJumpPC = GetDefaultObj()->GetFunction("ServerAttemptAircraftJump");
+		if (!ServerAttemptAircraftJumpPC)
+			Utils::ExecHook(DefaultObjImpl("FortControllerComponent_Aircraft")->GetFunction("ServerAttemptAircraftJump"), ServerAttemptAircraftJump_, ServerAttemptAircraftJump_OG);
+		else
+			Utils::ExecHook(ServerAttemptAircraftJumpPC, ServerAttemptAircraftJump_);
+	}
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerAcknowledgePossession"), ServerAcknowledgePossession);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerExecuteInventoryItem"), ServerExecuteInventoryItem);

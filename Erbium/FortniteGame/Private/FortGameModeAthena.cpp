@@ -680,6 +680,23 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
 
         if (FConfiguration::bLateGame && Pawn)
         {
+            FVector AircraftLocation = GameState->Aircrafts[0]->K2_GetActorLocation();
+
+            float Angle = (float)rand() / 5215.03002625f;
+            float Radius = (float)(rand() % 1000);
+
+            float OffsetX = cosf(Angle) * Radius;
+            float OffsetY = sinf(Angle) * Radius;
+
+            FVector Offset;
+            Offset.X = OffsetX;
+            Offset.Y = OffsetY;
+            Offset.Z = 0.0f;
+
+            FVector NewLoc = AircraftLocation + Offset;
+
+            Pawn->K2_SetActorLocation(NewLoc, false, nullptr, false);
+
             Pawn->SetShield(100);
 
             auto Shotgun = LateGame::GetShotgun();
