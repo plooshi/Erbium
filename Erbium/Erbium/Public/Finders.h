@@ -144,7 +144,9 @@ inline uint64_t FindGetWorldContext()
 
     if (GetWorldContext == 0)
     {
-        GetWorldContext = Memcury::Scanner::FindPattern("48 8B 81 ? ? ? ? 48 63 89 ? ? ? ? 4C 8D 04 C8 49 3B C0 74 ? 48 8B 08 48 39 91 ? ? ? ? 75 ? 48 8B C1 C3").Get();
+        auto sigWithHardcodedOff = Memcury::Scanner::FindPattern("48 8B 81 ? ? ? ? 48 63 89 ? ? ? ? 4C 8D 04 C8 49 3B C0 74 ? 48 8B 08 48 39 91 80 02 00 00 75 ? 48 8B C1 C3").Get();
+
+        GetWorldContext = sigWithHardcodedOff ? sigWithHardcodedOff : Memcury::Scanner::FindPattern("48 8B 81 ? ? ? ? 48 63 89 ? ? ? ? 4C 8D 04 C8 49 3B C0 74 ? 48 8B 08 48 39 91 ? ? ? ? 75 ? 48 8B C1 C3").Get();
     }
 
     return GetWorldContext;
