@@ -805,7 +805,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 	{
 		auto& Item = WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
 
-		if (AFortInventory::IsPrimaryQuickbar(Item.ItemDefinition))
+		if (AFortInventory::IsPrimaryQuickbar(Item.ItemDefinition) && Item.ItemDefinition->bInventorySizeLimited)
 			ItemCount += Item.ItemDefinition->HasNumberOfSlotsToTake() ? Item.ItemDefinition->NumberOfSlotsToTake : 1;
 	}
 
