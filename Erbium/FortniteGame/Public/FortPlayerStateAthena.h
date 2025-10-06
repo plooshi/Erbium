@@ -28,6 +28,16 @@ public:
     DEFINE_STRUCT_PROP(VictimTags, FGameplayTagContainer);
 };
 
+struct FFortRespawnData
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FFortRespawnData);
+
+    DEFINE_STRUCT_PROP(RespawnLocation, FVector);
+    DEFINE_STRUCT_PROP(RespawnRotation, FRotator);
+    DEFINE_STRUCT_PROP(bClientIsReady, bool);
+};
+
 class AFortPlayerStateAthena : public AActor
 {
 public:
@@ -43,6 +53,7 @@ public:
     DEFINE_PROP(KillScore, int32);
     DEFINE_PROP(TeamKillScore, int32);
     DEFINE_PROP(Place, int32);
+    DEFINE_PROP(RespawnData, FFortRespawnData);
 
     DEFINE_FUNC(OnRep_SquadId, void);
     DEFINE_FUNC(OnRep_DeathInfo, void);

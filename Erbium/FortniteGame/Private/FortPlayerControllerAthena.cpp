@@ -776,7 +776,42 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 	return ClientOnPawnDiedOG(PlayerController, DeathReport);
 }
 
+void AFortPlayerControllerAthena::ServerClientIsReadyToRespawn(UObject* Context, FFrame& Stack) {
+	Stack.IncrementCode();
 
+	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+
+	auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+	auto GameState = (AFortGameStateAthena*)GameMode->GameState;
+	auto PlayerState = (AFortPlayerStateAthena*)PlayerController->PlayerState;
+
+	if (GameState->IsRespawningAllowed(PlayerState)) {
+		auto RespawnData = PlayerState->RespawnData;
+		FTransform SpawnTransform{};
+		SpawnTransform.Translation = RespawnData.RespawnLocation;
+
+		auto Rotation = FQuat(RespawnData.RespawnRotation);
+		SpawnTransform.Rotation = Rotation;
+
+		auto Scale = FVector(1, 1, 1);
+		SpawnTransform.Scale3D = Scale;
+
+		auto NewPawn = GameMode->SpawnDefaultPawnAtTransform(PlayerController, SpawnTransform);
+		PlayerController->Possess(NewPawn);
+		PlayerController->RespawnPlayerAfterDeath(true);
+
+		//need a proper check if Player In Storm, or it would be possible to force spawn player in SafeZone center
+		NewPawn->bIsInAnyStorm = false; 
+		NewPawn->bIsInsideSafeZone = true;
+		NewPawn->OnRep_IsInAnyStorm();
+		NewPawn->OnRep_IsInsideSafeZone();
+
+		NewPawn->SetHealth(100);
+		NewPawn->SetShield(0);
+
+		PlayerState->RespawnData.bClientIsReady = true;
+	}
+}
 void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 {
 	auto MaxStack = (int32)PickupEntry->ItemDefinition->GetMaxStackSize();
@@ -1009,6 +1044,9 @@ void AFortPlayerControllerAthena::Hook()
 
 	auto ClientOnPawnDiedAddr = FindFunctionCall(L"ClientOnPawnDied", VersionInfo.EngineVersion == 4.16 ? std::vector<uint8_t>{ 0x48, 0x89, 0x54 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
 	Utils::Hook(ClientOnPawnDiedAddr, ClientOnPawnDied, ClientOnPawnDiedOG);
+
+	if (VersionInfo.EngineVersion > 4.27) //This Gota be checked, i guess
+		Utils::ExecHook(GetDefaultObj()->GetFunction("ServerClientIsReadyToRespawn"), ServerClientIsReadyToRespawn);
 
 	if (FConfiguration::bEnableCheats)
 		Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCheat"), ServerCheat);
