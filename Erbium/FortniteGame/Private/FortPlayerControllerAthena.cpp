@@ -789,7 +789,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 			ItemCount += Item.ItemDefinition->HasNumberOfSlotsToTake() ? Item.ItemDefinition->NumberOfSlotsToTake : 1;
 	}
 
-	printf("br: %d\n", ItemCount);
+	//printf("br: %d\n", ItemCount);
 	auto GiveOrSwap = [&]()
 		{
 			if (ItemCount >= 5 && AFortInventory::IsPrimaryQuickbar(PickupEntry->ItemDefinition))

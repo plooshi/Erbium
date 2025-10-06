@@ -2,6 +2,7 @@
 #include "../Public/FortInventory.h"
 #include "../Public/FortPlayerPawnAthena.h"
 #include "../Public/FortPlayerControllerAthena.h"
+#include "../Public/FortKismetLibrary.h"
 
 // OnItemInstanceRemoved is always + 1
 inline uint32_t FindOnItemInstanceAddedVft()
@@ -236,9 +237,19 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
     //NewPickup->OnRep_PrimaryPickupItemEntry();
 
     NewPickup->PawnWhoDroppedPickup = Pawn;
-    NewPickup->TossPickup(Loc, Pawn, -1, true, true, EFortPickupSourceTypeFlag::GetContainer(), EFortPickupSpawnSource::GetChest());
     //auto bFloorLoot = Container->IsA<ATiered_Athena_FloorLoot_01_C>() || Container->IsA<ATiered_Athena_FloorLoot_Warmup_C>();
     //UFortKismetLibrary::TossPickupFromContainer(UWorld::GetWorld(), Container, NewPickup, 1, 0, Container->LootTossConeHalfAngle_Athena, Container->LootTossDirection_Athena, Container->LootTossSpeed_Athena, false);
+    static auto tpfcPtr = UFortKismetLibrary::GetDefaultObj()->GetFunction("TossPickupFromContainer");
+    if (tpfcPtr)
+    {
+        if (!UFortKismetLibrary::TossPickupFromContainer__Ptr)
+            UFortKismetLibrary::TossPickupFromContainer__Ptr = tpfcPtr;
+
+        UFortKismetLibrary::TossPickupFromContainer(UWorld::GetWorld(), Container, NewPickup, 10, (int32)std::clamp((float)rand() * 0.0003357036f, 0.f, 10.f), Container->LootTossConeHalfAngle_Athena, Container->LootTossDirection_Athena, Container->LootTossSpeed_Athena, false);
+    }
+    else
+        NewPickup->TossPickup(Loc, Pawn, -1, true, true, EFortPickupSourceTypeFlag::GetContainer(), EFortPickupSpawnSource::GetChest());
+
     NewPickup->bTossedFromContainer = true;
     NewPickup->OnRep_TossedFromContainer();
 

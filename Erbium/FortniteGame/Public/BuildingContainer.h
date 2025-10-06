@@ -19,6 +19,9 @@ public:
     DEFINE_PROP(LootSpawnLocation_Athena, FVector);
     DEFINE_BITFIELD_PROP(bAlreadySearched);
     DEFINE_PROP(SearchBounceData, FFortSearchBounceData);
+    DEFINE_PROP(LootTossConeHalfAngle_Athena, float);
+    DEFINE_PROP(LootTossDirection_Athena, FRotator);
+    DEFINE_PROP(LootTossSpeed_Athena, float);
 
     DEFINE_FUNC(OnRep_bAlreadySearched, void);
     DEFINE_FUNC(BounceContainer, void);
