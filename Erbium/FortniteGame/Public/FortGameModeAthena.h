@@ -32,6 +32,7 @@ public:
     DEFINE_PROP(WarmupCountdownDuration, float);
     DEFINE_PROP(WarmupEarlyCountdownDuration, float);
     DEFINE_PROP(SafeZoneLocations, TArray<FVector>);
+    DEFINE_PROP(DefaultPawnClass, const UClass*);
 
     DEFINE_FUNC(SpawnDefaultPawnAtTransform, AFortPlayerPawnAthena*);
     DEFINE_FUNC(RestartPlayer, void);

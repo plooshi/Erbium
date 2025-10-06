@@ -3,6 +3,7 @@
 #include "../Public/FortPlayerPawnAthena.h"
 
 // used for rifts
+bool bHasWorldContextObject = false;
 void UFortMissionLibrary::TeleportPlayerPawn(UObject* Context, FFrame& Stack, bool* Ret)
 {
 	UObject* WorldContextObject;
@@ -12,7 +13,8 @@ void UFortMissionLibrary::TeleportPlayerPawn(UObject* Context, FFrame& Stack, bo
 	bool bIgnoreCollision;
 	bool bIgnoreSupplementalKillVolumeSweep;
 
-	Stack.StepCompiledIn(&WorldContextObject);
+	if (bHasWorldContextObject)
+		Stack.StepCompiledIn(&WorldContextObject);
 	Stack.StepCompiledIn(&PlayerPawn);
 	Stack.StepCompiledIn(&DestLocation);
 	Stack.StepCompiledIn(&DestRotation);
@@ -26,5 +28,15 @@ void UFortMissionLibrary::TeleportPlayerPawn(UObject* Context, FFrame& Stack, bo
 
 void UFortMissionLibrary::Hook()
 {
-	Utils::ExecHook(GetDefaultObj()->GetFunction("TeleportPlayerPawn"), TeleportPlayerPawn);
+	auto TeleportPlayerPawnFn = GetDefaultObj()->GetFunction("TeleportPlayerPawn");
+	if (TeleportPlayerPawnFn)
+		for (auto& Param : TeleportPlayerPawnFn->GetParams().NameOffsetMap)
+		{
+			if (Param.Name == "WorldContextObject")
+			{
+				bHasWorldContextObject = true;
+				break;
+			}
+		}
+	Utils::ExecHook(TeleportPlayerPawnFn, TeleportPlayerPawn);
 }

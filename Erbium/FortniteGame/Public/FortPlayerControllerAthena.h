@@ -52,6 +52,12 @@ public:
     DEFINE_FUNC(ServerAttemptAircraftJump, void);
 };
 
+class AFortQuickBars : public AActor
+{
+public:
+    UCLASS_COMMON_MEMBERS(AFortQuickBars);
+};
+
 class AFortPlayerControllerAthena : public AActor
 {
 public:
@@ -69,6 +75,7 @@ public:
     DEFINE_PROP(CustomizationLoadout, FFortAthenaLoadout);
     DEFINE_BITFIELD_PROP(bBuildFree);
     DEFINE_PROP(SwappingItemDefinition, FFortItemEntry*); // scuffness
+    DEFINE_PROP(QuickBars, AFortQuickBars*);
 
     DEFINE_FUNC(GetViewTarget, AActor*);
     DEFINE_FUNC(GetControlRotation, FRotator);

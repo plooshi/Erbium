@@ -446,142 +446,146 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                 Info->SupplyDropClass = SupplyDropClass;
 
 
-        const UCurveTable* GameData = Playlist->GameData;
-        if (!GameData)
-            GameData = Utils::FindObject<UCurveTable>(L"/Game/Athena/Balance/DataTables/AthenaGameData.AthenaGameData");
-
-        UEAllocatedMap<int, float> WeightMap;
-        float Sum = 0;
-        float Weight;
-        auto VMGroup = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_AthenaVending"));
-
-        for (int i = 0; i < 6; i++)
+        if (VersionInfo.FortniteVersion > 3.4)
         {
+            const UCurveTable* GameData = Playlist ? Playlist->GameData : nullptr;
+            if (!GameData)
+                GameData = Utils::FindObject<UCurveTable>(L"/Game/Athena/Balance/DataTables/AthenaGameData.AthenaGameData");
+
+            UEAllocatedMap<int, float> WeightMap;
+            float Sum = 0;
             float Weight;
-            UDataTableFunctionLibrary::EvaluateCurveTableRow(GameState->MapInfo->VendingMachineRarityCount.Curve.CurveTable, GameState->MapInfo->VendingMachineRarityCount.Curve.RowName, (float)i, nullptr, &Weight, FString());
+            auto VMGroup = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_AthenaVending"));
 
-            WeightMap[i] = Weight;
-            Sum += Weight;
-        }
-
-        UDataTableFunctionLibrary::EvaluateCurveTableRow(GameState->MapInfo->VendingMachineRarityCount.Curve.CurveTable, GameState->MapInfo->VendingMachineRarityCount.Curve.RowName, 0.f, nullptr, &Weight, FString());
-
-        float TotalWeight = std::accumulate(WeightMap.begin(), WeightMap.end(), 0.0f, [&](float acc, const std::pair<int, float>& p) { return acc + p.second; });
-        for (auto& VendingMachine : Utils::GetAll<ABuildingItemCollectorActor>())
-        {
-            if (Sum > Weight)
+            for (int i = 0; i < 6; i++)
             {
-            PickNum:
-                auto RandomNum = (float)rand() / (RAND_MAX / TotalWeight);
+                float Weight;
+                UDataTableFunctionLibrary::EvaluateCurveTableRow(GameState->MapInfo->VendingMachineRarityCount.Curve.CurveTable, GameState->MapInfo->VendingMachineRarityCount.Curve.RowName, (float)i, nullptr, &Weight, FString());
 
-                int Rarity = 0;
-                bool found = false;
+                WeightMap[i] = Weight;
+                Sum += Weight;
+            }
 
-                for (auto& Element : WeightMap)
+            UDataTableFunctionLibrary::EvaluateCurveTableRow(GameState->MapInfo->VendingMachineRarityCount.Curve.CurveTable, GameState->MapInfo->VendingMachineRarityCount.Curve.RowName, 0.f, nullptr, &Weight, FString());
+
+            float TotalWeight = std::accumulate(WeightMap.begin(), WeightMap.end(), 0.0f, [&](float acc, const std::pair<int, float>& p) { return acc + p.second; });
+            for (auto& VendingMachine : Utils::GetAll<ABuildingItemCollectorActor>())
+            {
+                if (Sum > Weight)
                 {
-                    float Weight = Element.second;
+                PickNum:
+                    auto RandomNum = (float)rand() / (RAND_MAX / TotalWeight);
 
-                    if (Weight == 0)
-                        continue;
+                    int Rarity = 0;
+                    bool found = false;
 
-                    if (RandomNum <= Weight)
+                    for (auto& Element : WeightMap)
                     {
-                        Rarity = Element.first;
+                        float Weight = Element.second;
 
-                        found = true;
-                        break;
-                    }
+                        if (Weight == 0)
+                            continue;
 
-                    RandomNum -= Weight;
-                }
-
-                if (!found)
-                    goto PickNum;
-
-                if (Rarity == 0)
-                {
-                    VendingMachine->K2_DestroyActor();
-                    continue;
-                }
-
-                int AttemptsToGetItem = 0;
-                for (int i = 0; i < VendingMachine->ItemCollections.Num(); i++)
-                {
-                    if (AttemptsToGetItem > 5)
-                    {
-                        AttemptsToGetItem = 0;
-                        goto PickNum;
-                    }
-
-                    auto& Collection = VendingMachine->ItemCollections.Get(i, FCollectorUnitInfo::Size());
-
-                    auto LootDrops = UFortLootPackage::ChooseLootForContainer(VMGroup, Rarity);
-
-                    if (Collection.OutputItemEntry.Num() > 0)
-                    {
-                        Collection.OutputItemEntry.ResetNum();
-                        Collection.OutputItem = nullptr;
-                    }
-
-                    for (auto& LootDrop : LootDrops)
-                    {
-                        if (AFortInventory::IsPrimaryQuickbar(LootDrop->ItemDefinition))
+                        if (RandomNum <= Weight)
                         {
-                            bool AlreadyInCollections = false;
+                            Rarity = Element.first;
 
-                            for (int q = 0; q < VendingMachine->ItemCollections.Num(); q++)
-                            {
-                                auto& Coll = VendingMachine->ItemCollections.Get(q, FCollectorUnitInfo::Size());
-
-                                if (Coll.OutputItem == LootDrop->ItemDefinition)
-                                    AlreadyInCollections = true;
-                            }
-
-                            if (AlreadyInCollections)
-                                goto PickNum;
-
-                            Collection.OutputItem = LootDrop->ItemDefinition;
+                            found = true;
+                            break;
                         }
 
-                        Collection.OutputItemEntry.Add(*LootDrop, FFortItemEntry::Size());
-                        free(LootDrop);
+                        RandomNum -= Weight;
                     }
 
-                    if (!Collection.OutputItem)
-                    {
-                        i--;
-                        AttemptsToGetItem++;
+                    if (!found)
+                        goto PickNum;
 
+                    if (Rarity == 0)
+                    {
+                        VendingMachine->K2_DestroyActor();
                         continue;
                     }
 
-                    UEAllocatedWString RowName = L"Default.VendingMachine.Cost.";
-                    switch (i)
+                    int AttemptsToGetItem = 0;
+                    for (int i = 0; i < VendingMachine->ItemCollections.Num(); i++)
                     {
-                    case 0:
-                        RowName += L"Wood";
-                        break;
-                    case 1:
-                        RowName += L"Stone";
-                        break;
-                    case 2:
-                        RowName += L"Metal";
-                        break;
+                        if (AttemptsToGetItem > 5)
+                        {
+                            AttemptsToGetItem = 0;
+                            goto PickNum;
+                        }
+
+                        auto& Collection = VendingMachine->ItemCollections.Get(i, FCollectorUnitInfo::Size());
+
+                        auto LootDrops = UFortLootPackage::ChooseLootForContainer(VMGroup, Rarity);
+
+                        if (Collection.OutputItemEntry.Num() > 0)
+                        {
+                            Collection.OutputItemEntry.ResetNum();
+                            Collection.OutputItem = nullptr;
+                        }
+
+                        for (auto& LootDrop : LootDrops)
+                        {
+                            if (AFortInventory::IsPrimaryQuickbar(LootDrop->ItemDefinition))
+                            {
+                                bool AlreadyInCollections = false;
+
+                                for (int q = 0; q < VendingMachine->ItemCollections.Num(); q++)
+                                {
+                                    auto& Coll = VendingMachine->ItemCollections.Get(q, FCollectorUnitInfo::Size());
+
+                                    if (Coll.OutputItem == LootDrop->ItemDefinition)
+                                        AlreadyInCollections = true;
+                                }
+
+                                if (AlreadyInCollections)
+                                    goto PickNum;
+
+                                Collection.OutputItem = LootDrop->ItemDefinition;
+                            }
+
+                            Collection.OutputItemEntry.Add(*LootDrop, FFortItemEntry::Size());
+                            free(LootDrop);
+                        }
+
+                        if (!Collection.OutputItem)
+                        {
+                            i--;
+                            AttemptsToGetItem++;
+
+                            continue;
+                        }
+
+                        UEAllocatedWString RowName = L"Default.VendingMachine.Cost.";
+                        switch (i)
+                        {
+                        case 0:
+                            RowName += L"Wood";
+                            break;
+                        case 1:
+                            RowName += L"Stone";
+                            break;
+                        case 2:
+                            RowName += L"Metal";
+                            break;
+                        }
+
+                        Collection.InputCount.Curve.CurveTable = GameData;
+                        Collection.InputCount.Curve.RowName = UKismetStringLibrary::Conv_StringToName(FString(RowName.c_str()));
+                        Collection.InputCount.Value = (float)(Rarity - 1);
                     }
 
-                    Collection.InputCount.Curve.CurveTable = GameData;
-                    Collection.InputCount.Curve.RowName = UKismetStringLibrary::Conv_StringToName(FString(RowName.c_str()));
-                    Collection.InputCount.Value = (float)(Rarity - 1);
+                    VendingMachine->StartingGoalLevel = Rarity;
                 }
-
-                VendingMachine->StartingGoalLevel = Rarity;
+                else
+                    VendingMachine->K2_DestroyActor();
             }
-            else
-                VendingMachine->K2_DestroyActor();
         }
+        GameMode->DefaultPawnClass = Utils::FindObject<UClass>(L"/Game/Athena/PlayerPawn_Athena.PlayerPawn_Athena_C");
 
         char buffer[67];
-        sprintf_s(buffer, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Joinable" : (VersionInfo.FortniteVersion >= 5.00 ? "Erbium (FN %.2f, UE %.2f): Joinable" : "Erbium (FN %.1f, UE %.2f): Joinable"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
+        sprintf_s(buffer, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Joinable" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Joinable" : "Erbium (FN %.1f, UE %.2f): Joinable"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
         SetConsoleTitleA(buffer);
         GameMode->bWorldIsReady = true;
     }
@@ -635,9 +639,9 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
         static bool HasCosmeticLoadoutPC = NewPlayer->HasCosmeticLoadoutPC();
         static bool HasCustomizationLoadout = NewPlayer->HasCustomizationLoadout();
 
-        if (HasCosmeticLoadoutPC)
+        if (HasCosmeticLoadoutPC && NewPlayer->CosmeticLoadoutPC.Pickaxe)
             NewPlayer->WorldInventory->GiveItem(NewPlayer->CosmeticLoadoutPC.Pickaxe->WeaponDefinition);
-        else if (HasCustomizationLoadout)
+        else if (HasCustomizationLoadout && NewPlayer->CustomizationLoadout.Pickaxe)
             NewPlayer->WorldInventory->GiveItem(NewPlayer->CustomizationLoadout.Pickaxe->WeaponDefinition);
         else
         {
@@ -757,7 +761,7 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
             auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 
             char buffer[67];
-            sprintf_s(buffer, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Match started" : (VersionInfo.FortniteVersion >= 5.00 ? "Erbium (FN %.2f, UE %.2f): Match started" : "Erbium (FN %.1f, UE %.2f): Match started"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
+            sprintf_s(buffer, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Match started" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Match started" : "Erbium (FN %.1f, UE %.2f): Match started"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
             SetConsoleTitleA(buffer);
         }
     }
@@ -885,8 +889,18 @@ void AFortGameModeAthena::HandleStartingNewPlayer_(UObject* Context, FFrame& Sta
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
     AFortPlayerStateAthena* PlayerState = (AFortPlayerStateAthena*)NewPlayer->PlayerState;
 
-    PlayerState->SquadId = PlayerState->TeamIndex - 3;
-    PlayerState->OnRep_SquadId();
+    printf("dtc\n");
+    if (VersionInfo.FortniteVersion <= 2.5)
+    {
+        NewPlayer->QuickBars = UWorld::SpawnActor<AFortQuickBars>(FVector{});
+        NewPlayer->QuickBars->SetOwner(NewPlayer);
+    }
+
+    if (PlayerState->HasSquadId())
+    {
+        PlayerState->SquadId = PlayerState->TeamIndex - 3;
+        PlayerState->OnRep_SquadId();
+    }
 
     if (GameState->HasGameMemberInfoArray())
     {
@@ -906,7 +920,8 @@ void AFortGameModeAthena::HandleStartingNewPlayer_(UObject* Context, FFrame& Sta
         free(Member);
     }
 
-    NewPlayer->bBuildFree = FConfiguration::bInfiniteMats;
+    if (NewPlayer->HasbBuildFree())
+        NewPlayer->bBuildFree = FConfiguration::bInfiniteMats;
 
     return callOG(GameMode, Stack.GetCurrentNativeFunction(), HandleStartingNewPlayer, NewPlayer);
 }

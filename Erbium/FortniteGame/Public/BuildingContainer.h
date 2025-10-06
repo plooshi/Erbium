@@ -17,6 +17,7 @@ public:
 
     DEFINE_PROP(SearchLootTierGroup, FName);
     DEFINE_PROP(LootSpawnLocation_Athena, FVector);
+    DEFINE_PROP(LootSpawnLocation, FVector);
     DEFINE_BITFIELD_PROP(bAlreadySearched);
     DEFINE_PROP(SearchBounceData, FFortSearchBounceData);
     DEFINE_PROP(LootTossConeHalfAngle_Athena, float);
