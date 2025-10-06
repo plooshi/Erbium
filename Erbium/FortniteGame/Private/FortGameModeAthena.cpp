@@ -811,6 +811,32 @@ void AFortGameModeAthena::OnAircraftExitedDropZone_(UObject* Context, FFrame& St
     auto GameMode = (AFortGameModeAthena*)Context;
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 
+    if (FConfiguration::bLateGame)
+    {
+        static auto CompClass = FindClass("FortControllerComponent_Aircraft");
+
+        if (CompClass)
+        {
+            for (auto& Player : GameMode->AlivePlayers)
+            {
+                if (((AFortPlayerControllerAthena*)Player)->IsInAircraft())
+                {
+                    ((AFortPlayerControllerAthena*)Player)->GetAircraftComponent()->ServerAttemptAircraftJump(FRotator{});
+                }
+            }
+        }
+        else
+        {
+            for (auto& Player : GameMode->AlivePlayers)
+            {
+                if (((AFortPlayerControllerAthena*)Player)->IsInAircraft())
+                {
+                    ((AFortPlayerControllerAthena*)Player)->ServerAttemptAircraftJump(FRotator{});
+                }
+            }
+        }
+    }
+
     callOG(GameMode, Stack.GetCurrentNativeFunction(), OnAircraftExitedDropZone, Aircraft);
 
     if (FConfiguration::bLateGame)
@@ -831,4 +857,5 @@ void AFortGameModeAthena::Hook()
     Utils::ExecHook(GetDefaultObj()->GetFunction("HandleStartingNewPlayer"), HandleStartingNewPlayer_, HandleStartingNewPlayer_OG);
     Utils::Hook(FindPickTeam(), PickTeam, PickTeamOG);
     Utils::Hook(FindStartAircraftPhase(), StartAircraftPhase, StartAircraftPhaseOG);
+    Utils::ExecHook(GetDefaultObj()->GetFunction("OnAircraftExitedDropZone"), OnAircraftExitedDropZone_, OnAircraftExitedDropZone_OG);
 }

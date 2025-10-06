@@ -44,6 +44,14 @@ public:
     DEFINE_BITFIELD_PROP(bMoveFollowingOnly);
 };
 
+class UFortControllerComponent_Aircraft : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortControllerComponent_Aircraft);
+
+    DEFINE_FUNC(ServerAttemptAircraftJump, void);
+};
+
 class AFortPlayerControllerAthena : public AActor
 {
 public:
@@ -71,10 +79,13 @@ public:
     DEFINE_FUNC(ClientNotifyTeamWon, void);
     DEFINE_FUNC(ClientMessage, void);
     DEFINE_FUNC(ClientGotoState, void);
+    DEFINE_FUNC(IsInAircraft, bool);
+    DEFINE_FUNC(GetAircraftComponent, UFortControllerComponent_Aircraft*);
+    DEFINE_FUNC(ServerAttemptAircraftJump, void);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);
-    DefHookOg(void, ServerAttemptAircraftJump, UObject*, FFrame&);
+    DefHookOg(void, ServerAttemptAircraftJump_, UObject*, FFrame&);
     static void ServerExecuteInventoryItem(UObject*, FFrame&);
     static void ServerExecuteInventoryWeapon(UObject*, FFrame&);
     static void ServerCreateBuildingActor(UObject*, FFrame&);

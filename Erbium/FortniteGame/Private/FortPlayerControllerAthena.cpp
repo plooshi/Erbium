@@ -73,7 +73,7 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 	PlayerController->AcknowledgedPawn = Pawn;
 }
 
-void AFortPlayerControllerAthena::ServerAttemptAircraftJump(UObject* Context, FFrame& Stack)
+void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, FFrame& Stack)
 {
 	FRotator Rotation;
 	Stack.StepCompiledIn(&Rotation);
@@ -81,6 +81,7 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump(UObject* Context, FF
 
 	AFortPlayerControllerAthena* PlayerController = nullptr;
 	auto GameMode = (AFortGameModeAthena*) UWorld::GetWorld()->AuthorityGameMode;
+	auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 
 	if (VersionInfo.FortniteVersion >= 11.00)
 	{
@@ -104,6 +105,25 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump(UObject* Context, FF
 		static auto ServerAttemptAircraftJumpOG = (void(*)(AFortPlayerControllerAthena*, FRotator&)) ((AFortPlayerControllerAthena*)Context)->Vft[((AFortPlayerControllerAthena*)Context)->GetFunction("ServerAttemptAircraftJump")->GetVTableIndex()];
 
 		ServerAttemptAircraftJumpOG((AFortPlayerControllerAthena*)Context, Rotation);
+	}
+	if (FConfiguration::bLateGame)
+	{
+		FVector AircraftLocation = GameState->Aircrafts[0]->K2_GetActorLocation();
+
+		float Angle = (float)rand() / 5215.03002625f;
+		float Radius = (float)(rand() % 1000);
+
+		float OffsetX = cosf(Angle) * Radius;
+		float OffsetY = sinf(Angle) * Radius;
+
+		FVector Offset;
+		Offset.X = OffsetX;
+		Offset.Y = OffsetY;
+		Offset.Z = 0.0f;
+
+		FVector NewLoc = AircraftLocation + Offset;
+
+		PlayerController->MyFortPawn->K2_SetActorLocation(NewLoc, false, nullptr, false);
 	}
 }
 
@@ -980,9 +1000,9 @@ void AFortPlayerControllerAthena::Hook()
 
 	auto ServerAttemptAircraftJumpPC = GetDefaultObj()->GetFunction("ServerAttemptAircraftJump");
 	if (!ServerAttemptAircraftJumpPC)
-		Utils::ExecHook(DefaultObjImpl("FortControllerComponent_Aircraft")->GetFunction("ServerAttemptAircraftJump"), ServerAttemptAircraftJump, ServerAttemptAircraftJumpOG);
+		Utils::ExecHook(DefaultObjImpl("FortControllerComponent_Aircraft")->GetFunction("ServerAttemptAircraftJump"), ServerAttemptAircraftJump_, ServerAttemptAircraftJump_OG);
 	else
-		Utils::ExecHook(ServerAttemptAircraftJumpPC, ServerAttemptAircraftJump);
+		Utils::ExecHook(ServerAttemptAircraftJumpPC, ServerAttemptAircraftJump_);
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerAcknowledgePossession"), ServerAcknowledgePossession);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerExecuteInventoryItem"), ServerExecuteInventoryItem);
