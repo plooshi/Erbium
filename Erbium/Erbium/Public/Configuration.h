@@ -9,4 +9,5 @@ struct FConfiguration
     static inline auto SiphonAmount = 50; // set to 0 to disable
     static inline auto bInfiniteMats = false;
     static inline auto bForceRespawns = false;
+    static inline auto bCreative = false;
 };

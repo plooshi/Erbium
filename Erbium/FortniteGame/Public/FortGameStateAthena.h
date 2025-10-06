@@ -40,12 +40,20 @@ struct FPlaylistPropertyArray : public FFastArraySerializer
     DEFINE_STRUCT_PROP(OverridePlaylist, const UFortPlaylistAthena*);
 };
 
+class UFortSupplyDropInfo : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortSupplyDropInfo);
+
+    DEFINE_PROP(SupplyDropClass, TSubclassOf<UObject>);
+};
 class AFortAthenaMapInfo : public AActor
 {
 public:
     UCLASS_COMMON_MEMBERS(AFortAthenaMapInfo);
 
     DEFINE_PROP(LlamaClass, UClass*);
+    DEFINE_PROP(SupplyDropInfoList, TArray<UFortSupplyDropInfo*>);
 };
 
 struct FAircraftFlightInfo
@@ -73,6 +81,8 @@ public:
     DEFINE_PROP(TimeTillFlightEnd, float);
     DEFINE_PROP(TimeTillDropStart, float);
     DEFINE_PROP(TimeTillDropEnd, float);
+    DEFINE_PROP(DefaultBusSkin, const UObject*);
+    DEFINE_PROP(SpawnedCosmeticActor, const UObject*);
 };
 
 class AFortGameStateAthena : public AActor
@@ -103,6 +113,7 @@ public:
     DEFINE_PROP(SafeZonesStartTime, float);
     DEFINE_PROP(AirCraftBehavior, uint8);
     DEFINE_PROP(CachedSafeZoneStartUp, uint8);
+    DEFINE_PROP(DefaultBattleBus, const UObject*);
 
     DEFINE_FUNC(OnRep_CurrentPlaylistInfo, void);
     DEFINE_FUNC(OnRep_CurrentPlaylistData, void);

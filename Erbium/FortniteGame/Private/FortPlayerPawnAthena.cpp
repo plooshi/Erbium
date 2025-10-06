@@ -59,7 +59,7 @@ void AFortPlayerPawnAthena::ServerHandlePickup_(UObject* Context, FFrame& Stack)
 	Pawn->IncomingPickups.Add(Pickup);
 
 	Pickup->PickupLocationData.bPlayPickupSound = bPlayPickupSound;
-	Pickup->PickupLocationData.FlyTime = 0.4f;
+	Pickup->PickupLocationData.FlyTime = 1.4f;
 	Pickup->PickupLocationData.ItemOwner = Pawn;
 	Pickup->PickupLocationData.PickupGuid = Pickup->PrimaryPickupItemEntry.ItemGuid;
 	Pickup->PickupLocationData.PickupTarget = Pawn;

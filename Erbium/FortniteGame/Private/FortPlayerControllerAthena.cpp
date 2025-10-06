@@ -789,6 +789,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 			ItemCount += Item.ItemDefinition->HasNumberOfSlotsToTake() ? Item.ItemDefinition->NumberOfSlotsToTake : 1;
 	}
 
+	printf("br: %d\n", ItemCount);
 	auto GiveOrSwap = [&]()
 		{
 			if (ItemCount >= 5 && AFortInventory::IsPrimaryQuickbar(PickupEntry->ItemDefinition))
@@ -927,7 +928,10 @@ _help:
 			if (args.size() == 3)
 				Count = strtol(args[2].c_str(), nullptr, 10);
 
-			PlayerController->WorldInventory->GiveItem(ItemDefinition, Count);
+			auto ItemEntry = AFortInventory::MakeItemEntry(ItemDefinition, Count, 0);
+			PlayerController->InternalPickup(ItemEntry);
+			free(ItemEntry);
+			//PlayerController->WorldInventory->GiveItem(ItemDefinition, Count);
 		}
 		else if (command == "spawnpickup")
 		{
