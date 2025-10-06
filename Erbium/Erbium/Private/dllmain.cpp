@@ -55,7 +55,7 @@ void Main()
     MH_EnableHook(MH_ALL_HOOKS);
 
     *(bool*)FindGIsClient() = false;
-    if (VersionInfo.FortniteVersion > 4.20) // 3.6 and below have a crash on ALandscapeProxy
+    if (VersionInfo.EngineVersion > 4.20) // 3.6 and below have a crash on ALandscapeProxy
         *(bool*)FindGIsServer() = true;
 
     UWorld::GetWorld()->OwningGameInstance->LocalPlayers.Remove(0);

@@ -351,21 +351,21 @@ void UNetDriver::Hook()
 
 	if (VersionInfo.FortniteVersion == 1.72)
 		ClientWorldPackageNameOffset = 0x336A8;
-	if (VersionInfo.FortniteVersion == 1.8 || VersionInfo.FortniteVersion == 1.9)
+	else if (VersionInfo.FortniteVersion == 1.8 || VersionInfo.FortniteVersion == 1.9)
 		ClientWorldPackageNameOffset = 0x33788;
-	if (VersionInfo.FortniteVersion == 1.10)
+	else if (VersionInfo.FortniteVersion == 1.10)
 		ClientWorldPackageNameOffset = 0x337A8;
-	if (VersionInfo.FortniteVersion == 1.11)
+	else if (VersionInfo.FortniteVersion == 1.11)
 		ClientWorldPackageNameOffset = 0x337B8;
-	if (VersionInfo.FortniteVersion >= 2.2 && VersionInfo.FortniteVersion <= 2.4)
+	else if (VersionInfo.FortniteVersion >= 2.2 && VersionInfo.FortniteVersion <= 2.4)
 		ClientWorldPackageNameOffset = 0xA17A8;
-	if (VersionInfo.FortniteVersion == 2.42 || VersionInfo.FortniteVersion == 2.5)
+	else if (VersionInfo.FortniteVersion == 2.42 || VersionInfo.FortniteVersion == 2.5)
 		ClientWorldPackageNameOffset = 0x17F8;
-	if (VersionInfo.FortniteVersion == 3.1)
+	else if (VersionInfo.FortniteVersion == 3.1)
 		ClientWorldPackageNameOffset = 0x1818;
-	if (VersionInfo.FortniteVersion == 3.2)
+	else if (VersionInfo.FortniteVersion == 3.2)
 		ClientWorldPackageNameOffset = 0x1820;
-	if (VersionInfo.FortniteVersion == 3.3)
+	else if (VersionInfo.FortniteVersion == 3.3)
 		ClientWorldPackageNameOffset = 0x1828;
 
     Utils::Hook(FindTickFlush(), TickFlush, TickFlushOG);

@@ -659,6 +659,8 @@ inline uint64 FindSpawnLoot()
                 return SpawnLoot = sRef - i;
             else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x5C)
                 return SpawnLoot = sRef - i;
+            else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
+                return SpawnLoot = sRef - i;
         }
     }
 
