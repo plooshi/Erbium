@@ -3,6 +3,7 @@
 #include "../Public/FortInventory.h"
 #include "../Public/FortLootPackage.h"
 
+bool bHasbPickupOnlyRelevantToOwner;
 void UFortKismetLibrary::K2_SpawnPickupInWorld(UObject* Object, FFrame& Stack, AFortPickupAthena** Ret)
 {
 	class UObject* WorldContextObject;
@@ -18,7 +19,7 @@ void UFortKismetLibrary::K2_SpawnPickupInWorld(UObject* Object, FFrame& Stack, A
 	uint8 SourceType;
 	uint8 Source;
 	class AFortPlayerControllerAthena* OptionalOwnerPC;
-	bool bPickupOnlyRelevantToOwner;
+	bool bPickupOnlyRelevantToOwner = false;
 	Stack.StepCompiledIn(&WorldContextObject);
 	Stack.StepCompiledIn(&ItemDefinition);
 	Stack.StepCompiledIn(&NumberToSpawn);
@@ -32,7 +33,8 @@ void UFortKismetLibrary::K2_SpawnPickupInWorld(UObject* Object, FFrame& Stack, A
 	Stack.StepCompiledIn(&SourceType);
 	Stack.StepCompiledIn(&Source);
 	Stack.StepCompiledIn(&OptionalOwnerPC);
-	Stack.StepCompiledIn(&bPickupOnlyRelevantToOwner);
+	if (bHasbPickupOnlyRelevantToOwner)
+		Stack.StepCompiledIn(&bPickupOnlyRelevantToOwner);
 	Stack.IncrementCode();
 
 	*Ret = AFortInventory::SpawnPickup(Position, ItemDefinition, NumberToSpawn, 0, SourceType, Source, OptionalOwnerPC ? OptionalOwnerPC->MyFortPawn : nullptr, bToss, bRandomRotation);
@@ -156,29 +158,29 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayerByGuid(UObject* Context, FFrame&
 void UFortKismetLibrary::SpawnItemVariantPickupInWorld(UObject* Object, FFrame& Stack, AFortPickupAthena** Ret)
 {
 	UObject* WorldContextObject;
-	FSpawnItemVariantParams Params;
 	Stack.StepCompiledIn(&WorldContextObject);
-	Stack.StepCompiledIn(&Params);
+	auto& Params = Stack.StepCompiledInRef<FSpawnItemVariantParams>();
 	Stack.IncrementCode();
 
 	*Ret = AFortInventory::SpawnPickup(Params.Position, Params.WorldItemDefinition, Params.NumberToSpawn, 0, Params.SourceType, Params.Source, nullptr, Params.bToss, Params.bRandomRotation);
 }
 
-
+bool bHasOptionalLootTags = false;
 void UFortKismetLibrary::PickLootDrops(UObject* Object, FFrame& Stack, bool* Ret)
 {
 	UObject* WorldContextObject;
 	FName TierGroupName;
 	int32 WorldLevel;
 	int32 ForcedLootTier;
-	FGameplayTagContainer OptionalLootTags;
+	FGameplayTagContainer OptionalLootTags{};
 
 	Stack.StepCompiledIn(&WorldContextObject);
 	auto& OutLootToDrop = Stack.StepCompiledInRef<TArray<FFortItemEntry>>();
 	Stack.StepCompiledIn(&TierGroupName);
 	Stack.StepCompiledIn(&WorldLevel);
 	Stack.StepCompiledIn(&ForcedLootTier);
-	Stack.StepCompiledIn(&OptionalLootTags);
+	if (bHasOptionalLootTags)
+		Stack.StepCompiledIn(&OptionalLootTags);
 	Stack.IncrementCode();
 
 	auto LootDrops = UFortLootPackage::ChooseLootForContainer(TierGroupName, ForcedLootTier, WorldLevel);
@@ -208,6 +210,7 @@ void UFortKismetLibrary::Hook()
 				bHasbUseItemPickupAnalyticEvent = true;
 		}
 	Utils::ExecHook(GiveItemToInventoryOwnerFn, GiveItemToInventoryOwner);
+
 	auto K2_RemoveItemFromPlayerFn = GetDefaultObj()->GetFunction("K2_RemoveItemFromPlayer");
 	if (K2_RemoveItemFromPlayerFn)
 		for (auto& Param : K2_RemoveItemFromPlayerFn->GetParams().NameOffsetMap)
@@ -219,8 +222,33 @@ void UFortKismetLibrary::Hook()
 			}
 		}
 	Utils::ExecHook(K2_RemoveItemFromPlayerFn, K2_RemoveItemFromPlayer);
+
 	Utils::ExecHook(GetDefaultObj()->GetFunction("K2_RemoveItemFromPlayerByGuid"), K2_RemoveItemFromPlayerByGuid);
-	Utils::ExecHook(GetDefaultObj()->GetFunction("K2_SpawnPickupInWorld"), K2_SpawnPickupInWorld);
+
+	auto K2_SpawnPickupInWorldFn = GetDefaultObj()->GetFunction("K2_SpawnPickupInWorld");
+	if (K2_SpawnPickupInWorldFn)
+		for (auto& Param : K2_SpawnPickupInWorldFn->GetParams().NameOffsetMap)
+		{
+			if (Param.Name == "bPickupOnlyRelevantToOwner")
+			{
+				bHasbPickupOnlyRelevantToOwner = true;
+				break;
+			}
+		}
+	Utils::ExecHook(K2_SpawnPickupInWorldFn, K2_SpawnPickupInWorld);
+
 	Utils::ExecHook(GetDefaultObj()->GetFunction("SpawnItemVariantPickupInWorld"), SpawnItemVariantPickupInWorld);
-	Utils::ExecHook(GetDefaultObj()->GetFunction("PickLootDrops"), PickLootDrops);
+
+	auto PickLootDropsFn = GetDefaultObj()->GetFunction("PickLootDrops");
+
+	if (PickLootDropsFn)
+		for (auto& Param : PickLootDropsFn->GetParams().NameOffsetMap)
+		{
+			if (Param.Name == "OptionalLootTags")
+			{
+				bHasOptionalLootTags = true;
+				break;
+			}
+		}
+	Utils::ExecHook(PickLootDropsFn, PickLootDrops);
 }

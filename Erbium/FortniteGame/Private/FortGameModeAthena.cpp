@@ -435,31 +435,25 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                 Info->SupplyDropClass = SupplyDropClass;
 
 
-        /*const UCurveTable* GameData = Playlist->GameData;
+        const UCurveTable* GameData = Playlist->GameData;
         if (!GameData)
             GameData = Utils::FindObject<UCurveTable>(L"/Game/Athena/Balance/DataTables/AthenaGameData.AthenaGameData");
 
         UEAllocatedMap<int, float> WeightMap;
         float Sum = 0;
-        bool Idfk = false;
         float Weight;
         auto VMGroup = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_AthenaVending"));
 
-        if (!Idfk) {
-            Idfk = true;
+        for (int i = 0; i < 6; i++)
+        {
+            float Weight;
+            UDataTableFunctionLibrary::EvaluateCurveTableRow(GameState->MapInfo->VendingMachineRarityCount.Curve.CurveTable, GameState->MapInfo->VendingMachineRarityCount.Curve.RowName, (float)i, nullptr, &Weight, FString());
 
-
-            for (int i = 0; i < 6; i++)
-            {
-                float Weight;
-                UDataTableFunctionLibrary::EvaluateCurveTableRow(GameState->MapInfo->VendingMachineRarityCount.Curve.CurveTable, GameState->MapInfo->VendingMachineRarityCount.Curve.RowName, (float)i, nullptr, &Weight, FString());
-
-                WeightMap[i] = Weight;
-                Sum += Weight;
-            }
-
-            UDataTableFunctionLibrary::EvaluateCurveTableRow(GameState->MapInfo->VendingMachineRarityCount.Curve.CurveTable, GameState->MapInfo->VendingMachineRarityCount.Curve.RowName, 0.f, nullptr, &Weight, FString());
+            WeightMap[i] = Weight;
+            Sum += Weight;
         }
+
+        UDataTableFunctionLibrary::EvaluateCurveTableRow(GameState->MapInfo->VendingMachineRarityCount.Curve.CurveTable, GameState->MapInfo->VendingMachineRarityCount.Curve.RowName, 0.f, nullptr, &Weight, FString());
 
         float TotalWeight = std::accumulate(WeightMap.begin(), WeightMap.end(), 0.0f, [&](float acc, const std::pair<int, float>& p) { return acc + p.second; });
         for (auto& VendingMachine : Utils::GetAll<ABuildingItemCollectorActor>())
@@ -569,10 +563,11 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                     Collection.InputCount.Value = (float)(Rarity - 1);
                 }
 
+                VendingMachine->StartingGoalLevel = Rarity;
             }
             else
                 VendingMachine->K2_DestroyActor();
-        }*/
+        }
 
         char buffer[67];
         sprintf_s(buffer, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Joinable" : (VersionInfo.FortniteVersion >= 5.00 ? "Erbium (FN %.2f, UE %.2f): Joinable" : "Erbium (FN %.1f, UE %.2f): Joinable"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);

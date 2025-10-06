@@ -1165,7 +1165,7 @@ inline void FindNullsAndRetTrues()
         NullFuncs.push_back(sRef.ScanFor(VersionInfo.EngineVersion >= 4.27 ? std::vector<uint8>{ 0x48, 0x89, 0x5C } : std::vector<uint8>{ 0x40, 0x55 }, false, 0, 1, 2000).Get());
     }
 
-    if (VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.27) {
+    if (VersionInfo.EngineVersion >= 4.24 && VersionInfo.EngineVersion < 4.27) {
         auto sRef = Memcury::Scanner::FindStringRef(L"STAT_CollectGarbageInternal").Get();
         uint64_t CollectGarbage = 0;
 
