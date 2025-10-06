@@ -600,14 +600,23 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
     Stack.IncrementCode();
     auto GameMode = (AFortGameModeAthena*)Context;
     auto GameState = GameMode->GameState;
+    auto Num = NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Num();
     // they only stripped it on athena for some reason
-    static auto FortGMSpawnDefaultPawnFor = (AFortPlayerPawnAthena * (*)(AFortGameModeAthena*, AFortPlayerControllerAthena*, AActor*)) DefaultObjImpl("FortGameMode")->Vft[SpawnDefaultPawnForIdx];
-    auto Pawn = FortGMSpawnDefaultPawnFor(GameMode, NewPlayer, StartSpot);
+    AFortPlayerPawnAthena* Pawn = nullptr;
+    if (VersionInfo.FortniteVersion == 4.23 && Num != 0)
+    {
+        auto Transform = StartSpot->GetTransform();
+        Pawn = GameMode->SpawnDefaultPawnAtTransform(NewPlayer, Transform);
+    }
+    else
+    {
+        static auto FortGMSpawnDefaultPawnFor = (AFortPlayerPawnAthena * (*)(AFortGameModeAthena*, AFortPlayerControllerAthena*, AActor*)) DefaultObjImpl("FortGameMode")->Vft[SpawnDefaultPawnForIdx];
+        Pawn = FortGMSpawnDefaultPawnFor(GameMode, NewPlayer, StartSpot);
+    }
 
     //auto Transform = StartSpot->GetTransform();
     //auto Pawn = GameMode->SpawnDefaultPawnAtTransform(NewPlayer, Transform);
 
-    auto Num = NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Num();
 
     if (Num == 0)
     {
@@ -824,7 +833,11 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
             GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
         }
     } 
-    else if (FConfiguration::bLateGame && GameMode->SafeZonePhase > 3)
+
+    if (VersionInfo.FortniteVersion < 13.00)
+        HandlePostSafeZonePhaseChangedOG(GameMode, NewSafeZonePhase_Inp);
+
+    if (FConfiguration::bLateGame && GameMode->SafeZonePhase > 3)
     {
         auto Duration = LateGameDurations[NewSafeZonePhase];
         auto HoldDuration = LateGameHoldDurations[NewSafeZonePhase];
@@ -848,7 +861,8 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
     }
 
 
-    return HandlePostSafeZonePhaseChangedOG(GameMode, NewSafeZonePhase_Inp);
+    if (VersionInfo.FortniteVersion >= 13.00)
+        HandlePostSafeZonePhaseChangedOG(GameMode, NewSafeZonePhase_Inp);
 }
 
 
@@ -908,9 +922,12 @@ bool AFortGameModeAthena::StartAircraftPhase(AFortGameModeAthena* GameMode, char
 
     if (FConfiguration::bLateGame)
     {
-        /*GameState->GamePhase = 4;
-        GameState->GamePhaseStep = 7;
-        GameState->OnRep_GamePhase(3);*/
+        /*if (VersionInfo.FortniteVersion < 16)
+        {
+            GameState->GamePhase = 4;
+            GameState->GamePhaseStep = 7;
+            GameState->OnRep_GamePhase(3);
+        }*/
 
         auto Aircraft = GameState->HasAircrafts() ? GameState->Aircrafts[0] : GameState->Aircraft;
         if (GameMode->SafeZoneLocations.Num() < 4)
@@ -986,14 +1003,14 @@ void AFortGameModeAthena::OnAircraftExitedDropZone_(UObject* Context, FFrame& St
         }
     }
 
-    callOG(GameMode, Stack.GetCurrentNativeFunction(), OnAircraftExitedDropZone, Aircraft);
-
     if (FConfiguration::bLateGame)
     {
         GameState->GamePhase = 4;
         GameState->GamePhaseStep = 7;
         GameState->OnRep_GamePhase(3);
     }
+
+    callOG(GameMode, Stack.GetCurrentNativeFunction(), OnAircraftExitedDropZone, Aircraft);
 }
 
 void AFortGameModeAthena::Hook()
