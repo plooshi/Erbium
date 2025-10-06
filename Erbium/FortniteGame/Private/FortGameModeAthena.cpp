@@ -105,19 +105,24 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
             ShowFoundation(Utils::FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.SLAB_4"));
 
 
-
+        auto AdditionalLevelStruct = FAdditionalLevelStreamed::StaticStruct();
         if (Playlist->HasAdditionalLevels())
             for (auto& Level : Playlist->AdditionalLevels)
             {
                 bool Success = false;
                 ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
-                auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
-                __stosb((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
-                level->bIsServerOnly = false;
-                level->LevelName = Level.ObjectID.AssetPathName;
-                if (Success)
-                    GameState->AdditionalPlaylistLevelsStreamed.Add(*level, FAdditionalLevelStreamed::Size());
-                free(level);
+                if (AdditionalLevelStruct)
+                {
+                    auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
+                    __stosb((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
+                    level->bIsServerOnly = false;
+                    level->LevelName = Level.ObjectID.AssetPathName;
+                    if (Success)
+                        GameState->AdditionalPlaylistLevelsStreamed.Add(*level, FAdditionalLevelStreamed::Size());
+                    free(level);
+                }
+                else
+                    GameState->Get<"AdditionalPlaylistLevelsStreamed", TArray<FName>>().Add(Level.ObjectID.AssetPathName);
             }
 
         if (Playlist->HasAdditionalLevelsServerOnly())
@@ -125,13 +130,19 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
             {
                 bool Success = false;
                 ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
-                auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
-                __stosb((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
-                level->bIsServerOnly = true;
-                level->LevelName = Level.ObjectID.AssetPathName;
-                if (Success)
-                    GameState->AdditionalPlaylistLevelsStreamed.Add(*level, FAdditionalLevelStreamed::Size());
-                free(level);
+
+                if (AdditionalLevelStruct)
+                {
+                    auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
+                    __stosb((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
+                    level->bIsServerOnly = true;
+                    level->LevelName = Level.ObjectID.AssetPathName;
+                    if (Success)
+                        GameState->AdditionalPlaylistLevelsStreamed.Add(*level, FAdditionalLevelStreamed::Size());
+                    free(level);
+                }
+                else
+                    GameState->Get<"AdditionalPlaylistLevelsStreamed", TArray<FName>>().Add(Level.ObjectID.AssetPathName);
             }
         if (GameState->HasAdditionalPlaylistLevelsStreamed())
             GameState->OnRep_AdditionalPlaylistLevelsStreamed();
