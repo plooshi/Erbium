@@ -152,6 +152,7 @@
     <ClInclude Include="Erbium\Public\Utils.h" />
     <ClInclude Include="FortniteGame\Public\BuildingContainer.h" />
     <ClInclude Include="FortniteGame\Public\BuildingFoundation.h" />
+    <ClInclude Include="FortniteGame\Public\BuildingItemCollectorActor.h" />
     <ClInclude Include="FortniteGame\Public\BuildingSMActor.h" />
     <ClInclude Include="FortniteGame\Public\FortGameModeAthena.h" />
     <ClInclude Include="FortniteGame\Public\FortGameSessionAthena.h" />

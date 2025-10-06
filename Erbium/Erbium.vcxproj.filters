@@ -147,6 +147,9 @@
     <ClInclude Include="Erbium\Public\LateGame.h">
       <Filter>Erbium\Public</Filter>
     </ClInclude>
+    <ClInclude Include="FortniteGame\Public\BuildingItemCollectorActor.h">
+      <Filter>FortniteGame\Public</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Erbium\Private\dllmain.cpp">

@@ -38,6 +38,6 @@ public:
 
 struct FCurveTableRowHandle
 {
-    UCurveTable* CurveTable;
+    const UCurveTable* CurveTable;
     FName RowName;
 };

@@ -13,6 +13,7 @@
 #include "../Public/FortLootPackage.h"
 #include "../Public/BuildingFoundation.h"
 #include "../../Erbium/Public/LateGame.h"
+#include "../Public/BuildingItemCollectorActor.h"
 
 
 __declspec(noinline) void ShowFoundation(const ABuildingFoundation* Foundation)
@@ -146,7 +147,8 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
     Stack.IncrementCode();
 
     auto GameMode = Context->Cast<AFortGameModeAthena>();
-    if (!GameMode) {
+    if (!GameMode) 
+    {
         *Ret = callOGWithRet(((AFortGameModeAthena*)Context), Stack.GetCurrentNativeFunction(), ReadyToStartMatch);
         return;
     }
@@ -166,10 +168,8 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             void* WorldCtx = ((void * (*)(UEngine*, UWorld*)) FindGetWorldContext())(Engine, World);
             World->NetDriver = NetDriver = ((UNetDriver * (*)(UEngine*, void*, FName)) FindCreateNetDriverWorldContext())(Engine, WorldCtx, NetDriverName);
         }
-        else 
-        {
+        else
             NetDriver = ((UNetDriver * (*)(UEngine*, UWorld*, FName)) FindCreateNetDriver())(Engine, World, NetDriverName);
-        }
 
         NetDriver->NetDriverName = NetDriverName;
         NetDriver->World = World;
@@ -190,13 +190,10 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
         FString Err;
         if (InitListen(NetDriver, World, URL, false, Err))
-        {
             SetWorld(NetDriver, World);
-        }
         else
-        {
             printf("Failed to listen!");
-        }
+
         free(URL);
 
         GameMode->WarmupRequiredPlayerCount = 1;
@@ -219,7 +216,8 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             *Ret = false;
             return;
         }
-        if (VersionInfo.FortniteVersion >= 3.5 && VersionInfo.FortniteVersion < 4.0)
+
+        if (VersionInfo.FortniteVersion >= 3.5 && VersionInfo.FortniteVersion <= 4.0)
             SetupPlaylist(GameMode, GameState);
         else if (VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.26)
             GameState->OnRep_CurrentPlaylistInfo(); 
@@ -232,13 +230,11 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             Table->AddToRoot();
             if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
                 for (auto& ParentTable : CompositeTable->ParentTables)
-                    for (auto& [Key, Val] : (TMap<FName, FFortLootTierData*>) ParentTable->RowMap) {
+                    for (auto& [Key, Val] : (TMap<FName, FFortLootTierData*>) ParentTable->RowMap)
                         TempArr[Key] = Val;
-                    }
 
-            for (auto& [Key, Val] : (TMap<FName, FFortLootTierData*>) Table->RowMap) {
+            for (auto& [Key, Val] : (TMap<FName, FFortLootTierData*>) Table->RowMap)
                 TempArr[Key] = Val;
-            }
         };
 
         auto AddToPackages = [&](const UDataTable* Table, UEAllocatedMap<FName, FFortLootPackageData*>& TempArr) {
@@ -248,13 +244,11 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             Table->AddToRoot();
             if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
                 for (auto& ParentTable : CompositeTable->ParentTables)
-                    for (auto& [Key, Val] : (TMap<FName, FFortLootPackageData*>) ParentTable->RowMap) {
+                    for (auto& [Key, Val] : (TMap<FName, FFortLootPackageData*>) ParentTable->RowMap)
                         TempArr[Key] = Val;
-                    }
 
-            for (auto& [Key, Val] : (TMap<FName, FFortLootPackageData*>) Table->RowMap) {
+            for (auto& [Key, Val] : (TMap<FName, FFortLootPackageData*>) Table->RowMap)
                 TempArr[Key] = Val;
-            }
         };
 
 
@@ -266,6 +260,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             LootTierData = Utils::FindObject<UDataTable>(L"/Game/Items/Datatables/AthenaLootTierData_Client.AthenaLootTierData_Client");
         if (LootTierData)
             AddToTierData(LootTierData, LootTierDataTempArr);
+
         for (auto& [_, Val] : LootTierDataTempArr)
             TierDataAllGroups.Add(Val);
 
@@ -275,6 +270,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             LootPackages = Utils::FindObject<UDataTable>(L"/Game/Items/Datatables/AthenaLootPackages_Client.AthenaLootPackages_Client");
         if (LootPackages)
             AddToPackages(LootPackages, LootPackageTempArr);
+
         for (auto& [_, Val] : LootPackageTempArr)
             LPGroupsAll.Add(Val);
 
@@ -438,6 +434,146 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             for (auto& Info : GameState->MapInfo->SupplyDropInfoList)
                 Info->SupplyDropClass = SupplyDropClass;
 
+
+        /*const UCurveTable* GameData = Playlist->GameData;
+        if (!GameData)
+            GameData = Utils::FindObject<UCurveTable>(L"/Game/Athena/Balance/DataTables/AthenaGameData.AthenaGameData");
+
+        UEAllocatedMap<int, float> WeightMap;
+        float Sum = 0;
+        bool Idfk = false;
+        float Weight;
+        auto VMGroup = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_AthenaVending"));
+
+        if (!Idfk) {
+            Idfk = true;
+
+
+            for (int i = 0; i < 6; i++)
+            {
+                float Weight;
+                UDataTableFunctionLibrary::EvaluateCurveTableRow(GameState->MapInfo->VendingMachineRarityCount.Curve.CurveTable, GameState->MapInfo->VendingMachineRarityCount.Curve.RowName, (float)i, nullptr, &Weight, FString());
+
+                WeightMap[i] = Weight;
+                Sum += Weight;
+            }
+
+            UDataTableFunctionLibrary::EvaluateCurveTableRow(GameState->MapInfo->VendingMachineRarityCount.Curve.CurveTable, GameState->MapInfo->VendingMachineRarityCount.Curve.RowName, 0.f, nullptr, &Weight, FString());
+        }
+
+        float TotalWeight = std::accumulate(WeightMap.begin(), WeightMap.end(), 0.0f, [&](float acc, const std::pair<int, float>& p) { return acc + p.second; });
+        for (auto& VendingMachine : Utils::GetAll<ABuildingItemCollectorActor>())
+        {
+            if (Sum > Weight)
+            {
+            PickNum:
+                auto RandomNum = (float)rand() / (RAND_MAX / TotalWeight);
+
+                int Rarity = 0;
+                bool found = false;
+
+                for (auto& Element : WeightMap)
+                {
+                    float Weight = Element.second;
+
+                    if (Weight == 0)
+                        continue;
+
+                    if (RandomNum <= Weight)
+                    {
+                        Rarity = Element.first;
+
+                        found = true;
+                        break;
+                    }
+
+                    RandomNum -= Weight;
+                }
+
+                if (!found)
+                    goto PickNum;
+
+                if (Rarity == 0)
+                {
+                    VendingMachine->K2_DestroyActor();
+                    continue;
+                }
+
+                int AttemptsToGetItem = 0;
+                for (int i = 0; i < VendingMachine->ItemCollections.Num(); i++)
+                {
+                    if (AttemptsToGetItem > 5)
+                    {
+                        AttemptsToGetItem = 0;
+                        goto PickNum;
+                    }
+
+                    auto& Collection = VendingMachine->ItemCollections.Get(i, FCollectorUnitInfo::Size());
+
+                    auto LootDrops = UFortLootPackage::ChooseLootForContainer(VMGroup, Rarity);
+
+                    if (Collection.OutputItemEntry.Num() > 0)
+                    {
+                        Collection.OutputItemEntry.ResetNum();
+                        Collection.OutputItem = nullptr;
+                    }
+
+                    for (auto& LootDrop : LootDrops)
+                    {
+                        if (AFortInventory::IsPrimaryQuickbar(LootDrop->ItemDefinition))
+                        {
+                            bool AlreadyInCollections = false;
+
+                            for (int q = 0; q < VendingMachine->ItemCollections.Num(); q++)
+                            {
+                                auto& Coll = VendingMachine->ItemCollections.Get(q, FCollectorUnitInfo::Size());
+
+                                if (Coll.OutputItem == LootDrop->ItemDefinition)
+                                    AlreadyInCollections = true;
+                            }
+
+                            if (AlreadyInCollections)
+                                goto PickNum;
+
+                            Collection.OutputItem = LootDrop->ItemDefinition;
+                        }
+
+                        Collection.OutputItemEntry.Add(*LootDrop, FFortItemEntry::Size());
+                        free(LootDrop);
+                    }
+
+                    if (!Collection.OutputItem)
+                    {
+                        i--;
+                        AttemptsToGetItem++;
+
+                        continue;
+                    }
+
+                    UEAllocatedWString RowName = L"Default.VendingMachine.Cost.";
+                    switch (i)
+                    {
+                    case 0:
+                        RowName += L"Wood";
+                        break;
+                    case 1:
+                        RowName += L"Stone";
+                        break;
+                    case 2:
+                        RowName += L"Metal";
+                        break;
+                    }
+
+                    Collection.InputCount.Curve.CurveTable = GameData;
+                    Collection.InputCount.Curve.RowName = UKismetStringLibrary::Conv_StringToName(FString(RowName.c_str()));
+                    Collection.InputCount.Value = (float)(Rarity - 1);
+                }
+
+            }
+            else
+                VendingMachine->K2_DestroyActor();
+        }*/
+
         char buffer[67];
         sprintf_s(buffer, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Joinable" : (VersionInfo.FortniteVersion >= 5.00 ? "Erbium (FN %.2f, UE %.2f): Joinable" : "Erbium (FN %.1f, UE %.2f): Joinable"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
         SetConsoleTitleA(buffer);
@@ -468,6 +604,7 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
     Stack.StepCompiledIn(&StartSpot);
     Stack.IncrementCode();
     auto GameMode = (AFortGameModeAthena*)Context;
+    auto GameState = GameMode->GameState;
     // they only stripped it on athena for some reason
     static auto FortGMSpawnDefaultPawnFor = (AFortPlayerPawnAthena * (*)(AFortGameModeAthena*, AFortPlayerControllerAthena*, AActor*)) DefaultObjImpl("FortGameMode")->Vft[SpawnDefaultPawnForIdx];
     auto Pawn = FortGMSpawnDefaultPawnFor(GameMode, NewPlayer, StartSpot);

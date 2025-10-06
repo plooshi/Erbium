@@ -1226,9 +1226,6 @@ namespace Memcury
                 {
                     auto& currentOpcode = opcodesToFind[k];
 
-                    if (currentOpcode == 0xFF)
-                        continue;
-
                     // LOG_INFO(LogDev, "[{} 0x{:x}] 0x{:x}", i, __int64(&scanBytes[i]) - __int64(GetModuleHandleW(0)), currentOpcode);
 
                     found = currentOpcode == scanBytes[i + k];

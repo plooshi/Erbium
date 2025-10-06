@@ -71,7 +71,7 @@ public:
 
     __forceinline static const UObject* InternalLoadObject(const wchar_t* ObjectPath, const UClass* InClass, UObject* Outer = nullptr)
     {
-        auto StaticLoadObjectInternal = (UObject * (*)(const UClass*, UObject*, const wchar_t*, const wchar_t*, uint32_t, UObject*, bool)) SDK::Offsets::StaticFindObject;
+        auto StaticLoadObjectInternal = (UObject * (*)(const UClass*, UObject*, const wchar_t*, const wchar_t*, uint32_t, UObject*, bool)) SDK::Offsets::StaticLoadObject;
         return StaticLoadObjectInternal(InClass, Outer, ObjectPath, nullptr, 0, nullptr, false);
     }
 

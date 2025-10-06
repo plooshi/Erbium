@@ -54,6 +54,7 @@ public:
 
     DEFINE_PROP(LlamaClass, UClass*);
     DEFINE_PROP(SupplyDropInfoList, TArray<UFortSupplyDropInfo*>);
+    DEFINE_PROP(VendingMachineRarityCount, FScalableFloat);
 };
 
 struct FAircraftFlightInfo

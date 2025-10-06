@@ -1077,7 +1077,7 @@ namespace SDK
 
 	__forceinline static const UObject* StaticLoadObject(const wchar_t* ObjectPath, const UClass* InClass, UObject* Outer = nullptr)
 	{
-		auto StaticLoadObjectInternal = (UObject * (*)(const UClass*, UObject*, const wchar_t*, const wchar_t*, uint32_t, UObject*, bool)) SDK::Offsets::StaticFindObject;
+		auto StaticLoadObjectInternal = (UObject * (*)(const UClass*, UObject*, const wchar_t*, const wchar_t*, uint32_t, UObject*, bool)) SDK::Offsets::StaticLoadObject;
 		return StaticLoadObjectInternal(InClass, Outer, ObjectPath, nullptr, 0, nullptr, false);
 	}
 
@@ -1124,7 +1124,7 @@ namespace SDK
 		{
 			return Get();
 		}
-		operator UEType* ()
+		operator const UEType* ()
 		{
 			return Get();
 		}
@@ -1151,7 +1151,7 @@ namespace SDK
 		{
 			return Get();
 		}
-		operator UClass* ()
+		operator const UClass* ()
 		{
 			return Get();
 		}
