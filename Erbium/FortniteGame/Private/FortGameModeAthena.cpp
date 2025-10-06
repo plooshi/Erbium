@@ -546,7 +546,7 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
         NewPlayer->WorldInventory->Update(nullptr);
 
 
-        if (FConfiguration::bLateGame)
+        if (FConfiguration::bLateGame && Pawn)
         {
             Pawn->SetShield(100);
 
