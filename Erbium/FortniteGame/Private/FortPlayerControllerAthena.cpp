@@ -788,10 +788,10 @@ void AFortPlayerControllerAthena::ServerClientIsReadyToRespawn(UObject* Context,
 	if (GameState->IsRespawningAllowed(PlayerState)) {
 		auto RespawnData = PlayerState->RespawnData;
 		FTransform SpawnTransform{};
-		SpawnTransform.Translation = RespawnData.RespawnLocation;
 
-		auto Rotation = FQuat(RespawnData.RespawnRotation);
-		SpawnTransform.Rotation = Rotation;
+		auto Center = GameMode->SafeZoneIndicator->GetSafeZoneCenter();
+		Center.Z = GameState->CurrentPlaylistInfo.BasePlaylist->RespawnHeight.Evaluate();
+		SpawnTransform.Translation = Center;
 
 		auto Scale = FVector(1, 1, 1);
 		SpawnTransform.Scale3D = Scale;
@@ -806,8 +806,8 @@ void AFortPlayerControllerAthena::ServerClientIsReadyToRespawn(UObject* Context,
 		NewPawn->OnRep_IsInAnyStorm();
 		NewPawn->OnRep_IsInsideSafeZone();
 
-		NewPawn->SetHealth(100);
-		NewPawn->SetShield(0);
+		NewPawn->SetHealth(100.0f);
+		NewPawn->SetShield(0.0f);
 
 		PlayerState->RespawnData.bClientIsReady = true;
 	}
