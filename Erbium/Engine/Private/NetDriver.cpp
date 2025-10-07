@@ -62,7 +62,7 @@ UNetConnection* IsActorOwnedByAndRelevantToConnection(const AActor* Actor, TArra
 		return ConnViewers[0]->Connection;
 
 	bool (*&IsRelevancyOwnerFor)(const AActor*, const AActor*, const AActor*, const AActor*) = decltype(IsRelevancyOwnerFor)(Actor->Vft[IsNetRelevantForIdx + 2]);
-	AActor* (*&GetNetOwner)(const AActor*) = decltype(GetNetOwner)(Actor->Vft[IsNetRelevantForIdx + (VersionInfo.FortniteVersion >= 20 ? 6 : 5)]);
+	AActor* (*&GetNetOwner)(const AActor*) = decltype(GetNetOwner)(Actor->Vft[IsNetRelevantForIdx + (VersionInfo.EngineVersion >= 4.19 ? 6 : 5)]);
 
 	const AActor* ActorOwner = GetNetOwner(Actor);
 
