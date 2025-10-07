@@ -70,9 +70,9 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
             GameMode->GameSession->MaxPlayers = Playlist->MaxPlayers;
 
 
-        if (GameState->HasAirCraftBehavior())
+        if (GameState->HasAirCraftBehavior() && Playlist->HasAirCraftBehavior())
             GameState->AirCraftBehavior = Playlist->AirCraftBehavior;
-        if (GameState->HasCachedSafeZoneStartUp())
+        if (GameState->HasCachedSafeZoneStartUp() && Playlist->HasSafeZoneStartUp())
             GameState->CachedSafeZoneStartUp = Playlist->SafeZoneStartUp;
 
         if (VersionInfo.FortniteVersion >= 6 && VersionInfo.FortniteVersion < 7)
@@ -584,6 +584,33 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         }
         GameMode->DefaultPawnClass = Utils::FindObject<UClass>(L"/Game/Athena/PlayerPawn_Athena.PlayerPawn_Athena_C");
 
+        if (VersionInfo.EngineVersion == 4.16)
+        {
+            auto sRef = Memcury::Scanner::FindStringRef(L"CollectGarbageInternal() is flushing async loading").Get();
+            uint64_t CollectGarbage = 0;
+
+            if (sRef)
+            {
+                for (int i = 0; i < 1000; i++) {
+                    auto Ptr = (uint8_t*)(sRef - i);
+
+                    if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C) {
+                        CollectGarbage = uint64_t(Ptr);
+                        break;
+                    }
+                    else if (*Ptr == 0x40 && *(Ptr + 1) == 0x55) {
+                        CollectGarbage = uint64_t(Ptr);
+                        break;
+                    }
+                    else if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4) {
+                        CollectGarbage = uint64_t(Ptr);
+                        break;
+                    }
+                }
+
+                Utils::Patch<uint8_t>(CollectGarbage, 0xC3);
+            }
+        }
         char buffer[67];
         sprintf_s(buffer, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Joinable" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Joinable" : "Erbium (FN %.1f, UE %.2f): Joinable"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
         SetConsoleTitleA(buffer);

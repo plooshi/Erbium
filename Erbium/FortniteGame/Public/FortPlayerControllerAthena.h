@@ -52,10 +52,33 @@ public:
     DEFINE_FUNC(ServerAttemptAircraftJump, void);
 };
 
+struct FQuickBarSlot
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FQuickBarSlot);
+
+    DEFINE_STRUCT_PROP(Items, TArray<FGuid>);
+};
+
+struct FQuickBar
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FQuickBar);
+
+    DEFINE_STRUCT_PROP(Slots, TArray<FQuickBarSlot>);
+};
+
 class AFortQuickBars : public AActor
 {
 public:
     UCLASS_COMMON_MEMBERS(AFortQuickBars);
+
+    DEFINE_PROP(PrimaryQuickBar, FQuickBar);
+    DEFINE_PROP(SecondaryQuickBar, FQuickBar);
+
+    DEFINE_FUNC(ServerAddItemInternal, void);
+    DEFINE_FUNC(ServerRemoveItemInternal, void);
+    DEFINE_FUNC(EmptySlot, void);
 };
 
 class AFortPlayerControllerAthena : public AActor

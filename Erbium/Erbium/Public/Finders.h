@@ -1138,7 +1138,7 @@ inline uint64_t FindCallPreReplication()
             return CallPreReplication = Memcury::Scanner::FindPattern("48 85 D2 0F 84 ? ? ? ? 56 41 56 48 83 EC 38 4C 8B F2").Get();
         else if (std::floor(VersionInfo.FortniteVersion) == 20)
             return CallPreReplication = Memcury::Scanner::FindPattern("48 85 D2 0F 84 ? ? ? ? 48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC 40 F6 41 58 30 48 8B EA 48 8B D9 40 B6 01").Get();
-        else    if (VersionInfo.FortniteVersion >= 21)
+        else if (VersionInfo.FortniteVersion >= 21)
             return CallPreReplication = Memcury::Scanner::FindPattern("48 85 D2 0F 84 ? ? ? ? 48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC 40 F6 41 58 30 4C 8B F2").Get();
     }
 
@@ -1337,6 +1337,9 @@ inline void FindNullsAndRetTrues()
     if (VersionInfo.EngineVersion >= 4.24 && VersionInfo.EngineVersion < 4.27) {
         auto sRef = Memcury::Scanner::FindStringRef(L"STAT_CollectGarbageInternal").Get();
         uint64_t CollectGarbage = 0;
+
+        if (!sRef)
+            sRef = Memcury::Scanner::FindStringRef(L"CollectGarbageInternal() is flushing async loading").Get();
 
         if (sRef)
         {

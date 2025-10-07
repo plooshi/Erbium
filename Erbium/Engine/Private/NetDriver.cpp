@@ -213,7 +213,9 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 			}
 			else
 			{
-				if (ActorInfo->DormantConnections.Contains(Conn))
+				//if (ActorInfo->DormantConnections.Contains(Conn))
+				//	continue;
+				if (Channel && Channel->IsDormant())
 					continue;
 
 				if (Actor->GetNetDormancy() > 1 && Channel && !Channel->IsPendingDormancy() && !Channel->IsDormant())

@@ -83,7 +83,7 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayer(UObject* Context, FFrame& Stack
 	UFortItemDefinition* ItemDefinition;
 	FGuid ItemVariantGuid{};
 	int32 AmountToRemove;
-	bool bForceRemoval;
+	bool bForceRemoval = false;
 	Stack.StepCompiledIn(&PlayerController);
 	Stack.StepCompiledIn(&ItemDefinition);
 	if (bHasItemVariantGuid)
@@ -166,6 +166,7 @@ void UFortKismetLibrary::SpawnItemVariantPickupInWorld(UObject* Object, FFrame& 
 }
 
 bool bHasOptionalLootTags = false;
+bool bHasWorldContextObject2 = false;
 void UFortKismetLibrary::PickLootDrops(UObject* Object, FFrame& Stack, bool* Ret)
 {
 	UObject* WorldContextObject;
@@ -174,7 +175,8 @@ void UFortKismetLibrary::PickLootDrops(UObject* Object, FFrame& Stack, bool* Ret
 	int32 ForcedLootTier;
 	FGameplayTagContainer OptionalLootTags{};
 
-	Stack.StepCompiledIn(&WorldContextObject);
+	if (bHasWorldContextObject2)
+		Stack.StepCompiledIn(&WorldContextObject);
 	auto& OutLootToDrop = Stack.StepCompiledInRef<TArray<FFortItemEntry>>();
 	Stack.StepCompiledIn(&TierGroupName);
 	Stack.StepCompiledIn(&WorldLevel);
@@ -247,6 +249,11 @@ void UFortKismetLibrary::Hook()
 			if (Param.Name == "OptionalLootTags")
 			{
 				bHasOptionalLootTags = true;
+				break;
+			} 
+			else if (Param.Name == "WorldContextObject")
+			{
+				bHasWorldContextObject2 = true;
 				break;
 			}
 		}
