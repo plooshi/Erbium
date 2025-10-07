@@ -117,7 +117,7 @@ namespace SDK
 
 		bool operator<(const FName& Other) const
 		{
-			return ComparisonIndex == Other.ComparisonIndex ? (VersionInfo.FortniteVersion >= 20.00 || Number < Other.Number) : ComparisonIndex < Other.ComparisonIndex;
+			return ComparisonIndex == Other.ComparisonIndex ? (VersionInfo.FortniteVersion < 20.00 && Number < Other.Number) : ComparisonIndex < Other.ComparisonIndex;
 		}
 
 		operator bool() const {
