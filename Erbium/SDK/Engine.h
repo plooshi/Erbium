@@ -509,6 +509,11 @@ namespace SDK
 		DEFINE_PROP(Owner, AActor*);
 		DEFINE_PROP(Role, uint8);
 		DEFINE_PROP(RemoteRole, uint8);
+		DEFINE_PROP(NetDriverName, FName);
+		DEFINE_PROP(NetDormancy, uint8);
+		DEFINE_BITFIELD_PROP(bActorIsBeingDestroyed);
+		DEFINE_BITFIELD_PROP(bNetStartup);
+		DEFINE_BITFIELD_PROP(bOnlyRelevantToOwner);
 
 		DEFINE_FUNC(AddComponentByClass, UActorComponent*);
 		DEFINE_FUNC(GetComponentByClass, UActorComponent*);

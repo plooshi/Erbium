@@ -1096,9 +1096,15 @@ namespace SDK
 				return nullptr;
 
 			auto Ret = WeakPtr.ObjectIndex && WeakPtr.ObjectSerialNumber ? Get() : nullptr;
-			if ((!Ret || !Ret->IsA(Class)) && ObjectID.AssetPathName.ComparisonIndex > 0) {
-				WeakPtr = Ret = FindObject(ObjectID.AssetPathName.ToWString().c_str(), Class);
+			if (VersionInfo.EngineVersion <= 4.16)
+			{
+				auto AssetLongPathname = *(FString*)(__int64(this) + offsetof(FSoftObjectPtr, ObjectID));
+
+				if ((!Ret || !Ret->IsA(Class)) && AssetLongPathname.Num() > 0)
+					WeakPtr = Ret = FindObject(AssetLongPathname.CStr(), Class);
 			}
+			else if ((!Ret || !Ret->IsA(Class)) && ObjectID.AssetPathName.ComparisonIndex > 0)
+				WeakPtr = Ret = FindObject(ObjectID.AssetPathName.ToWString().c_str(), Class);
 			return Ret;
 		}
 	};

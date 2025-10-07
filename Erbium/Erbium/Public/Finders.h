@@ -330,6 +330,31 @@ inline uint64_t FindTickFlush()
     return TickFlush;
 }
 
+inline int32_t FindIsNetRelevantForVft()
+{
+    static int32_t IsNetRelevantForIdx = -1;
+
+    if (IsNetRelevantForIdx == -1)
+    {
+        auto sRef = Memcury::Scanner::FindStringRef(L"Actor %s / %s has no root component in AActor::IsNetRelevantFor. (Make bAlwaysRelevant=true?)");
+
+        auto IsNetRelevantFor = sRef.ScanFor({ 0x48, 0x89, 0x5C }, false).Get();
+
+        auto ActorVft = AActor::GetDefaultObj()->Vft;
+
+        for (int i = 0; i < 500; i++)
+        {
+            if (ActorVft[i] == (void*)IsNetRelevantFor)
+            {
+                return IsNetRelevantForIdx = i;
+            }
+        }
+        return IsNetRelevantForIdx = 0;
+    }
+
+    return IsNetRelevantForIdx;
+}
+
 inline uint64_t FindServerReplicateActors()
 {
     static uint64_t ServerReplicateActors = 0;
@@ -633,6 +658,8 @@ inline uint64 FindSpawnLoot()
             if (*(uint8_t*)(sRef - i) == 0x40 && (*(uint8_t*)(sRef - i + 1) == 0x53 || *(uint8_t*)(sRef - i + 1) == 0x55))
                 return SpawnLoot = sRef - i;
             else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x5C)
+                return SpawnLoot = sRef - i;
+            else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
                 return SpawnLoot = sRef - i;
         }
     }
@@ -1096,6 +1123,146 @@ inline uint64_t FindSetPickupItems()
     return SetPickupItems;
 }
 
+inline uint64_t FindCallPreReplication()
+{
+    static uint64_t CallPreReplication = 0;
+
+    if (CallPreReplication == 0)
+    {
+
+        if (VersionInfo.EngineVersion == 4.16)
+            return CallPreReplication = Memcury::Scanner::FindPattern("48 85 D2 0F 84 ? ? ? ? 48 8B C4 55 57 41 57 48 8D 68 A1 48 81 EC").Get();
+        else if (VersionInfo.EngineVersion == 4.19)
+            return CallPreReplication = Memcury::Scanner::FindPattern("48 85 D2 0F 84 ? ? ? ? 48 8B C4 55 57 41 54 48 8D 68 A1 48 81 EC ? ? ? ? 48 89 58 08 4C").Get();
+        else if (VersionInfo.FortniteVersion >= 2.5 && VersionInfo.FortniteVersion <= 3.3)
+            return CallPreReplication = Memcury::Scanner::FindPattern("48 85 D2 0F 84 ? ? ? ? 56 41 56 48 83 EC 38 4C 8B F2").Get();
+        else if (std::floor(VersionInfo.FortniteVersion) == 20)
+            return CallPreReplication = Memcury::Scanner::FindPattern("48 85 D2 0F 84 ? ? ? ? 48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC 40 F6 41 58 30 48 8B EA 48 8B D9 40 B6 01").Get();
+        else if (VersionInfo.FortniteVersion >= 21)
+            return CallPreReplication = Memcury::Scanner::FindPattern("48 85 D2 0F 84 ? ? ? ? 48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC 40 F6 41 58 30 4C 8B F2").Get();
+    }
+
+    return CallPreReplication;
+}
+
+inline uint64_t FindSendClientAdjustment()
+{
+    static uint64_t SendClientAdjustment = 0;
+
+    if (SendClientAdjustment == 0)
+    {
+        SendClientAdjustment = Memcury::Scanner::FindPattern("40 53 48 83 EC 20 48 8B 99 ? ? ? ? 48 39 99 ? ? ? ? 74 0A 48 83 B9", false).Get();
+    }
+
+    return SendClientAdjustment;
+}
+
+inline uint64 FindSetChannelActor()
+{
+    static uint64_t SetChannelActor = 0;
+    
+    if (SetChannelActor == 0)
+    {
+        if (VersionInfo.EngineVersion == 4.16)
+            return SetChannelActor = Memcury::Scanner::FindPattern("4C 8B DC 55 53 57 41 54 49 8D AB ? ? ? ? 48 81 EC ? ? ? ? 45 33").Get();
+        else if (VersionInfo.FortniteVersion == 3.3)
+            return SetChannelActor = Memcury::Scanner::FindPattern("48 8B C4 55 53 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 89 70 10 48 8B D9 48 89 78 18 48 8D 35").Get();
+        else if (VersionInfo.EngineVersion >= 4.19 && VersionInfo.FortniteVersion < 3.3)
+        {
+            SetChannelActor = Memcury::Scanner::FindPattern("48 8B C4 55 53 57 41 54 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 45 33 E4 48 89 70", false).Get();
+
+            if (!SetChannelActor)
+                return SetChannelActor = Memcury::Scanner::FindPattern("48 8B C4 55 53 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 89 70 E8 48 8B D9").Get();
+        }
+        if (std::floor(VersionInfo.FortniteVersion) == 20)
+            return SetChannelActor = Memcury::Scanner::FindPattern("40 55 53 56 57 41 54 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 45 33 E4 48 8D 3D ? ? ? ? 44 89 A5").Get();
+        if (VersionInfo.FortniteVersion >= 21)
+            return SetChannelActor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 33 FF 4C 8D 35 ? ? ? ? 89 BD").Get();
+    }
+
+    return SetChannelActor;
+}
+
+inline uint64 FindCreateChannel()
+{
+    static uint64_t CreateChannel = 0;
+
+    if (CreateChannel == 0)
+    {
+        if (VersionInfo.FortniteVersion <= 3.3)
+            return CreateChannel = Memcury::Scanner::FindPattern("40 56 57 41 54 41 55 41 57 48 83 EC 60 48 8B 01 41 8B F9 45 0F B6 E0").Get();
+        else if (VersionInfo.EngineVersion >= 20)
+            return CreateChannel = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 44 89 4C 24 ? 55 57 41 54 41 56 41 57 48 8B EC 48 83 EC 50 45 33 E4 48 8D 05 ? ? ? ? 44 38 25").Get();
+    }
+
+    return CreateChannel;
+}
+
+inline uint64 FindReplicateActor()
+{
+    static uint64_t ReplicateActor = 0;
+
+    if (ReplicateActor == 0)
+    {
+        if (VersionInfo.EngineVersion == 4.16)
+            return ReplicateActor = Memcury::Scanner::FindPattern("40 55 53 57 41 56 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8D 59 68 4C 8B F1 48 8B").Get();
+        if (VersionInfo.FortniteVersion == 3.3)
+            return ReplicateActor = Memcury::Scanner::FindPattern("48 8B C4 55 53 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 0F 29 70 A8 0F 29 78 98 48 89 70 E8 4C").Get();
+        else if (VersionInfo.EngineVersion >= 419 && VersionInfo.FortniteVersion <= 3.2)
+        {
+            ReplicateActor = Memcury::Scanner::FindPattern("40 55 56 57 41 54 41 55 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 4C", false).Get(); // 3.0, we could just use this sig for everything?
+
+            if (!ReplicateActor)
+                ReplicateActor = Memcury::Scanner::FindPattern("40 55 56 41 54 41 55 41 56 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 4C 8B E9 48 8B 49 68 48").Get();
+        }
+        else if (std::floor(VersionInfo.FortniteVersion) == 20)
+            return Memcury::Scanner::FindPattern("48 8B C4 48 89 58 10 48 89 70 18 48 89 78 20 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 4C 8D 69 68").Get();
+        else if (VersionInfo.FortniteVersion >= 21)
+            return Memcury::Scanner::FindPattern("48 8B C4 48 89 58 10 48 89 70 18 48 89 78 20 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 45 33 FF 4C 8D 69 68 44 38 3D").Get();
+    }
+
+    return ReplicateActor;
+}
+
+inline uint64 FindCloseActorChannel()
+{
+    static uint64_t CloseActorChannel = 0;
+
+    if (CloseActorChannel == 0)
+        CloseActorChannel = Memcury::Scanner::FindStringRef(L"UActorChannel::Close: ChIndex: %d, Actor: %s").ScanFor({ 0x48, 0x89, 0x5C }, false).Get();
+
+    return CloseActorChannel;
+}
+
+inline uint64 FindClientHasInitializedLevelFor()
+{
+    static uint64_t ClientHasInitializedLevelFor = 0;
+    
+    if (ClientHasInitializedLevelFor == 0)
+    {
+        ClientHasInitializedLevelFor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 20 48 8B 5A 20 48 8B F1 4C 8B C3", false).Get();
+
+        if (!ClientHasInitializedLevelFor)
+            ClientHasInitializedLevelFor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 20 48 8B 5A 20 48 8B F1 4C 8B C3 48 8D", false).Get();
+
+        if (!ClientHasInitializedLevelFor)
+            ClientHasInitializedLevelFor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 20 48 8B F9 48 85 D2 74 35 48").Get();
+    }
+
+    return ClientHasInitializedLevelFor;
+}
+
+
+inline uint64 FindStartBecomingDormant()
+{
+    static uint64_t StartBecomingDormant = 0;
+
+    if (StartBecomingDormant == 0)
+        StartBecomingDormant = Memcury::Scanner::FindStringRef(L"StartBecomingDormant: %s").ScanFor({ 0x48, 0x89, 0x5C }, false).Get();
+
+    return StartBecomingDormant;
+}
+
 static inline std::vector<uint64_t> NullFuncs = {};
 static inline std::vector<uint64_t> RetTrueFuncs = {};
 
@@ -1170,6 +1337,9 @@ inline void FindNullsAndRetTrues()
     if (VersionInfo.EngineVersion >= 4.24 && VersionInfo.EngineVersion < 4.27) {
         auto sRef = Memcury::Scanner::FindStringRef(L"STAT_CollectGarbageInternal").Get();
         uint64_t CollectGarbage = 0;
+
+        if (!sRef)
+            sRef = Memcury::Scanner::FindStringRef(L"CollectGarbageInternal() is flushing async loading").Get();
 
         if (sRef)
         {

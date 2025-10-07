@@ -13,7 +13,8 @@ void ABuildingFoundation::SetDynamicFoundationEnabled_(UObject* Context, FFrame&
 		Foundation->DynamicFoundationRepData.EnabledState = bEnabled ? 1 : 2;
 		Foundation->OnRep_DynamicFoundationRepData();
 	}
-	Foundation->FoundationEnabledState = bEnabled ? 1 : 2;
+	if (Foundation->HasFoundationEnabledState())
+		Foundation->FoundationEnabledState = bEnabled ? 1 : 2;
 }
 
 void ABuildingFoundation::SetDynamicFoundationTransform_(UObject* Context, FFrame& Stack)

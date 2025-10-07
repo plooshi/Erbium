@@ -60,6 +60,8 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
         static auto InterfaceClass = FindClass("FortInventoryOwnerInterface");
         ((bool(*)(const UFortItemDefinition*, const IInterface*, UFortWorldItem*, uint8)) Def->Vft[OnItemInstanceAddedVft])(Def, Owner->GetInterface(InterfaceClass), Item, 1);
     }
+    if (VersionInfo.FortniteVersion < 4.20)
+        ((AFortPlayerControllerAthena*)Owner)->QuickBars->ServerAddItemInternal(Item->ItemEntry.ItemGuid, !IsPrimaryQuickbar(Def), -1);
 
     if (updateInventory)
         Update(&Item->ItemEntry);
@@ -86,6 +88,7 @@ void AFortInventory::Update(FFortItemEntry* Entry)
 void AFortInventory::Remove(FGuid Guid)
 {
     auto ItemEntryIdx = Inventory.ReplicatedEntries.SearchIndex([&](FFortItemEntry& entry) { return entry.ItemGuid == Guid; }, FFortItemEntry::Size());
+    auto& ItemEntry = Inventory.ReplicatedEntries.Get(ItemEntryIdx, FFortItemEntry::Size());
     if (ItemEntryIdx != -1)
         Inventory.ReplicatedEntries.Remove(ItemEntryIdx, FFortItemEntry::Size());
 
@@ -103,7 +106,27 @@ void AFortInventory::Remove(FGuid Guid)
         static auto InterfaceClass = FindClass("FortInventoryOwnerInterface");
         ((bool(*)(const UFortItemDefinition*, const IInterface*, UFortWorldItem*)) Instance->ItemEntry.ItemDefinition->Vft[OnItemInstanceRemovedVft])(Instance->ItemEntry.ItemDefinition, Owner->GetInterface(InterfaceClass), Instance);
     }
+    
+    if (VersionInfo.EngineVersion < 4.20)
+    {
+        auto PlayerController = (AFortPlayerControllerAthena*)Owner;
+        auto& QuickBar = IsPrimaryQuickbar(ItemEntry.ItemDefinition) ? PlayerController->QuickBars->PrimaryQuickBar : PlayerController->QuickBars->SecondaryQuickBar;
+        int i = 0;
+        for (i = 0; i < QuickBar.Slots.Num(); i++)
+        {
+            auto& Slot = QuickBar.Slots.Get(i, FQuickBarSlot::Size());
 
+            for (auto& Item : Slot.Items)
+                if (Item == Guid)
+                    goto _Out;
+        }
+        goto _Skip;
+    _Out:
+        PlayerController->QuickBars->EmptySlot(!IsPrimaryQuickbar(ItemEntry.ItemDefinition), i);
+        PlayerController->QuickBars->ServerRemoveItemInternal(Guid, false, true);
+    }
+
+_Skip:
     Update(nullptr);
 }
 
@@ -138,9 +161,12 @@ FFortItemEntry* AFortInventory::MakeItemEntry(const UFortItemDefinition* ItemDef
     if (auto Weapon = ItemDefinition->Cast<UFortWeaponItemDefinition>())
     {
         auto Stats = GetStats(Weapon);
-        ItemEntry->LoadedAmmo = Stats->ClipSize;
-        if (Weapon->HasbUsesPhantomReserveAmmo() && Weapon->bUsesPhantomReserveAmmo)
-            ItemEntry->PhantomReserveAmmo = Stats->InitialClips * Stats->ClipSize;
+        if (Stats)
+        {
+            ItemEntry->LoadedAmmo = Stats->ClipSize;
+            if (Weapon->HasbUsesPhantomReserveAmmo() && Weapon->bUsesPhantomReserveAmmo)
+                ItemEntry->PhantomReserveAmmo = Stats->InitialClips * Stats->ClipSize;
+        }
     }
 
     return ItemEntry;
@@ -209,7 +235,8 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
         return nullptr;
 
     auto ContainerLoc = Container->K2_GetActorLocation();
-    auto Loc = ContainerLoc + (Container->GetActorForwardVector() * Container->LootSpawnLocation_Athena.X) + (Container->GetActorRightVector() * Container->LootSpawnLocation_Athena.Y) + (Container->GetActorUpVector() * Container->LootSpawnLocation_Athena.Z);
+    auto& SpawnLocation = Container->HasLootSpawnLocation_Athena() ? Container->LootSpawnLocation_Athena : Container->LootSpawnLocation;
+    auto Loc = ContainerLoc + (Container->GetActorForwardVector() * SpawnLocation.X) + (Container->GetActorRightVector() * SpawnLocation.Y) + (Container->GetActorUpVector() * SpawnLocation.Z);
     AFortPickupAthena* NewPickup = UWorld::SpawnActor<AFortPickupAthena>(Loc, {});
     if (!NewPickup)
         return nullptr;
