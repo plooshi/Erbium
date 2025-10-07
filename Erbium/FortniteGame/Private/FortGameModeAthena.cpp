@@ -748,7 +748,7 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
 
             Pawn->K2_SetActorLocation(NewLoc, false, nullptr, false);
 
-            Pawn->SetShield(100);
+            Pawn->SetShield(100.f);
 
             auto Shotgun = LateGame::GetShotgun();
             auto AssaultRifle = LateGame::GetAssaultRifle();
