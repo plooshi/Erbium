@@ -10,7 +10,7 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 	auto GameState = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState);
 	static auto MeleeClass = FindClass("FortWeaponMeleeItemDefinition");
 
-	if (!InstigatedBy || Actor->bPlayerPlaced || Actor->GetHealth() == 1 || !Actor->bAllowResourceDrop)
+	if (!InstigatedBy || !Actor->IsA<ABuildingSMActor>() || Actor->bPlayerPlaced || Actor->GetHealth() == 1 || !Actor->bAllowResourceDrop)
 		return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
 	if (!DamageCauser || !DamageCauser->IsA<AFortWeapon>() || !((AFortWeapon*)DamageCauser)->WeaponData->IsA(MeleeClass)) 
 		return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
