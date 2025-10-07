@@ -5,6 +5,7 @@
 #include "../Public/BuildingSMActor.h"
 #include "../Public/FortKismetLibrary.h"
 #include "../../Erbium/Public/Configuration.h"
+#include "../Public/FortLootPackage.h"
 
 
 uint64_t FindGetPlayerViewPoint()
@@ -85,8 +86,8 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 
 	if (VersionInfo.FortniteVersion >= 11.00)
 	{
-		static auto ControllerCompClass = FindClass("FortControllerComponent_Aircraft");
-		if (Context->IsA(ControllerCompClass))
+		static auto bIsComp = Context->IsA(FindClass("FortControllerComponent_Aircraft"));
+		if (bIsComp)
 			PlayerController = (AFortPlayerControllerAthena*)((UActorComponent*)Context)->GetOwner();
 		else
 			PlayerController = (AFortPlayerControllerAthena*)Context;
@@ -348,7 +349,7 @@ bool CanBePlacedByPlayer(TSubclassOf<AActor> BuildClass)
 {
 	auto GameState = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState);
 	static auto HasAllPlayerBuildableClasses = GameState->HasAllPlayerBuildableClasses();
-	return HasAllPlayerBuildableClasses ? GameState->AllPlayerBuildableClasses.Search([BuildClass](TSubclassOf<AActor> Class) { return Class == BuildClass; }) : true;
+	return HasAllPlayerBuildableClasses ? GameState->AllPlayerBuildableClasses.Search([BuildClass](TSubclassOf<AActor> Class) { return Class == BuildClass; }) != 0 : true;
 }
 
 void AFortPlayerControllerAthena::ServerBeginEditingBuildingActor(UObject* Context, FFrame& Stack)
@@ -959,6 +960,38 @@ _help:
 	}
 }
 
+extern bool bDidntFind;
+void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFrame& Stack)
+{
+	AActor* ReceivingActor;
+	UObject* InteractComponent;
+	uint8_t InteractType;
+	UObject* OptionalObjectData;
+	uint8_t InteractionBeingAttempted;
+	int32 RequestID;
+
+	Stack.StepCompiledIn(&ReceivingActor);
+	Stack.StepCompiledIn(&InteractComponent);
+	Stack.StepCompiledIn(&InteractType);
+	Stack.StepCompiledIn(&OptionalObjectData);
+	Stack.StepCompiledIn(&InteractionBeingAttempted);
+	Stack.StepCompiledIn(&RequestID);
+	Stack.IncrementCode();
+
+	AFortPlayerControllerAthena* PlayerController = nullptr;
+
+	static auto bIsComp = Context->IsA(FindClass("FortControllerComponent_Interation"));
+	if (bIsComp)
+		PlayerController = (AFortPlayerControllerAthena*)((UActorComponent*)Context)->GetOwner();
+	else
+		PlayerController = (AFortPlayerControllerAthena*)Context;
+
+	if (auto Container = bDidntFind ? ReceivingActor->Cast<ABuildingContainer>() : nullptr)
+		UFortLootPackage::SpawnLoot(Container->SearchLootTierGroup, Container->K2_GetActorLocation() + Container->GetActorRightVector() * 70.f + FVector{ 0, 0, 50 });
+
+	return bIsComp ? (void)0 : callOG(PlayerController, Stack.GetCurrentNativeFunction(), ServerAttemptInteract, ReceivingActor, InteractComponent, InteractType, OptionalObjectData, InteractionBeingAttempted, RequestID);
+}
+
 void AFortPlayerControllerAthena::Hook()
 {
 	CantBuild_ = FindCantBuild();
@@ -1012,4 +1045,10 @@ void AFortPlayerControllerAthena::Hook()
 
 	if (FConfiguration::bEnableCheats)
 		Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCheat"), ServerCheat);
+
+	auto ServerAttemptInteractPC = GetDefaultObj()->GetFunction("ServerAttemptInteract");
+	if (!ServerAttemptInteractPC)
+		Utils::ExecHook(DefaultObjImpl("FortControllerComponent_Interaction")->GetFunction("ServerAttemptInteract"), ServerAttemptInteract_, ServerAttemptInteract_OG);
+	else
+		Utils::ExecHook(ServerAttemptInteractPC, ServerAttemptInteract_, ServerAttemptInteract_OG);
 }

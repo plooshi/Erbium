@@ -324,7 +324,7 @@ bool SpawnLootHook(ABuildingContainer* Container)
 }
 
 
-void SpawnLoot(FName& TierGroup, FVector Loc)
+void UFortLootPackage::SpawnLoot(FName& TierGroup, FVector Loc)
 {
 	auto& RealTierGroup = TierGroup;
 
@@ -403,6 +403,7 @@ void UFortLootPackage::SpawnFloorLootForContainer(const UClass* ContainerType)
 	Containers.Free();
 }
 
+bool bDidntFind = false;
 void UFortLootPackage::Hook()
 {
 	if (VersionInfo.FortniteVersion >= 11.00)
@@ -432,5 +433,6 @@ void UFortLootPackage::Hook()
 
 	// if we cant find serveronattemptinteract
 _:
+	bDidntFind = true;
 	return;
 }

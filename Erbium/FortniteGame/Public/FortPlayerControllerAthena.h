@@ -112,6 +112,7 @@ public:
     DEFINE_FUNC(IsInAircraft, bool);
     DEFINE_FUNC(GetAircraftComponent, UFortControllerComponent_Aircraft*);
     DEFINE_FUNC(ServerAttemptAircraftJump, void);
+    DEFINE_FUNC(ServerAttemptInteract, void);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);
@@ -127,6 +128,7 @@ public:
     static void ServerPlayEmoteItem(UObject*, FFrame&);
     static void ServerCheat(UObject*, FFrame&);
     DefHookOg(void, ClientOnPawnDied, AFortPlayerControllerAthena*, FFortPlayerDeathReport&);
+    DefUHookOg(ServerAttemptInteract_);
     void InternalPickup(FFortItemEntry*);
     
 
