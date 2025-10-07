@@ -596,7 +596,7 @@ uint8 ToDeathCause(AFortPlayerPawnAthena* Pawn, FGameplayTagContainer& DeathTags
 		}
 
 
-		if (VersionInfo.EngineVersion == 419)
+		if (VersionInfo.EngineVersion == 4.19)
 		{
 			static uint8(*ToDeathCause_)(AFortPlayerPawnAthena * Pawn, FGameplayTagContainer TagContainer, char bDBNO) = decltype(ToDeathCause_)(ToDeathCauseNative);
 			return ToDeathCause_(Pawn, DeathTags, bDBNO);
