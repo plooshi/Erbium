@@ -192,8 +192,8 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	struct FBuildingClassData { UClass* BuildingClass; int PreviousBuildingLevel; int UpgradeLevel; };
 	if (VersionInfo.FortniteVersion >= 8.30)
 	{
-		struct FCreateBuildingActorData { uint32_t BuildingClassHandle; _Pad_0xC BuildLoc; _Pad_0xC BuildRot; bool bMirrored; };
-		struct FCreateBuildingActorData_New { uint32_t BuildingClassHandle; _Pad_0x18 BuildLoc; _Pad_0x18 BuildRot; bool bMirrored; };
+		struct alignas(0x8) FCreateBuildingActorData { uint32_t BuildingClassHandle; _Pad_0xC BuildLoc; _Pad_0xC BuildRot; bool bMirrored; float SyncKey; uint8_t BuildingClassData[0x10]; };
+		struct alignas(0x8) FCreateBuildingActorData_New { uint32_t BuildingClassHandle; _Pad_0x18 BuildLoc; _Pad_0x18 BuildRot; bool bMirrored; float SyncKey; uint8_t BuildingClassData[0x10]; };
 
 		if (VersionInfo.FortniteVersion >= 20.00)
 		{
@@ -994,6 +994,7 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 
 void AFortPlayerControllerAthena::Hook()
 {
+
 	CantBuild_ = FindCantBuild();
 	ReplaceBuildingActor_ = FindReplaceBuildingActor(); // pre-cache building offsets
 	RemoveFromAlivePlayers_ = FindRemoveFromAlivePlayers();

@@ -867,6 +867,23 @@ namespace Memcury
                     }
                 }
 
+
+                if ((scanBytes[i] == ASM::LEA || scanBytes[i] == 0x8B))
+                {
+                    if (PE::Address(&scanBytes[i]).RelativeOffset(2).GetAs<void*>() == Pointer)
+                    {
+                        add = PE::Address(&scanBytes[i]);
+
+                        // LOG_INFO(LogDev, "2add: 0x{:x}", add.Get() - __int64(GetModuleHandleW(0)));
+
+                        if (bUseFirstResult)
+                            return Scanner(add);
+
+                        /* if (++aa > useRefNum)
+                            break; */
+                    }
+                }
+
                 if (scanBytes[i] == ASM::CALL)
                 {
                     if (PE::Address(&scanBytes[i]).RelativeOffset(1).GetAs<void*>() == Pointer)

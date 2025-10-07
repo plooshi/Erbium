@@ -10,6 +10,7 @@ public:
 	USCRIPTSTRUCT_COMMON_MEMBERS(FFortLootLevelData);
 
 	DEFINE_STRUCT_PROP(Category, FName);
+	DEFINE_STRUCT_PROP(category, FName);
 	DEFINE_STRUCT_PROP(LootLevel, int32);
 	DEFINE_STRUCT_PROP(MinItemLevel, int32);
 	DEFINE_STRUCT_PROP(MaxItemLevel, int32);
@@ -33,7 +34,7 @@ int GetLevel(const FDataTableCategoryHandle& CategoryHandle)
 	FFortLootLevelData* LootLevelData = nullptr;
 	for (auto& LootLevelDataPair : (TMap<FName, FFortLootLevelData*>)CategoryHandle.DataTable->RowMap)
 	{
-		if (LootLevelDataPair.Value()->Category != CategoryHandle.RowContents || LootLevelDataPair.Value()->LootLevel > GameState->WorldLevel || LootLevelDataPair.Value()->LootLevel <= Level)
+		if ((FFortLootLevelData::HasCategory() ? LootLevelDataPair.Value()->Category : LootLevelDataPair.Value()->category) != CategoryHandle.RowContents || LootLevelDataPair.Value()->LootLevel > GameState->WorldLevel || LootLevelDataPair.Value()->LootLevel <= Level)
 			continue;
 
 		Level = LootLevelDataPair.Value()->LootLevel;
