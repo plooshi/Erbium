@@ -1154,7 +1154,10 @@ inline uint64_t FindSendClientAdjustment()
 
     if (SendClientAdjustment == 0)
     {
-        SendClientAdjustment = Memcury::Scanner::FindPattern("40 53 48 83 EC 20 48 8B 99 ? ? ? ? 48 39 99 ? ? ? ? 74 0A 48 83 B9", false).Get();
+        if (VersionInfo.FortniteVersion >= 20.00)
+            SendClientAdjustment = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 48 83 EC ? 8B 91 ? ? ? ? 48 8B D9 83 FA").Get();
+        else
+            SendClientAdjustment = Memcury::Scanner::FindPattern("40 53 48 83 EC 20 48 8B 99 ? ? ? ? 48 39 99 ? ? ? ? 74 0A 48 83 B9", false).Get();
     }
 
     return SendClientAdjustment;
