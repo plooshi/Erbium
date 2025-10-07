@@ -308,12 +308,6 @@ void AFortInventory::UpdateEntry(FFortItemEntry& Entry)
     if (!this)
         return; // wtf 3.5
 
-    auto repEnt = Inventory.ReplicatedEntries.Search([&](FFortItemEntry& item)
-        { return item.ItemGuid == Entry.ItemGuid; }, FFortItemEntry::Size());
-    if (repEnt)
-        *repEnt = Entry;
-        //__movsb((PBYTE)repEnt, (const PBYTE)&Entry, FFortItemEntry::Size());
-
     auto ent = Inventory.ItemInstances.Search([&](UFortWorldItem* item)
         { return item->ItemEntry.ItemGuid == Entry.ItemGuid; });
     if (ent)
