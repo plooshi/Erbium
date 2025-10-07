@@ -62,7 +62,7 @@ UNetConnection* IsActorOwnedByAndRelevantToConnection(const AActor* Actor, TArra
 		return ConnViewers[0]->Connection;
 
 	bool (*&IsRelevancyOwnerFor)(const AActor*, const AActor*, const AActor*, const AActor*) = decltype(IsRelevancyOwnerFor)(Actor->Vft[IsNetRelevantForIdx + 2]);
-	AActor* (*&GetNetOwner)(const AActor*) = decltype(GetNetOwner)(Actor->Vft[IsNetRelevantForIdx + (VersionInfo.FortniteVersion >= 20 ? 6 : 5)]);
+	AActor* (*&GetNetOwner)(const AActor*) = decltype(GetNetOwner)(Actor->Vft[IsNetRelevantForIdx + (VersionInfo.EngineVersion >= 4.19 ? 6 : 5)]);
 
 	const AActor* ActorOwner = GetNetOwner(Actor);
 
@@ -306,11 +306,12 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 {
     static auto HasReplicationDriver_ = Driver->HasReplicationDriver();
 
-    if (HasReplicationDriver_ ? Driver->ReplicationDriver : nullptr)
+	static auto ServerReplicateActors_ = FindServerReplicateActors();
+    if (ServerReplicateActors_ && (HasReplicationDriver_ ? Driver->ReplicationDriver : nullptr))
     {
-        ((void (*)(UObject*, float)) FindServerReplicateActors())(Driver->ReplicationDriver, DeltaSeconds);
+        ((void (*)(UObject*, float)) ServerReplicateActors_)(Driver->ReplicationDriver, DeltaSeconds);
     }
-	else if (!HasReplicationDriver_ || !FindServerReplicateActors())
+	else if (!HasReplicationDriver_ || !ServerReplicateActors_)
 		ServerReplicateActors(Driver, DeltaSeconds);
 
     static bool bStartedBus = false;
@@ -350,6 +351,16 @@ void UNetDriver::Hook()
 		NetworkObjectListOffset = VersionInfo.FortniteVersion == 3.3 ? 0x508 : 0x500;
 		ReplicationFrameOffset = 0x330;
 	}
+	else if (VersionInfo.FortniteVersion >= 20 && VersionInfo.FortniteVersion < 22)
+	{
+		NetworkObjectListOffset = 0x6b8;
+		ReplicationFrameOffset = 0x3d8;
+	}
+	if (VersionInfo.FortniteVersion >= 23 && VersionInfo.FortniteVersion < 25)
+	{
+		ReplicationFrameOffset = VersionInfo.FortniteVersion == 24.20 ? 0x438 : 0x440;
+		NetworkObjectListOffset = 0x730;
+	}
 
 	if (VersionInfo.FortniteVersion == 1.72)
 		ClientWorldPackageNameOffset = 0x336A8;
@@ -369,6 +380,21 @@ void UNetDriver::Hook()
 		ClientWorldPackageNameOffset = 0x1820;
 	else if (VersionInfo.FortniteVersion == 3.3)
 		ClientWorldPackageNameOffset = 0x1828;
+	else if (VersionInfo.FortniteVersion >= 20 && VersionInfo.FortniteVersion < 25)
+		ClientWorldPackageNameOffset = 0x16b8;
+	if (!FindServerReplicateActors())
+	{
+		// cache
+		FindCreateChannel();
+		FindSetChannelActor();
+		FindReplicateActor();
+		FindSendClientAdjustment();
+		FindIsNetRelevantForVft();
+		FindCallPreReplication();
+		FindCloseActorChannel();
+		FindStartBecomingDormant();
+		FindClientHasInitializedLevelFor();
+	}
 
     Utils::Hook(FindTickFlush(), TickFlush, TickFlushOG);
 }

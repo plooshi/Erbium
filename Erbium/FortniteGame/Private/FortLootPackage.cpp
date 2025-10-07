@@ -10,6 +10,7 @@ public:
 	USCRIPTSTRUCT_COMMON_MEMBERS(FFortLootLevelData);
 
 	DEFINE_STRUCT_PROP(Category, FName);
+	DEFINE_STRUCT_PROP(category, FName);
 	DEFINE_STRUCT_PROP(LootLevel, int32);
 	DEFINE_STRUCT_PROP(MinItemLevel, int32);
 	DEFINE_STRUCT_PROP(MaxItemLevel, int32);
@@ -33,7 +34,7 @@ int GetLevel(const FDataTableCategoryHandle& CategoryHandle)
 	FFortLootLevelData* LootLevelData = nullptr;
 	for (auto& LootLevelDataPair : (TMap<FName, FFortLootLevelData*>)CategoryHandle.DataTable->RowMap)
 	{
-		if (LootLevelDataPair.Value()->Category != CategoryHandle.RowContents || LootLevelDataPair.Value()->LootLevel > GameState->WorldLevel || LootLevelDataPair.Value()->LootLevel <= Level)
+		if ((FFortLootLevelData::HasCategory() ? LootLevelDataPair.Value()->Category : LootLevelDataPair.Value()->category) != CategoryHandle.RowContents || LootLevelDataPair.Value()->LootLevel > GameState->WorldLevel || LootLevelDataPair.Value()->LootLevel <= Level)
 			continue;
 
 		Level = LootLevelDataPair.Value()->LootLevel;
@@ -278,7 +279,7 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 }
 
 
-bool SpawnLootHook(ABuildingContainer* Container)
+bool UFortLootPackage::SpawnLootHook(ABuildingContainer* Container)
 {
 	if (Container->bAlreadySearched)
 		return false;
@@ -324,7 +325,7 @@ bool SpawnLootHook(ABuildingContainer* Container)
 }
 
 
-void SpawnLoot(FName& TierGroup, FVector Loc)
+void UFortLootPackage::SpawnLoot(FName& TierGroup, FVector Loc)
 {
 	auto& RealTierGroup = TierGroup;
 
@@ -371,12 +372,12 @@ bool ServerOnAttemptInteract(ABuildingContainer* BuildingContainer, AFortPlayerP
 		return true;
 
 	//SpawnLoot(BuildingContainer->SearchLootTierGroup, BuildingContainer->K2_GetActorLocation() + BuildingContainer->GetActorRightVector() * 70.f + FVector{ 0, 0, 50 });
-	SpawnLootHook(BuildingContainer);
+	UFortLootPackage::SpawnLootHook(BuildingContainer);
 	
-	BuildingContainer->bAlreadySearched = true;
+	/*BuildingContainer->bAlreadySearched = true;
 	BuildingContainer->OnRep_bAlreadySearched();
 	BuildingContainer->SearchBounceData.SearchAnimationCount++;
-	BuildingContainer->BounceContainer();
+	BuildingContainer->BounceContainer();*/
 
 	return true;
 }
@@ -403,6 +404,7 @@ void UFortLootPackage::SpawnFloorLootForContainer(const UClass* ContainerType)
 	Containers.Free();
 }
 
+bool bDidntFind = false;
 void UFortLootPackage::Hook()
 {
 	if (VersionInfo.FortniteVersion >= 11.00)
@@ -432,5 +434,6 @@ void UFortLootPackage::Hook()
 
 	// if we cant find serveronattemptinteract
 _:
+	bDidntFind = true;
 	return;
 }

@@ -73,26 +73,43 @@ void AFortPlayerPawnAthena::ServerHandlePickup_(UObject* Context, FFrame& Stack)
 
 void AFortPlayerPawnAthena::ServerHandlePickupInfo(UObject* Context, FFrame& Stack)
 {
+	bool bTrySwapWithWeapon;
+	bool bUseRequestedSwap;
+	bool bPlayPickupSound;
+	FGuid SwapWithItem;
+
 	AFortPickupAthena* Pickup;
-	FFortPickupRequestInfo Params;
 	Stack.StepCompiledIn(&Pickup);
-	Stack.StepCompiledIn(&Params);
+	if (VersionInfo.FortniteVersion >= 20.00)
+	{
+		FFortPickupRequestInfoNew Params;
+		Stack.StepCompiledIn(&Params);
+		bTrySwapWithWeapon = Params.bTrySwapWithWeapon;
+		bUseRequestedSwap = Params.bUseRequestedSwap;
+		bPlayPickupSound = Params.bPlayPickupSound;
+		SwapWithItem = Params.SwapWithItem;
+	}
+	else
+	{
+		FFortPickupRequestInfo Params;
+		Stack.StepCompiledIn(&Params);
+	}
 	Stack.IncrementCode();
 	auto Pawn = (AFortPlayerPawnAthena*)Context;
 
 	if (!Pawn || !Pickup || Pickup->bPickedUp)
 		return;
 
-	if ((Params.bTrySwapWithWeapon || Params.bUseRequestedSwap) && Pawn->CurrentWeapon && AFortInventory::IsPrimaryQuickbar(((AFortWeapon*)Pawn->CurrentWeapon)->WeaponData) && AFortInventory::IsPrimaryQuickbar(Pickup->PrimaryPickupItemEntry.ItemDefinition))
+	if ((bTrySwapWithWeapon || bUseRequestedSwap) && Pawn->CurrentWeapon && AFortInventory::IsPrimaryQuickbar(((AFortWeapon*)Pawn->CurrentWeapon)->WeaponData) && AFortInventory::IsPrimaryQuickbar(Pickup->PrimaryPickupItemEntry.ItemDefinition))
 	{
 		auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
 		auto SwapEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
-			{ return entry.ItemGuid == Params.SwapWithItem; }, FFortItemEntry::Size());
+			{ return entry.ItemGuid == SwapWithItem; }, FFortItemEntry::Size());
 		PlayerController->SwappingItemDefinition = SwapEntry; // proper af
 	}
 	Pawn->IncomingPickups.Add(Pickup);
 
-	Pickup->PickupLocationData.bPlayPickupSound = Params.bPlayPickupSound;
+	Pickup->PickupLocationData.bPlayPickupSound = bPlayPickupSound;
 	Pickup->PickupLocationData.FlyTime = 0.4f;
 	Pickup->PickupLocationData.ItemOwner = Pawn;
 	Pickup->PickupLocationData.PickupGuid = Pickup->PrimaryPickupItemEntry.ItemGuid;

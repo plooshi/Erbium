@@ -81,6 +81,14 @@ public:
     DEFINE_FUNC(EmptySlot, void);
 };
 
+class UFortControllerComponent_Interaction : public UActorComponent
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortControllerComponent_Interaction);
+
+    DEFINE_FUNC(ServerAttemptInteract, void);
+};
+
 class AFortPlayerControllerAthena : public AActor
 {
 public:
@@ -114,6 +122,7 @@ public:
     DEFINE_FUNC(ServerAttemptAircraftJump, void);
     DEFINE_FUNC(Possess, void);
     DEFINE_FUNC(RespawnPlayerAfterDeath, void);
+    DEFINE_FUNC(ServerAttemptInteract, void);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);
@@ -130,6 +139,7 @@ public:
     static void ServerClientIsReadyToRespawn(UObject*, FFrame&);
     static void ServerCheat(UObject*, FFrame&);
     DefHookOg(void, ClientOnPawnDied, AFortPlayerControllerAthena*, FFortPlayerDeathReport&);
+    DefUHookOg(ServerAttemptInteract_);
     void InternalPickup(FFortItemEntry*);
     
 

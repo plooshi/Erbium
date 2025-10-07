@@ -195,6 +195,9 @@ inline uint64_t FindCreateNetDriverWorldContext()
 
     if (CreateNetDriver == 0)
     {
+        if (VersionInfo.FortniteVersion >= 20)
+            return CreateNetDriver = Memcury::Scanner::FindPattern("48 89 5C 24 ? 44 89 44 24 ? 55 56 57 41 56 41 57 48 83 EC ? 48 63 81").Get();
+
         auto Ptr = Memcury::Scanner::FindPattern("C7 44 24 ? 00 20 00 00 33 D2 48 8B C8 E8 ? ? ? ? 48 ?? 4C");
         
         if (!Ptr.Get())
@@ -336,7 +339,7 @@ inline int32_t FindIsNetRelevantForVft()
 
     if (IsNetRelevantForIdx == -1)
     {
-        auto sRef = Memcury::Scanner::FindStringRef(L"Actor %s / %s has no root component in AActor::IsNetRelevantFor. (Make bAlwaysRelevant=true?)");
+        auto sRef = Memcury::Scanner::FindStringRef(L"Actor %s / %s has no root component in AActor::IsNetRelevantFor. (Make bAlwaysRelevant=true?)", false, 0, VersionInfo.FortniteVersion >= 19);
 
         auto IsNetRelevantFor = sRef.ScanFor({ 0x48, 0x89, 0x5C }, false).Get();
 
@@ -417,11 +420,6 @@ inline uint64_t FindServerReplicateActors()
         if (ServerReplicateActorsVft) 
         {
             ServerReplicateActors = uint64_t(DefaultObjImpl("FortReplicationGraph")->Vft[ServerReplicateActorsVft]);
-        }
-        else 
-        {
-            MessageBoxA(nullptr, "This version is currently not supported.", "Erbium", MB_ICONERROR);
-            ExitProcess(0);
         }
     }
     return ServerReplicateActors;
@@ -571,7 +569,7 @@ inline uint64 FindApplyCharacterCustomization()
 
     if (ApplyCharacterCustomization == 0)
     {
-        auto sRef = Memcury::Scanner::FindStringRef(L"AFortPlayerState::ApplyCharacterCustomization - Failed initialization, using default parts. Player Controller: %s PlayerState: %s, HeroId: %s", false, 0, VersionInfo.FortniteVersion >= 17, true).Get();
+        auto sRef = Memcury::Scanner::FindStringRef(L"AFortPlayerState::ApplyCharacterCustomization - Failed initialization, using default parts. Player Controller: %s PlayerState: %s, HeroId: %s", false, 0, VersionInfo.FortniteVersion >= 17, VersionInfo.FortniteVersion < 20).Get();
 
         if (!sRef)
             return 0;
@@ -809,6 +807,9 @@ inline uint64_t FindKickPlayer()
 
     if (std::floor(VersionInfo.FortniteVersion) == 19)
         return Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 48 8B EC 48 83 EC 60 48 8B FA 48 8B F1 E8").Get();
+
+    if (VersionInfo.EngineVersion >= 5.0)
+        return Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 45 33 ED 48 8B FA 41 8B DD").Get();
 
     if (VersionInfo.FortniteVersion >= 7.00 && VersionInfo.FortniteVersion <= 15.50) {
         return Memcury::Scanner::FindPattern("48 89 5C 24 08 48 89 74 24 10 57 48 83 EC ? 49 8B F0 48 8B DA 48 85 D2").Get();
@@ -1116,8 +1117,10 @@ inline uint64_t FindSetPickupItems()
 
             return SetPickupItems;
         }
-        else if (VersionInfo.EngineVersion == 4.27 || VersionInfo.EngineVersion == 5.0)
+        else if (VersionInfo.EngineVersion == 4.27)
             return SetPickupItems = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC ? 80 B9 ? ? ? ? ? 45 8A").Get();
+        else if (VersionInfo.EngineVersion == 5.0)
+            return SetPickupItems = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC ? 80 B9 ? ? ? ? ? 45 8A F9").Get();
     }
 
     return SetPickupItems;
@@ -1191,7 +1194,7 @@ inline uint64 FindCreateChannel()
     {
         if (VersionInfo.FortniteVersion <= 3.3)
             return CreateChannel = Memcury::Scanner::FindPattern("40 56 57 41 54 41 55 41 57 48 83 EC 60 48 8B 01 41 8B F9 45 0F B6 E0").Get();
-        else if (VersionInfo.EngineVersion >= 20)
+        else if (VersionInfo.FortniteVersion >= 20)
             return CreateChannel = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 44 89 4C 24 ? 55 57 41 54 41 56 41 57 48 8B EC 48 83 EC 50 45 33 E4 48 8D 05 ? ? ? ? 44 38 25").Get();
     }
 
@@ -1206,19 +1209,19 @@ inline uint64 FindReplicateActor()
     {
         if (VersionInfo.EngineVersion == 4.16)
             return ReplicateActor = Memcury::Scanner::FindPattern("40 55 53 57 41 56 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8D 59 68 4C 8B F1 48 8B").Get();
-        if (VersionInfo.FortniteVersion == 3.3)
+        else if (VersionInfo.FortniteVersion == 3.3)
             return ReplicateActor = Memcury::Scanner::FindPattern("48 8B C4 55 53 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 0F 29 70 A8 0F 29 78 98 48 89 70 E8 4C").Get();
-        else if (VersionInfo.EngineVersion >= 419 && VersionInfo.FortniteVersion <= 3.2)
+        else if (VersionInfo.EngineVersion >= 4.19 && VersionInfo.FortniteVersion <= 3.2)
         {
-            ReplicateActor = Memcury::Scanner::FindPattern("40 55 56 57 41 54 41 55 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 4C", false).Get(); // 3.0, we could just use this sig for everything?
+            ReplicateActor = Memcury::Scanner::FindPattern("40 55 56 57 41 54 41 55 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 4C", false).Get(); 
 
             if (!ReplicateActor)
                 ReplicateActor = Memcury::Scanner::FindPattern("40 55 56 41 54 41 55 41 56 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 4C 8B E9 48 8B 49 68 48").Get();
         }
         else if (std::floor(VersionInfo.FortniteVersion) == 20)
-            return Memcury::Scanner::FindPattern("48 8B C4 48 89 58 10 48 89 70 18 48 89 78 20 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 4C 8D 69 68").Get();
+            return ReplicateActor = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 10 48 89 70 18 48 89 78 20 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 4C 8D 69 68").Get();
         else if (VersionInfo.FortniteVersion >= 21)
-            return Memcury::Scanner::FindPattern("48 8B C4 48 89 58 10 48 89 70 18 48 89 78 20 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 45 33 FF 4C 8D 69 68 44 38 3D").Get();
+            return ReplicateActor = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 10 48 89 70 18 48 89 78 20 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 45 33 FF 4C 8D 69 68 44 38 3D").Get();
     }
 
     return ReplicateActor;
@@ -1229,7 +1232,23 @@ inline uint64 FindCloseActorChannel()
     static uint64_t CloseActorChannel = 0;
 
     if (CloseActorChannel == 0)
-        CloseActorChannel = Memcury::Scanner::FindStringRef(L"UActorChannel::Close: ChIndex: %d, Actor: %s").ScanFor({ 0x48, 0x89, 0x5C }, false).Get();
+    {
+        auto sRef = Memcury::Scanner::FindStringRef(L"UActorChannel::Close: ChIndex: %d, Actor: %s", false, 0, VersionInfo.FortniteVersion >= 19).Get();
+        
+        if (!sRef)
+            sRef = Memcury::Scanner::FindStringRef(L"UActorChannel::Close: ChIndex: %d, Actor: %s, Reason: %s", false, 0, VersionInfo.FortniteVersion >= 19).Get();
+
+        if (!sRef)
+            return 0;
+
+        for (int i = 0; i < 2000; i++)
+        {
+            if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x5C)
+                return CloseActorChannel = sRef - i;
+            else if (*(uint8_t*)(sRef - i) == 0x40 && *(uint8_t*)(sRef - i + 1) == 0x55)
+                return CloseActorChannel = sRef - i;
+        }
+    }
 
     return CloseActorChannel;
 }
@@ -1258,7 +1277,20 @@ inline uint64 FindStartBecomingDormant()
     static uint64_t StartBecomingDormant = 0;
 
     if (StartBecomingDormant == 0)
-        StartBecomingDormant = Memcury::Scanner::FindStringRef(L"StartBecomingDormant: %s").ScanFor({ 0x48, 0x89, 0x5C }, false).Get();
+    {
+        auto sRef = Memcury::Scanner::FindStringRef(L"StartBecomingDormant: %s", false, 0, VersionInfo.FortniteVersion >= 19).Get();
+
+        if (!sRef)
+            return 0;
+
+        for (int i = 0; i < 2000; i++)
+        {
+            if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x5C)
+                return StartBecomingDormant = sRef - i;
+            else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
+                return StartBecomingDormant = sRef - i;
+        }
+    }
 
     return StartBecomingDormant;
 }

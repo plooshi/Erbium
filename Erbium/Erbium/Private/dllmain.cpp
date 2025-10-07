@@ -26,7 +26,9 @@ void Main()
 
     for (auto& NullFunc : NullFuncs)
         if (NullFunc != 0)
+        {
             Utils::Patch<uint8_t>(NullFunc, 0xc3);
+        }
 
     for (auto& RetTrueFunc : RetTrueFuncs) 
     {
@@ -57,6 +59,8 @@ void Main()
     *(bool*)FindGIsClient() = false;
     if (VersionInfo.EngineVersion > 4.20) // 3.6 and below have a crash on ALandscapeProxy
         *(bool*)FindGIsServer() = true;
+
+    srand((uint32_t) time(0));
 
     UWorld::GetWorld()->OwningGameInstance->LocalPlayers.Remove(0);
     const wchar_t* terrainOpen = L"open Athena_Terrain";
