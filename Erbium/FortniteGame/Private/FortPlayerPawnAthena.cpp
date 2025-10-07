@@ -93,6 +93,10 @@ void AFortPlayerPawnAthena::ServerHandlePickupInfo(UObject* Context, FFrame& Sta
 	{
 		FFortPickupRequestInfo Params;
 		Stack.StepCompiledIn(&Params);
+		bTrySwapWithWeapon = Params.bTrySwapWithWeapon;
+		bUseRequestedSwap = Params.bUseRequestedSwap;
+		bPlayPickupSound = Params.bPlayPickupSound;
+		SwapWithItem = Params.SwapWithItem;
 	}
 	Stack.IncrementCode();
 	auto Pawn = (AFortPlayerPawnAthena*)Context;
