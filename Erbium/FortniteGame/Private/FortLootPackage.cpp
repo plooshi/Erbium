@@ -278,7 +278,7 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 }
 
 
-bool SpawnLootHook(ABuildingContainer* Container)
+bool UFortLootPackage::SpawnLootHook(ABuildingContainer* Container)
 {
 	if (Container->bAlreadySearched)
 		return false;
@@ -371,12 +371,12 @@ bool ServerOnAttemptInteract(ABuildingContainer* BuildingContainer, AFortPlayerP
 		return true;
 
 	//SpawnLoot(BuildingContainer->SearchLootTierGroup, BuildingContainer->K2_GetActorLocation() + BuildingContainer->GetActorRightVector() * 70.f + FVector{ 0, 0, 50 });
-	SpawnLootHook(BuildingContainer);
+	UFortLootPackage::SpawnLootHook(BuildingContainer);
 	
-	BuildingContainer->bAlreadySearched = true;
+	/*BuildingContainer->bAlreadySearched = true;
 	BuildingContainer->OnRep_bAlreadySearched();
 	BuildingContainer->SearchBounceData.SearchAnimationCount++;
-	BuildingContainer->BounceContainer();
+	BuildingContainer->BounceContainer();*/
 
 	return true;
 }
