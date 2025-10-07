@@ -38,8 +38,11 @@ void Misc::ApplyHomebaseEffectsOnPlayerSetup(
 	char a6,
 	unsigned __int8 a7)
 {
-	static auto ItemDefOffset = a5->GetOffset("ItemDefinition");
-	GetFromOffset<const UObject*>(a5, ItemDefOffset) = Utils::FindObject<UObject>(L"/Game/Athena/Heroes/HID_Commando_Athena_Menu.HID_Commando_Athena_Menu");
+	if (VersionInfo.FortniteVersion == 1.72 || VersionInfo.FortniteVersion == 1.8)
+	{
+		static auto ItemDefOffset = a5->GetOffset("ItemDefinition");
+		GetFromOffset<const UObject*>(a5, ItemDefOffset) = Utils::FindObject<UObject>(L"/Game/Athena/Heroes/HID_Commando_Athena_Menu.HID_Commando_Athena_Menu");
+	}
 
 	return ApplyHomebaseEffectsOnPlayerSetupOG(a1, a2, a3, a4, a5, a6, a7);
 }
