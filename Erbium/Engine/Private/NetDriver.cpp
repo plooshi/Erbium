@@ -249,7 +249,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 		if (SendClientAdjustment)
 			for (auto& Viewer : Viewers)
 			{
-				if (Viewer->Connection->PlayerController)
+				if (Viewer->Connection->PlayerController && SendClientAdjustment)
 					((void(*)(AFortPlayerControllerAthena*)) SendClientAdjustment)(Viewer->Connection->PlayerController);
 			}
 
