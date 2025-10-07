@@ -785,7 +785,8 @@ void AFortPlayerControllerAthena::ServerClientIsReadyToRespawn(UObject* Context,
 	auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 	auto PlayerState = (AFortPlayerStateAthena*)PlayerController->PlayerState;
 
-	if (GameState->IsRespawningAllowed(PlayerState)) {
+	if (GameState->IsRespawningAllowed(PlayerState)) 
+	{
 		auto RespawnData = PlayerState->RespawnData;
 		FTransform SpawnTransform{};
 
