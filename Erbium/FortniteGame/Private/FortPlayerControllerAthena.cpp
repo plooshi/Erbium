@@ -1023,7 +1023,7 @@ void AFortPlayerControllerAthena::Hook()
 			Utils::ExecHook(ServerAttemptAircraftJumpPC, ServerAttemptAircraftJump_);
 	}
 
-	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerAcknowledgePossession"), ServerAcknowledgePossession);
+	//Utils::ExecHook(GetDefaultObj()->GetFunction("ServerAcknowledgePossession"), ServerAcknowledgePossession);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerExecuteInventoryItem"), ServerExecuteInventoryItem);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerExecuteInventoryWeapon"), ServerExecuteInventoryWeapon); // S9 shenanigans
 
