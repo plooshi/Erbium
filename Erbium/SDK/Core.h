@@ -943,7 +943,7 @@ namespace SDK
 		auto TargetClass = FindClass(Name);
 		for (int i = 0; i < TUObjectArray::Num(); i++) {
 			const UObject* Obj = TUObjectArray::GetObjectByIndex(i);
-			if (Obj && Obj->IsDefaultObject() && Obj->IsA(TargetClass))
+			if (Obj && Obj->IsDefaultObject() && Obj->Class == TargetClass)
 				return Obj;
 		}
 		return nullptr;
