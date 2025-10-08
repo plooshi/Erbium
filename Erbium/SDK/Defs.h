@@ -1,4 +1,11 @@
 #pragma once
+
+#define GUESS_PROP_FLAGS(...) std::is_same_v<__VA_ARGS__, bool> ? 0x20000 : \
+                             (std::is_same_v<__VA_ARGS__, int32> ? 0x80 : \
+                             (std::is_same_v<__VA_ARGS__, float> ? 0x100 : \
+                             (std::is_same_v<__VA_ARGS__, UClass*> ? 0x400 : \
+                             (std::is_base_of_v<__VA_ARGS__, UObject*> ? 0x10000 : 0))))
+
 #define UCLASS_COMMON_MEMBERS(__Class)                                                                                                                               \
 	static const SDK::UClass* StaticClass()                                                                                                                          \
 	{                                                                                                                                                                \
@@ -69,7 +76,7 @@
     __VA_ARGS__& Get##Name() const                                                                                                                                   \
     {                                                                                                                                                                \
         if (Name##__Offset == -2)                                                                                                                                    \
-            Name##__Offset = this->GetOffset(#Name);                                                                                                                 \
+            Name##__Offset = this->GetOffset(#Name, GUESS_PROP_FLAGS(__VA_ARGS__));                                                                                  \
         return GetFromOffset<__VA_ARGS__>(this, Name##__Offset);                                                                                                     \
     }                                                                                                                                                                \
                                                                                                                                                                      \
@@ -105,11 +112,11 @@
         if (Name##__Offset == -2)                                                                                                                                    \
         {                                                                                                                                                            \
             auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);        \
-            auto Prop = GetProperty(#Name);                                                                                                                          \
+            auto Prop = GetProperty(#Name, 0x20000);                                                                                                                          \
             Name##__Offset = Prop ? GetFromOffset<uint32>(Prop, OffsetOff) : -1;                                                                                     \
             Name##__FieldMask = Prop ? Prop->GetFieldMask() : 0;                                                                                                     \
         }                                                                                                                                                            \
-        return (GetFromOffset<uint8_t>(this, Name##__Offset) & Name##__FieldMask) != 0;                                                                                 \
+        return (GetFromOffset<uint8_t>(this, Name##__Offset) & Name##__FieldMask) != 0;                                                                              \
     }                                                                                                                                                                \
                                                                                                                                                                      \
     bool Has##Name() const                                                                                                                                           \
@@ -117,7 +124,7 @@
         if (Name##__Offset == -2)                                                                                                                                    \
         {                                                                                                                                                            \
             auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);        \
-            auto Prop = GetProperty(#Name);                                                                                                                          \
+            auto Prop = GetProperty(#Name, 0x20000);                                                                                                                          \
             Name##__Offset = Prop ? GetFromOffset<uint32>(Prop, OffsetOff) : -1;                                                                                     \
             Name##__FieldMask = Prop ? Prop->GetFieldMask() : 0;                                                                                                     \
         }                                                                                                                                                            \
@@ -129,7 +136,7 @@
         if (Name##__Offset == -2)                                                                                                                                    \
         {                                                                                                                                                            \
             auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);        \
-            auto Prop = GetProperty(#Name);                                                                                                                          \
+            auto Prop = GetProperty(#Name, 0x20000);                                                                                                                          \
             Name##__Offset = Prop ? GetFromOffset<uint32>(Prop, OffsetOff) : -1;                                                                                     \
             Name##__FieldMask = Prop ? Prop->GetFieldMask() : 0;                                                                                                     \
         }                                                                                                                                                            \
