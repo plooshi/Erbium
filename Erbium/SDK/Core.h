@@ -422,7 +422,8 @@ namespace SDK
 	{
 		for (const UStruct* Clss = this; Clss; Clss = (const UStruct*)Clss->GetSuper())
 		{
-			if (CastFlags != 0x80000 && VersionInfo.EngineVersion >= 4.25) {
+			if (CastFlags != 0x80000 && VersionInfo.EngineVersion >= 4.25) 
+			{
 				for (const UField* Prop = Clss->GetChildren(true); Prop; Prop = Prop->GetNext(true))
 				{
 					if (CastFlags != 0)
@@ -437,11 +438,13 @@ namespace SDK
 						return Prop;
 				}
 			}
-
-			for (const UField* Prop = Clss->GetChildren(false); Prop; Prop = Prop->GetNext(false))
+			else if (CastFlags == 0x80000 || VersionInfo.EngineVersion < 4.25)
 			{
-				if ((CastFlags == 0 || Prop->Class->GetCastFlags() & CastFlags) && Prop->GetName(false).ToSDKString() == Name)
-					return Prop;
+				for (const UField* Prop = Clss->GetChildren(false); Prop; Prop = Prop->GetNext(false))
+				{
+					if ((CastFlags == 0 || Prop->Class->GetCastFlags() & CastFlags) && Prop->GetName(false).ToSDKString() == Name)
+						return Prop;
+				}
 			}
 		}
 
@@ -548,9 +551,9 @@ namespace SDK
 			if (VersionInfo.EngineVersion >= 4.25)
 				for (const UField* _Pr = GetChildren(true); _Pr; _Pr = _Pr->GetNext(true))
 					p.NameOffsetMap.push_back({ _Pr->GetName(true).ToSDKString(), GetFromOffset<uint32>(_Pr, OffsetOff), GetFromOffset<uint64>(_Pr, PropertyFlagsOff), GetFromOffset<uint32>(_Pr, ElementSizeOff) });
-
-			for (const UField* _Pr = GetChildren(false); _Pr; _Pr = _Pr->GetNext(false))
-				p.NameOffsetMap.push_back({ _Pr->GetName(false).ToSDKString(), GetFromOffset<uint32>(_Pr, OffsetOff), GetFromOffset<uint64>(_Pr, PropertyFlagsOff), GetFromOffset<uint32>(_Pr, ElementSizeOff) });
+			else
+				for (const UField* _Pr = GetChildren(false); _Pr; _Pr = _Pr->GetNext(false))
+					p.NameOffsetMap.push_back({ _Pr->GetName(false).ToSDKString(), GetFromOffset<uint32>(_Pr, OffsetOff), GetFromOffset<uint64>(_Pr, PropertyFlagsOff), GetFromOffset<uint32>(_Pr, ElementSizeOff) });
 
 			p.Size = GetPropertiesSize();
 			return p;
