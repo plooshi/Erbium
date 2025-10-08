@@ -20,10 +20,27 @@ void ShowFoundation(const ABuildingFoundation* Foundation)
 {
     if (!Foundation) return;
 
-    Foundation->StreamingData.BoundingBox = Foundation->StreamingBoundingBox;
+    /*Foundation->StreamingData.BoundingBox = Foundation->StreamingBoundingBox;
     Foundation->StreamingData.FoundationLocation = Foundation->GetTransform().Translation;
-    Foundation->SetDynamicFoundationEnabled(true);
+    Foundation->SetDynamicFoundationEnabled(true);*/
     //Foundation->SetDynamicFoundationTransform(Foundation->GetTransform());
+
+    if (Foundation->HasDynamicFoundationType())
+        Foundation->DynamicFoundationType = 0;
+    if (Foundation->HasbServerStreamedInLevel())
+    {
+        Foundation->bServerStreamedInLevel = true;
+        Foundation->OnRep_ServerStreamedInLevel();
+    }
+    if (Foundation->HasDynamicFoundationRepData())
+    {
+        Foundation->DynamicFoundationRepData.EnabledState = 1;
+        Foundation->OnRep_DynamicFoundationRepData();
+    }
+    if (Foundation->HasFoundationEnabledState())
+        Foundation->FoundationEnabledState = 1;
+
+    Foundation->SetDynamicFoundationEnabled(true);
 }
 
 
