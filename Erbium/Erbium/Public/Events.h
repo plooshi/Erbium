@@ -9,10 +9,10 @@ struct FEventFunction
 
 struct FEvent
 {
-    UEAllocatedWString Loader;
-    UEAllocatedWString Scripting;
+    UEAllocatedWString LoaderClass;
+    UEAllocatedWString ScriptingClass;
     std::vector<FEventFunction> EventFunctions;
-    double Version;
+    double EventVersion;
     UEAllocatedWString LoaderFuncPath;
 };
 
