@@ -145,7 +145,37 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryItem(UObject* Context, F
 		return;
 	}
 
-	PlayerController->MyFortPawn->EquipWeaponDefinition(ItemDefinition, ItemGuid, entry->HasTrackerGuid() ? entry->TrackerGuid : FGuid(), false);
+	auto Weapon = PlayerController->MyFortPawn->EquipWeaponDefinition(ItemDefinition, ItemGuid, entry->HasTrackerGuid() ? entry->TrackerGuid : FGuid(), false);
+	if (VersionInfo.EngineVersion < 4.20)
+	{
+		static auto BuildingToolClass = FindClass("FortWeap_BuildingTool");
+		if (Weapon->IsA(BuildingToolClass))
+		{
+			static auto RoofPiece = Utils::FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_RoofS.BuildingItemData_RoofS");
+			static auto FloorPiece = Utils::FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Floor.BuildingItemData_Floor");
+			static auto WallPiece = Utils::FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Wall.BuildingItemData_Wall");
+			static auto StairPiece = Utils::FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Stair_W.BuildingItemData_Stair_W");
+
+			static auto RoofMetadata = Utils::FindObject<UObject>(L"/Game/Building/EditModePatterns/Roof/EMP_Roof_RoofC.EMP_Roof_RoofC");
+			static auto StairMetadata = Utils::FindObject<UObject>(L"/Game/Building/EditModePatterns/Stair/EMP_Stair_StairW.EMP_Stair_StairW");
+			static auto WallMetadata = Utils::FindObject<UObject>(L"/Game/Building/EditModePatterns/Wall/EMP_Wall_Solid.EMP_Wall_Solid");
+			static auto FloorMetadata = Utils::FindObject<UObject>(L"/Game/Building/EditModePatterns/Floor/EMP_Floor_Floor.EMP_Floor_Floor");
+
+			static auto DefaultMetadataOffset = Weapon->GetOffset("DefaultMetadata");
+			static auto OnRep_DefaultMetadata = Weapon->GetFunction("OnRep_DefaultMetadata");
+
+			if (ItemDefinition == RoofPiece)
+				GetFromOffset<const UObject*>(Weapon, DefaultMetadataOffset) = RoofMetadata;
+			else if (ItemDefinition == StairPiece)
+				GetFromOffset<const UObject*>(Weapon, DefaultMetadataOffset) = StairMetadata;
+			else if (ItemDefinition == WallPiece)
+				GetFromOffset<const UObject*>(Weapon, DefaultMetadataOffset) = WallMetadata;
+			else if (ItemDefinition == FloorPiece)
+				GetFromOffset<const UObject*>(Weapon, DefaultMetadataOffset) = FloorMetadata;
+
+			Weapon->ProcessEvent(OnRep_DefaultMetadata, nullptr);
+		}
+	}
 }
 
 

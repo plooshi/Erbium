@@ -308,6 +308,11 @@ void AFortInventory::UpdateEntry(FFortItemEntry& Entry)
     if (!this)
         return; // wtf 3.5
 
+    auto repEnt = Inventory.ReplicatedEntries.Search([&](FFortItemEntry& item)
+        { return item.ItemGuid == Entry.ItemGuid; }, FFortItemEntry::Size());
+    if (repEnt)
+        *repEnt = Entry;
+
     auto ent = Inventory.ItemInstances.Search([&](UFortWorldItem* item)
         { return item->ItemEntry.ItemGuid == Entry.ItemGuid; });
     if (ent)
@@ -344,13 +349,7 @@ void SetLoadedAmmo(UFortWorldItem* Item, int LoadedAmmo)
     Item->ItemEntry.LoadedAmmo = LoadedAmmo;
 
     auto PlayerController = (AFortPlayerControllerAthena*)Item->GetOwningController();
-
-    auto repEnt = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& item)
-        { return item.ItemGuid == Item->ItemEntry.ItemGuid; }, FFortItemEntry::Size());
-    if (repEnt)
-        *repEnt = Item->ItemEntry;
-    PlayerController->WorldInventory->Update(&Item->ItemEntry);
-    //PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
+    PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
 }
 
 void SetPhantomReserveAmmo(UFortWorldItem* Item, unsigned int PhantomReserveAmmo)
@@ -358,13 +357,7 @@ void SetPhantomReserveAmmo(UFortWorldItem* Item, unsigned int PhantomReserveAmmo
     Item->ItemEntry.PhantomReserveAmmo = PhantomReserveAmmo;
 
     auto PlayerController = (AFortPlayerControllerAthena*)Item->GetOwningController();
-
-    auto repEnt = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& item)
-        { return item.ItemGuid == Item->ItemEntry.ItemGuid; }, FFortItemEntry::Size());
-    if (repEnt)
-        *repEnt = Item->ItemEntry;
-    PlayerController->WorldInventory->Update(&Item->ItemEntry);
-   // PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
+    PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
 }
 
 
