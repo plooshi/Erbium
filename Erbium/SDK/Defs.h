@@ -4,7 +4,7 @@
                              (std::is_same_v<__VA_ARGS__, int32> ? 0x80 : \
                              (std::is_same_v<__VA_ARGS__, float> ? 0x100 : \
                              (std::is_same_v<__VA_ARGS__, UClass*> ? 0x400 : \
-                             (std::is_same_v<__VA_ARGS__, uint8> ? 0x1000000000040 : \
+                             (std::is_same_v<__VA_ARGS__, uint8> ? 0x1000000020040 : \
                              (std::is_base_of_v<UObject, std::remove_pointer_t<__VA_ARGS__>> ? 0x10000 : 0)))))
 
 #define UCLASS_COMMON_MEMBERS(__Class)                                                                                                                               \

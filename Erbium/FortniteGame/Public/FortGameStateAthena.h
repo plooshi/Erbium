@@ -9,8 +9,8 @@ struct FGameMemberInfo : public FFastArraySerializerItem
 public:
     USCRIPTSTRUCT_COMMON_MEMBERS(FGameMemberInfo);
 
-    DEFINE_STRUCT_PROP(TeamIndex, int32);
-    DEFINE_STRUCT_PROP(SquadId, int32);
+    DEFINE_STRUCT_PROP(TeamIndex, uint8);
+    DEFINE_STRUCT_PROP(SquadId, uint8);
     DEFINE_STRUCT_PROP(MemberUniqueId, FUniqueNetIdRepl);
 };
 

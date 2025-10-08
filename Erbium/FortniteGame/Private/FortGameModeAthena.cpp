@@ -645,16 +645,8 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
     auto Num = NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Num();
     // they only stripped it on athena for some reason
     AFortPlayerPawnAthena* Pawn = nullptr;
-    if ((VersionInfo.EngineVersion == 4.23 || VersionInfo.EngineVersion == 4.22 || VersionInfo.EngineVersion == 4.21) && Num != 0)
-    {
-        auto Transform = StartSpot->GetTransform();
-        Pawn = GameMode->SpawnDefaultPawnAtTransform(NewPlayer, Transform);
-    }
-    else
-    {
-        static auto FortGMSpawnDefaultPawnFor = (AFortPlayerPawnAthena * (*)(AFortGameModeAthena*, AFortPlayerControllerAthena*, AActor*)) DefaultObjImpl("FortGameMode")->Vft[SpawnDefaultPawnForIdx];
-        Pawn = FortGMSpawnDefaultPawnFor(GameMode, NewPlayer, StartSpot);
-    }
+    static auto FortGMSpawnDefaultPawnFor = (AFortPlayerPawnAthena * (*)(AFortGameModeAthena*, AFortPlayerControllerAthena*, AActor*)) DefaultObjImpl("FortGameMode")->Vft[SpawnDefaultPawnForIdx];
+    Pawn = FortGMSpawnDefaultPawnFor(GameMode, NewPlayer, StartSpot);
 
     //auto Transform = StartSpot->GetTransform();
     //auto Pawn = GameMode->SpawnDefaultPawnAtTransform(NewPlayer, Transform);
