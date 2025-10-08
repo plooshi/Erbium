@@ -865,8 +865,8 @@ namespace SDK
 		static int32 Offset = 0;
 		if (Offset == 0)
 		{
-			auto ClassObj = FindClass("Class");
-			auto ActorObj = FindClass("Actor");
+			auto ClassObj = TUObjectArray::FindObject("Class");
+			auto ActorObj = TUObjectArray::FindObject("Actor");
 			for (int i = 0x28; i < 0x1a0; i += 4)
 			{
 				if (*(uint64_t*)(__int64(ClassObj) + i) == 0x29 && *(uint64_t*)(__int64(ActorObj) + i) == 0x1000000000)
