@@ -40,7 +40,7 @@ void ABuildingFoundation::Hook()
 	if (!GetDefaultObj())
 		return;
 
-	if (VersionInfo.FortniteVersion >= 4.24)
+	if (VersionInfo.EngineVersion >= 4.24)
 	{
 		Utils::ExecHook(GetDefaultObj()->GetFunction("SetDynamicFoundationEnabled"), SetDynamicFoundationEnabled_);
 		Utils::ExecHook(GetDefaultObj()->GetFunction("SetDynamicFoundationTransform"), SetDynamicFoundationTransform_);
