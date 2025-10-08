@@ -738,7 +738,7 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
         NewPlayer->WorldInventory->Update(nullptr);
 
 
-        if (FConfiguration::bLateGame && Pawn)
+        if (FConfiguration::bLateGame && Pawn && GameState->Aircrafts.Num() > 0 && GameState->Aircrafts[0])
         {
             FVector AircraftLocation = GameState->Aircrafts[0]->K2_GetActorLocation();
 
