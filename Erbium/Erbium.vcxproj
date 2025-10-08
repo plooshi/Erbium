@@ -162,6 +162,7 @@
     <ClInclude Include="FortniteGame\Public\FortKismetLibrary.h" />
     <ClInclude Include="FortniteGame\Public\FortLootPackage.h" />
     <ClInclude Include="FortniteGame\Public\FortMissionLibrary.h" />
+    <ClInclude Include="FortniteGame\Public\FortPhysicsPawn.h" />
     <ClInclude Include="FortniteGame\Public\FortPlayerControllerAthena.h" />
     <ClInclude Include="FortniteGame\Public\FortPlayerPawnAthena.h" />
     <ClInclude Include="FortniteGame\Public\FortPlayerStateAthena.h" />
@@ -194,6 +195,7 @@
     <ClCompile Include="FortniteGame\Private\FortKismetLibrary.cpp" />
     <ClCompile Include="FortniteGame\Private\FortLootPackage.cpp" />
     <ClCompile Include="FortniteGame\Private\FortMissionLibrary.cpp" />
+    <ClCompile Include="FortniteGame\Private\FortPhysicsPawn.cpp" />
     <ClCompile Include="FortniteGame\Private\FortPlayerControllerAthena.cpp" />
     <ClCompile Include="FortniteGame\Private\FortPlayerPawnAthena.cpp" />
     <ClCompile Include="pch.cpp">
