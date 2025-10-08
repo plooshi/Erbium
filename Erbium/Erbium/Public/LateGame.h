@@ -1,5 +1,5 @@
 #pragma once
-#include "pch.h"
+#include "../../pch.h"
 #include "../../FortniteGame/Public/BuildingSMActor.h"
 #include "../../FortniteGame/Public/FortInventory.h"
 

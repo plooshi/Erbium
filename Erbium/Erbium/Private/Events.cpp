@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "../Public/Events.h"
 #include <thread>
-#include "FortniteGame/Public/FortGameModeAthena.h"
+#include "../../FortniteGame/Public/FortGameModeAthena.h"
 
 void Events::StartEvent()
 {

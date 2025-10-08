@@ -381,6 +381,12 @@ namespace UC
 		void deallocate(T* ptr, size_t) {
 			FMemory::FreeForType<T>(ptr);
 		}
+
+		template <typename NT>
+		operator TMemoryAllocator<NT>()
+		{
+			return TMemoryAllocator<NT>();
+		}
 	};
 
 

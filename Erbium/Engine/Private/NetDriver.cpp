@@ -318,7 +318,7 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
     if (!bStartedBus && VersionInfo.FortniteVersion >= 11.00)
     { 
         auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
-        if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->bWorldIsReady && ((AFortGameStateAthena*)UWorld::GetWorld()->GameState)->WarmupCountdownEndTime <= Time)
+        if (Driver->ClientConnections.Num() > 0 && ((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->bWorldIsReady && ((AFortGameStateAthena*)UWorld::GetWorld()->GameState)->WarmupCountdownEndTime <= Time)
         {
             bStartedBus = true;
 

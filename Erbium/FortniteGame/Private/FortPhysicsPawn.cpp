@@ -43,25 +43,32 @@ void ServerMove(UObject* Context, FFrame& Stack)
     static auto StateStruct = FReplicatedPhysicsPawnState::StaticStruct();
     if (StateStruct)
     {
-        auto& State = Stack.StepCompiledInRef<FReplicatedPhysicsPawnState>();
+        auto State = (FReplicatedPhysicsPawnState*)malloc(FReplicatedPhysicsPawnState::Size());
+        Stack.StepCompiledIn(State);
         Stack.IncrementCode();
 
-        Rotation = State.Rotation;
-        Translation = State.Translation;
-        LinearVelocity = State.LinearVelocity;
-        AngularVelocity = State.AngularVelocity;
+        Rotation = State->Rotation;
+        Translation = State->Translation;
+        LinearVelocity = State->LinearVelocity;
+        AngularVelocity = State->AngularVelocity;
+
+        free(State);
     }
     else
     {
-        auto& State = Stack.StepCompiledInRef<FReplicatedAthenaVehiclePhysicsState>();
+        auto State = (FReplicatedAthenaVehiclePhysicsState*)malloc(FReplicatedAthenaVehiclePhysicsState::Size());
+        Stack.StepCompiledIn(State);
         Stack.IncrementCode();
 
-        Rotation = State.Rotation;
-        Translation = State.Translation;
-        LinearVelocity = State.LinearVelocity;
-        AngularVelocity = State.AngularVelocity;
+        Rotation = State->Rotation;
+        Translation = State->Translation;
+        LinearVelocity = State->LinearVelocity;
+        AngularVelocity = State->AngularVelocity;
+        
+        free(State);
     }
     auto Pawn = (AFortPhysicsPawn*)Context;
+
 
     if (VersionInfo.EngineVersion < 4.24)
     {
@@ -77,10 +84,13 @@ void ServerMove(UObject* Context, FFrame& Stack)
     {
         FRotator RealRotation = Rotation.Rotator();
 
-        RealRotation.Yaw = FRotator::UnwindDegrees(RealRotation.Yaw);
+        if (VersionInfo.FortniteVersion >= 4.24)
+        {
+            RealRotation.Yaw = FRotator::UnwindDegrees(RealRotation.Yaw);
 
-        RealRotation.Pitch = 0;
-        RealRotation.Roll = 0;
+            RealRotation.Pitch = 0;
+            RealRotation.Roll = 0;
+        }
 
         RootComponent->K2_SetWorldLocationAndRotation(Translation, RealRotation, false, nullptr, true);
         RootComponent->SetPhysicsLinearVelocity(LinearVelocity, 0, FName(0));

@@ -6,7 +6,7 @@
 #include "../Public/FortKismetLibrary.h"
 #include "../../Erbium/Public/Configuration.h"
 #include "../Public/FortLootPackage.h"
-#include "Erbium/Public/Events.h"
+#include "../../Erbium/Public/Events.h"
 
 uint64_t FindGetPlayerViewPoint()
 {
@@ -998,7 +998,8 @@ _help:
 extern bool bDidntFind;
 void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFrame& Stack)
 {
-	AActor* ReceivingActor;
+	AActor* ReceivingActor = *(AActor**)Stack.Locals;
+	/*AActor* ReceivingActor;
 	UObject* InteractComponent;
 	uint8_t InteractType;
 	UObject* OptionalObjectData;
@@ -1011,7 +1012,7 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 	Stack.StepCompiledIn(&OptionalObjectData);
 	Stack.StepCompiledIn(&InteractionBeingAttempted);
 	Stack.StepCompiledIn(&RequestID);
-	Stack.IncrementCode();
+	Stack.IncrementCode();*/
 
 	AFortPlayerControllerAthena* PlayerController = nullptr;
 
@@ -1024,7 +1025,8 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 	if (auto Container = bDidntFind ? ReceivingActor->Cast<ABuildingContainer>() : nullptr)
 		UFortLootPackage::SpawnLootHook(Container);
 
-	return bIsComp ? (void)callOG(((UFortControllerComponent_Interaction*)Context), Stack.GetCurrentNativeFunction(), ServerAttemptInteract, ReceivingActor, InteractComponent, InteractType, OptionalObjectData, InteractionBeingAttempted, RequestID) : callOG(PlayerController, Stack.GetCurrentNativeFunction(), ServerAttemptInteract, ReceivingActor, InteractComponent, InteractType, OptionalObjectData, InteractionBeingAttempted, RequestID);
+	return ServerAttemptInteract_OG(Context, Stack);
+	//return bIsComp ? (void)callOG(((UFortControllerComponent_Interaction*)Context), Stack.GetCurrentNativeFunction(), ServerAttemptInteract, ReceivingActor, InteractComponent, InteractType, OptionalObjectData, InteractionBeingAttempted, RequestID) : callOG(PlayerController, Stack.GetCurrentNativeFunction(), ServerAttemptInteract, ReceivingActor, InteractComponent, InteractType, OptionalObjectData, InteractionBeingAttempted, RequestID);
 }
 
 void AFortPlayerControllerAthena::Hook()
