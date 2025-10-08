@@ -629,7 +629,7 @@ namespace SDK
 
 			auto& Param = Params.NameOffsetMap[i];
 
-			if ((Param.PropertyFlags & 0x100) != 0 && (Param.PropertyFlags & 0x8000000) == 0)
+			if (((Param.PropertyFlags & 0x100) != 0 && (Param.PropertyFlags & 0x8000000) == 0) || (Param.PropertyFlags & 0x400) != 0)
 			{
 				i++;
 				return;
@@ -650,7 +650,7 @@ namespace SDK
 
 			auto& Param = Params.NameOffsetMap[i];
 
-			if ((Param.PropertyFlags & 0x100) == 0 && (Param.PropertyFlags & 0x8000000) == 0)
+			if (((Param.PropertyFlags & 0x100) == 0 && (Param.PropertyFlags & 0x8000000) == 0) || (Param.PropertyFlags & 0x400) != 0)
 			{
 				i++;
 				return;
@@ -674,15 +674,13 @@ namespace SDK
 		if constexpr (!std::is_void_v<Ret>)
 		{
 			Ret ret{};
-			int x = 0;
 			for (auto& Param : Params.NameOffsetMap)
 			{
-				if (Param.Name == "ReturnValue")
-				{
-					__movsb((PBYTE)&ret, (const PBYTE)(__int64(Mem) + Param.Offset), Param.ElementSize);
-					break;
-				}
-				x++;
+				if ((Param.PropertyFlags & 0x400) == 0)
+					continue;
+
+				__movsb((PBYTE)&ret, (const PBYTE)(__int64(Mem) + Param.Offset), Param.ElementSize);
+				break;
 			}
 
 			FMemory::Free(Mem);
