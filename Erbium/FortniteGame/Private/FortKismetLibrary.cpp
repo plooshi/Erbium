@@ -200,7 +200,7 @@ void UFortKismetLibrary::Hook()
 {
 	auto GiveItemToInventoryOwnerFn = GetDefaultObj()->GetFunction("GiveItemToInventoryOwner");
 	if (GiveItemToInventoryOwnerFn)
-		for (auto& Param : GiveItemToInventoryOwnerFn->GetParams().NameOffsetMap)
+		for (auto& Param : GiveItemToInventoryOwnerFn->GetParamsNamed().NameOffsetMap)
 		{
 			if (Param.Name == "ItemVariantGuid")
 				bHasItemVariantGuid2 = true;
@@ -215,7 +215,7 @@ void UFortKismetLibrary::Hook()
 
 	auto K2_RemoveItemFromPlayerFn = GetDefaultObj()->GetFunction("K2_RemoveItemFromPlayer");
 	if (K2_RemoveItemFromPlayerFn)
-		for (auto& Param : K2_RemoveItemFromPlayerFn->GetParams().NameOffsetMap)
+		for (auto& Param : K2_RemoveItemFromPlayerFn->GetParamsNamed().NameOffsetMap)
 		{
 			if (Param.Name == "ItemVariantGuid")
 			{
@@ -229,7 +229,7 @@ void UFortKismetLibrary::Hook()
 
 	auto K2_SpawnPickupInWorldFn = GetDefaultObj()->GetFunction("K2_SpawnPickupInWorld");
 	if (K2_SpawnPickupInWorldFn)
-		for (auto& Param : K2_SpawnPickupInWorldFn->GetParams().NameOffsetMap)
+		for (auto& Param : K2_SpawnPickupInWorldFn->GetParamsNamed().NameOffsetMap)
 		{
 			if (Param.Name == "bPickupOnlyRelevantToOwner")
 			{
@@ -244,7 +244,7 @@ void UFortKismetLibrary::Hook()
 	auto PickLootDropsFn = GetDefaultObj()->GetFunction("PickLootDrops");
 
 	if (PickLootDropsFn)
-		for (auto& Param : PickLootDropsFn->GetParams().NameOffsetMap)
+		for (auto& Param : PickLootDropsFn->GetParamsNamed().NameOffsetMap)
 		{
 			if (Param.Name == "OptionalLootTags")
 			{

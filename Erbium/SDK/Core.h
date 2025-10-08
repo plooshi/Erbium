@@ -489,8 +489,8 @@ namespace SDK
 
 		void Call(const UObject* obj, UEAllocatedVector<ParamPair> Params) 
 		{
-			if (this) 
-				obj->ProcessEvent(this, CreateParams(Params));
+			//if (this) 
+				//obj->ProcessEvent(this, CreateParams(Params));
 		}
 
 		void operator()(const UObject* obj, void* Params) 
@@ -529,7 +529,7 @@ namespace SDK
 
 		struct Param 
 		{
-			UEAllocatedString Name;
+			//UEAllocatedString Name;
 			uint32 Offset;
 			uint64 PropertyFlags;
 			uint32 ElementSize;
@@ -541,9 +541,43 @@ namespace SDK
 			uint32 Size;
 		};
 
+
+		struct ParamNamed
+		{
+			UEAllocatedString Name;
+			uint32 Offset;
+			uint64 PropertyFlags;
+			uint32 ElementSize;
+		};
+		class ParamsNamed
+		{
+		public:
+			UEAllocatedVector<ParamNamed> NameOffsetMap;
+			uint32 Size;
+		};
+
 		Params GetParams() 
 		{
 			Params p{};
+			static auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);
+			static auto PropertyFlagsOff = OffsetOff - 0xc;
+			static auto ElementSizeOff = OffsetOff - 0x10;
+
+			if (VersionInfo.EngineVersion >= 4.25)
+				for (const UField* _Pr = GetChildren(true); _Pr; _Pr = _Pr->GetNext(true))
+					p.NameOffsetMap.push_back({ /*_Pr->GetName(true).ToSDKString(), */GetFromOffset<uint32>(_Pr, OffsetOff), GetFromOffset<uint64>(_Pr, PropertyFlagsOff), GetFromOffset<uint32>(_Pr, ElementSizeOff)});
+			else
+				for (const UField* _Pr = GetChildren(false); _Pr; _Pr = _Pr->GetNext(false))
+					p.NameOffsetMap.push_back({ /*_Pr->GetName(false).ToSDKString(), */GetFromOffset<uint32>(_Pr, OffsetOff), GetFromOffset<uint64>(_Pr, PropertyFlagsOff), GetFromOffset<uint32>(_Pr, ElementSizeOff)});
+
+			p.Size = GetPropertiesSize();
+			return p;
+		}
+
+
+		ParamsNamed GetParamsNamed()
+		{
+			ParamsNamed p{};
 			static auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);
 			static auto PropertyFlagsOff = OffsetOff - 0xc;
 			static auto ElementSizeOff = OffsetOff - 0x10;
@@ -559,7 +593,7 @@ namespace SDK
 			return p;
 		}
 
-		void* CreateParams(UEAllocatedVector<ParamPair> InputParams) 
+		/*void* CreateParams(UEAllocatedVector<ParamPair> InputParams)
 		{
 			auto Params = GetParams();
 			auto Mem = FMemory::Malloc(Params.Size);
@@ -600,14 +634,14 @@ namespace SDK
 			}
 
 			return nullptr;
-		}
+		}*/
 	};
 
 	template <ConstexprString Name>
 	void UObject::Call(UEAllocatedVector<ParamPair> Params) const 
 	{
-		auto Function = GetFunction(Name);
-		ProcessEvent(Function, Function->CreateParams(Params));
+		//auto Function = GetFunction(Name);
+		//ProcessEvent(Function, Function->CreateParams(Params));
 	}
 
 	template <typename Ret, typename... Args>
