@@ -418,7 +418,7 @@ namespace SDK
 		UObject* GetDefaultObj() const;
 	};
 
-	inline const UField* UStruct::GetProperty(const char* Name, uint64_t CastFlags) const
+	__declspec(noinline) inline const UField* UStruct::GetProperty(const char* Name, uint64_t CastFlags) const
 	{
 		for (const UStruct* Clss = this; Clss; Clss = (const UStruct*)Clss->GetSuper())
 		{
@@ -836,13 +836,37 @@ namespace SDK
 		}
 	}
 
+	inline const UClass* FindClass(const char* Name) {
+		return (UClass*)TUObjectArray::FindObject(Name, 0x20);
+	}
+
+	inline const UObject* DefaultObjImpl(const char* Name) {
+		auto TargetClass = FindClass(Name);
+		for (int i = 0; i < TUObjectArray::Num(); i++) {
+			const UObject* Obj = TUObjectArray::GetObjectByIndex(i);
+			if (Obj && Obj->IsDefaultObject() && Obj->Class == TargetClass)
+				return Obj;
+		}
+		return nullptr;
+	}
+
+	inline const UObject* DefaultObjImpl(const UClass* TargetClass, const char* Name) {
+		for (int i = 0; i < TUObjectArray::Num(); i++) {
+			const UObject* Obj = TUObjectArray::GetObjectByIndex(i);
+			if (Obj && Obj->IsDefaultObject() && Obj->Class == TargetClass)
+				return Obj;
+		}
+		return nullptr;
+	}
+
+
 	inline uint64_t UClass::GetCastFlags() const
 	{
 		static int32 Offset = 0;
 		if (Offset == 0)
 		{
-			auto ClassObj = TUObjectArray::FindObject("Class");
-			auto ActorObj = TUObjectArray::FindObject("Actor");
+			auto ClassObj = FindClass("Class");
+			auto ActorObj = FindClass("Actor");
 			for (int i = 0x28; i < 0x1a0; i += 4)
 			{
 				if (*(uint64_t*)(__int64(ClassObj) + i) == 0x29 && *(uint64_t*)(__int64(ActorObj) + i) == 0x1000000000)
@@ -861,10 +885,10 @@ namespace SDK
 		static int32 Offset = 0;
 		if (Offset == 0)
 		{
-			auto ClassClass = TUObjectArray::FindObject("Class");
-			auto ActorClass = TUObjectArray::FindObject("Actor");
-			auto ClassObj = TUObjectArray::FindObject("Default__Class");
-			auto ActorObj = TUObjectArray::FindObject("Default__Actor");
+			auto ClassClass = FindClass("Class");
+			auto ActorClass = FindClass("Actor");
+			auto ClassObj = DefaultObjImpl(ClassClass, "Class");
+			auto ActorObj = DefaultObjImpl(ActorClass, "Actor");
 			for (int i = 0x28; i < 0x1a0; i += 4)
 			{
 				if (*(UObject**)(__int64(ClassClass) + i) == ClassObj && *(UObject**)(__int64(ActorClass) + i) == ActorObj)
@@ -903,10 +927,6 @@ namespace SDK
 			return -1;
 		}
 	};
-
-	inline const UClass* FindClass(const char* Name) {
-		return (UClass*)TUObjectArray::FindObject(Name, 0x20);
-	}
 
 	inline const UStruct* FindStruct(const char* Name) {
 		return (UStruct*)TUObjectArray::FindObject(Name, 0x10);
@@ -947,15 +967,6 @@ namespace SDK
 		return _storage;
 	}
 
-	inline const UObject* DefaultObjImpl(const char* Name) {
-		auto TargetClass = FindClass(Name);
-		for (int i = 0; i < TUObjectArray::Num(); i++) {
-			const UObject* Obj = TUObjectArray::GetObjectByIndex(i);
-			if (Obj && Obj->IsDefaultObject() && Obj->Class == TargetClass)
-				return Obj;
-		}
-		return nullptr;
-	}
 	template <typename T = UObject*, typename _St>
 	inline T& StructGet(_St* StructInstance, const char* StructName, const char* Name) {
 		auto Struct = TUObjectArray::FindObject<UStruct>(StructName, 0x10);

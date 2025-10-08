@@ -39,8 +39,8 @@ public:
     DEFINE_PROP(DynamicFoundationRepData, FDynamicBuildingFoundationRepData);
     DEFINE_PROP(DynamicFoundationTransform, FTransform);
     DEFINE_PROP(StreamingData, FBuildingFoundationStreamingData);
-    DEFINE_PROP(StreamingBoundingBox, int32);
-    DEFINE_PROP(DynamicFoundationType, int32);
+    DEFINE_PROP(StreamingBoundingBox, uint32);
+    DEFINE_PROP(DynamicFoundationType, uint8);
     DEFINE_BITFIELD_PROP(bServerStreamedInLevel);
 
     DEFINE_FUNC(OnRep_DynamicFoundationRepData, void);
