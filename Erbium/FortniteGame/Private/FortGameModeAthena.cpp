@@ -16,15 +16,14 @@
 #include "../Public/BuildingItemCollectorActor.h"
 
 
-__declspec(noinline) void ShowFoundation(const ABuildingFoundation* Foundation)
+void ShowFoundation(const ABuildingFoundation* Foundation)
 {
-    if (!Foundation) 
-        return;
+    if (!Foundation) return;
 
-    Foundation->bServerStreamedInLevel = true;
-    Foundation->DynamicFoundationType = 0; // static
+    Foundation->StreamingData.BoundingBox = Foundation->StreamingBoundingBox;
+    Foundation->StreamingData.FoundationLocation = Foundation->GetTransform().Translation;
     Foundation->SetDynamicFoundationEnabled(true);
-    Foundation->OnRep_ServerStreamedInLevel();
+    //Foundation->SetDynamicFoundationTransform(Foundation->GetTransform());
 }
 
 

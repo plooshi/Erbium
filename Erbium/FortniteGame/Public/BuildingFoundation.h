@@ -4,11 +4,7 @@
 struct FBox
 {
 public:
-    FBox() {}
-    void operator=(FBox& Rhs)
-    {
-        __movsb((PBYTE)this, (const PBYTE)&Rhs, VersionInfo.FortniteVersion >= 20.00 ? 0x38 : 0x1c);
-    }
+    USCRIPTSTRUCT_COMMON_MEMBERS(FBox);
 };
 
 struct FDynamicBuildingFoundationRepData
@@ -27,7 +23,7 @@ public:
     USCRIPTSTRUCT_COMMON_MEMBERS(FBuildingFoundationStreamingData);
 
     DEFINE_STRUCT_PROP(FoundationLocation, FVector);
-    DEFINE_STRUCT_PROP(BoundingBox, int32);
+    DEFINE_STRUCT_PROP(BoundingBox, FBox);
 };
 
 class ABuildingFoundation : public AActor
@@ -39,7 +35,7 @@ public:
     DEFINE_PROP(DynamicFoundationRepData, FDynamicBuildingFoundationRepData);
     DEFINE_PROP(DynamicFoundationTransform, FTransform);
     DEFINE_PROP(StreamingData, FBuildingFoundationStreamingData);
-    DEFINE_PROP(StreamingBoundingBox, uint32);
+    DEFINE_PROP(StreamingBoundingBox, FBox);
     DEFINE_PROP(DynamicFoundationType, uint8);
     DEFINE_BITFIELD_PROP(bServerStreamedInLevel);
 
