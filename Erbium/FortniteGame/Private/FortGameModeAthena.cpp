@@ -645,7 +645,7 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
     auto Num = NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Num();
     // they only stripped it on athena for some reason
     AFortPlayerPawnAthena* Pawn = nullptr;
-    if (VersionInfo.FortniteVersion == 4.23 && Num != 0)
+    if ((VersionInfo.FortniteVersion == 4.23 || VersionInfo.FortniteVersion == 4.22) && Num != 0)
     {
         auto Transform = StartSpot->GetTransform();
         Pawn = GameMode->SpawnDefaultPawnAtTransform(NewPlayer, Transform);
