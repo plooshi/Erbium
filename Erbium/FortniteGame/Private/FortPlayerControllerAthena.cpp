@@ -6,7 +6,7 @@
 #include "../Public/FortKismetLibrary.h"
 #include "../../Erbium/Public/Configuration.h"
 #include "../Public/FortLootPackage.h"
-
+#include "Erbium/Public/Events.h"
 
 uint64_t FindGetPlayerViewPoint()
 {
@@ -883,6 +883,7 @@ _help:
     cheat startaircraft - Starts the battle bus
     cheat pausesafezone - Pauses the storm
 	cheat giveitem <WID/path> <Count = 1> - Gives you an item
+	cheat startevent - Starts the event for the current version
 	cheat spawnpickup <WID/path> <Count = 1> - Spawns a pickup at your player's location
     cheat tp <X> <Y> <Z> - Teleports to a location)"), FName(), 1);
 	}
@@ -898,6 +899,10 @@ _help:
 		else if (command == "spawnbot")
 		{
 			// todo
+		} 
+		else if (command == "startevent")
+		{
+			Events::StartEvent();
 		}
 		else if (command == "bugitgo" || command == "tp")
 		{
