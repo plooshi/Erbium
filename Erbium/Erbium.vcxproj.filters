@@ -150,6 +150,7 @@
     <ClInclude Include="FortniteGame\Public\BuildingItemCollectorActor.h">
       <Filter>FortniteGame\Public</Filter>
     </ClInclude>
+    <ClInclude Include="Erbium\Public\Events.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Erbium\Private\dllmain.cpp">
@@ -197,5 +198,6 @@
     <ClCompile Include="Erbium\Private\LateGame.cpp">
       <Filter>Erbium\Private</Filter>
     </ClCompile>
+    <ClCompile Include="Erbium\Private\Events.cpp" />
   </ItemGroup>
 </Project>
