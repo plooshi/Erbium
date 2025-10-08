@@ -220,10 +220,10 @@ namespace SDK
 			return ObjectFlags & 0x10;
 		}
 
-		uint32 GetOffset(const char* Name) const 
+		uint32 GetOffset(const char* Name, uint64_t CastFlags = 0) const 
 		{
 			static auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);
-			auto Prop = GetProperty(Name);
+			auto Prop = GetProperty(Name, CastFlags);
 			if (!Prop) return -1;
 			return GetFromOffset<uint32>(Prop, OffsetOff);
 		}
@@ -398,10 +398,10 @@ namespace SDK
 
 		const UField* GetProperty(const char* Name, uint64_t CastFlags = 0) const;
 
-		uint32_t GetOffset(const char* Name) const
+		uint32_t GetOffset(const char* Name, uint64_t CastFlags = 0) const
 		{
 			static auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);
-			auto Prop = GetProperty(Name);
+			auto Prop = GetProperty(Name, CastFlags);
 			if (!Prop)
 				return -1;
 
@@ -425,6 +425,14 @@ namespace SDK
 			if (CastFlags != 0x80000 && VersionInfo.EngineVersion >= 4.25) {
 				for (const UField* Prop = Clss->GetChildren(true); Prop; Prop = Prop->GetNext(true))
 				{
+					if (CastFlags != 0)
+					{
+						auto FieldClass = *(void**)(__int64(Prop) + 0x8);
+						auto CastFlags = *(uint64_t*)(__int64(FieldClass) + 0x10);
+
+						if ((Prop->Class->GetCastFlags() & CastFlags) == 0)
+							continue;
+					}
 					if (Prop->GetName(true).ToSDKString() == Name)
 						return Prop;
 				}

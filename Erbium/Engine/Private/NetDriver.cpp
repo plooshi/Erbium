@@ -180,7 +180,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 
 			for (auto& Chan : Conn->OpenChannels)
 			{
-				if (!Chan->IsA<UActorChannel>() || Chan->Actor != Actor)
+				if (!Chan->IsA<UActorChannel>() || Chan->Actor != Actor)	
 					continue;
 
 				Channel = Chan;
