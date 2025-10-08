@@ -84,21 +84,21 @@
     bool Has##Name() const                                                                                                                                           \
     {                                                                                                                                                                \
         if (Name##__Offset == -2)                                                                                                                                    \
-            Name##__Offset = this->GetOffset(#Name, GUESS_PROP_FLAGS(__VA_ARGS__));                                                                                                                 \
+            Name##__Offset = this->GetOffset(#Name, GUESS_PROP_FLAGS(__VA_ARGS__));                                                                                  \
         return Name##__Offset != -1;                                                                                                                                 \
     }                                                                                                                                                                \
                                                                                                                                                                      \
     __VA_ARGS__& Set##Name(__VA_ARGS__&& Value) const                                                                                                                \
     {                                                                                                                                                                \
         if (Name##__Offset == -2)                                                                                                                                    \
-            Name##__Offset = this->GetOffset(#Name, GUESS_PROP_FLAGS(__VA_ARGS__));                                                                                                                 \
+            Name##__Offset = this->GetOffset(#Name, GUESS_PROP_FLAGS(__VA_ARGS__));                                                                                  \
         return GetFromOffset<__VA_ARGS__>(this, Name##__Offset) = Value;                                                                                             \
     }                                                                                                                                                                \
                                                                                                                                                                      \
     __VA_ARGS__& Set##Name(__VA_ARGS__& Value) const                                                                                                                 \
     {                                                                                                                                                                \
         if (Name##__Offset == -2)                                                                                                                                    \
-            Name##__Offset = this->GetOffset(#Name, GUESS_PROP_FLAGS(__VA_ARGS__));                                                                                                                 \
+            Name##__Offset = this->GetOffset(#Name, GUESS_PROP_FLAGS(__VA_ARGS__));                                                                                  \
         return GetFromOffset<__VA_ARGS__>(this, Name##__Offset) = Value;                                                                                             \
     }                                                                                                                                                                \
                                                                                                                                                                      \
@@ -113,7 +113,7 @@
         if (Name##__Offset == -2)                                                                                                                                    \
         {                                                                                                                                                            \
             auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);        \
-            auto Prop = GetProperty(#Name, 0x20000);                                                                                                                          \
+            auto Prop = GetProperty(#Name, 0x20000);                                                                                                                 \
             Name##__Offset = Prop ? GetFromOffset<uint32>(Prop, OffsetOff) : -1;                                                                                     \
             Name##__FieldMask = Prop ? Prop->GetFieldMask() : 0;                                                                                                     \
         }                                                                                                                                                            \
@@ -125,7 +125,7 @@
         if (Name##__Offset == -2)                                                                                                                                    \
         {                                                                                                                                                            \
             auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);        \
-            auto Prop = GetProperty(#Name, 0x20000);                                                                                                                          \
+            auto Prop = GetProperty(#Name, 0x20000);                                                                                                                 \
             Name##__Offset = Prop ? GetFromOffset<uint32>(Prop, OffsetOff) : -1;                                                                                     \
             Name##__FieldMask = Prop ? Prop->GetFieldMask() : 0;                                                                                                     \
         }                                                                                                                                                            \
@@ -137,7 +137,7 @@
         if (Name##__Offset == -2)                                                                                                                                    \
         {                                                                                                                                                            \
             auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);        \
-            auto Prop = GetProperty(#Name, 0x20000);                                                                                                                          \
+            auto Prop = GetProperty(#Name, 0x20000);                                                                                                                 \
             Name##__Offset = Prop ? GetFromOffset<uint32>(Prop, OffsetOff) : -1;                                                                                     \
             Name##__FieldMask = Prop ? Prop->GetFieldMask() : 0;                                                                                                     \
         }                                                                                                                                                            \
@@ -153,28 +153,28 @@
     __VA_ARGS__& Get##Name() const                                                                                                                                   \
     {                                                                                                                                                                \
         if (Name##__Offset == -2)                                                                                                                                    \
-            Name##__Offset = StaticStruct()->GetOffset(#Name, GUESS_PROP_FLAGS(__VA_ARGS__));                                                                                                       \
+            Name##__Offset = StaticStruct()->GetOffset(#Name, GUESS_PROP_FLAGS(__VA_ARGS__));                                                                        \
         return GetFromOffset<__VA_ARGS__>(this, Name##__Offset);                                                                                                     \
     }                                                                                                                                                                \
                                                                                                                                                                      \
     static bool Has##Name()                                                                                                                                          \
     {                                                                                                                                                                \
         if (Name##__Offset == -2)                                                                                                                                    \
-            Name##__Offset = StaticStruct()->GetOffset(#Name, GUESS_PROP_FLAGS(__VA_ARGS__));                                                                                                       \
+            Name##__Offset = StaticStruct()->GetOffset(#Name, GUESS_PROP_FLAGS(__VA_ARGS__));                                                                        \
         return Name##__Offset != -1;                                                                                                                                 \
     }                                                                                                                                                                \
                                                                                                                                                                      \
     __VA_ARGS__& Set##Name(__VA_ARGS__&& Value) const                                                                                                                \
     {                                                                                                                                                                \
         if (Name##__Offset == -2)                                                                                                                                    \
-            Name##__Offset = StaticStruct()->GetOffset(#Name, GUESS_PROP_FLAGS(__VA_ARGS__));                                                                                                       \
+            Name##__Offset = StaticStruct()->GetOffset(#Name, GUESS_PROP_FLAGS(__VA_ARGS__));                                                                        \
         return GetFromOffset<__VA_ARGS__>(this, Name##__Offset) = Value;                                                                                             \
     }                                                                                                                                                                \
                                                                                                                                                                      \
     __VA_ARGS__& Set##Name(__VA_ARGS__& Value) const                                                                                                                 \
     {                                                                                                                                                                \
         if (Name##__Offset == -2)                                                                                                                                    \
-            Name##__Offset = StaticStruct()->GetOffset(#Name, GUESS_PROP_FLAGS(__VA_ARGS__));                                                                                                       \
+            Name##__Offset = StaticStruct()->GetOffset(#Name, GUESS_PROP_FLAGS(__VA_ARGS__));                                                                        \
         return GetFromOffset<__VA_ARGS__>(this, Name##__Offset) = Value;                                                                                             \
     }                                                                                                                                                                \
                                                                                                                                                                      \
