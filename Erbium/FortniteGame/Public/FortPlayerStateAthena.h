@@ -34,8 +34,8 @@ public:
     UCLASS_COMMON_MEMBERS(AFortPlayerStateAthena);
 
     DEFINE_PROP(AbilitySystemComponent, UAbilitySystemComponent*);
-    DEFINE_PROP(SquadId, int32);
-    DEFINE_PROP(TeamIndex, int32);
+    DEFINE_PROP(SquadId, uint8);
+    DEFINE_PROP(TeamIndex, uint8);
     DEFINE_PROP(UniqueId, FUniqueNetIdRepl);
     DEFINE_PROP(PawnDeathLocation, FVector);
     DEFINE_PROP(DeathInfo, FDeathInfo);
