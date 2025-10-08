@@ -4,7 +4,8 @@
                              (std::is_same_v<__VA_ARGS__, int32> ? 0x80 : \
                              (std::is_same_v<__VA_ARGS__, float> ? 0x100 : \
                              (std::is_same_v<__VA_ARGS__, UClass*> ? 0x400 : \
-                             (std::is_base_of_v<UObject, std::remove_pointer_t<__VA_ARGS__>> ? 0x10000 : 0))))
+                             (std::is_same_v<__VA_ARGS__, uint8> ? 0x1000000000040 : \
+                             (std::is_base_of_v<UObject, std::remove_pointer_t<__VA_ARGS__>> ? 0x10000 : 0)))))
 
 #define UCLASS_COMMON_MEMBERS(__Class)                                                                                                                               \
 	static const SDK::UClass* StaticClass()                                                                                                                          \
@@ -152,28 +153,28 @@
     __VA_ARGS__& Get##Name() const                                                                                                                                   \
     {                                                                                                                                                                \
         if (Name##__Offset == -2)                                                                                                                                    \
-            Name##__Offset = StaticStruct()->GetOffset(#Name);                                                                                                       \
+            Name##__Offset = StaticStruct()->GetOffset(#Name, GUESS_PROP_FLAGS(__VA_ARGS__));                                                                                                       \
         return GetFromOffset<__VA_ARGS__>(this, Name##__Offset);                                                                                                     \
     }                                                                                                                                                                \
                                                                                                                                                                      \
     static bool Has##Name()                                                                                                                                          \
     {                                                                                                                                                                \
         if (Name##__Offset == -2)                                                                                                                                    \
-            Name##__Offset = StaticStruct()->GetOffset(#Name);                                                                                                       \
+            Name##__Offset = StaticStruct()->GetOffset(#Name, GUESS_PROP_FLAGS(__VA_ARGS__));                                                                                                       \
         return Name##__Offset != -1;                                                                                                                                 \
     }                                                                                                                                                                \
                                                                                                                                                                      \
     __VA_ARGS__& Set##Name(__VA_ARGS__&& Value) const                                                                                                                \
     {                                                                                                                                                                \
         if (Name##__Offset == -2)                                                                                                                                    \
-            Name##__Offset = StaticStruct()->GetOffset(#Name);                                                                                                       \
+            Name##__Offset = StaticStruct()->GetOffset(#Name, GUESS_PROP_FLAGS(__VA_ARGS__));                                                                                                       \
         return GetFromOffset<__VA_ARGS__>(this, Name##__Offset) = Value;                                                                                             \
     }                                                                                                                                                                \
                                                                                                                                                                      \
     __VA_ARGS__& Set##Name(__VA_ARGS__& Value) const                                                                                                                 \
     {                                                                                                                                                                \
         if (Name##__Offset == -2)                                                                                                                                    \
-            Name##__Offset = StaticStruct()->GetOffset(#Name);                                                                                                       \
+            Name##__Offset = StaticStruct()->GetOffset(#Name, GUESS_PROP_FLAGS(__VA_ARGS__));                                                                                                       \
         return GetFromOffset<__VA_ARGS__>(this, Name##__Offset) = Value;                                                                                             \
     }                                                                                                                                                                \
                                                                                                                                                                      \

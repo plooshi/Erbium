@@ -428,9 +428,9 @@ namespace SDK
 					if (CastFlags != 0)
 					{
 						auto FieldClass = *(void**)(__int64(Prop) + 0x8);
-						auto CastFlags = *(uint64_t*)(__int64(FieldClass) + 0x10);
+						auto FieldFlags = *(uint64_t*)(__int64(FieldClass) + 0x10);
 
-						if ((Prop->Class->GetCastFlags() & CastFlags) == 0)
+						if ((FieldFlags & CastFlags) == 0)
 							continue;
 					}
 					if (Prop->GetName(true).ToSDKString() == Name)
