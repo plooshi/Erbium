@@ -810,6 +810,9 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 
 void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 {
+	if (!PickupEntry || !PickupEntry->ItemDefinition)
+		return;
+	
 	auto MaxStack = (int32)PickupEntry->ItemDefinition->GetMaxStackSize();
 	int ItemCount = 0;
 
