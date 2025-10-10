@@ -235,7 +235,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
     if (!GameMode->bWorldIsReady)
     {
-        static auto WarmupStartClass = FindClass("FortPlayerStartWarmup");
+        static auto WarmupStartClass = FindClass(FConfiguration::bCreative ? "FortPlayerStartCreative" : "FortPlayerStartWarmup");
         auto Starts = Utils::GetAll(WarmupStartClass);
         auto StartsNum = Starts.Num();
         Starts.Free();
