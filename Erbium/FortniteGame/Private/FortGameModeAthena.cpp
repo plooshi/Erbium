@@ -712,18 +712,23 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
         static auto AmmoClass = FindClass("FortAmmoItemDefinition");
         static auto ResourceClass = FindClass("FortResourceItemDefinition");
 
+        UEAllocatedVector<FGuid> GuidsToRemove;
         for (int i = 0; i < NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
         {
             auto& Entry = NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
 
             if (AFortInventory::IsPrimaryQuickbar(Entry.ItemDefinition) || Entry.ItemDefinition->IsA(AmmoClass) || Entry.ItemDefinition->IsA(ResourceClass))
             {
-                NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Remove(i, FFortItemEntry::Size());
-                i--;
+                //NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Remove(i, FFortItemEntry::Size());
+                //i--;
+                GuidsToRemove.push_back(Entry.ItemGuid);
             }
         }
 
-        for (int i = 0; i < NewPlayer->WorldInventory->Inventory.ItemInstances.Num(); i++)
+        for (auto& Guid : GuidsToRemove)
+            NewPlayer->WorldInventory->Remove(Guid);
+
+        /*for (int i = 0; i < NewPlayer->WorldInventory->Inventory.ItemInstances.Num(); i++)
         {
             auto& Entry = NewPlayer->WorldInventory->Inventory.ItemInstances[i]->ItemEntry;
 
@@ -734,7 +739,7 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
             }
         }
 
-        NewPlayer->WorldInventory->Update(nullptr);
+        NewPlayer->WorldInventory->Update(nullptr);*/
 
 
         if (FConfiguration::bLateGame && Pawn && GameState->Aircrafts.Num() > 0 && GameState->Aircrafts[0])
