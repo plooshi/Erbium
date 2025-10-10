@@ -39,16 +39,6 @@ public:
     DEFINE_STRUCT_PROP(InputCount, FScalableFloat);
 };
 
-struct FColletorUnitInfo
-{
-public:
-    USCRIPTSTRUCT_COMMON_MEMBERS(FColletorUnitInfo);
-
-    DEFINE_STRUCT_PROP(OutputItemEntry, TArray<FFortItemEntry>);
-    DEFINE_STRUCT_PROP(OutputItem, const UFortItemDefinition*);
-    DEFINE_STRUCT_PROP(InputCount, FScalableFloat);
-};
-
 class ABuildingItemCollectorActor : public AActor
 {
 public:
