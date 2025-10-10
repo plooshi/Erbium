@@ -18,7 +18,6 @@
 
 void ShowFoundation(const ABuildingFoundation* Foundation)
 {
-    return;
     if (!Foundation) return;
 
     /*Foundation->StreamingData.BoundingBox = Foundation->StreamingBoundingBox;
