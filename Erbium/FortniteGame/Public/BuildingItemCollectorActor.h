@@ -5,8 +5,8 @@
 struct FCollectorUnitInfo
 {
 public:
-    static const SDK::UStruct* StaticStruct()                         
-    {    
+    static const SDK::UStruct* StaticStruct()
+    {
         static const SDK::UStruct* _storage = nullptr;
 
         if (!_storage)
@@ -15,23 +15,24 @@ public:
         if (!_storage)
             _storage = SDK::FindStruct("ColletorUnitInfo");
 
-        return _storage;                                              
-    }    
-    static const int32 Size()                                         
-    {    
+        return _storage;
+    }
+
+    static const int32 Size()
+    {
         static int32 _size = -1;
 
-        if (_size == -1)                                              
+        if (_size == -1)
             _size = StaticStruct()->GetPropertiesSize();
 
         return _size;
-    }    
-        
-    FCollectorUnitInfo& operator=(FCollectorUnitInfo& _Rhs)                                 
-    {    
-        __movsb((PBYTE)this, (const PBYTE)&_Rhs, Size());             
-        return *this;                                                 
-    }    
+    }
+
+    FCollectorUnitInfo& operator=(FCollectorUnitInfo& _Rhs)
+    {
+        __movsb((PBYTE)this, (const PBYTE)&_Rhs, Size());
+        return *this;
+    }
 
     DEFINE_STRUCT_PROP(OutputItemEntry, TArray<FFortItemEntry>);
     DEFINE_STRUCT_PROP(OutputItem, const UFortItemDefinition*);
