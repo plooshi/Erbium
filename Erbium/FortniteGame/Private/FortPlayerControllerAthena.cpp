@@ -1032,6 +1032,25 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 	//return bIsComp ? (void)callOG(((UFortControllerComponent_Interaction*)Context), Stack.GetCurrentNativeFunction(), ServerAttemptInteract, ReceivingActor, InteractComponent, InteractType, OptionalObjectData, InteractionBeingAttempted, RequestID) : callOG(PlayerController, Stack.GetCurrentNativeFunction(), ServerAttemptInteract, ReceivingActor, InteractComponent, InteractType, OptionalObjectData, InteractionBeingAttempted, RequestID);
 }
 
+void AFortPlayerControllerAthena::ServerDropAllItems(UObject* Context, FFrame& Stack)
+{
+	UFortItemDefinition* IgnoreItemDef;
+
+	Stack.StepCompiledIn(&IgnoreItemDef);
+	Stack.IncrementCode();
+	auto PlayerController = (AFortPlayerControllerAthena*) Context;
+
+	for (int i = 0; i < PlayerController->WorldInventory.Inventory.ReplicatedEntries.Num(); i++)
+	{
+		auto& Entry = PlayerController->WorldInventory.Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
+
+		if (Entry.ItemDefinition == IgnoreItemDef)
+			continue;
+
+		PlayerController->WorldInventory->Remove(Entry.ItemGuid);
+	}
+}
+
 void AFortPlayerControllerAthena::Hook()
 {
 
@@ -1099,4 +1118,6 @@ void AFortPlayerControllerAthena::Hook()
 		Utils::ExecHook(DefaultObjImpl("FortControllerComponent_Interaction")->GetFunction("ServerAttemptInteract"), ServerAttemptInteract_, ServerAttemptInteract_OG);
 	else
 		Utils::ExecHook(ServerAttemptInteractPC, ServerAttemptInteract_, ServerAttemptInteract_OG);
+	
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerDropAllItems"), ServerDropAllItems);
 }
