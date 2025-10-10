@@ -150,7 +150,12 @@
     <ClInclude Include="FortniteGame\Public\BuildingItemCollectorActor.h">
       <Filter>FortniteGame\Public</Filter>
     </ClInclude>
-    <ClInclude Include="Erbium\Public\Events.h" />
+    <ClInclude Include="Erbium\Public\Events.h">
+      <Filter>Erbium\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="FortniteGame\Public\FortPhysicsPawn.h">
+      <Filter>FortniteGame\Public</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Erbium\Private\dllmain.cpp">
@@ -198,6 +203,11 @@
     <ClCompile Include="Erbium\Private\LateGame.cpp">
       <Filter>Erbium\Private</Filter>
     </ClCompile>
-    <ClCompile Include="Erbium\Private\Events.cpp" />
+    <ClCompile Include="Erbium\Private\Events.cpp">
+      <Filter>Erbium\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="FortniteGame\Private\FortPhysicsPawn.cpp">
+      <Filter>FortniteGame\Private</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
