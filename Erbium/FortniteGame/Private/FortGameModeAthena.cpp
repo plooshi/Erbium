@@ -872,12 +872,10 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
             for (int i = 0; i < Durations.Num(); i++)
             {
                 UDataTableFunctionLibrary::EvaluateCurveTableRow(GameData, ShrinkTime, (float)i, nullptr, &Durations[i], FString());
-                printf("new dur %f\n", Durations[i]);
             }
             for (int i = 0; i < HoldDurations.Num(); i++)
             {
                 UDataTableFunctionLibrary::EvaluateCurveTableRow(GameData, HoldTime, (float)i, nullptr, &HoldDurations[i], FString());
-                printf("new holddur %f\n", HoldDurations[i]);
             }
         }
 
@@ -885,6 +883,8 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
         {
             auto Duration = Durations[GameMode->SafeZonePhase + 1];
             auto HoldDuration = HoldDurations[GameMode->SafeZonePhase + 1];
+            printf("new dur %f\n", Duration);
+            printf("new holddur %f\n", HoldDuration);
 
             GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + HoldDuration;
             GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
