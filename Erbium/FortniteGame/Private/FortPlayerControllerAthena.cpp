@@ -1040,6 +1040,7 @@ void AFortPlayerControllerAthena::ServerDropAllItems(UObject* Context, FFrame& S
 	Stack.IncrementCode();
 	auto PlayerController = (AFortPlayerControllerAthena*) Context;
 
+	auto Loc = PlayerController->MyFortPawn->K2_GetActorLocation();
 	for (int i = 0; i < PlayerController->WorldInventory.Inventory.ReplicatedEntries.Num(); i++)
 	{
 		auto& Entry = PlayerController->WorldInventory.Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
@@ -1047,6 +1048,7 @@ void AFortPlayerControllerAthena::ServerDropAllItems(UObject* Context, FFrame& S
 		if (Entry.ItemDefinition == IgnoreItemDef)
 			continue;
 
+		AFortInventory::SpawnPickup(Loc, Entry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn);
 		PlayerController->WorldInventory->Remove(Entry.ItemGuid);
 	}
 }
