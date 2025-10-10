@@ -812,6 +812,7 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
 
 void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* GameMode, int NewSafeZonePhase_Inp)
 {
+    printf("call\n");
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
     
     auto NewSafeZonePhase = NewSafeZonePhase_Inp >= 0 ? NewSafeZonePhase_Inp : GameMode->SafeZonePhase + 1;
@@ -881,8 +882,8 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
 
         if (!FConfiguration::bLateGame)
         {
-            auto Duration = Durations[GameMode->SafeZonePhase + 1];
-            auto HoldDuration = HoldDurations[GameMode->SafeZonePhase + 1];
+            auto Duration = Durations[NewSafeZonePhase];
+            auto HoldDuration = HoldDurations[NewSafeZonePhase];
             printf("new dur %f\n", Duration);
             printf("new holddur %f\n", HoldDuration);
 
