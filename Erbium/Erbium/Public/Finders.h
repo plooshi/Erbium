@@ -1434,7 +1434,7 @@ inline void FindNullsAndRetTrues()
     }
 
 
-    auto PedestalBeginPlay = Memcury::Scanner::FindStringRef(L"AFortTeamMemberPedestal::BeginPlay - Begun play on pedestal %s").Get();
+    auto PedestalBeginPlay = Memcury::Scanner::FindStringRef(L"AFortTeamMemberPedestal::BeginPlay - Begun play on pedestal %s", true, 0, VersionInfo.EngineVersion >= 5.0).Get();
 
     if (PedestalBeginPlay)
         for (int i = 0; i < 1000; i++)
