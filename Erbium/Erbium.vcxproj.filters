@@ -203,11 +203,11 @@
     <ClCompile Include="Erbium\Private\LateGame.cpp">
       <Filter>Erbium\Private</Filter>
     </ClCompile>
-    <ClCompile Include="Erbium\Private\Events.cpp">
-      <Filter>Erbium\Private</Filter>
-    </ClCompile>
     <ClCompile Include="FortniteGame\Private\FortPhysicsPawn.cpp">
       <Filter>FortniteGame\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="Erbium\Private\Events.cpp">
+      <Filter>Erbium\Private</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

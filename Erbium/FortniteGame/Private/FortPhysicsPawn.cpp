@@ -100,17 +100,26 @@ void ServerMove(UObject* Context, FFrame& Stack)
 
 void AFortPhysicsPawn::Hook()
 {
-    auto ServerMoveFn = GetDefaultObj()->GetFunction("ServerMove");
+    auto DefaultPhysPawn = GetDefaultObj();
+    if (DefaultPhysPawn)
+    {
+        auto ServerMoveFn = DefaultPhysPawn->GetFunction("ServerMove");
 
-    if (ServerMoveFn)
-        Utils::ExecHook(ServerMoveFn, ServerMove);
+        if (ServerMoveFn)
+            Utils::ExecHook(ServerMoveFn, ServerMove);
+        else
+        {
+            auto ServerUpdatePhysicsParamsFn = DefaultPhysPawn->GetFunction("ServerUpdatePhysicsParams");
+
+            if (ServerUpdatePhysicsParamsFn)
+                Utils::ExecHook(ServerUpdatePhysicsParamsFn, ServerMove);
+        }
+    }
     else
     {
-        auto ServerUpdatePhysicsParamsFn = GetDefaultObj()->GetFunction("ServerUpdatePhysicsParams");
+        auto DefaultVehicle = DefaultObjImpl("FortAthenaVehicle");
 
-        if (ServerUpdatePhysicsParamsFn)
-            Utils::ExecHook(ServerUpdatePhysicsParamsFn, ServerMove);
-        else
-            Utils::ExecHook(DefaultObjImpl("FortAthenaVehicle")->GetFunction("ServerUpdatePhysicsParams"), ServerMove);
+        if (DefaultVehicle)
+            Utils::ExecHook(DefaultVehicle->GetFunction("ServerUpdatePhysicsParams"), ServerMove);
     }
 }
