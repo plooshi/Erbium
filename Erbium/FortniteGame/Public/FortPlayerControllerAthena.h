@@ -138,6 +138,7 @@ public:
     DefHookOg(void, ClientOnPawnDied, AFortPlayerControllerAthena*, FFortPlayerDeathReport&);
     DefUHookOg(ServerAttemptInteract_);
     void InternalPickup(FFortItemEntry*);
+    static void ServerDropAllItems(UObject*, FFrame&);
     
 
     InitHooks;
