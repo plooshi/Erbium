@@ -1041,9 +1041,9 @@ void AFortPlayerControllerAthena::ServerDropAllItems(UObject* Context, FFrame& S
 	auto PlayerController = (AFortPlayerControllerAthena*) Context;
 
 	auto Loc = PlayerController->MyFortPawn->K2_GetActorLocation();
-	for (int i = 0; i < PlayerController->WorldInventory.Inventory.ReplicatedEntries.Num(); i++)
+	for (int i = 0; i < PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
 	{
-		auto& Entry = PlayerController->WorldInventory.Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
+		auto& Entry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
 
 		if (Entry.ItemDefinition == IgnoreItemDef)
 			continue;
