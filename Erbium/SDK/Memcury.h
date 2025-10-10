@@ -1204,16 +1204,20 @@ namespace Memcury
                 {
                     for (int i = 0; i < 300; i++)
                     {
-                        if (!bSkunky ? (*(uint8_t*)(add.Get() - i) == 0x48 && *(uint8_t*)(add.Get() - i + 1) == 0x83) :
-                            (*(uint8_t*)(add.Get() - i) == 0x4C && *(uint8_t*)(add.Get() - i + 1) == 0x8B && *(uint8_t*)(add.Get() - i + 2) == 0xDC))
+                        //if (!bSkunky ? (*(uint8_t*)(add.Get() - i) == 0x48 && *(uint8_t*)(add.Get() - i + 1) == 0x83) :
+                        //    (*(uint8_t*)(add.Get() - i) == 0x4C && *(uint8_t*)(add.Get() - i + 1) == 0x8B && *(uint8_t*)(add.Get() - i + 2) == 0xDC))
+                        if (*(uint8_t*)(add.Get() - i) == 0x48 && *(uint8_t*)(add.Get() - i + 1) == 0x83)
                         {
-                            // MessageBoxA(0, std::format("0x{:x}", (__int64(add.Get() - i) - __int64(GetModuleHandleW(0)))).c_str(), "Memcury", MB_OK);
+                           int sub = 0;
+                           if (*(uint8_t*)(add.Get() - i - 3) == 0x4C && *(uint8_t*)(add.Get() - i - 2) == 0x8B && *(uint8_t*)(add.Get() - i - 1) == 0xDC)
+                              sub = 3;
+                           // MessageBoxA(0, std::format("0x{:x}", (__int64(add.Get() - i) - __int64(GetModuleHandleW(0)))).c_str(), "Memcury", MB_OK);
 
-                            auto beginFunc = Scanner(add.Get() - i);
+                           auto beginFunc = Scanner(add.Get() - i - sub);
 
-                            auto ref = FindPointerRef(beginFunc.GetAs<void*>());
+                           auto ref = FindPointerRef(beginFunc.GetAs<void*>());
 
-                            return ref;
+                           return ref;
                         }
                     }
                 }
