@@ -569,7 +569,7 @@ inline uint64 FindApplyCharacterCustomization()
 
     if (ApplyCharacterCustomization == 0)
     {
-        auto sRef = Memcury::Scanner::FindStringRef(L"AFortPlayerState::ApplyCharacterCustomization - Failed initialization, using default parts. Player Controller: %s PlayerState: %s, HeroId: %s", false, 0, VersionInfo.FortniteVersion >= 17, VersionInfo.FortniteVersion < 20).Get();
+        auto sRef = Memcury::Scanner::FindStringRef(L"AFortPlayerState::ApplyCharacterCustomization - Failed initialization, using default parts. Player Controller: %s PlayerState: %s, HeroId: %s", false, 0, VersionInfo.FortniteVersion >= 17, VersionInfo.FortniteVersion < 20 && VersionInfo.FortniteVersion != 19.01).Get();
 
         if (!sRef)
             return 0;
