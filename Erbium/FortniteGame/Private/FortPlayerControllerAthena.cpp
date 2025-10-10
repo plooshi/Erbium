@@ -1052,6 +1052,10 @@ void AFortPlayerControllerAthena::Hook()
 		auto DefaultFortPCZone = DefaultObjImpl("FortPlayerControllerZone");
 		Utils::Hook<AFortPlayerControllerAthena>(ServerRestartPlayerIdx, DefaultFortPCZone->Vft[ServerRestartPlayerIdx]);
 	}
+	
+	auto ServerSuicideIdx = GetDefaultObj()->GetFunction("ServerSuicide")->GetVTableIndex();
+	auto DefaultFortPCZone = DefaultObjImpl("FortPlayerControllerZone");
+	Utils::Hook<AFortPlayerControllerAthena>(ServerSuicideIdx, DefaultFortPCZone->Vft[ServerSuicideIdx]);
 
 	if (VersionInfo.FortniteVersion >= 11)
 	{
