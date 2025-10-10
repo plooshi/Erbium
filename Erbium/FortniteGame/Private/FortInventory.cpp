@@ -357,7 +357,7 @@ void SetLoadedAmmo(UFortWorldItem* Item, int LoadedAmmo)
         { return item.ItemGuid == Item->ItemEntry.ItemGuid; }, FFortItemEntry::Size());
     if (repEnt)
         *repEnt = Item->ItemEntry;
-    PlayerController->WorldInventory->Update(&Item->ItemEntry);
+    PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
 }
 
 void SetPhantomReserveAmmo(UFortWorldItem* Item, unsigned int PhantomReserveAmmo)
@@ -371,7 +371,7 @@ void SetPhantomReserveAmmo(UFortWorldItem* Item, unsigned int PhantomReserveAmmo
         { return item.ItemGuid == Item->ItemEntry.ItemGuid; }, FFortItemEntry::Size());
     if (repEnt)
         *repEnt = Item->ItemEntry;
-    PlayerController->WorldInventory->Update(&Item->ItemEntry);
+    PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
 }
 
 
