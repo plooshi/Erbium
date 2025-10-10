@@ -872,10 +872,12 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
             for (int i = 0; i < Durations.Num(); i++)
             {
                 UDataTableFunctionLibrary::EvaluateCurveTableRow(GameData, ShrinkTime, (float)i, nullptr, &Durations[i], FString());
+                printf("new dur %f\n", Durations[i]);
             }
             for (int i = 0; i < HoldDurations.Num(); i++)
             {
                 UDataTableFunctionLibrary::EvaluateCurveTableRow(GameData, HoldTime, (float)i, nullptr, &HoldDurations[i], FString());
+                printf("new holddur %f\n", HoldDurations[i]);
             }
         }
 
