@@ -109,7 +109,7 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 	}
 }
 
-void AFortPlayerControllerAthena::ServerExecuteInventoryItem(UObject* Context, FFrame& Stack)
+void AFortPlayerControllerAthena::ServerExecuteInventoryItem_(UObject* Context, FFrame& Stack)
 {
 	FGuid ItemGuid;
 	Stack.StepCompiledIn(&ItemGuid);
@@ -815,12 +815,17 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 	
 	auto MaxStack = (int32)PickupEntry->ItemDefinition->GetMaxStackSize();
 	int ItemCount = 0;
-
+	
+	if (PickupEntry->ItemDefinition->HasbForceIntoOverflow() && PickupEntry->ItemDefinition->bForceIntoOverflow)
+	{
+		WorldInventory->GiveItem(*PickupEntry, PickupEntry->Count, true);
+		return;
+	}
 	for (int i = 0; i < WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
 	{
 		auto& Item = WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
 
-		if (AFortInventory::IsPrimaryQuickbar(Item.ItemDefinition) && Item.ItemDefinition->bInventorySizeLimited)
+		if (AFortInventory::IsPrimaryQuickbar(Item.ItemDefinition))
 			ItemCount += Item.ItemDefinition->HasNumberOfSlotsToTake() ? Item.ItemDefinition->NumberOfSlotsToTake : 1;
 	}
 
@@ -1032,6 +1037,8 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 	//return bIsComp ? (void)callOG(((UFortControllerComponent_Interaction*)Context), Stack.GetCurrentNativeFunction(), ServerAttemptInteract, ReceivingActor, InteractComponent, InteractType, OptionalObjectData, InteractionBeingAttempted, RequestID) : callOG(PlayerController, Stack.GetCurrentNativeFunction(), ServerAttemptInteract, ReceivingActor, InteractComponent, InteractType, OptionalObjectData, InteractionBeingAttempted, RequestID);
 }
 
+const UClass* AmmoClass = nullptr;
+const UClass* ResourceClass = nullptr;
 void AFortPlayerControllerAthena::ServerDropAllItems(UObject* Context, FFrame& Stack)
 {
 	UFortItemDefinition* IgnoreItemDef;
@@ -1045,11 +1052,11 @@ void AFortPlayerControllerAthena::ServerDropAllItems(UObject* Context, FFrame& S
 	{
 		auto& Entry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
 
-		if (Entry.ItemDefinition == IgnoreItemDef)
-			continue;
-
-		AFortInventory::SpawnPickup(Loc, Entry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn);
-		PlayerController->WorldInventory->Remove(Entry.ItemGuid);
+		if (Entry.ItemDefinition != IgnoreItemDef && AFortInventory::IsPrimaryQuickbar(Entry.ItemDefinition) || Entry.ItemDefinition->IsA(AmmoClass) || Entry.ItemDefinition->IsA(ResourceClass))
+		{
+			AFortInventory::SpawnPickup(Loc, Entry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn);
+			PlayerController->WorldInventory->Remove(Entry.ItemGuid);
+		}
 	}
 }
 
@@ -1059,6 +1066,8 @@ void AFortPlayerControllerAthena::Hook()
 	CantBuild_ = FindCantBuild();
 	ReplaceBuildingActor_ = FindReplaceBuildingActor(); // pre-cache building offsets
 	RemoveFromAlivePlayers_ = FindRemoveFromAlivePlayers();
+	AmmoClass = FindClass("FortAmmoItemDefinition");
+	ResourceClass = FindClass("FortResourceItemDefinition");
 
 	auto DefaultFortPC = DefaultObjImpl("FortPlayerController");
 
@@ -1088,7 +1097,7 @@ void AFortPlayerControllerAthena::Hook()
 	}
 
 	//Utils::ExecHook(GetDefaultObj()->GetFunction("ServerAcknowledgePossession"), ServerAcknowledgePossession);
-	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerExecuteInventoryItem"), ServerExecuteInventoryItem);
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerExecuteInventoryItem"), ServerExecuteInventoryItem_);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerExecuteInventoryWeapon"), ServerExecuteInventoryWeapon); // S9 shenanigans
 
 	// same as serveracknowledgepossession

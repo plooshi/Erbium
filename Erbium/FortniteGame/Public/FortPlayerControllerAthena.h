@@ -121,11 +121,13 @@ public:
     DEFINE_FUNC(GetAircraftComponent, UFortControllerComponent_Aircraft*);
     DEFINE_FUNC(ServerAttemptAircraftJump, void);
     DEFINE_FUNC(ServerAttemptInteract, void);
+    DEFINE_FUNC(ServerExecuteInventoryItem, void);
+    DEFINE_FUNC(ClientEquipItem, void);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);
     DefHookOg(void, ServerAttemptAircraftJump_, UObject*, FFrame&);
-    static void ServerExecuteInventoryItem(UObject*, FFrame&);
+    static void ServerExecuteInventoryItem_(UObject*, FFrame&);
     static void ServerExecuteInventoryWeapon(UObject*, FFrame&);
     static void ServerCreateBuildingActor(UObject*, FFrame&);
     static void ServerBeginEditingBuildingActor(UObject*, FFrame&);

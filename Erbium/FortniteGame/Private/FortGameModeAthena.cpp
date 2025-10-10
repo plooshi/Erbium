@@ -859,12 +859,11 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
         TArray<float>& HoldDurations = *(TArray<float>*)(SafeZoneDefinition + DurationsOffset - 0x10);
 
 
-        auto DurationSum = 0.f;
-        for (auto& _v : Durations)
-            DurationSum += _v;
-
-        if (DurationSum == 0)
+        static bool bSetDurations = false;
+        if (!bSetDurations)
         {
+            bSetDurations = true;
+
             auto GameData = GameMode->HasAthenaGameDataTable() ? GameMode->AthenaGameDataTable : GameState->AthenaGameDataTable;
 
             auto ShrinkTime = UKismetStringLibrary::Conv_StringToName(FString(L"Default.SafeZone.ShrinkTime"));
