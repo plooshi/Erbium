@@ -917,6 +917,9 @@ namespace SDK
 
 	inline UObject* UClass::GetDefaultObj() const
 	{ 
+		if (!this)
+			return nullptr;
+
 		static int32 Offset = 0;
 		if (Offset == 0)
 		{
