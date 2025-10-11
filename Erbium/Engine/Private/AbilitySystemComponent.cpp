@@ -22,7 +22,7 @@ void UAbilitySystemComponent::GiveAbility(const UObject* Ability)
         Spec->Level = 1;
         Spec->InputID = -1;
         Spec->Handle.Handle = rand();
-        Spec->SourceObject = nullptr;
+        if (VersionInfo.FortniteVersion <= 23) Spec->SourceObject = nullptr;
     }
 
     ((FGameplayAbilitySpecHandle * (*)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle*, __int64)) FindGiveAbility())(this, &Spec->Handle, __int64(Spec));

@@ -158,8 +158,11 @@ namespace SDK
 
 		if (VersionInfo.FortniteVersion < 14.00)
 			addr = Memcury::Scanner::FindStringRef(L"AccessNoneNoContext").ScanFor({ 0x40, 0x55 }, true, 0, 1, 2000).Get();
-		else if (VersionInfo.FortniteVersion >= 23.00)
+		else if (VersionInfo.FortniteVersion >= 23.00) {
 			addr = Memcury::Scanner::FindPattern("48 85 C9 0F 85 ? ? ? ? F7 87 ? ? ? ? ? ? ? ? ? 8B ?").ScanFor({ 0x40, 0x55 }, false).Get();
+			if (!addr)
+				addr = Memcury::Scanner::FindPattern("41 FF 92 ? ? ? ? E9 ? ? ? ? 49 8B C8").ScanFor({ 0x40, 0x55 }, false).Get();
+		} 
 		else
 			addr = Memcury::Scanner::FindStringRef(L"UMeshNetworkComponent::ProcessEvent: Invalid mesh network node type: %s", true, 0, VersionInfo.FortniteVersion >= 19.00).ScanFor({ 0xE8 }, true, VersionInfo.FortniteVersion < 19.00 ? 1 : 3, 0, 2000).RelativeOffset(1).Get();
 
@@ -217,6 +220,9 @@ namespace SDK
 						Offsets::StaticFindObject = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 7C 24 ? 4C 89 64 24 ? 55 41 56 41 57 48 8B EC 48 83 EC 60 33 FF 4C 8B E1 48 8D 4D E8 45 8A").Get();
 				}
 			}
+
+			if (VersionInfo.FortniteVersion >= 23.00)
+				Offsets::StaticFindObject = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 55 57 41 56 48 8B EC 48 83 EC ? 33 DB 4C 8B F1").Get();
 		}
 		else if (VersionInfo.EngineVersion >= 4.27)
 		{

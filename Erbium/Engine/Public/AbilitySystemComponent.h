@@ -30,7 +30,7 @@ public:
     DEFINE_STRUCT_PROP(Ability, UFortGameplayAbility*);
     DEFINE_STRUCT_PROP(Level, int32);
     DEFINE_STRUCT_PROP(InputID, int32);
-    DEFINE_STRUCT_PROP(SourceObject, UObject*);
+    DEFINE_STRUCT_PROP(SourceObject, TWeakObjectPtr<class UObject>);
     DEFINE_STRUCT_PROP(InputPressed, uint8);
 };
 
