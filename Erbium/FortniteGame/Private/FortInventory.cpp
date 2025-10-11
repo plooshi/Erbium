@@ -198,7 +198,7 @@ AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entr
     if (HasPhantomReserveAmmo)
         NewPickup->PrimaryPickupItemEntry.PhantomReserveAmmo = Entry.PhantomReserveAmmo;
 
-    auto SetPickupItems = FindSetPickupItems();
+    static auto SetPickupItems = FindSetPickupItems();
     if (SetPickupItems)
     {
         TArray<FFortItemEntry> a{};
@@ -257,7 +257,7 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
     static auto HasPhantomReserveAmmo = Entry.HasPhantomReserveAmmo();
     if (HasPhantomReserveAmmo)
         NewPickup->PrimaryPickupItemEntry.PhantomReserveAmmo = Entry.PhantomReserveAmmo;
-    auto SetPickupItems = FindSetPickupItems();
+    static auto SetPickupItems = FindSetPickupItems();
     if (SetPickupItems)
     {
         TArray<FFortItemEntry> a{};
