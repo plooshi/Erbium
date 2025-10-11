@@ -36,6 +36,8 @@ public:
     DEFINE_BITFIELD_PROP(bMovingEmoteFollowingOnly);
     DEFINE_PROP(LastFallDistance, float);
     DEFINE_PROP(GameplayTags, FGameplayTagContainer);
+    DEFINE_BITFIELD_PROP(bIsInAnyStorm);
+    DEFINE_BITFIELD_PROP(bIsInsideSafeZone);
 
     DEFINE_FUNC(BeginSkydiving, void);
     DEFINE_FUNC(GetHealth, float);
@@ -48,6 +50,8 @@ public:
     DEFINE_FUNC(ServerHandlePickup, void);
     DEFINE_FUNC(IsDBNO, bool);
     DEFINE_FUNC(PickUpActor, void);
+    DEFINE_FUNC(OnRep_IsInAnyStorm, void);
+    DEFINE_FUNC(OnRep_IsInsideSafeZone, void);
 
     DefUHookOg(ServerHandlePickup_);
     DefUHookOg(ServerHandlePickupInfo);

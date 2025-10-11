@@ -8,4 +8,6 @@ public:
 
     DEFINE_PROP(SafeZoneStartShrinkTime, float);
     DEFINE_PROP(SafeZoneFinishShrinkTime, float);
+
+    DEFINE_FUNC(GetSafeZoneCenter, FVector);
 };

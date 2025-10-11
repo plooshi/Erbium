@@ -133,6 +133,8 @@ public:
     DEFINE_FUNC(IsInAircraft, bool);
     DEFINE_FUNC(GetAircraftComponent, UFortControllerComponent_Aircraft*);
     DEFINE_FUNC(ServerAttemptAircraftJump, void);
+    DEFINE_FUNC(Possess, void);
+    DEFINE_FUNC(RespawnPlayerAfterDeath, void);
     DEFINE_FUNC(ServerAttemptInteract, void);
     DEFINE_FUNC(ServerExecuteInventoryItem, void);
     DEFINE_FUNC(ClientEquipItem, void);
@@ -149,6 +151,7 @@ public:
     static void ServerRepairBuildingActor(UObject*, FFrame&);
     static void ServerAttemptInventoryDrop(UObject*, FFrame&);
     static void ServerPlayEmoteItem(UObject*, FFrame&);
+    static void ServerClientIsReadyToRespawn(UObject*, FFrame&);
     static void ServerCheat(UObject*, FFrame&);
     DefHookOg(void, ClientOnPawnDied, AFortPlayerControllerAthena*, FFortPlayerDeathReport&);
     DefUHookOg(ServerAttemptInteract_);
