@@ -891,8 +891,7 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
         }
     } 
 
-    if (VersionInfo.FortniteVersion < 13.00)
-        HandlePostSafeZonePhaseChangedOG(GameMode, NewSafeZonePhase_Inp);
+    HandlePostSafeZonePhaseChangedOG(GameMode, NewSafeZonePhase_Inp);
 
     if (FConfiguration::bLateGame && GameMode->SafeZonePhase > 3)
     {
@@ -916,10 +915,6 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
         GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = (float) UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + 30.f;
         GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
     }
-
-
-    if (VersionInfo.FortniteVersion >= 13.00)
-        HandlePostSafeZonePhaseChangedOG(GameMode, NewSafeZonePhase_Inp);
 }
 
 
