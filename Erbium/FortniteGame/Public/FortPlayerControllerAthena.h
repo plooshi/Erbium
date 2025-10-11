@@ -89,6 +89,18 @@ public:
     DEFINE_FUNC(ServerAttemptInteract, void);
 };
 
+// todo: seperate this
+class UFortPlayerControllerAthenaXPComponent : public UActorComponent
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortPlayerControllerAthenaXPComponent);
+
+    DEFINE_PROP(CurrentLevel, int32);
+    DEFINE_PROP(bRegisteredWithQuestManager, bool);
+
+    DEFINE_FUNC(OnRep_bRegisteredWithQuestManager, void);
+};
+
 class AFortPlayerControllerAthena : public AActor
 {
 public:
@@ -107,6 +119,7 @@ public:
     DEFINE_BITFIELD_PROP(bBuildFree);
     DEFINE_PROP(SwappingItemDefinition, FFortItemEntry*); // scuffness
     DEFINE_PROP(QuickBars, AFortQuickBars*);
+    DEFINE_PROP(XPComponent, UFortPlayerControllerAthenaXPComponent*);
 
     DEFINE_FUNC(GetViewTarget, AActor*);
     DEFINE_FUNC(GetControlRotation, FRotator);

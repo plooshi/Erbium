@@ -8,7 +8,6 @@
 #include <chrono>
 #include "../Public/Configuration.h"
 
-
 void Main()
 {
     AllocConsole();

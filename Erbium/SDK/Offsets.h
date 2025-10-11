@@ -30,6 +30,17 @@ namespace SDK
 		inline uint64_t GetInterfaceAddress = 0;
 		inline uint64_t StaticFindObject = 0;
 		inline uint64_t StaticLoadObject = 0;
+
+		inline uint32_t Offset_Internal = 0;
+		inline uint32_t ElementSize = 0;
+		inline uint32_t PropertyFlags = 0;
+		inline uint32_t PropertiesSize = 0;
+		inline uint32_t Super = 0;
+		inline uint32_t FieldMask = 0;
+		inline uint32_t Children = 0;
+		inline uint32_t FField_Next = 0;
+		inline uint32_t FField_Name = 0;
+		inline uint32_t ExecFunction = 0;
     }
 
 	inline void Init()
@@ -281,5 +292,26 @@ namespace SDK
 				}
 			}
 		}
+
+		Offsets::Offset_Internal = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);
+		Offsets::PropertyFlags = Offsets::Offset_Internal - 0xc;
+		Offsets::ElementSize = Offsets::Offset_Internal - 0x10;
+		Offsets::PropertiesSize = VersionInfo.EngineVersion >= 4.25 ? 0x58 : (VersionInfo.EngineVersion >= 4.22 ? 0x50 : 0x40);
+		Offsets::Super = VersionInfo.EngineVersion >= 4.22 ? 0x40 : 0x30;
+		Offsets::FieldMask = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x7b : 0x73;
+		Offsets::Children = VersionInfo.EngineVersion >= 4.22 ? 0x48 : 0x38;
+		Offsets::FField_Next = VersionInfo.EngineVersion >= 5.2 ? 0x18 : 0x20;
+		Offsets::FField_Name = VersionInfo.EngineVersion >= 5.2 ? 0x20 : 0x28;
+
+		if (VersionInfo.FortniteVersion <= 6.31)
+			Offsets::ExecFunction = 0xB0;
+		else if (VersionInfo.FortniteVersion > 7.00 && VersionInfo.FortniteVersion < 12.00)
+			Offsets::ExecFunction = 0xC0;
+		else if (VersionInfo.FortniteVersion >= 12.00 && VersionInfo.FortniteVersion < 12.10)
+			Offsets::ExecFunction = 0xC8;
+		else if (VersionInfo.FortniteVersion >= 12.10 && VersionInfo.FortniteVersion <= 12.61)
+			Offsets::ExecFunction = 0xF0;
+		else
+			Offsets::ExecFunction = 0xD8;
 	}
 }

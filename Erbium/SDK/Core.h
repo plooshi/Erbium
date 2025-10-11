@@ -222,10 +222,9 @@ namespace SDK
 
 		uint32 GetOffset(const char* Name, uint64_t CastFlags = 0) const 
 		{
-			static auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);
 			auto Prop = GetProperty(Name, CastFlags);
 			if (!Prop) return -1;
-			return GetFromOffset<uint32>(Prop, OffsetOff);
+			return GetFromOffset<uint32>(Prop, Offsets::Offset_Internal);
 		}
 
 		template <ConstexprString Name, typename T = UObject*>
@@ -242,9 +241,8 @@ namespace SDK
 		template <ConstexprString Name>
 		bool GetBitfield() const
 		{
-			static auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);
 			auto Prop = GetProperty(Name);
-			auto Offset = GetFromOffset<uint32>(Prop, OffsetOff);
+			auto Offset = GetFromOffset<uint32>(Prop, Offsets::Offset_Internal);
 			auto& Field = GetFromOffset<uint8>(this, Offset);
 
 			return Field & Prop->GetFieldMask();
@@ -253,9 +251,8 @@ namespace SDK
 		template <ConstexprString Name>
 		void SetBitfield(bool Value) const 
 		{
-			static auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);
 			auto Prop = GetProperty(Name);
-			auto Offset = GetFromOffset<uint32>(Prop, OffsetOff);
+			auto Offset = GetFromOffset<uint32>(Prop, Offsets::Offset_Internal);
 			auto& Field = GetFromOffset<uint8>(this, Offset);
 
 			if (Value) {
@@ -315,14 +312,11 @@ namespace SDK
 			return IsA(Clss) ? (T*)this : nullptr;
 		}
 
-		class UFunction* GetFunction(const char* Name) const
-		{
-			return (UFunction*)GetProperty(Name, 0x80000);
-		}
+		class UFunction* GetFunction(const char* Name) const;
 
 		void ProcessEvent(class UFunction* Function, void* Params) const 
 		{
-			auto ProcessEventInternal = (void(*&)(const UObject*, class UFunction*, void*)) Offsets::ProcessEvent;
+			auto& ProcessEventInternal = (void(*&)(const UObject*, class UFunction*, void*)) Offsets::ProcessEvent;
 			ProcessEventInternal(this, Function, Params);
 		}
 
@@ -349,25 +343,29 @@ namespace SDK
 	class UField : public UObject
 	{
 	public:
-		const UField* GetNext(bool bNewFields = false) const 
+		const UField* FField_GetNext() const
 		{
-			auto NextOff = bNewFields ? (VersionInfo.EngineVersion >= 5.2 ? 0x18 : 0x20) : 0x28;
-
-			return GetFromOffset<UField*>(this, NextOff);
+			return GetFromOffset<UField*>(this, Offsets::FField_Next);
 		}
 
-		FName& GetName(bool bNewFields = false) const
+		FName& FField_GetName() const
 		{
-			auto NameOff = bNewFields ? (VersionInfo.EngineVersion >= 5.2 ? 0x20 : 0x28) : 0x18;
+			return GetFromOffset<FName>(this, Offsets::FField_Name);
+		}
 
-			return GetFromOffset<FName>(this, NameOff);
+		const UField* GetNext() const 
+		{
+			return GetFromOffset<UField*>(this, 0x28);
+		}
+
+		FName& GetName() const
+		{
+			return GetFromOffset<FName>(this, 0x18);
 		}
 
 		const uint8 GetFieldMask() const 
 		{
-			static auto FieldMaskOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x7b : 0x73;
-
-			return GetFromOffset<uint8>(this, FieldMaskOff);
+			return GetFromOffset<uint8>(this, Offsets::FieldMask);
 		}
 	};
 
@@ -376,23 +374,22 @@ namespace SDK
 	public:
 		const UStruct* GetSuper() const 
 		{
-			static auto SuperOff = VersionInfo.EngineVersion >= 4.22 ? 0x40 : 0x30;
-
-			return GetFromOffset<UStruct*>(this, SuperOff);
+			return GetFromOffset<UStruct*>(this, Offsets::Super);
 		}
 
 		const int32 GetPropertiesSize() const 
 		{
-			auto ChildrenOff = VersionInfo.EngineVersion >= 4.25 ? 0x58 : (VersionInfo.EngineVersion >= 4.22 ? 0x50 : 0x40);
-
-			return GetFromOffset<int32>(this, ChildrenOff);
+			return GetFromOffset<int32>(this, Offsets::PropertiesSize);
 		}
 
-		const UField* GetChildren(bool bNewFields = false) const 
+		const UField* GetChildProperties() const
 		{
-			auto ChildrenOff = bNewFields ? 0x50 : (VersionInfo.EngineVersion >= 4.22 ? 0x48 : 0x38);
+			return GetFromOffset<UField*>(this, 0x50);
+		}
 
-			return GetFromOffset<UField*>(this, ChildrenOff);
+		const UField* GetChildren() const 
+		{
+			return GetFromOffset<UField*>(this, Offsets::Children);
 		}
 
 
@@ -400,12 +397,11 @@ namespace SDK
 
 		uint32_t GetOffset(const char* Name, uint64_t CastFlags = 0) const
 		{
-			static auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);
 			auto Prop = GetProperty(Name, CastFlags);
 			if (!Prop)
 				return -1;
 
-			return GetFromOffset<uint32>(Prop, OffsetOff);
+			return GetFromOffset<uint32>(Prop, Offsets::Offset_Internal);
 		}
 	};
 
@@ -420,11 +416,13 @@ namespace SDK
 
 	__declspec(noinline) inline const UField* UStruct::GetProperty(const char* Name, uint64_t CastFlags) const
 	{
+		UEAllocatedString s = Name;
+
 		for (const UStruct* Clss = this; Clss; Clss = (const UStruct*)Clss->GetSuper())
 		{
-			if (CastFlags != 0x80000 && VersionInfo.EngineVersion >= 4.25) 
+			if (VersionInfo.EngineVersion >= 4.25) 
 			{
-				for (const UField* Prop = Clss->GetChildren(true); Prop; Prop = Prop->GetNext(true))
+				for (const UField* Prop = Clss->GetChildProperties(); Prop; Prop = Prop->FField_GetNext())
 				{
 					if (CastFlags != 0)
 					{
@@ -434,15 +432,15 @@ namespace SDK
 						if ((FieldFlags & CastFlags) == 0)
 							continue;
 					}
-					if (Prop->GetName(true).ToSDKString() == Name)
+					if (Prop->FField_GetName().ToSDKString() == s)
 						return Prop;
 				}
 			}
-			else if (CastFlags == 0x80000 || VersionInfo.EngineVersion < 4.25)
+			else
 			{
-				for (const UField* Prop = Clss->GetChildren(false); Prop; Prop = Prop->GetNext(false))
+				for (const UField* Prop = Clss->GetChildren(); Prop; Prop = Prop->GetNext())
 				{
-					if ((CastFlags == 0 || Prop->Class->GetCastFlags() & CastFlags) && Prop->GetName(false).ToSDKString() == Name)
+					if ((CastFlags == 0 || Prop->Class->GetCastFlags() & CastFlags) && Prop->GetName().ToSDKString() == s)
 						return Prop;
 				}
 			}
@@ -456,21 +454,25 @@ namespace SDK
 		return Class->GetProperty(Name, CastFlags);
 	}
 
+	__declspec(noinline) inline UFunction* UObject::GetFunction(const char* Name) const
+	{
+		UEAllocatedString s = Name;
+
+		for (const UStruct* Clss = Class; Clss; Clss = (const UStruct*)Clss->GetSuper())
+			for (const UField* Prop = Clss->GetChildren(); Prop; Prop = Prop->GetNext())
+				if (Prop->Class->GetCastFlags() & 0x80000 && Prop->GetName().ToSDKString() == s)
+					return (UFunction*)Prop;
+
+		return nullptr;
+		//return (UFunction*)GetProperty(Name, 0x80000);
+	}
+
 	class UFunction : public UStruct 
 	{
 	public:
 		void*& GetNativeFunc()
 		{
-			if (VersionInfo.FortniteVersion <= 6.31)
-				return GetFromOffset<void*>(this, 0xB0);
-			else if (VersionInfo.FortniteVersion > 7.00 && VersionInfo.FortniteVersion < 12.00)
-				return GetFromOffset<void*>(this, 0xC0);
-			else if (VersionInfo.FortniteVersion >= 12.00 && VersionInfo.FortniteVersion < 12.10)
-				return GetFromOffset<void*>(this, 0xC8);
-			else if (VersionInfo.FortniteVersion >= 12.10 && VersionInfo.FortniteVersion <= 12.61)
-				return GetFromOffset<void*>(this, 0xF0);
-			else
-				return GetFromOffset<void*>(this, 0xD8);
+			return GetFromOffset<void*>(this, Offsets::ExecFunction);
 		}
 
 		void SetNativeFunc(void* NewFunc)
@@ -559,16 +561,13 @@ namespace SDK
 		Params GetParams() 
 		{
 			Params p{};
-			static auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);
-			static auto PropertyFlagsOff = OffsetOff - 0xc;
-			static auto ElementSizeOff = OffsetOff - 0x10;
 
 			if (VersionInfo.EngineVersion >= 4.25)
-				for (const UField* _Pr = GetChildren(true); _Pr; _Pr = _Pr->GetNext(true))
-					p.NameOffsetMap.push_back({ /*_Pr->GetName(true).ToSDKString(), */GetFromOffset<uint32>(_Pr, OffsetOff), GetFromOffset<uint64>(_Pr, PropertyFlagsOff), GetFromOffset<uint32>(_Pr, ElementSizeOff)});
+				for (const UField* _Pr = GetChildProperties(); _Pr; _Pr = _Pr->FField_GetNext())
+					p.NameOffsetMap.push_back({ /*_Pr->GetName(true).ToSDKString(), */GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags), GetFromOffset<uint32>(_Pr, Offsets::ElementSize)});
 			else
-				for (const UField* _Pr = GetChildren(false); _Pr; _Pr = _Pr->GetNext(false))
-					p.NameOffsetMap.push_back({ /*_Pr->GetName(false).ToSDKString(), */GetFromOffset<uint32>(_Pr, OffsetOff), GetFromOffset<uint64>(_Pr, PropertyFlagsOff), GetFromOffset<uint32>(_Pr, ElementSizeOff)});
+				for (const UField* _Pr = GetChildren(); _Pr; _Pr = _Pr->GetNext())
+					p.NameOffsetMap.push_back({ /*_Pr->GetName(false).ToSDKString(), */GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags), GetFromOffset<uint32>(_Pr, Offsets::ElementSize)});
 
 			p.Size = GetPropertiesSize();
 			return p;
@@ -578,16 +577,13 @@ namespace SDK
 		ParamsNamed GetParamsNamed()
 		{
 			ParamsNamed p{};
-			static auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);
-			static auto PropertyFlagsOff = OffsetOff - 0xc;
-			static auto ElementSizeOff = OffsetOff - 0x10;
 
 			if (VersionInfo.EngineVersion >= 4.25)
-				for (const UField* _Pr = GetChildren(true); _Pr; _Pr = _Pr->GetNext(true))
-					p.NameOffsetMap.push_back({ _Pr->GetName(true).ToSDKString(), GetFromOffset<uint32>(_Pr, OffsetOff), GetFromOffset<uint64>(_Pr, PropertyFlagsOff), GetFromOffset<uint32>(_Pr, ElementSizeOff) });
+				for (const UField* _Pr = GetChildProperties(); _Pr; _Pr = _Pr->FField_GetNext())
+					p.NameOffsetMap.push_back({ _Pr->FField_GetName().ToSDKString(), GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags), GetFromOffset<uint32>(_Pr, Offsets::ElementSize) });
 			else
-				for (const UField* _Pr = GetChildren(false); _Pr; _Pr = _Pr->GetNext(false))
-					p.NameOffsetMap.push_back({ _Pr->GetName(false).ToSDKString(), GetFromOffset<uint32>(_Pr, OffsetOff), GetFromOffset<uint64>(_Pr, PropertyFlagsOff), GetFromOffset<uint32>(_Pr, ElementSizeOff) });
+				for (const UField* _Pr = GetChildren(); _Pr; _Pr = _Pr->GetNext())
+					p.NameOffsetMap.push_back({ _Pr->GetName().ToSDKString(), GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags), GetFromOffset<uint32>(_Pr, Offsets::ElementSize) });
 
 			p.Size = GetPropertiesSize();
 			return p;
@@ -1009,8 +1005,7 @@ namespace SDK
 	inline T& StructGet(_St* StructInstance, const char* StructName, const char* Name) {
 		auto Struct = TUObjectArray::FindObject<UStruct>(StructName, 0x10);
 
-		static auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);
-		auto Off = GetFromOffset<uint32>(Struct->GetProperty(Name), OffsetOff);
+		auto Off = GetFromOffset<uint32>(Struct->GetProperty(Name), Offsets::Offset_Internal);
 		return GetFromOffset<T>(StructInstance, Off);
 	}
 

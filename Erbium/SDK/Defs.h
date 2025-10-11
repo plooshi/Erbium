@@ -112,9 +112,8 @@
     {                                                                                                                                                                \
         if (Name##__Offset == -2)                                                                                                                                    \
         {                                                                                                                                                            \
-            auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);        \
             auto Prop = GetProperty(#Name, 0x20000);                                                                                                                 \
-            Name##__Offset = Prop ? GetFromOffset<uint32>(Prop, OffsetOff) : -1;                                                                                     \
+            Name##__Offset = Prop ? GetFromOffset<uint32>(Prop, Offsets::Offset_Internal) : -1;                                                                      \
             Name##__FieldMask = Prop ? Prop->GetFieldMask() : 0;                                                                                                     \
         }                                                                                                                                                            \
         return (GetFromOffset<uint8_t>(this, Name##__Offset) & Name##__FieldMask) != 0;                                                                              \
@@ -124,9 +123,8 @@
     {                                                                                                                                                                \
         if (Name##__Offset == -2)                                                                                                                                    \
         {                                                                                                                                                            \
-            auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);        \
             auto Prop = GetProperty(#Name, 0x20000);                                                                                                                 \
-            Name##__Offset = Prop ? GetFromOffset<uint32>(Prop, OffsetOff) : -1;                                                                                     \
+            Name##__Offset = Prop ? GetFromOffset<uint32>(Prop, Offsets::Offset_Internal) : -1;                                                                      \
             Name##__FieldMask = Prop ? Prop->GetFieldMask() : 0;                                                                                                     \
         }                                                                                                                                                            \
         return Name##__Offset != -1;                                                                                                                                 \
@@ -136,12 +134,11 @@
     {                                                                                                                                                                \
         if (Name##__Offset == -2)                                                                                                                                    \
         {                                                                                                                                                            \
-            auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);        \
             auto Prop = GetProperty(#Name, 0x20000);                                                                                                                 \
-            Name##__Offset = Prop ? GetFromOffset<uint32>(Prop, OffsetOff) : -1;                                                                                     \
+            Name##__Offset = Prop ? GetFromOffset<uint32>(Prop, Offsets::Offset_Internal) : -1;                                                                      \
             Name##__FieldMask = Prop ? Prop->GetFieldMask() : 0;                                                                                                     \
         }                                                                                                                                                            \
-        Value ? GetFromOffset<uint8_t>(this, Name##__Offset) |= Name##__FieldMask : GetFromOffset<uint8_t>(this, Name##__Offset) &= ~Name##__FieldMask;                                                                                                                             \
+        Value ? GetFromOffset<uint8_t>(this, Name##__Offset) |= Name##__FieldMask : GetFromOffset<uint8_t>(this, Name##__Offset) &= ~Name##__FieldMask;              \
     }                                                                                                                                                                \
                                                                                                                                                                      \
     __declspec(property(get = Get##Name, put = Set##Name))                                                                                                           \

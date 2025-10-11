@@ -43,6 +43,7 @@ public:
     DEFINE_PROP(KillScore, int32);
     DEFINE_PROP(TeamKillScore, int32);
     DEFINE_PROP(Place, int32);
+    DEFINE_PROP(SeasonLevelUIDisplay, int32);
 
     DEFINE_FUNC(OnRep_SquadId, void);
     DEFINE_FUNC(OnRep_DeathInfo, void);
@@ -52,4 +53,5 @@ public:
     DEFINE_FUNC(ClientReportKill, void);
     DEFINE_FUNC(ClientReportTeamKill, void);
     DEFINE_FUNC(OnRep_Place, void);
+    DEFINE_FUNC(OnRep_SeasonLevelUIDisplay, void);
 };

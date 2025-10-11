@@ -704,6 +704,21 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
         {
             //UFortKismetLibrary::UpdatePlayerCustomCharacterPartsVisualization(NewPlayer->PlayerState);
         }
+
+        if (NewPlayer->HasXPComponent())
+        {
+            if (NewPlayer->PlayerState->HasSeasonLevelUIDisplay())
+            {
+                NewPlayer->PlayerState->SeasonLevelUIDisplay = NewPlayer->XPComponent->CurrentLevel;
+                NewPlayer->PlayerState->OnRep_SeasonLevelUIDisplay();
+            }
+
+            if (NewPlayer->XPComponent->HasbRegisteredWithQuestManager())
+            {
+                NewPlayer->XPComponent->bRegisteredWithQuestManager = true;
+                NewPlayer->XPComponent->OnRep_bRegisteredWithQuestManager();
+            }
+        }
     }
     else
     {
