@@ -48,6 +48,16 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 
 		if (itemEntry)
 		{
+			for (int i = 0; i < itemEntry->StateValues.Num(); i++)
+			{
+				auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
+
+				if (StateValue.StateType != 2)
+					continue;
+
+				StateValue.IntValue = 0;
+			}
+
 			itemEntry->Count += ResCount;
 			if (itemEntry->Count > MaxMat)
 			{

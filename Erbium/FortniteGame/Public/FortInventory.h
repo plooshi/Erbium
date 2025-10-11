@@ -65,6 +65,16 @@ public:
     }
 };
 
+struct FFortItemEntryStateValue
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FFortItemEntryStateValue);
+
+    DEFINE_STRUCT_PROP(IntValue, int);
+    DEFINE_STRUCT_PROP(NameValue, FName);
+    DEFINE_STRUCT_PROP(StateType, uint8_t);
+};
+
 struct FFortItemEntry : public FFastArraySerializerItem
 {
 public:
@@ -80,7 +90,7 @@ public:
     DEFINE_STRUCT_PROP(GameplayAbilitySpecHandle, FGameplayAbilitySpecHandle);
     DEFINE_STRUCT_PROP(ParentInventory, TWeakObjectPtr<class AFortInventory>);
     DEFINE_STRUCT_PROP(Level, int32);
-    DEFINE_STRUCT_PROP(StateValues, TArray<uint8_t>);
+    DEFINE_STRUCT_PROP(StateValues, TArray<FFortItemEntryStateValue>);
 };
 
 class UFortWorldItem : public UObject
@@ -208,7 +218,7 @@ public:
     
     DEFINE_FUNC(HandleInventoryLocalUpdate, void);
 
-    UFortWorldItem* GiveItem(const UFortItemDefinition*, int = 1, int = 0, int = 0, bool = true, bool = true, int = 0, TArray<uint8_t> = {});
+    UFortWorldItem* GiveItem(const UFortItemDefinition*, int = 1, int = 0, int = 0, bool = true, bool = true, int = 0, TArray<FFortItemEntryStateValue> = {});
     UFortWorldItem* GiveItem(FFortItemEntry&, int = -1, bool = true, bool = true);
     void Update(FFortItemEntry*);
     void Remove(FGuid);

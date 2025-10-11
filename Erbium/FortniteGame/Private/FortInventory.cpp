@@ -39,7 +39,7 @@ inline uint32_t FindOnItemInstanceAddedVft()
     return OnItemInstanceAddedVft;
 }
 
-UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Count, int LoadedAmmo, int Level, bool ShowPickupNoti, bool updateInventory, int PhantomReserveAmmo, TArray<uint8_t> StateValues)
+UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Count, int LoadedAmmo, int Level, bool ShowPickupNoti, bool updateInventory, int PhantomReserveAmmo, TArray<FFortItemEntryStateValue> StateValues)
 {
     if (!this || !Def || !Count)
         return nullptr;
@@ -80,7 +80,7 @@ UFortWorldItem* AFortInventory::GiveItem(FFortItemEntry& entry, int Count, bool 
     if (Count == -1)
         Count = entry.Count;
 
-    return GiveItem(entry.ItemDefinition, Count, entry.LoadedAmmo, entry.Level, ShowPickupNoti, updateInventory, entry.HasPhantomReserveAmmo() ? entry.PhantomReserveAmmo : 0, entry.HasStateValues() ? entry.StateValues : TArray<uint8_t>{});
+    return GiveItem(entry.ItemDefinition, Count, entry.LoadedAmmo, entry.Level, ShowPickupNoti, updateInventory, entry.HasPhantomReserveAmmo() ? entry.PhantomReserveAmmo : 0, entry.HasStateValues() ? entry.StateValues : TArray<FFortItemEntryStateValue>{});
 }
 
 void AFortInventory::Update(FFortItemEntry* Entry)
