@@ -109,11 +109,11 @@ inline uint64_t FindGetNetMode()
 
     if (GetNetMode == 0)
     {
-        if (floor(VersionInfo.FortniteVersion) >= 18) {
-            GetNetMode = Memcury::Scanner::FindPattern("48 8B 81 ? ? ? ? 48 63 89 ? ? ? ? 4C 8D 04 C8 49 3B C0 74 ? 48 8B 08 48 39 91 ? ? ? ? 75 ? 48 8B C1 C3").Get();
-			if (!GetNetMode)
-				GetNetMode = Memcury::Scanner::FindPattern("48 83 EC ? 48 83 79 ? ? 74 ? B8").Get();
+        if (floor(VersionInfo.FortniteVersion) == 18) {
+            GetNetMode = Memcury::Scanner::FindPattern("48 8B 81 ? ? ? ? 48 63 89 ? ? ? ? 4C 8D 04 C8 49 3B C0 74 ? 48 8B 08 48 39 91 ? ? ? ? 75 ? 48 8B C1 C3").Get();\
         }
+        else if (floor(VersionInfo.FortniteVersion) >= 23)
+            GetNetMode = Memcury::Scanner::FindPattern("48 83 EC ? 48 83 79 ? ? 74 ? B8").Get();
         else {
             auto sRef = Memcury::Scanner::FindStringRef(L"PREPHYSBONES").Get();
 
