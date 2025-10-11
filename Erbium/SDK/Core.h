@@ -483,6 +483,16 @@ namespace SDK
 		__declspec(property(get = GetNativeFunc, put = SetNativeFunc))
 		void* ExecFunction;
 
+
+		void* GetImpl()
+		{
+			if (!this)
+				return nullptr;
+
+			return (void*)Memcury::Scanner(GetNativeFunc()).ScanFor({ 0x40, 0x0F, 0x95, 0xC7 }).ScanFor({ 0xE8 }).RelativeOffset(1).Get();
+
+		}
+
 		void Call(const UObject* obj, void* Params) 
 		{
 			if (this) 

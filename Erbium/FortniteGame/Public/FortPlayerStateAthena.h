@@ -36,6 +36,8 @@ public:
     DEFINE_STRUCT_PROP(RespawnLocation, FVector);
     DEFINE_STRUCT_PROP(RespawnRotation, FRotator);
     DEFINE_STRUCT_PROP(bClientIsReady, bool);
+    DEFINE_STRUCT_PROP(bServerIsReady, bool);
+    DEFINE_STRUCT_PROP(bRespawnDataAvailable, bool);
 };
 
 class AFortPlayerStateAthena : public AActor

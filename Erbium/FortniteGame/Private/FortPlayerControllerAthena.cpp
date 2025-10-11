@@ -807,7 +807,8 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 	return ClientOnPawnDiedOG(PlayerController, DeathReport);
 }
 
-void AFortPlayerControllerAthena::ServerClientIsReadyToRespawn(UObject* Context, FFrame& Stack) {
+void AFortPlayerControllerAthena::ServerClientIsReadyToRespawn(UObject* Context, FFrame& Stack) 
+{
 	Stack.IncrementCode();
 
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
@@ -816,14 +817,14 @@ void AFortPlayerControllerAthena::ServerClientIsReadyToRespawn(UObject* Context,
 	auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 	auto PlayerState = (AFortPlayerStateAthena*)PlayerController->PlayerState;
 
-	if (GameState->IsRespawningAllowed(PlayerState)) 
+	if (PlayerState->RespawnData.bRespawnDataAvailable && PlayerState->RespawnData.bServerIsReady)
 	{
 		auto RespawnData = PlayerState->RespawnData;
 		FTransform SpawnTransform{};
 
-		auto Center = GameMode->SafeZoneIndicator->GetSafeZoneCenter();
-		Center.Z = GameState->CurrentPlaylistInfo.BasePlaylist->RespawnHeight.Evaluate();
-		SpawnTransform.Translation = Center;
+		FQuat Rotation = PlayerState->RespawnData.RespawnRotation;
+		SpawnTransform.Translation = PlayerState->RespawnData.RespawnLocation;
+		SpawnTransform.Rotation = Rotation;
 
 		auto Scale = FVector(1, 1, 1);
 		SpawnTransform.Scale3D = Scale;
@@ -832,18 +833,13 @@ void AFortPlayerControllerAthena::ServerClientIsReadyToRespawn(UObject* Context,
 		PlayerController->Possess(NewPawn);
 		PlayerController->RespawnPlayerAfterDeath(true);
 
-		//need a proper check if player is in storm, or it would be possible to force spawn player out of the zone
-		NewPawn->bIsInAnyStorm = false; 
-		NewPawn->bIsInsideSafeZone = true;
-		NewPawn->OnRep_IsInAnyStorm();
-		NewPawn->OnRep_IsInsideSafeZone();
-
-		NewPawn->SetHealth(100.0f);
-		NewPawn->SetShield(0.0f);
+		NewPawn->SetHealth(100.f);
+		NewPawn->SetShield(0.f);
 
 		PlayerState->RespawnData.bClientIsReady = true;
 	}
 }
+
 void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 {
 	if (!PickupEntry || !PickupEntry->ItemDefinition)
