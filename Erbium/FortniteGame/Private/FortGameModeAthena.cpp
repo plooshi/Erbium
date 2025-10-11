@@ -827,6 +827,9 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
 
 void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* GameMode, int NewSafeZonePhase_Inp)
 {
+    if (!GameMode->SafeZoneIndicator)
+        return;
+
     printf("call\n");
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
     
