@@ -113,6 +113,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -145,6 +146,7 @@
     <ClInclude Include="Engine\Public\DataTableFunctionLibrary.h" />
     <ClInclude Include="Engine\Public\NetDriver.h" />
     <ClInclude Include="Erbium\Public\Configuration.h" />
+    <ClInclude Include="Erbium\Public\Events.h" />
     <ClInclude Include="Erbium\Public\Finders.h" />
     <ClInclude Include="Erbium\Public\LateGame.h" />
     <ClInclude Include="Erbium\Public\MinHook.h" />
@@ -161,6 +163,7 @@
     <ClInclude Include="FortniteGame\Public\FortKismetLibrary.h" />
     <ClInclude Include="FortniteGame\Public\FortLootPackage.h" />
     <ClInclude Include="FortniteGame\Public\FortMissionLibrary.h" />
+    <ClInclude Include="FortniteGame\Public\FortPhysicsPawn.h" />
     <ClInclude Include="FortniteGame\Public\FortPlayerControllerAthena.h" />
     <ClInclude Include="FortniteGame\Public\FortPlayerPawnAthena.h" />
     <ClInclude Include="FortniteGame\Public\FortPlayerStateAthena.h" />
@@ -183,6 +186,7 @@
     <ClCompile Include="Engine\Private\AbilitySystemComponent.cpp" />
     <ClCompile Include="Engine\Private\NetDriver.cpp" />
     <ClCompile Include="Erbium\Private\dllmain.cpp" />
+    <ClCompile Include="Erbium\Private\Events.cpp" />
     <ClCompile Include="Erbium\Private\LateGame.cpp" />
     <ClCompile Include="Erbium\Private\Misc.cpp" />
     <ClCompile Include="FortniteGame\Private\BuildingFoundation.cpp" />
@@ -192,10 +196,12 @@
     <ClCompile Include="FortniteGame\Private\FortKismetLibrary.cpp" />
     <ClCompile Include="FortniteGame\Private\FortLootPackage.cpp" />
     <ClCompile Include="FortniteGame\Private\FortMissionLibrary.cpp" />
+    <ClCompile Include="FortniteGame\Private\FortPhysicsPawn.cpp" />
     <ClCompile Include="FortniteGame\Private\FortPlayerControllerAthena.cpp" />
     <ClCompile Include="FortniteGame\Private\FortPlayerPawnAthena.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
     </ClCompile>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

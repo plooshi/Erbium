@@ -1,5 +1,5 @@
 #pragma once
-#include "pch.h"
+#include "../../pch.h"
 #include "FortInventory.h"
 #include "FortGameStateAthena.h"
 #include "../../Engine/Public/DataTable.h"

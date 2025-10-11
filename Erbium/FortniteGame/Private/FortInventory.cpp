@@ -39,7 +39,7 @@ inline uint32_t FindOnItemInstanceAddedVft()
     return OnItemInstanceAddedVft;
 }
 
-UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Count, int LoadedAmmo, int Level, bool ShowPickupNoti, bool updateInventory, int PhantomReserveAmmo, TArray<uint8_t> StateValues)
+UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Count, int LoadedAmmo, int Level, bool ShowPickupNoti, bool updateInventory, int PhantomReserveAmmo, TArray<FFortItemEntryStateValue> StateValues)
 {
     if (!this || !Def || !Count)
         return nullptr;
@@ -60,7 +60,14 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
         static auto InterfaceClass = FindClass("FortInventoryOwnerInterface");
         ((bool(*)(const UFortItemDefinition*, const IInterface*, UFortWorldItem*, uint8)) Def->Vft[OnItemInstanceAddedVft])(Def, Owner->GetInterface(InterfaceClass), Item, 1);
     }
-    if (VersionInfo.FortniteVersion < 4.20)
+
+    /*if (Item->ItemEntry.ItemDefinition->bForceFocusWhenAdded)
+    {
+        ((AFortPlayerControllerAthena*)Owner)->ServerExecuteInventoryItem(Item->ItemEntry.ItemGuid);
+        ((AFortPlayerControllerAthena*)Owner)->ClientEquipItem(Item->ItemEntry.ItemGuid, true);
+    }*/
+
+    if (VersionInfo.EngineVersion < 4.20)
         ((AFortPlayerControllerAthena*)Owner)->QuickBars->ServerAddItemInternal(Item->ItemEntry.ItemGuid, !IsPrimaryQuickbar(Def), -1);
 
     if (updateInventory)
@@ -73,7 +80,7 @@ UFortWorldItem* AFortInventory::GiveItem(FFortItemEntry& entry, int Count, bool 
     if (Count == -1)
         Count = entry.Count;
 
-    return GiveItem(entry.ItemDefinition, Count, entry.LoadedAmmo, entry.Level, ShowPickupNoti, updateInventory, entry.HasPhantomReserveAmmo() ? entry.PhantomReserveAmmo : 0, entry.HasStateValues() ? entry.StateValues : TArray<uint8_t>{});
+    return GiveItem(entry.ItemDefinition, Count, entry.LoadedAmmo, entry.Level, ShowPickupNoti, updateInventory, entry.HasPhantomReserveAmmo() ? entry.PhantomReserveAmmo : 0, entry.HasStateValues() ? entry.StateValues : TArray<FFortItemEntryStateValue>{});
 }
 
 void AFortInventory::Update(FFortItemEntry* Entry)
@@ -191,7 +198,7 @@ AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entr
     if (HasPhantomReserveAmmo)
         NewPickup->PrimaryPickupItemEntry.PhantomReserveAmmo = Entry.PhantomReserveAmmo;
 
-    auto SetPickupItems = FindSetPickupItems();
+    static auto SetPickupItems = FindSetPickupItems();
     if (SetPickupItems)
     {
         TArray<FFortItemEntry> a{};
@@ -250,7 +257,7 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
     static auto HasPhantomReserveAmmo = Entry.HasPhantomReserveAmmo();
     if (HasPhantomReserveAmmo)
         NewPickup->PrimaryPickupItemEntry.PhantomReserveAmmo = Entry.PhantomReserveAmmo;
-    auto SetPickupItems = FindSetPickupItems();
+    static auto SetPickupItems = FindSetPickupItems();
     if (SetPickupItems)
     {
         TArray<FFortItemEntry> a{};
@@ -263,7 +270,7 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
         NewPickup->OnRep_PrimaryPickupItemEntry();
     //NewPickup->OnRep_PrimaryPickupItemEntry();
 
-    NewPickup->PawnWhoDroppedPickup = Pawn;
+    if (VersionInfo.FortniteVersion <= 21.30) NewPickup->PawnWhoDroppedPickup = Pawn;
     //auto bFloorLoot = Container->IsA<ATiered_Athena_FloorLoot_01_C>() || Container->IsA<ATiered_Athena_FloorLoot_Warmup_C>();
     //UFortKismetLibrary::TossPickupFromContainer(UWorld::GetWorld(), Container, NewPickup, 1, 0, Container->LootTossConeHalfAngle_Athena, Container->LootTossDirection_Athena, Container->LootTossSpeed_Athena, false);
     static auto tpfcPtr = UFortKismetLibrary::GetDefaultObj()->GetFunction("TossPickupFromContainer");
@@ -308,12 +315,6 @@ void AFortInventory::UpdateEntry(FFortItemEntry& Entry)
     if (!this)
         return; // wtf 3.5
 
-    auto repEnt = Inventory.ReplicatedEntries.Search([&](FFortItemEntry& item)
-        { return item.ItemGuid == Entry.ItemGuid; }, FFortItemEntry::Size());
-    if (repEnt)
-        *repEnt = Entry;
-        //__movsb((PBYTE)repEnt, (const PBYTE)&Entry, FFortItemEntry::Size());
-
     auto ent = Inventory.ItemInstances.Search([&](UFortWorldItem* item)
         { return item->ItemEntry.ItemGuid == Entry.ItemGuid; });
     if (ent)
@@ -350,6 +351,12 @@ void SetLoadedAmmo(UFortWorldItem* Item, int LoadedAmmo)
     Item->ItemEntry.LoadedAmmo = LoadedAmmo;
 
     auto PlayerController = (AFortPlayerControllerAthena*)Item->GetOwningController();
+    //PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
+
+    auto repEnt = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& item)
+        { return item.ItemGuid == Item->ItemEntry.ItemGuid; }, FFortItemEntry::Size());
+    if (repEnt)
+        *repEnt = Item->ItemEntry;
     PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
 }
 
@@ -358,6 +365,12 @@ void SetPhantomReserveAmmo(UFortWorldItem* Item, unsigned int PhantomReserveAmmo
     Item->ItemEntry.PhantomReserveAmmo = PhantomReserveAmmo;
 
     auto PlayerController = (AFortPlayerControllerAthena*)Item->GetOwningController();
+    //PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
+
+    auto repEnt = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& item)
+        { return item.ItemGuid == Item->ItemEntry.ItemGuid; }, FFortItemEntry::Size());
+    if (repEnt)
+        *repEnt = Item->ItemEntry;
     PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
 }
 

@@ -514,6 +514,7 @@ namespace SDK
 		DEFINE_BITFIELD_PROP(bActorIsBeingDestroyed);
 		DEFINE_BITFIELD_PROP(bNetStartup);
 		DEFINE_BITFIELD_PROP(bOnlyRelevantToOwner);
+		DEFINE_PROP(RootComponent, UObject*);
 
 		DEFINE_FUNC(AddComponentByClass, UActorComponent*);
 		DEFINE_FUNC(GetComponentByClass, UActorComponent*);
@@ -531,6 +532,7 @@ namespace SDK
 		DEFINE_FUNC(GetActorUpVector, FVector);
 		DEFINE_FUNC(GetActorRightVector, FVector);
 		DEFINE_FUNC(GetDistanceTo, float);
+		DEFINE_FUNC(SetLifeSpan, void);
 	};
 
 	class UGameplayStatics : public SDK::UObject
@@ -782,7 +784,7 @@ namespace SDK
 				const UField* _Prop = *(const UField**)(__int64(this) + (VersionInfo.FortniteVersion >= 20 ? 0x88 : 0x80));
 				if (_Prop)
 				{
-					*(const UField**)(__int64(this) + (VersionInfo.FortniteVersion >= 20 ? 0x88 : 0x80)) = _Prop->GetNext(VersionInfo.EngineVersion >= 4.25);
+					*(const UField**)(__int64(this) + (VersionInfo.FortniteVersion >= 20 ? 0x88 : 0x80)) = VersionInfo.EngineVersion >= 4.25 ? _Prop->FField_GetNext() : _Prop->GetNext();
 					((void (*)(FFrame*, void* const, const UField*)) Offsets::StepExplicitProperty)(this, Result, _Prop);
 				}
 			}
@@ -800,7 +802,7 @@ namespace SDK
 			else
 			{
 				const UField* _Prop = *(const UField**)(__int64(this) + (VersionInfo.FortniteVersion >= 20 ? 0x88 : 0x80));
-				*(const UField**)(__int64(this) + (VersionInfo.FortniteVersion >= 20 ? 0x88 : 0x80)) = _Prop->GetNext(VersionInfo.EngineVersion >= 4.25);
+				*(const UField**)(__int64(this) + (VersionInfo.FortniteVersion >= 20 ? 0x88 : 0x80)) = VersionInfo.EngineVersion >= 4.25 ? _Prop->FField_GetNext() : _Prop->GetNext();
 				((void (*)(FFrame*, void* const, const UField*)) Offsets::StepExplicitProperty)(this, _Tm, _Prop);
 			}
 

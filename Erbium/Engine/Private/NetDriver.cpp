@@ -53,8 +53,6 @@ static FNetworkObjectList& GetNetworkObjectList(UNetDriver* Driver)
 	return *(*(class TSharedPtr<FNetworkObjectList>*)(__int64(Driver) + NetworkObjectListOffset));
 }
 
-
-
 UNetConnection* IsActorOwnedByAndRelevantToConnection(const AActor* Actor, TArray<FNetViewer*>& ConnViewers, bool& bOutHasNullViewTarget)
 {
 	auto IsNetRelevantForIdx = FindIsNetRelevantForVft();
@@ -142,7 +140,6 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 	auto& NetworkObjectList = GetNetworkObjectList(Driver);
 	auto& ActiveNetworkObjects = NetworkObjectList.ActiveNetworkObjects;
 
-
 	for (auto& ViewerPair : ViewerMap)
 	{
 		auto& Conn = ViewerPair.first;
@@ -165,7 +162,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 			continue;
 
 		auto Outer = Actor->Outer;
-		if (Actor->bActorIsBeingDestroyed || Actor->RemoteRole == 0 || (Actor->bNetStartup && Actor->NetDormancy == 4))
+		if ((VersionInfo.FortniteVersion >= 23.00 ? false : Actor->bActorIsBeingDestroyed) || Actor->RemoteRole == 0 || ((Actor->HasbNetStartup() ? Actor->bNetStartup : false) && Actor->NetDormancy == 4))
 		{
 			//RemoveNetworkActor(&NetworkObjectList, Actor);
 			continue;
@@ -180,7 +177,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 
 			for (auto& Chan : Conn->OpenChannels)
 			{
-				if (!Chan->IsA<UActorChannel>() || Chan->Actor != Actor)
+				if (!Chan->IsA<UActorChannel>() || Chan->Actor != Actor)	
 					continue;
 
 				Channel = Chan;
@@ -193,7 +190,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 				continue;
 
 			static auto CloseActorChannel = (void(*)(UActorChannel*, uint8_t)) FindCloseActorChannel();
-			if (Channel && !bRelevant && (!bLevelInitializedForActor || !Actor->bNetStartup))
+			if (Channel && !bRelevant && (!bLevelInitializedForActor || !(Actor->HasbNetStartup() ? Actor->bNetStartup : true)))
 			{
 				CloseActorChannel(Channel, 3);
 				continue;
@@ -318,7 +315,7 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
     if (!bStartedBus && VersionInfo.FortniteVersion >= 11.00)
     { 
         auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
-        if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->bWorldIsReady && ((AFortGameStateAthena*)UWorld::GetWorld()->GameState)->WarmupCountdownEndTime <= Time)
+        if (Driver->ClientConnections.Num() > 0 && ((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->bWorldIsReady && ((AFortGameStateAthena*)UWorld::GetWorld()->GameState)->WarmupCountdownEndTime <= Time)
         {
             bStartedBus = true;
 
@@ -359,7 +356,7 @@ void UNetDriver::Hook()
 	if (VersionInfo.FortniteVersion >= 23 && VersionInfo.FortniteVersion < 25)
 	{
 		ReplicationFrameOffset = VersionInfo.FortniteVersion == 24.20 ? 0x438 : 0x440;
-		NetworkObjectListOffset = 0x730;
+		NetworkObjectListOffset = VersionInfo.FortniteVersion < 24 ? 0x720 : 0x730;
 	}
 
 	if (VersionInfo.FortniteVersion == 1.72)
@@ -380,6 +377,8 @@ void UNetDriver::Hook()
 		ClientWorldPackageNameOffset = 0x1820;
 	else if (VersionInfo.FortniteVersion == 3.3)
 		ClientWorldPackageNameOffset = 0x1828;
+	else if (VersionInfo.FortniteVersion < 24 && VersionInfo.FortniteVersion >= 22) 
+		ClientWorldPackageNameOffset = 0x17D0;
 	else if (VersionInfo.FortniteVersion >= 20 && VersionInfo.FortniteVersion < 25)
 		ClientWorldPackageNameOffset = 0x16b8;
 	if (!FindServerReplicateActors())

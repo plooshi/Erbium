@@ -44,8 +44,8 @@ public:
     UCLASS_COMMON_MEMBERS(AFortPlayerStateAthena);
 
     DEFINE_PROP(AbilitySystemComponent, UAbilitySystemComponent*);
-    DEFINE_PROP(SquadId, int32);
-    DEFINE_PROP(TeamIndex, int32);
+    DEFINE_PROP(SquadId, uint8);
+    DEFINE_PROP(TeamIndex, uint8);
     DEFINE_PROP(UniqueId, FUniqueNetIdRepl);
     DEFINE_PROP(PawnDeathLocation, FVector);
     DEFINE_PROP(DeathInfo, FDeathInfo);
@@ -54,6 +54,7 @@ public:
     DEFINE_PROP(TeamKillScore, int32);
     DEFINE_PROP(Place, int32);
     DEFINE_PROP(RespawnData, FFortRespawnData);
+    DEFINE_PROP(SeasonLevelUIDisplay, int32);
 
     DEFINE_FUNC(OnRep_SquadId, void);
     DEFINE_FUNC(OnRep_DeathInfo, void);
@@ -63,4 +64,5 @@ public:
     DEFINE_FUNC(ClientReportKill, void);
     DEFINE_FUNC(ClientReportTeamKill, void);
     DEFINE_FUNC(OnRep_Place, void);
+    DEFINE_FUNC(OnRep_SeasonLevelUIDisplay, void);
 };

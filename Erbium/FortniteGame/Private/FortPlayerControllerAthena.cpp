@@ -6,7 +6,7 @@
 #include "../Public/FortKismetLibrary.h"
 #include "../../Erbium/Public/Configuration.h"
 #include "../Public/FortLootPackage.h"
-
+#include "../../Erbium/Public/Events.h"
 
 uint64_t FindGetPlayerViewPoint()
 {
@@ -109,7 +109,7 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 	}
 }
 
-void AFortPlayerControllerAthena::ServerExecuteInventoryItem(UObject* Context, FFrame& Stack)
+void AFortPlayerControllerAthena::ServerExecuteInventoryItem_(UObject* Context, FFrame& Stack)
 {
 	FGuid ItemGuid;
 	Stack.StepCompiledIn(&ItemGuid);
@@ -145,7 +145,37 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryItem(UObject* Context, F
 		return;
 	}
 
-	PlayerController->MyFortPawn->EquipWeaponDefinition(ItemDefinition, ItemGuid, entry->HasTrackerGuid() ? entry->TrackerGuid : FGuid(), false);
+	auto Weapon = PlayerController->MyFortPawn->EquipWeaponDefinition(ItemDefinition, ItemGuid, entry->HasTrackerGuid() ? entry->TrackerGuid : FGuid(), false);
+	if (VersionInfo.EngineVersion < 4.20)
+	{
+		static auto BuildingToolClass = FindClass("FortWeap_BuildingTool");
+		if (Weapon->IsA(BuildingToolClass))
+		{
+			static auto RoofPiece = Utils::FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_RoofS.BuildingItemData_RoofS");
+			static auto FloorPiece = Utils::FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Floor.BuildingItemData_Floor");
+			static auto WallPiece = Utils::FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Wall.BuildingItemData_Wall");
+			static auto StairPiece = Utils::FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Stair_W.BuildingItemData_Stair_W");
+
+			static auto RoofMetadata = Utils::FindObject<UObject>(L"/Game/Building/EditModePatterns/Roof/EMP_Roof_RoofC.EMP_Roof_RoofC");
+			static auto StairMetadata = Utils::FindObject<UObject>(L"/Game/Building/EditModePatterns/Stair/EMP_Stair_StairW.EMP_Stair_StairW");
+			static auto WallMetadata = Utils::FindObject<UObject>(L"/Game/Building/EditModePatterns/Wall/EMP_Wall_Solid.EMP_Wall_Solid");
+			static auto FloorMetadata = Utils::FindObject<UObject>(L"/Game/Building/EditModePatterns/Floor/EMP_Floor_Floor.EMP_Floor_Floor");
+
+			static auto DefaultMetadataOffset = Weapon->GetOffset("DefaultMetadata");
+			static auto OnRep_DefaultMetadata = Weapon->GetFunction("OnRep_DefaultMetadata");
+
+			if (ItemDefinition == RoofPiece)
+				GetFromOffset<const UObject*>(Weapon, DefaultMetadataOffset) = RoofMetadata;
+			else if (ItemDefinition == StairPiece)
+				GetFromOffset<const UObject*>(Weapon, DefaultMetadataOffset) = StairMetadata;
+			else if (ItemDefinition == WallPiece)
+				GetFromOffset<const UObject*>(Weapon, DefaultMetadataOffset) = WallMetadata;
+			else if (ItemDefinition == FloorPiece)
+				GetFromOffset<const UObject*>(Weapon, DefaultMetadataOffset) = FloorMetadata;
+
+			Weapon->ProcessEvent(OnRep_DefaultMetadata, nullptr);
+		}
+	}
 }
 
 
@@ -192,8 +222,8 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	struct FBuildingClassData { UClass* BuildingClass; int PreviousBuildingLevel; int UpgradeLevel; };
 	if (VersionInfo.FortniteVersion >= 8.30)
 	{
-		struct alignas(0x8) FCreateBuildingActorData { uint32_t BuildingClassHandle; _Pad_0xC BuildLoc; _Pad_0xC BuildRot; bool bMirrored; float SyncKey; uint8_t BuildingClassData[0x10]; };
-		struct alignas(0x8) FCreateBuildingActorData_New { uint32_t BuildingClassHandle; _Pad_0x18 BuildLoc; _Pad_0x18 BuildRot; bool bMirrored; float SyncKey; uint8_t BuildingClassData[0x10]; };
+		struct FCreateBuildingActorData { uint32_t BuildingClassHandle; _Pad_0xC BuildLoc; _Pad_0xC BuildRot; bool bMirrored; uint8_t Pad_1[0x3]; float SyncKey; uint8 Pad_2[0x4]; uint8_t BuildingClassData[0x10]; };
+		struct FCreateBuildingActorData_New { uint32_t BuildingClassHandle; uint8_t Pad_1[0x4]; _Pad_0x18 BuildLoc; _Pad_0x18 BuildRot; bool bMirrored; uint8_t Pad_2[0x3]; float SyncKey; uint8_t BuildingClassData[0x10]; };
 
 		if (VersionInfo.FortniteVersion >= 20.00)
 		{
@@ -816,14 +846,22 @@ void AFortPlayerControllerAthena::ServerClientIsReadyToRespawn(UObject* Context,
 }
 void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 {
+	if (!PickupEntry || !PickupEntry->ItemDefinition)
+		return;
+	
 	auto MaxStack = (int32)PickupEntry->ItemDefinition->GetMaxStackSize();
 	int ItemCount = 0;
-
+	
+	if (PickupEntry->ItemDefinition->HasbForceIntoOverflow() && PickupEntry->ItemDefinition->bForceIntoOverflow)
+	{
+		WorldInventory->GiveItem(*PickupEntry, PickupEntry->Count, true);
+		return;
+	}
 	for (int i = 0; i < WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
 	{
 		auto& Item = WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
 
-		if (AFortInventory::IsPrimaryQuickbar(Item.ItemDefinition) && Item.ItemDefinition->bInventorySizeLimited)
+		if (AFortInventory::IsPrimaryQuickbar(Item.ItemDefinition))
 			ItemCount += Item.ItemDefinition->HasNumberOfSlotsToTake() ? Item.ItemDefinition->NumberOfSlotsToTake : 1;
 	}
 
@@ -864,6 +902,16 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 
 		if (itemEntry)
 		{
+			for (int i = 0; i < itemEntry->StateValues.Num(); i++)
+			{
+				auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
+
+				if (StateValue.StateType != 2)
+					continue;
+
+				StateValue.IntValue = 0;
+			}
+
 			if ((itemEntry->Count += PickupEntry->Count) > MaxStack)
 			{
 				auto OriginalCount = itemEntry->Count;
@@ -876,6 +924,16 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 		}
 		else
 		{
+			for (int i = 0; i < PickupEntry->StateValues.Num(); i++)
+			{
+				auto& StateValue = PickupEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
+
+				if (StateValue.StateType != 2)
+					continue;
+
+				StateValue.IntValue = 0;
+			}
+
 			if (PickupEntry->Count > MaxStack)
 			{
 				auto OriginalCount = PickupEntry->Count;
@@ -919,6 +977,7 @@ _help:
     cheat startaircraft - Starts the battle bus
     cheat pausesafezone - Pauses the storm
 	cheat giveitem <WID/path> <Count = 1> - Gives you an item
+	cheat startevent - Starts the event for the current version
 	cheat spawnpickup <WID/path> <Count = 1> - Spawns a pickup at your player's location
     cheat tp <X> <Y> <Z> - Teleports to a location)"), FName(), 1);
 	}
@@ -934,6 +993,10 @@ _help:
 		else if (command == "spawnbot")
 		{
 			// todo
+		} 
+		else if (command == "startevent")
+		{
+			Events::StartEvent();
 		}
 		else if (command == "bugitgo" || command == "tp")
 		{
@@ -999,7 +1062,8 @@ _help:
 extern bool bDidntFind;
 void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFrame& Stack)
 {
-	AActor* ReceivingActor;
+	AActor* ReceivingActor = *(AActor**)Stack.Locals;
+	/*AActor* ReceivingActor;
 	UObject* InteractComponent;
 	uint8_t InteractType;
 	UObject* OptionalObjectData;
@@ -1012,7 +1076,7 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 	Stack.StepCompiledIn(&OptionalObjectData);
 	Stack.StepCompiledIn(&InteractionBeingAttempted);
 	Stack.StepCompiledIn(&RequestID);
-	Stack.IncrementCode();
+	Stack.IncrementCode();*/
 
 	AFortPlayerControllerAthena* PlayerController = nullptr;
 
@@ -1025,7 +1089,31 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 	if (auto Container = bDidntFind ? ReceivingActor->Cast<ABuildingContainer>() : nullptr)
 		UFortLootPackage::SpawnLootHook(Container);
 
-	return bIsComp ? (void)callOG(((UFortControllerComponent_Interaction*)Context), Stack.GetCurrentNativeFunction(), ServerAttemptInteract, ReceivingActor, InteractComponent, InteractType, OptionalObjectData, InteractionBeingAttempted, RequestID) : callOG(PlayerController, Stack.GetCurrentNativeFunction(), ServerAttemptInteract, ReceivingActor, InteractComponent, InteractType, OptionalObjectData, InteractionBeingAttempted, RequestID);
+	return ServerAttemptInteract_OG(Context, Stack);
+	//return bIsComp ? (void)callOG(((UFortControllerComponent_Interaction*)Context), Stack.GetCurrentNativeFunction(), ServerAttemptInteract, ReceivingActor, InteractComponent, InteractType, OptionalObjectData, InteractionBeingAttempted, RequestID) : callOG(PlayerController, Stack.GetCurrentNativeFunction(), ServerAttemptInteract, ReceivingActor, InteractComponent, InteractType, OptionalObjectData, InteractionBeingAttempted, RequestID);
+}
+
+const UClass* AmmoClass = nullptr;
+const UClass* ResourceClass = nullptr;
+void AFortPlayerControllerAthena::ServerDropAllItems(UObject* Context, FFrame& Stack)
+{
+	UFortItemDefinition* IgnoreItemDef;
+
+	Stack.StepCompiledIn(&IgnoreItemDef);
+	Stack.IncrementCode();
+	auto PlayerController = (AFortPlayerControllerAthena*) Context;
+
+	auto Loc = PlayerController->MyFortPawn->K2_GetActorLocation();
+	for (int i = 0; i < PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
+	{
+		auto& Entry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
+
+		if (Entry.ItemDefinition != IgnoreItemDef && AFortInventory::IsPrimaryQuickbar(Entry.ItemDefinition) || Entry.ItemDefinition->IsA(AmmoClass) || Entry.ItemDefinition->IsA(ResourceClass))
+		{
+			AFortInventory::SpawnPickup(Loc, Entry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn);
+			PlayerController->WorldInventory->Remove(Entry.ItemGuid);
+		}
+	}
 }
 
 void AFortPlayerControllerAthena::Hook()
@@ -1034,6 +1122,8 @@ void AFortPlayerControllerAthena::Hook()
 	CantBuild_ = FindCantBuild();
 	ReplaceBuildingActor_ = FindReplaceBuildingActor(); // pre-cache building offsets
 	RemoveFromAlivePlayers_ = FindRemoveFromAlivePlayers();
+	AmmoClass = FindClass("FortAmmoItemDefinition");
+	ResourceClass = FindClass("FortResourceItemDefinition");
 
 	auto DefaultFortPC = DefaultObjImpl("FortPlayerController");
 
@@ -1048,6 +1138,10 @@ void AFortPlayerControllerAthena::Hook()
 		auto DefaultFortPCZone = DefaultObjImpl("FortPlayerControllerZone");
 		Utils::Hook<AFortPlayerControllerAthena>(ServerRestartPlayerIdx, DefaultFortPCZone->Vft[ServerRestartPlayerIdx]);
 	}
+	
+	auto ServerSuicideIdx = GetDefaultObj()->GetFunction("ServerSuicide")->GetVTableIndex();
+	auto DefaultFortPCZone = DefaultObjImpl("FortPlayerControllerZone");
+	Utils::Hook<AFortPlayerControllerAthena>(ServerSuicideIdx, DefaultFortPCZone->Vft[ServerSuicideIdx]);
 
 	if (VersionInfo.FortniteVersion >= 11)
 	{
@@ -1059,19 +1153,22 @@ void AFortPlayerControllerAthena::Hook()
 	}
 
 	//Utils::ExecHook(GetDefaultObj()->GetFunction("ServerAcknowledgePossession"), ServerAcknowledgePossession);
-	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerExecuteInventoryItem"), ServerExecuteInventoryItem);
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerExecuteInventoryItem"), ServerExecuteInventoryItem_);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerExecuteInventoryWeapon"), ServerExecuteInventoryWeapon); // S9 shenanigans
 
 	// same as serveracknowledgepossession
 	auto ServerReturnToMainMenuIdx = GetDefaultObj()->GetFunction("ServerReturnToMainMenu")->GetVTableIndex();
 	Utils::Hook<AFortPlayerControllerAthena>(ServerReturnToMainMenuIdx, DefaultFortPC->Vft[ServerReturnToMainMenuIdx]);
 
-	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCreateBuildingActor"), ServerCreateBuildingActor);
-	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerBeginEditingBuildingActor"), ServerBeginEditingBuildingActor);
-	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerEditBuildingActor"), ServerEditBuildingActor);
-	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerEndEditingBuildingActor"), ServerEndEditingBuildingActor);
-	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerRepairBuildingActor"), ServerRepairBuildingActor);
+	if (VersionInfo.FortniteVersion != 1.72 && VersionInfo.FortniteVersion != 1.8)
+	{
+		Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCreateBuildingActor"), ServerCreateBuildingActor);
+		Utils::ExecHook(GetDefaultObj()->GetFunction("ServerBeginEditingBuildingActor"), ServerBeginEditingBuildingActor);
+		Utils::ExecHook(GetDefaultObj()->GetFunction("ServerEditBuildingActor"), ServerEditBuildingActor);
+		Utils::ExecHook(GetDefaultObj()->GetFunction("ServerEndEditingBuildingActor"), ServerEndEditingBuildingActor);
+		Utils::ExecHook(GetDefaultObj()->GetFunction("ServerRepairBuildingActor"), ServerRepairBuildingActor);
 
+	}
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerAttemptInventoryDrop"), ServerAttemptInventoryDrop);
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerPlayEmoteItem"), ServerPlayEmoteItem);
@@ -1091,4 +1188,6 @@ void AFortPlayerControllerAthena::Hook()
 		Utils::ExecHook(DefaultObjImpl("FortControllerComponent_Interaction")->GetFunction("ServerAttemptInteract"), ServerAttemptInteract_, ServerAttemptInteract_OG);
 	else
 		Utils::ExecHook(ServerAttemptInteractPC, ServerAttemptInteract_, ServerAttemptInteract_OG);
+	
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerDropAllItems"), ServerDropAllItems);
 }

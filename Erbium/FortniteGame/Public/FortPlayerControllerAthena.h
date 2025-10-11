@@ -89,6 +89,18 @@ public:
     DEFINE_FUNC(ServerAttemptInteract, void);
 };
 
+// todo: seperate this
+class UFortPlayerControllerAthenaXPComponent : public UActorComponent
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortPlayerControllerAthenaXPComponent);
+
+    DEFINE_PROP(CurrentLevel, int32);
+    DEFINE_PROP(bRegisteredWithQuestManager, bool);
+
+    DEFINE_FUNC(OnRep_bRegisteredWithQuestManager, void);
+};
+
 class AFortPlayerControllerAthena : public AActor
 {
 public:
@@ -107,6 +119,7 @@ public:
     DEFINE_BITFIELD_PROP(bBuildFree);
     DEFINE_PROP(SwappingItemDefinition, FFortItemEntry*); // scuffness
     DEFINE_PROP(QuickBars, AFortQuickBars*);
+    DEFINE_PROP(XPComponent, UFortPlayerControllerAthenaXPComponent*);
 
     DEFINE_FUNC(GetViewTarget, AActor*);
     DEFINE_FUNC(GetControlRotation, FRotator);
@@ -123,11 +136,13 @@ public:
     DEFINE_FUNC(Possess, void);
     DEFINE_FUNC(RespawnPlayerAfterDeath, void);
     DEFINE_FUNC(ServerAttemptInteract, void);
+    DEFINE_FUNC(ServerExecuteInventoryItem, void);
+    DEFINE_FUNC(ClientEquipItem, void);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);
     DefHookOg(void, ServerAttemptAircraftJump_, UObject*, FFrame&);
-    static void ServerExecuteInventoryItem(UObject*, FFrame&);
+    static void ServerExecuteInventoryItem_(UObject*, FFrame&);
     static void ServerExecuteInventoryWeapon(UObject*, FFrame&);
     static void ServerCreateBuildingActor(UObject*, FFrame&);
     static void ServerBeginEditingBuildingActor(UObject*, FFrame&);
@@ -141,6 +156,7 @@ public:
     DefHookOg(void, ClientOnPawnDied, AFortPlayerControllerAthena*, FFortPlayerDeathReport&);
     DefUHookOg(ServerAttemptInteract_);
     void InternalPickup(FFortItemEntry*);
+    static void ServerDropAllItems(UObject*, FFrame&);
     
 
     InitHooks;

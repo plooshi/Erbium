@@ -408,7 +408,10 @@ bool bDidntFind = false;
 void UFortLootPackage::Hook()
 {
 	if (VersionInfo.FortniteVersion >= 11.00)
+	{
 		Utils::Hook(FindSpawnLoot(), SpawnLootHook);
+		return;
+	}
 	else
 	{
 		auto ServerOnAttemptInteractRef = Memcury::Scanner::FindStringRef(L"ABuildingContainer::ServerOnAttemptInteract %s failed for %s");
@@ -426,14 +429,13 @@ void UFortLootPackage::Hook()
 				{
 					Utils::Hook<ABuildingContainer>(VFTIndex / 8, ServerOnAttemptInteract);
 
-					goto _;
+					return;
 				}
 			}
 		}
 	}
 
 	// if we cant find serveronattemptinteract
-_:
 	bDidntFind = true;
 	return;
 }

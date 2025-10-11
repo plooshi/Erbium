@@ -16,15 +16,31 @@
 #include "../Public/BuildingItemCollectorActor.h"
 
 
-__declspec(noinline) void ShowFoundation(const ABuildingFoundation* Foundation)
+void ShowFoundation(const ABuildingFoundation* Foundation)
 {
-    if (!Foundation) 
-        return;
+    if (!Foundation) return;
 
-    Foundation->bServerStreamedInLevel = true;
-    Foundation->DynamicFoundationType = 0; // static
+    /*Foundation->StreamingData.BoundingBox = Foundation->StreamingBoundingBox;
+    Foundation->StreamingData.FoundationLocation = Foundation->GetTransform().Translation;
+    Foundation->SetDynamicFoundationEnabled(true);*/
+    //Foundation->SetDynamicFoundationTransform(Foundation->GetTransform());
+
+    if (Foundation->HasDynamicFoundationType())
+        Foundation->DynamicFoundationType = 0;
+    if (Foundation->HasbServerStreamedInLevel())
+    {
+        Foundation->bServerStreamedInLevel = true;
+        Foundation->OnRep_ServerStreamedInLevel();
+    }
+    if (Foundation->HasDynamicFoundationRepData())
+    {
+        Foundation->DynamicFoundationRepData.EnabledState = 1;
+        Foundation->OnRep_DynamicFoundationRepData();
+    }
+    if (Foundation->HasFoundationEnabledState())
+        Foundation->FoundationEnabledState = 1;
+
     Foundation->SetDynamicFoundationEnabled(true);
-    Foundation->OnRep_ServerStreamedInLevel();
 }
 
 
@@ -218,7 +234,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
     if (!GameMode->bWorldIsReady)
     {
-        static auto WarmupStartClass = FindClass("FortPlayerStartWarmup");
+        static auto WarmupStartClass = FindClass(FConfiguration::bCreative ? "FortPlayerStartCreative" : "FortPlayerStartWarmup");
         auto Starts = Utils::GetAll(WarmupStartClass);
         auto StartsNum = Starts.Num();
         Starts.Free();
@@ -645,16 +661,8 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
     auto Num = NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Num();
     // they only stripped it on athena for some reason
     AFortPlayerPawnAthena* Pawn = nullptr;
-    if (VersionInfo.FortniteVersion == 4.23 && Num != 0)
-    {
-        auto Transform = StartSpot->GetTransform();
-        Pawn = GameMode->SpawnDefaultPawnAtTransform(NewPlayer, Transform);
-    }
-    else
-    {
-        static auto FortGMSpawnDefaultPawnFor = (AFortPlayerPawnAthena * (*)(AFortGameModeAthena*, AFortPlayerControllerAthena*, AActor*)) DefaultObjImpl("FortGameMode")->Vft[SpawnDefaultPawnForIdx];
-        Pawn = FortGMSpawnDefaultPawnFor(GameMode, NewPlayer, StartSpot);
-    }
+    static auto FortGMSpawnDefaultPawnFor = (AFortPlayerPawnAthena * (*)(AFortGameModeAthena*, AFortPlayerControllerAthena*, AActor*)) DefaultObjImpl("FortGameMode")->Vft[SpawnDefaultPawnForIdx];
+    Pawn = FortGMSpawnDefaultPawnFor(GameMode, NewPlayer, StartSpot);
 
     //auto Transform = StartSpot->GetTransform();
     //auto Pawn = GameMode->SpawnDefaultPawnAtTransform(NewPlayer, Transform);
@@ -696,6 +704,21 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
         {
             //UFortKismetLibrary::UpdatePlayerCustomCharacterPartsVisualization(NewPlayer->PlayerState);
         }
+
+        if (NewPlayer->HasXPComponent())
+        {
+            if (NewPlayer->PlayerState->HasSeasonLevelUIDisplay())
+            {
+                NewPlayer->PlayerState->SeasonLevelUIDisplay = NewPlayer->XPComponent->CurrentLevel;
+                NewPlayer->PlayerState->OnRep_SeasonLevelUIDisplay();
+            }
+
+            if (NewPlayer->XPComponent->HasbRegisteredWithQuestManager())
+            {
+                NewPlayer->XPComponent->bRegisteredWithQuestManager = true;
+                NewPlayer->XPComponent->OnRep_bRegisteredWithQuestManager();
+            }
+        }
     }
     else
     {
@@ -704,18 +727,23 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
         static auto AmmoClass = FindClass("FortAmmoItemDefinition");
         static auto ResourceClass = FindClass("FortResourceItemDefinition");
 
+        UEAllocatedVector<FGuid> GuidsToRemove;
         for (int i = 0; i < NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
         {
             auto& Entry = NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
 
             if (AFortInventory::IsPrimaryQuickbar(Entry.ItemDefinition) || Entry.ItemDefinition->IsA(AmmoClass) || Entry.ItemDefinition->IsA(ResourceClass))
             {
-                NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Remove(i, FFortItemEntry::Size());
-                i--;
+                //NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Remove(i, FFortItemEntry::Size());
+                //i--;
+                GuidsToRemove.push_back(Entry.ItemGuid);
             }
         }
 
-        for (int i = 0; i < NewPlayer->WorldInventory->Inventory.ItemInstances.Num(); i++)
+        for (auto& Guid : GuidsToRemove)
+            NewPlayer->WorldInventory->Remove(Guid);
+
+        /*for (int i = 0; i < NewPlayer->WorldInventory->Inventory.ItemInstances.Num(); i++)
         {
             auto& Entry = NewPlayer->WorldInventory->Inventory.ItemInstances[i]->ItemEntry;
 
@@ -726,10 +754,10 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
             }
         }
 
-        NewPlayer->WorldInventory->Update(nullptr);
+        NewPlayer->WorldInventory->Update(nullptr);*/
 
 
-        if (FConfiguration::bLateGame && Pawn)
+        if (FConfiguration::bLateGame && Pawn && GameState->Aircrafts.Num() > 0 && GameState->Aircrafts[0])
         {
             FVector AircraftLocation = GameState->Aircrafts[0]->K2_GetActorLocation();
 
@@ -748,7 +776,7 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
 
             Pawn->K2_SetActorLocation(NewLoc, false, nullptr, false);
 
-            Pawn->SetShield(100);
+            Pawn->SetShield(100.f);
 
             auto Shotgun = LateGame::GetShotgun();
             auto AssaultRifle = LateGame::GetAssaultRifle();
@@ -799,6 +827,7 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
 
 void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* GameMode, int NewSafeZonePhase_Inp)
 {
+    printf("call\n");
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
     
     auto NewSafeZonePhase = NewSafeZonePhase_Inp >= 0 ? NewSafeZonePhase_Inp : GameMode->SafeZonePhase + 1;
@@ -845,12 +874,11 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
         TArray<float>& HoldDurations = *(TArray<float>*)(SafeZoneDefinition + DurationsOffset - 0x10);
 
 
-        auto DurationSum = 0.f;
-        for (auto& _v : Durations)
-            DurationSum += _v;
-
-        if (DurationSum == 0)
+        static bool bSetDurations = false;
+        if (!bSetDurations)
         {
+            bSetDurations = true;
+
             auto GameData = GameMode->HasAthenaGameDataTable() ? GameMode->AthenaGameDataTable : GameState->AthenaGameDataTable;
 
             auto ShrinkTime = UKismetStringLibrary::Conv_StringToName(FString(L"Default.SafeZone.ShrinkTime"));
@@ -866,18 +894,19 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
             }
         }
 
-        if (!FConfiguration::bLateGame || GameMode->SafeZonePhase > 3)
+        if (!FConfiguration::bLateGame)
         {
-            auto Duration = FConfiguration::bLateGame ? LateGameDurations[GameMode->SafeZonePhase - 1] : Durations[GameMode->SafeZonePhase + 1];
-            auto HoldDuration = FConfiguration::bLateGame ? LateGameHoldDurations[GameMode->SafeZonePhase - 1] : HoldDurations[GameMode->SafeZonePhase + 1];
+            auto Duration = Durations[NewSafeZonePhase];
+            auto HoldDuration = HoldDurations[NewSafeZonePhase];
+            printf("new dur %f\n", Duration);
+            printf("new holddur %f\n", HoldDuration);
 
             GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + HoldDuration;
             GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
         }
     } 
 
-    if (VersionInfo.FortniteVersion < 13.00)
-        HandlePostSafeZonePhaseChangedOG(GameMode, NewSafeZonePhase_Inp);
+    HandlePostSafeZonePhaseChangedOG(GameMode, NewSafeZonePhase_Inp);
 
     if (FConfiguration::bLateGame && GameMode->SafeZonePhase > 3)
     {
@@ -901,10 +930,6 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
         GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = (float) UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + 30.f;
         GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
     }
-
-
-    if (VersionInfo.FortniteVersion >= 13.00)
-        HandlePostSafeZonePhaseChangedOG(GameMode, NewSafeZonePhase_Inp);
 }
 
 

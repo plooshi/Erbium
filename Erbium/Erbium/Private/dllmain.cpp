@@ -6,7 +6,7 @@
 #include "../Public/Finders.h"
 #include "../../FortniteGame/Public/FortInventory.h"
 #include <chrono>
-
+#include "../Public/Configuration.h"
 
 void Main()
 {
@@ -65,17 +65,20 @@ void Main()
     UWorld::GetWorld()->OwningGameInstance->LocalPlayers.Remove(0);
     const wchar_t* terrainOpen = L"open Athena_Terrain";
 
-    if (VersionInfo.FortniteVersion >= 27.00)
-    {
-        if (VersionInfo.FortniteVersion >= 28.00)
-            terrainOpen = L"open Helios_Terrain";
-    }
-    else if (VersionInfo.FortniteVersion >= 23.00)
-        terrainOpen = L"open Asteria_Terrain";
-    else if (VersionInfo.FortniteVersion >= 19.00)
-        terrainOpen = L"open Artemis_Terrain";
-    else if (VersionInfo.FortniteVersion >= 11.00)
-        terrainOpen = L"open Apollo_Terrain";
+    if (VersionInfo.FortniteVersion >= 11.00 && FConfiguration::bCreative)
+        terrainOpen = L"open Creative_NoApollo_Terrain";
+    else
+        if (VersionInfo.FortniteVersion >= 27.00)
+        {
+            if (VersionInfo.FortniteVersion >= 28.00)
+                terrainOpen = L"open Helios_Terrain";
+        }
+        else if (VersionInfo.FortniteVersion >= 23.00)
+            terrainOpen = L"open Asteria_Terrain";
+        else if (VersionInfo.FortniteVersion >= 19.00)
+            terrainOpen = L"open Artemis_Terrain";
+        else if (VersionInfo.FortniteVersion >= 11.00)
+            terrainOpen = L"open Apollo_Terrain";
 
     UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(terrainOpen), nullptr);
 }

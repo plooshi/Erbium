@@ -30,6 +30,17 @@ namespace SDK
 		inline uint64_t GetInterfaceAddress = 0;
 		inline uint64_t StaticFindObject = 0;
 		inline uint64_t StaticLoadObject = 0;
+
+		inline uint32_t Offset_Internal = 0;
+		inline uint32_t ElementSize = 0;
+		inline uint32_t PropertyFlags = 0;
+		inline uint32_t PropertiesSize = 0;
+		inline uint32_t Super = 0;
+		inline uint32_t FieldMask = 0;
+		inline uint32_t Children = 0;
+		inline uint32_t FField_Next = 0;
+		inline uint32_t FField_Name = 0;
+		inline uint32_t ExecFunction = 0;
     }
 
 	inline void Init()
@@ -158,8 +169,11 @@ namespace SDK
 
 		if (VersionInfo.FortniteVersion < 14.00)
 			addr = Memcury::Scanner::FindStringRef(L"AccessNoneNoContext").ScanFor({ 0x40, 0x55 }, true, 0, 1, 2000).Get();
-		else if (VersionInfo.FortniteVersion >= 23.00)
+		else if (VersionInfo.FortniteVersion >= 23.00) {
 			addr = Memcury::Scanner::FindPattern("48 85 C9 0F 85 ? ? ? ? F7 87 ? ? ? ? ? ? ? ? ? 8B ?").ScanFor({ 0x40, 0x55 }, false).Get();
+			if (!addr)
+				addr = Memcury::Scanner::FindPattern("41 FF 92 ? ? ? ? E9 ? ? ? ? 49 8B C8").ScanFor({ 0x40, 0x55 }, false).Get();
+		} 
 		else
 			addr = Memcury::Scanner::FindStringRef(L"UMeshNetworkComponent::ProcessEvent: Invalid mesh network node type: %s", true, 0, VersionInfo.FortniteVersion >= 19.00).ScanFor({ 0xE8 }, true, VersionInfo.FortniteVersion < 19.00 ? 1 : 3, 0, 2000).RelativeOffset(1).Get();
 
@@ -217,6 +231,9 @@ namespace SDK
 						Offsets::StaticFindObject = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 7C 24 ? 4C 89 64 24 ? 55 41 56 41 57 48 8B EC 48 83 EC 60 33 FF 4C 8B E1 48 8D 4D E8 45 8A").Get();
 				}
 			}
+
+			if (VersionInfo.FortniteVersion >= 23.00)
+				Offsets::StaticFindObject = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 55 57 41 56 48 8B EC 48 83 EC ? 33 DB 4C 8B F1").Get();
 		}
 		else if (VersionInfo.EngineVersion >= 4.27)
 		{
@@ -275,5 +292,26 @@ namespace SDK
 				}
 			}
 		}
+
+		Offsets::Offset_Internal = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);
+		Offsets::PropertyFlags = Offsets::Offset_Internal - 0xc;
+		Offsets::ElementSize = Offsets::Offset_Internal - 0x10;
+		Offsets::PropertiesSize = VersionInfo.EngineVersion >= 4.25 ? 0x58 : (VersionInfo.EngineVersion >= 4.22 ? 0x50 : 0x40);
+		Offsets::Super = VersionInfo.EngineVersion >= 4.22 ? 0x40 : 0x30;
+		Offsets::FieldMask = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x7b : 0x73;
+		Offsets::Children = VersionInfo.EngineVersion >= 4.22 ? 0x48 : 0x38;
+		Offsets::FField_Next = VersionInfo.EngineVersion >= 5.2 ? 0x18 : 0x20;
+		Offsets::FField_Name = VersionInfo.EngineVersion >= 5.2 ? 0x20 : 0x28;
+
+		if (VersionInfo.FortniteVersion <= 6.31)
+			Offsets::ExecFunction = 0xB0;
+		else if (VersionInfo.FortniteVersion > 7.00 && VersionInfo.FortniteVersion < 12.00)
+			Offsets::ExecFunction = 0xC0;
+		else if (VersionInfo.FortniteVersion >= 12.00 && VersionInfo.FortniteVersion < 12.10)
+			Offsets::ExecFunction = 0xC8;
+		else if (VersionInfo.FortniteVersion >= 12.10 && VersionInfo.FortniteVersion <= 12.61)
+			Offsets::ExecFunction = 0xF0;
+		else
+			Offsets::ExecFunction = 0xD8;
 	}
 }

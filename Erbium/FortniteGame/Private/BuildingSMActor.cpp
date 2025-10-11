@@ -48,6 +48,16 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 
 		if (itemEntry)
 		{
+			for (int i = 0; i < itemEntry->StateValues.Num(); i++)
+			{
+				auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
+
+				if (StateValue.StateType != 2)
+					continue;
+
+				StateValue.IntValue = 0;
+			}
+
 			itemEntry->Count += ResCount;
 			if (itemEntry->Count > MaxMat)
 			{
@@ -71,7 +81,7 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 
 	
 	if (ResCount > 0)
-		InstigatedBy->ClientReportDamagedResourceBuilding(Actor, ResCount == 0 ? EFortResourceType::GetNone() : Actor->ResourceType, ResCount, false, Damage == 100.f);
+		InstigatedBy->ClientReportDamagedResourceBuilding(Actor, ResCount == 0 ? EFortResourceType::GetNone() : Actor->ResourceType, ResCount, Actor->GetHealth() - Damage <= 0, Damage == 100.f);
 
 	Actor->ForceNetUpdate();
 	return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
