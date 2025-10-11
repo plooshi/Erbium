@@ -802,7 +802,7 @@ void AFortPlayerControllerAthena::ServerClientIsReadyToRespawn(UObject* Context,
 		PlayerController->Possess(NewPawn);
 		PlayerController->RespawnPlayerAfterDeath(true);
 
-		//need a proper check if Player In Storm, or it would be possible to force spawn player in SafeZone center
+		//need a proper check if player is in storm, or it would be possible to force spawn player out of the zone
 		NewPawn->bIsInAnyStorm = false; 
 		NewPawn->bIsInsideSafeZone = true;
 		NewPawn->OnRep_IsInAnyStorm();
@@ -1080,7 +1080,7 @@ void AFortPlayerControllerAthena::Hook()
 	auto ClientOnPawnDiedAddr = FindFunctionCall(L"ClientOnPawnDied", VersionInfo.EngineVersion == 4.16 ? std::vector<uint8_t>{ 0x48, 0x89, 0x54 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
 	Utils::Hook(ClientOnPawnDiedAddr, ClientOnPawnDied, ClientOnPawnDiedOG);
 
-	if (VersionInfo.EngineVersion > 4.27) //This Gota be checked, i guess
+	if (VersionInfo.FortniteVersion >= 15)
 		Utils::ExecHook(GetDefaultObj()->GetFunction("ServerClientIsReadyToRespawn"), ServerClientIsReadyToRespawn);
 
 	if (FConfiguration::bEnableCheats)
