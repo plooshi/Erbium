@@ -59,6 +59,7 @@ void AFortPlayerPawnAthena::ServerHandlePickup_(UObject* Context, FFrame& Stack)
 
 	Pawn->IncomingPickups.Add(Pickup);
 
+	Pickup->SetLifeSpan(5.f);
 	if (FFortPickupLocationData::HasbPlayPickupSound())
 		Pickup->PickupLocationData.bPlayPickupSound = bPlayPickupSound;
 	Pickup->PickupLocationData.FlyTime = 0.4f;
