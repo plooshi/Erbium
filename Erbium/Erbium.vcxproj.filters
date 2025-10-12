@@ -209,5 +209,8 @@
     <ClCompile Include="Erbium\Private\Events.cpp">
       <Filter>Erbium\Private</Filter>
     </ClCompile>
+    <ClCompile Include="Erbium\Private\Finders.cpp">
+      <Filter>Erbium\Private</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

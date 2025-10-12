@@ -187,6 +187,7 @@
     <ClCompile Include="Engine\Private\NetDriver.cpp" />
     <ClCompile Include="Erbium\Private\dllmain.cpp" />
     <ClCompile Include="Erbium\Private\Events.cpp" />
+    <ClCompile Include="Erbium\Private\Finders.cpp" />
     <ClCompile Include="Erbium\Private\LateGame.cpp" />
     <ClCompile Include="Erbium\Private\Misc.cpp" />
     <ClCompile Include="FortniteGame\Private\BuildingFoundation.cpp" />
