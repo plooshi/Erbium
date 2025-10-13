@@ -1170,12 +1170,18 @@ namespace SDK
 
 	__forceinline static const UObject* StaticFindObject(const wchar_t* ObjectPath, const UClass* Class)
 	{
+		if (!SDK::Offsets::StaticFindObject)
+			return nullptr;
+
 		auto StaticFindObjectInternal = (UObject * (*)(const UClass*, UObject*, const wchar_t*, bool)) SDK::Offsets::StaticFindObject;
 		return StaticFindObjectInternal(Class, nullptr, ObjectPath, false);
 	}
 
 	__forceinline static const UObject* StaticLoadObject(const wchar_t* ObjectPath, const UClass* InClass, UObject* Outer = nullptr)
 	{
+		if (!SDK::Offsets::StaticLoadObject)
+			return nullptr;
+
 		auto StaticLoadObjectInternal = (UObject * (*)(const UClass*, UObject*, const wchar_t*, const wchar_t*, uint32_t, UObject*, bool)) SDK::Offsets::StaticLoadObject;
 		return StaticLoadObjectInternal(InClass, Outer, ObjectPath, nullptr, 0, nullptr, false);
 	}
