@@ -650,6 +650,7 @@ namespace SDK
 		//ProcessEvent(Function, Function->CreateParams(Params));
 	}
 
+
 	template <typename Ret, typename... Args>
 	Ret UObject::Call(UFunction* Function, Args... args) const
 	{
@@ -732,6 +733,7 @@ namespace SDK
 
 		FMemory::Free(Mem);
 	}
+
 
 
 	struct FUObjectItem final
