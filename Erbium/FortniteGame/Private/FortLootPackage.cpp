@@ -127,8 +127,6 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 
 		return;
 	}
-	
-	printf("SpawnLD\n");
 
 	auto ItemDefinition = LootPackage->ItemDefinition.Get();
 	if (!ItemDefinition)
