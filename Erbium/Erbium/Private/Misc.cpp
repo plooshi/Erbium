@@ -131,8 +131,10 @@ void Misc::InitClient()
 
 	MH_Initialize();
 
-	MH_CreateHook(SelectEditAddr, SelectEdit, (LPVOID*)&SelectEditOG);
-	MH_CreateHook(SelectResetAddr, SelectReset, (LPVOID*)&SelectResetOG);
+	if (VersionInfo.FortniteVersion < 11)
+		MH_CreateHook(SelectEditAddr, SelectEdit, (LPVOID*)&SelectEditOG);
+	if (VersionInfo.FortniteVersion < 24.40)
+		MH_CreateHook(SelectResetAddr, SelectReset, (LPVOID*)&SelectResetOG);
 
 	MH_EnableHook(MH_ALL_HOOKS);
 
