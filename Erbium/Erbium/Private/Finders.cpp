@@ -719,10 +719,18 @@ uint64_t FindFinishedTargetSpline()
 
     if (FinishedTargetSpline == 0)
     {
-        auto sRef = Memcury::Scanner::FindStringRef("AFortPickup::FinishedTargetSpline");
+        auto sRef = Memcury::Scanner::FindStringRef("AFortPickup::FinishedTargetSpline").Get();
 
-        if (sRef.Get())
-            return sRef.ScanFor(VersionInfo.FortniteVersion >= 20 ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C }, false).Get();
+        if (sRef)
+        {
+            for (int i = 0; i < 500; i++)
+            {
+                if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x5C)
+                    return FinishedTargetSpline = sRef - i;
+                else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
+                    return FinishedTargetSpline = sRef - i;
+            }
+        }
 
         if (VersionInfo.EngineVersion == 4.16 || VersionInfo.EngineVersion == 4.19)
             return Memcury::Scanner::FindPattern("4C 8B DC 53 55 56 48 83 EC 60 48 8B F1 48 8B 89 ? ? ? ? 48 85 C9").Get();
