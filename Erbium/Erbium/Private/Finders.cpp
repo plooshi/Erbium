@@ -726,7 +726,7 @@ uint64_t FindFinishedTargetSpline()
 
         if (sRef)
         {
-            for (int i = 0; i < 500; i++)
+            for (int i = 0; i < 1500; i++)
             {
                 if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x5C)
                     return FinishedTargetSpline = sRef - i;

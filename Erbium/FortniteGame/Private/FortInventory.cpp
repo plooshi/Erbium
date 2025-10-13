@@ -396,7 +396,9 @@ void AFortInventory::Hook()
 {
     Utils::Hook(FindRemoveInventoryItem(), RemoveInventoryItem);
 
-    auto SetOwningInventory = Memcury::Scanner::FindPattern("48 85 D2 74 ? 80 BA ? ? ? ? ? 75 ? 48 89 91").Get(); // finds on 1.8, 4.1, 10.40, 14.40, 19.10, 21.00
+    auto SetOwningInventory = Memcury::Scanner::FindPattern("48 85 D2 74 ? 80 BA ? ? ? ? ? 75 ? 48 89 91").Get();
+    if (!SetOwningInventory)
+        SetOwningInventory = Memcury::Scanner::FindPattern("48 83 EC ? 48 85 D2 74 ? 80 BA ? ? ? ? ? 75 ? 48 81 C1").Get();
 
     if (SetOwningInventory)
     {
