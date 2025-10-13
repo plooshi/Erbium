@@ -555,10 +555,16 @@ uint64_t FindGiveAbility()
             return GiveAbility = Memcury::Scanner::FindPattern("48 89 5C 24 ? 56 57 41 56 48 83 EC 20 83 B9").Get();
         else if (VersionInfo.EngineVersion == 4.21)
             return GiveAbility = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 7C 24 ? 41 56 48 83 EC 20 83 B9 ? ? ? ? ? 49 8B E8 4C 8B F2").Get();
-        if (VersionInfo.EngineVersion == 5.0 && VersionInfo.FortniteVersion <= 23)
-            return GiveAbility = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 56 57 41 56 48 83 EC 20 8B 81 ? ? ? ? 49 8B E8 4C").Get();
-        if (VersionInfo.FortniteVersion >= 23)
-            return GiveAbility = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 56 41 57 48 8B EC 48 83 EC ? 49 8B 40").Get();
+        else if (VersionInfo.EngineVersion >= 5.0)
+        {
+            GiveAbility = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 56 57 41 56 48 83 EC 20 8B 81 ? ? ? ? 49 8B E8 4C").Get();
+           
+            if (!GiveAbility)
+                GiveAbility = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 56 41 57 48 8B EC 48 83 EC ? 49 8B 40").Get();
+
+            if (!GiveAbility)
+                GiveAbility = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 56 57 41 56 48 83 EC 30 49 8B 40 10 45 33 F6 49 8B E8 48 8B F2 48 8B").Get();
+        }
 
         Memcury::Scanner addr = Memcury::Scanner::FindStringRef(L"GiveAbilityAndActivateOnce called on ability %s on the client, not allowed!", true, 1, VersionInfo.EngineVersion >= 5.0);
 
