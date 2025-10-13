@@ -1301,10 +1301,18 @@ uint64 FindReplicateActor()
         }
         else if (std::floor(VersionInfo.FortniteVersion) == 20)
             return ReplicateActor = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 10 48 89 70 18 48 89 78 20 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 4C 8D 69 68").Get();
-        else if (VersionInfo.FortniteVersion <= 22)
-            return ReplicateActor = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 10 48 89 70 18 48 89 78 20 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 45 33 FF 4C 8D 69 68 44 38 3D").Get();
-        else if (VersionInfo.FortniteVersion >= 23)
-            return ReplicateActor = Memcury::Scanner::FindPattern("40 55 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 48 8D 6C 24 ? 48 89 9D ? ? ? ? 48 89 B5 ? ? ? ? 48 89 BD ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C5 48 89 85 ? ? ? ? 45 33 E4").Get();
+        else if (VersionInfo.FortniteVersion >= 21)
+        {
+            auto sRef = Memcury::Scanner::FindStringRef(L"STAT_NetReplicateActorTime").Get();
+
+            for (int i = 0; i < 2000; i++)
+            {
+                if (*(uint8_t*)(sRef - i) == 0x40 && *(uint8_t*)(sRef - i + 1) == 0x55)
+                    return ReplicateActor = sRef - i;
+                else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
+                    return ReplicateActor = sRef - i;
+            }
+        }
     }
 
     return ReplicateActor;
