@@ -950,7 +950,7 @@ uint64_t FindRemoveInventoryItem()
 
     if (RemoveInventoryItem == 0)
     {
-        std::vector<uint8_t> funcStart = VersionInfo.EngineVersion == 4.16 ? std::vector<uint8_t>{ 0x44, 0x88, 0x4C } : (VersionInfo.FortniteVersion >= 16 && (VersionInfo.FortniteVersion < 20 || VersionInfo.FortniteVersion >= 23) ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
+        std::vector<uint8_t> funcStart = VersionInfo.EngineVersion == 4.16 ? std::vector<uint8_t>{ 0x44, 0x88, 0x4C } : (VersionInfo.FortniteVersion >= 16 && (VersionInfo.FortniteVersion < 20 || VersionInfo.FortniteVersion >= 22) ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
 
         auto uFuncCall = FindFunctionCall(L"ServerRemoveInventoryItem", funcStart);
         auto ServerRemoveInventoryItemCall = Memcury::Scanner::FindPointerRef((PVOID)uFuncCall, 0, true);
