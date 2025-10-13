@@ -574,7 +574,7 @@ namespace UC
 			for (int32_t i = 0; i < Num(); i++) {
 				auto& v = Get(i, Size);
 
-				if (Predicate(v)) 
+				if (Predicate(v))
 					return i;
 			}
 			return -1;
@@ -835,7 +835,7 @@ namespace UC
 		{
 			return Num() < (HashSize / 4);
 		}
-		
+
 		void UnhashElements()
 		{
 			if (ShouldClearByElements())
@@ -943,7 +943,7 @@ namespace UC
 			}
 			return nullptr;
 		}
-		
+
 		void Reset()
 		{
 			Elements.Reset();

@@ -251,7 +251,7 @@ namespace SDK
 			__movsb((PBYTE)this, (const PBYTE)&Rhs, Size());
 			return *this;
 		}
-		
+
 		struct FRotator Rotator();
 	};
 
@@ -546,7 +546,7 @@ namespace SDK
 		DEFINE_STATIC_FUNC(GetAllActorsOfClass, void);
 		static double GetTimeSeconds(UObject* WorldContextObject)
 		{
-			static UFunction *GetTimeSeconds__Ptr = nullptr;
+			static UFunction* GetTimeSeconds__Ptr = nullptr;
 			if (!GetTimeSeconds__Ptr)
 				GetTimeSeconds__Ptr = GetDefaultObj()->GetFunction("GetTimeSeconds");
 
