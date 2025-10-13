@@ -28,9 +28,9 @@ public:
     USCRIPTSTRUCT_COMMON_MEMBERS(FFortPlayerDeathReport);
 
     DEFINE_STRUCT_PROP(KillerPlayerState, AFortPlayerStateAthena*);
-    DEFINE_STRUCT_PROP(KillerPawn, AFortPlayerPawnAthena*);
+    DEFINE_STRUCT_NEWOBJ_PROP(KillerPawn, AFortPlayerPawnAthena);
     DEFINE_STRUCT_PROP(Tags, FGameplayTagContainer);
-    DEFINE_STRUCT_PROP(DamageCauser, AActor*);
+    DEFINE_STRUCT_NEWOBJ_PROP(DamageCauser, AActor);
 };
 
 class UAthenaDanceItemDefinition : public UObject
