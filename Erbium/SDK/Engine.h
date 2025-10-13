@@ -557,11 +557,20 @@ namespace SDK
 		}
 	};
 
+	class ULocalPlayer : public UObject
+	{
+	public:
+		UCLASS_COMMON_MEMBERS(ULocalPlayer);
+
+		DEFINE_PROP(PlayerController, UObject*);
+	};
+
 	class UGameInstance : public UObject
 	{
 	public:
 		UCLASS_COMMON_MEMBERS(UGameInstance);
-		DEFINE_PROP(LocalPlayers, TArray<UObject*>);
+
+		DEFINE_PROP(LocalPlayers, TArray<ULocalPlayer*>);
 	};
 
 	class UGameViewportClient : public SDK::UObject

@@ -7,15 +7,28 @@
 #include "../../FortniteGame/Public/FortInventory.h"
 #include <chrono>
 #include "../Public/Configuration.h"
+#include "../Public/Misc.h"
 
 void Main()
 {
+#ifndef CLIENT
     AllocConsole();
     FILE* s;
     freopen_s(&s, "CONOUT$", "w", stdout);
 
     printf("Initializing SDK...\n");
+#endif
     SDK::Init();
+
+    if (VersionInfo.EngineVersion >= 5.1)
+        UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"net.AllowEncryption 0"), nullptr);
+
+#ifdef CLIENT
+    Misc::InitClient();
+
+    return;
+#endif
+
     char buffer[67];
     sprintf_s(buffer, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Setting up" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Setting up" : "Erbium (FN %.1f, UE %.2f): Setting up"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
     SetConsoleTitleA(buffer);

@@ -215,11 +215,5 @@
     <ClCompile Include="Erbium\Private\Finders.cpp">
       <Filter>Erbium\Private</Filter>
     </ClCompile>
-    <ClCompile Include="SDK\Private\Core.cpp">
-      <Filter>SDK\Private</Filter>
-    </ClCompile>
-    <ClCompile Include="SDK\Private\Offsets.cpp">
-      <Filter>SDK\Private</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>

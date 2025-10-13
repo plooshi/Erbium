@@ -1,8 +1,9 @@
 #include "pch.h"
 #include "../Public/Misc.h"
-#include "../../Erbium/Public/Finders.h"
+#include "../Public/Finders.h"
 #include <algorithm>
-#include "../../Erbium/Public/Configuration.h"
+#include "../Public/Configuration.h"
+#include "../../FortniteGame/Public/FortPlayerControllerAthena.h"
 
 int Misc::GetNetMode() 
 {
@@ -44,6 +45,98 @@ void Misc::ApplyHomebaseEffectsOnPlayerSetup(
 	GetFromOffset<const UObject*>(a5, ItemDefOffset) = Commando ? Commando : Commando2;
 
 	return ApplyHomebaseEffectsOnPlayerSetupOG(a1, a2, a3, a4, a5, a6, a7);
+}
+
+bool bEOREnabled = false;
+inline void* (*SelectResetOG)(void*) = nullptr;
+inline void* (*SelectEditOG)(void*) = nullptr;
+inline char (*CompleteBuildingEditInteraction)(void*) = nullptr;
+
+void* SelectEdit(void* a1)
+{
+	void* result = SelectEditOG(a1);
+
+	if (bEOREnabled)
+		CompleteBuildingEditInteraction(a1);
+
+	return result;
+}
+
+void* SelectReset(void* a1)
+{
+	void* result = SelectResetOG(a1);
+
+	if (bEOREnabled)
+		CompleteBuildingEditInteraction(a1);
+
+	return result;
+}
+
+void ClientThread()
+{
+	bool bPressed = false;
+	while (true)
+	{
+		if (!bPressed && GetAsyncKeyState(VK_F3))
+		{
+			bPressed = true;
+
+			bEOREnabled ^= 1;
+		}
+		else if (!bPressed && GetAsyncKeyState(VK_F2))
+		{
+			bPressed = true;
+			//bEnableResetOnRelease ^= 1;
+			auto& LocalPlayers = UWorld::GetWorld()->OwningGameInstance->LocalPlayers;
+
+			if (LocalPlayers.Num() > 0)
+			{
+				auto PlayerController = (AFortPlayerControllerAthena*) LocalPlayers[0]->PlayerController;
+
+				PlayerController->CheatManager = UGameplayStatics::SpawnObject(PlayerController->CheatClass, PlayerController);
+			}
+		}
+		else if (!GetAsyncKeyState(VK_F3) && !GetAsyncKeyState(VK_F2))
+			bPressed = false;
+
+		Sleep(33); // thread runs at 30tps
+	}
+}
+
+void Misc::InitClient()
+{
+	UEngine::GetEngine()->GameViewport->ViewportConsole = UGameplayStatics::SpawnObject(UEngine::GetEngine()->ConsoleClass, UEngine::GetEngine()->GameViewport);
+
+	auto SelectEditAddr = Memcury::Scanner::FindStringRef(L"EditModeInputComponent0").ScanFor({ 0x48, 0x8D, 0x05 }, true, 1).RelativeOffset(3).GetAs<void*>();
+	auto SelectResetAddr = Memcury::Scanner::FindStringRef(L"EditModeInputComponent0").ScanFor({ 0x48, 0x8D, 0x05 }, true, 2).RelativeOffset(3).GetAs<void*>();
+
+	auto sRef = Memcury::Scanner::FindStringRef("CompleteBuildingEditInteraction", true).Get();
+	uintptr_t CompleteBuildingEditInteractionLea = 0;
+
+	for (int i = 1; i < 2000; i++)
+	{
+		if (*(uint8_t*)(sRef - i) == 0x4C && *(uint8_t*)(sRef - i + 1) == 0x8D)
+		{
+			CompleteBuildingEditInteractionLea = sRef - i;
+			break;
+		}
+		else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8D)
+		{
+			CompleteBuildingEditInteractionLea = sRef - i;
+			break;
+		}
+	}
+
+	CompleteBuildingEditInteraction = (char (*)(void*)) Memcury::Scanner(CompleteBuildingEditInteractionLea).RelativeOffset(3).Get();
+
+	MH_Initialize();
+
+	MH_CreateHook(SelectEditAddr, SelectEdit, (LPVOID*)&SelectEditOG);
+	MH_CreateHook(SelectResetAddr, SelectReset, (LPVOID*)&SelectResetOG);
+
+	MH_EnableHook(MH_ALL_HOOKS);
+
+	CreateThread(0, 0, (LPTHREAD_START_ROUTINE)ClientThread, 0, 0, 0);
 }
 
 void Misc::Hook()

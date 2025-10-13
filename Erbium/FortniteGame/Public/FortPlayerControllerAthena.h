@@ -120,6 +120,8 @@ public:
     DEFINE_PROP(SwappingItemDefinition, FFortItemEntry*); // scuffness
     DEFINE_PROP(QuickBars, AFortQuickBars*);
     DEFINE_PROP(XPComponent, UFortPlayerControllerAthenaXPComponent*);
+    DEFINE_PROP(CheatManager, UObject*);
+    DEFINE_PROP(CheatClass, TSubclassOf<UObject>);
 
     DEFINE_FUNC(GetViewTarget, AActor*);
     DEFINE_FUNC(GetControlRotation, FRotator);
