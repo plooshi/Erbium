@@ -1177,7 +1177,7 @@ namespace Memcury
 
             if (add.Get())
             {
-                if (bIsInFunc)
+                if (bIsInFunc && !bUE51)
                 {
                     for (int i = 0; i < 300; i++)
                     {

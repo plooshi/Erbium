@@ -111,13 +111,6 @@ uint64_t FindGetNetMode()
     {
         if (floor(VersionInfo.FortniteVersion) == 18)
             GetNetMode = Memcury::Scanner::FindPattern("48 83 EC 28 48 83 79 ? ? 75 20 48 8B 91 ? ? ? ? 48 85 D2 74 1E 48 8B 02 48 8B CA FF 90").Get();
-        else if (floor(VersionInfo.FortniteVersion) >= 23)
-        {
-            GetNetMode = Memcury::Scanner::FindPattern("48 8B 81 ? ? ? ? 48 63 89 ? ? ? ? 4C 8D 04 C8 49 3B C0 74 ? 48 8B 08 48 39 91 ? ? ? ? 75 ? 48 8B C1 C3").Get();
-
-            if (!GetNetMode)
-                GetNetMode = Memcury::Scanner::FindPattern("48 83 EC ? 48 83 79 ? ? 74 ? B8").Get();
-        }
         else {
             auto sRef = Memcury::Scanner::FindStringRef(L"PREPHYSBONES").Get();
 
@@ -157,10 +150,13 @@ uint64_t FindGetWorldContext()
             GetWorldContext = Memcury::Scanner::FindPattern("48 8B 81 ? ? ? ? 48 63 89 ? ? ? ? 4C 8D 04 C8 49 3B C0 74 ? 48 8B 08 48 39 91 ? ? ? ? 75 ? 48 8B C1 C3").Get();
 
         if (!GetWorldContext)
-            GetWorldContext = Memcury::Scanner::FindPattern("48 8B 81 ? ? ? ? 48 63 89 ? ? ? ? 4C 8D 04 C8 49 3B C0").Get();
+            GetWorldContext = Memcury::Scanner::FindPattern("48 8B 81 ? ? ? ? 48 63 89 ? ? ? ? 4C 8D 04 C8 49 3B C0 74 ? 48 8B 08 48 39 91 B8 02 00 00 74 ? 48 83 C0 08 EB ??").Get();
 
         if (!GetWorldContext)
-            GetWorldContext = Memcury::Scanner::FindPattern("40 53 48 83 ec ?? f6 41 08 10 48 8b d9 75 ?? 48 8b 41 20").Get();
+            GetWorldContext = Memcury::Scanner::FindPattern("48 8B 81 ? ? ? ? 48 63 89 ? ? ? ? 4C 8D 04 C8 49 3B C0 74 ? 48 8B 08 48 39 91 ? ? ? ? 74 ? 48 83 C0 08 EB ??").Get();
+
+        if (!GetWorldContext)
+            GetWorldContext = Memcury::Scanner::FindPattern("40 53 48 83 EC ?? F6 41 08 10 48 8B D9 75 ?? 48 8B 41 20").Get();
     }
     return GetWorldContext;
 }
@@ -249,7 +245,12 @@ uint64_t FindInitListen()
         if (VersionInfo.EngineVersion >= 5.0) {
             InitListen = Memcury::Scanner::FindPattern("4D 8B C8 4C 8B C2 33 D2 FF 90 ? ? ? ? 84 C0 75 ? 80 3D").ScanFor({ 0x4C, 0x8B, 0xDC }, false).Get();
             if (!InitListen)
+            {
                 InitListen = Memcury::Scanner::FindPattern("4C 8B DC 49 89 5B ? 49 89 73 ? 57 48 83 EC ? 48 8B BC 24").Get();
+
+                if (!InitListen)
+                    InitListen = Memcury::Scanner::FindPattern("4C 8B DC 49 89 5B 08 49 89 73 10 57 48 83 EC 40 48 8B 7C 24 ? 49 8B F0 48 8B 01 48 8B D9 49 89 7B E0 45").Get();
+            }
         }
         else if (VersionInfo.EngineVersion >= 4.27)
             InitListen = Memcury::Scanner::FindPattern("4C 8B DC 49 89 5B 08 49 89 73 10 57 48 83 EC 50 48 8B BC 24 ? ? ? ? 49 8B F0 48 8B 01 48 8B").Get();
@@ -296,14 +297,23 @@ uint64_t FindSetWorld()
             case 19:
                 VftIdx = 0x7a;
                 break;
+            case 22:
+            case 23:
             case 20:
                 VftIdx = 0x7b;
                 break;
+            case 21:
+                VftIdx = 0x7c;
+                break;
+            case 24:
+                VftIdx = 0x7d;
+                break;
             default:
-                if (VersionInfo.FortniteVersion >= 14 && VersionInfo.FortniteVersion <= 15.2) VftIdx = 0x71;
-                else if (VersionInfo.FortniteVersion >= 15.3 && VersionInfo.FortniteVersion < 18) VftIdx = 0x72;
-                else
-                    VftIdx = 0x7c;
+                if (VersionInfo.FortniteVersion >= 14 && VersionInfo.FortniteVersion <= 15.2) 
+                    VftIdx = 0x71;
+                else if (VersionInfo.FortniteVersion >= 15.3 && VersionInfo.FortniteVersion < 18) 
+                    VftIdx = 0x72;
+
                 break;
             }
             SetWorld = uintptr_t(DefaultObjImpl("NetDriver")->Vft[VftIdx]);
