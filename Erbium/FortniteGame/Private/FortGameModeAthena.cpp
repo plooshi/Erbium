@@ -121,6 +121,7 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
             ShowFoundation(Utils::FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.SLAB_4"));
 
 
+        auto AdditionalPlaylistLevelsStreamed__Off = GameState->GetOffset("AdditionalPlaylistLevelsStreamed");
         auto AdditionalLevelStruct = FAdditionalLevelStreamed::StaticStruct();
         if (Playlist->HasAdditionalLevels())
             for (auto& Level : Playlist->AdditionalLevels)
@@ -138,7 +139,7 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
                     free(level);
                 }
                 else
-                    GameState->Get<"AdditionalPlaylistLevelsStreamed", TArray<FName>>().Add(Level.ObjectID.AssetPathName);
+                    GetFromOffset<TArray<FName>>(GameState, AdditionalPlaylistLevelsStreamed__Off).Add(Level.ObjectID.AssetPathName);
             }
 
         if (Playlist->HasAdditionalLevelsServerOnly())
@@ -158,7 +159,7 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
                     free(level);
                 }
                 else
-                    GameState->Get<"AdditionalPlaylistLevelsStreamed", TArray<FName>>().Add(Level.ObjectID.AssetPathName);
+                    GetFromOffset<TArray<FName>>(GameState, AdditionalPlaylistLevelsStreamed__Off).Add(Level.ObjectID.AssetPathName);
             }
         if (GameState->HasAdditionalPlaylistLevelsStreamed())
             GameState->OnRep_AdditionalPlaylistLevelsStreamed();

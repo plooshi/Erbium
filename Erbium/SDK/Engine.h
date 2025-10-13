@@ -45,7 +45,7 @@ namespace SDK
 		/** This must be called if you just remove something from the array */
 		void MarkArrayDirty()
 		{
-			// ItemMap.Reset();        // This allows to clients to add predictive elements to arrays without affecting replication.
+			ItemMap.Reset();        // This allows to clients to add predictive elements to arrays without affecting replication.
 			IncrementArrayReplicationKey();
 
 			// Invalidate the cached item counts so that they're recomputed during the next write

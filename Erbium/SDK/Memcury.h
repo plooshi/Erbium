@@ -193,39 +193,6 @@ namespace Memcury
                 printf("[%lu] Name: %s - Address: %p  - Module: %s\n", frame, symbolInfo->Name, (void*)symbolInfo->Address, module);
             }
         }
-
-        template <ExceptionMode mode>
-        auto MemcuryGlobalHandler(EXCEPTION_POINTERS* ExceptionInfo) -> long
-        {
-            auto [dllStart, dllEnd] = Util::GetModuleStartAndEnd();
-
-            if constexpr (mode == ExceptionMode::CatchDllExceptionsOnly)
-            {
-                if (!Util::IsInRange(ExceptionInfo->ContextRecord->Rip, dllStart, dllEnd))
-                {
-                    return EXCEPTION_CONTINUE_SEARCH;
-                }
-            }
-
-            auto message = std::format("Memcury caught an exception at [{:x}]\nPress Yes if you want the address to be copied to your clipboard", ExceptionInfo->ContextRecord->Rip);
-            if (MessageBoxA(nullptr, message.c_str(), "Error", MB_ICONERROR | MB_YESNO) == IDYES)
-            {
-                std::string clip = std::format("{:x}", ExceptionInfo->ContextRecord->Rip);
-                Util::CopyToClipboard(clip);
-            }
-
-            PrintStack(ExceptionInfo->ContextRecord);
-
-            FreezeCurrentThread();
-
-            return EXCEPTION_EXECUTE_HANDLER;
-        }
-
-        template <ExceptionMode mode>
-        static auto SetExceptionMode() -> void
-        {
-            SetUnhandledExceptionFilter(MemcuryGlobalHandler<mode>);
-        }
     }
 
     namespace Globals

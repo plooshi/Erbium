@@ -163,9 +163,9 @@ public:
 
     DEFINE_STRUCT_PROP(bPlayPickupSound, bool);
     DEFINE_STRUCT_PROP(FlyTime, float);
-    DEFINE_STRUCT_PROP(ItemOwner, AFortPlayerPawnAthena*);
+    DEFINE_STRUCT_NEWOBJ_PROP(ItemOwner, AFortPlayerPawnAthena);
     DEFINE_STRUCT_PROP(PickupGuid, FGuid);
-    DEFINE_STRUCT_PROP(PickupTarget, AFortPlayerPawnAthena*);
+    DEFINE_STRUCT_NEWOBJ_PROP(PickupTarget, AFortPlayerPawnAthena);
 };
 
 class AFortPickupAthena : public AActor
@@ -175,7 +175,7 @@ public:
 
     DEFINE_PROP(bRandomRotation, bool);
     DEFINE_PROP(PrimaryPickupItemEntry, FFortItemEntry);
-    DEFINE_PROP(PawnWhoDroppedPickup, AFortPlayerPawnAthena*);
+    DEFINE_NEWOBJ_PROP(PawnWhoDroppedPickup, AFortPlayerPawnAthena);
     DEFINE_PROP(bTossedFromContainer, bool);
     DEFINE_PROP(bPickedUp, bool);
     DEFINE_PROP(PickupLocationData, FFortPickupLocationData);

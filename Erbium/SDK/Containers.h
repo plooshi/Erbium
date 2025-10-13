@@ -270,6 +270,11 @@ namespace UC
 				Value ? GetData()[DWORDIndex] |= Mask : GetData()[DWORDIndex] &= ~Mask;
 			}
 
+			inline void Reset()
+			{
+				NumBits = 0;
+			}
+
 		public:
 			Iterators::FSetBitIterator begin();
 			Iterators::FSetBitIterator end();
@@ -737,6 +742,17 @@ namespace UC
 			}
 		}
 
+		/** Empties the array, but keep its allocated memory as slack. */
+		void Reset()
+		{
+
+			// Free the allocated elements.
+			Data.ResetNum();
+			FirstFreeIndex = -1;
+			NumFreeIndices = 0;
+			AllocationFlags.Reset();
+		}
+
 	public:
 		const ContainerImpl::FBitArray& GetAllocationFlags() const { return AllocationFlags; }
 
@@ -815,6 +831,40 @@ namespace UC
 			return false;
 		}
 
+		bool ShouldClearByElements()
+		{
+			return Num() < (HashSize / 4);
+		}
+		
+		void UnhashElements()
+		{
+			if (ShouldClearByElements())
+			{
+				// Faster path: only reset hash buckets to FSetElementId for elements in the hash
+				for (const SetDataType& Element : Elements)
+				{
+					Hash.GetAllocation()[Element.HashIndex] = -1;
+				}
+			}
+			else
+			{
+				for (int32 I = 0; I < HashSize; ++I)
+				{
+					Hash.GetAllocation()[I] = -1;
+				}
+			}
+		}
+
+		void Reset()
+		{
+			if (Num() == 0)
+			{
+				return;
+			}
+
+			UnhashElements();
+			Elements.Reset();
+		}
 
 	public:
 		const ContainerImpl::FBitArray& GetAllocationFlags() const { return Elements.GetAllocationFlags(); }
@@ -893,6 +943,12 @@ namespace UC
 			}
 			return nullptr;
 		}
+		
+		void Reset()
+		{
+			Elements.Reset();
+		}
+
 
 
 	public:

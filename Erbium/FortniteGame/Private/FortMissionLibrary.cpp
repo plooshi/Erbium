@@ -30,7 +30,7 @@ void UFortMissionLibrary::Hook()
 {
 	auto TeleportPlayerPawnFn = GetDefaultObj()->GetFunction("TeleportPlayerPawn");
 	if (TeleportPlayerPawnFn)
-		for (auto& Param : TeleportPlayerPawnFn->GetParamsNamed().NameOffsetMap)
+		for (auto& Param : TeleportPlayerPawnFn->GetParamsNamed())
 		{
 			if (Param.Name == "WorldContextObject")
 			{

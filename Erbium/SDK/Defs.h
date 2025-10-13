@@ -90,16 +90,12 @@
                                                                                                                                                                      \
     __VA_ARGS__& Set##Name(__VA_ARGS__&& Value) const                                                                                                                \
     {                                                                                                                                                                \
-        if (Name##__Offset == -2)                                                                                                                                    \
-            Name##__Offset = this->GetOffset(#Name, GUESS_PROP_FLAGS(__VA_ARGS__));                                                                                  \
-        return GetFromOffset<__VA_ARGS__>(this, Name##__Offset) = Value;                                                                                             \
+        return Get##Name() = Value;                                                                                                                                  \
     }                                                                                                                                                                \
                                                                                                                                                                      \
     __VA_ARGS__& Set##Name(__VA_ARGS__& Value) const                                                                                                                 \
     {                                                                                                                                                                \
-        if (Name##__Offset == -2)                                                                                                                                    \
-            Name##__Offset = this->GetOffset(#Name, GUESS_PROP_FLAGS(__VA_ARGS__));                                                                                  \
-        return GetFromOffset<__VA_ARGS__>(this, Name##__Offset) = Value;                                                                                             \
+        return Get##Name() = Value;                                                                                                                                  \
     }                                                                                                                                                                \
                                                                                                                                                                      \
     __declspec(property(get = Get##Name, put = Set##Name))                                                                                                           \
@@ -163,16 +159,12 @@
                                                                                                                                                                      \
     __VA_ARGS__& Set##Name(__VA_ARGS__&& Value) const                                                                                                                \
     {                                                                                                                                                                \
-        if (Name##__Offset == -2)                                                                                                                                    \
-            Name##__Offset = StaticStruct()->GetOffset(#Name, GUESS_PROP_FLAGS(__VA_ARGS__));                                                                        \
-        return GetFromOffset<__VA_ARGS__>(this, Name##__Offset) = Value;                                                                                             \
+        return Get##Name() = Value;                                                                                                                                  \
     }                                                                                                                                                                \
                                                                                                                                                                      \
     __VA_ARGS__& Set##Name(__VA_ARGS__& Value) const                                                                                                                 \
     {                                                                                                                                                                \
-        if (Name##__Offset == -2)                                                                                                                                    \
-            Name##__Offset = StaticStruct()->GetOffset(#Name, GUESS_PROP_FLAGS(__VA_ARGS__));                                                                        \
-        return GetFromOffset<__VA_ARGS__>(this, Name##__Offset) = Value;                                                                                             \
+        return Get##Name() = Value;                                                                                                                                  \
     }                                                                                                                                                                \
                                                                                                                                                                      \
     __declspec(property(get = Get##Name, put = Set##Name))                                                                                                           \
@@ -223,9 +215,10 @@
     template <typename... Args>                                                                                                                                      \
     static __VA_ARGS__ Name(Args... Params)                                                                                                                          \
     {                                                                                                                                                                \
+        auto DefaultObj = GetDefaultObj();                                                                                                                           \
         if (!Name##__Ptr)                                                                                                                                            \
-            Name##__Ptr = GetDefaultObj()->GetFunction(#Name);                                                                                                       \
-        return GetDefaultObj()->Call<__VA_ARGS__>(Name##__Ptr, Params...);                                                                                           \
+            Name##__Ptr = DefaultObj->GetFunction(#Name);                                                                                                            \
+        return DefaultObj->Call<__VA_ARGS__>(Name##__Ptr, Params...);                                                                                                \
     }                                                                                                                                                                \
                                                                                                                                                                      \
     /*static void Name##_LP(UEAllocatedVector<SDK::ParamPair> Params)                                                                                                \

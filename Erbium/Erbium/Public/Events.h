@@ -4,16 +4,16 @@
 struct FEventFunction
 {
     bool bIsLoaderFunction;
-    UEAllocatedWString FunctionPath;
+    const wchar_t* FunctionPath;
 };
 
 struct FEvent
 {
-    UEAllocatedWString LoaderClass;
-    UEAllocatedWString ScriptingClass;
+    const wchar_t* LoaderClass;
+    const wchar_t* ScriptingClass;
     std::vector<FEventFunction> EventFunctions;
     double EventVersion;
-    UEAllocatedWString LoaderFuncPath;
+    const wchar_t* LoaderFuncPath;
 };
 
 namespace Events

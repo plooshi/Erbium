@@ -270,7 +270,7 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
         NewPickup->OnRep_PrimaryPickupItemEntry();
     //NewPickup->OnRep_PrimaryPickupItemEntry();
 
-    if (VersionInfo.FortniteVersion <= 21.30) NewPickup->PawnWhoDroppedPickup = Pawn;
+    NewPickup->PawnWhoDroppedPickup = Pawn;
     //auto bFloorLoot = Container->IsA<ATiered_Athena_FloorLoot_01_C>() || Container->IsA<ATiered_Athena_FloorLoot_Warmup_C>();
     //UFortKismetLibrary::TossPickupFromContainer(UWorld::GetWorld(), Container, NewPickup, 1, 0, Container->LootTossConeHalfAngle_Athena, Container->LootTossDirection_Athena, Container->LootTossSpeed_Athena, false);
     static auto tpfcPtr = UFortKismetLibrary::GetDefaultObj()->GetFunction("TossPickupFromContainer");
