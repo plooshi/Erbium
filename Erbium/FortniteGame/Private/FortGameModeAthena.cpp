@@ -305,6 +305,11 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         for (auto& [_, Val] : LootPackageTempArr)
             LPGroupsAll.Add(Val);
 
+        if (VersionInfo.FortniteVersion >= 21)
+        {
+            AbilitySets.Add(Utils::FindObject<UFortAbilitySet>(L"/TacticalSprintGame/Gameplay/AS_TacticalSprint.AS_TacticalSprint"));
+            AbilitySets.Add(Utils::FindObject<UFortAbilitySet>(L"/Ascender/Gameplay/Ascender/AS_Ascender.AS_Ascender"));
+        }
 
         auto GameFeatureDataClass = FindClass("FortGameFeatureData");
         if (GameFeatureDataClass)
@@ -322,10 +327,6 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                     auto& LootTableData = GetFromOffset<FFortGameFeatureLootTableData>(Object, DefaultLootTableDataOffset);
                     auto LTDFeatureData = LootTableData.LootTierData.Get();
                     auto LootPackageData = LootTableData.LootPackageData.Get();
-                    auto AbilitySet = LootTableData.PlayerAbilitySet.Get();
-
-                    if (AbilitySet)
-                        AbilitySets.Add(AbilitySet);
 
                     if (LTDFeatureData)
                     {
