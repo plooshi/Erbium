@@ -206,17 +206,14 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 	{
 		for (auto const& Val : TierDataAllGroups)
 		{
-			printf("%s %d %d\n", Val->TierGroup.ToString().c_str(), TierGroup.ComparisonIndex, Val->TierGroup.ComparisonIndex);
 			if (Val->TierGroup == TierGroup && (LootTier == -1 ? true : LootTier == Val->LootTier))
 				TierDataGroups.Add(Val);
 		}
 	}
-	printf("TDC: %d\n", TierDataGroups.Num());
 
 	auto LootTierData = PickWeighted(TierDataGroups, [](float Total) { return ((float)rand() / 32767.f) * Total; });
 	if (!LootTierData)
 		return {};
-	printf("LootTierData: %s\n", LootTierData->LootPackage.ToString().c_str());
 
 	if (LootTierData->NumLootPackageDrops < 0)
 		return {};
