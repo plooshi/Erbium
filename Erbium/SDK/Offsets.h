@@ -137,6 +137,8 @@ namespace SDK
 		else
 			VersionInfo.FortniteVersion = std::stod(BuildString.substr(BuildString.rfind(L'-') + 1));
 
+		bUE51 = VersionInfo.EngineVersion >= 5.1;
+
 		Offsets::Realloc = Memcury::Scanner::FindPattern("48 89 5C 24 08 48 89 74 24 10 57 48 83 EC ? 48 8B F1 41 8B D8 48 8B 0D ? ? ? ?").Get();
 
 		auto SRef = Memcury::Scanner::FindStringRef("ForwardShadingQuality_");

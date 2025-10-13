@@ -67,6 +67,7 @@
         Memcury::Safety::FreezeCurrentThread();
 
 extern uint64_t ImageBase;
+inline bool bUE51 = false;
 namespace Memcury
 {
 
@@ -929,13 +930,16 @@ namespace Memcury
                                 if (rdataSection.isInSection(stringAdd))
                                 {
                                     auto strBytes = stringAdd.GetAs<std::uint8_t*>();
-                                    /*auto pointerToRef = *(LPVOID*)strBytes;
 
-                                    if (rdataSection.isInSection(pointerToRef)) // Credit: Ender
+                                    if (bUE51)
                                     {
-                                        strBytes = (std::uint8_t*)pointerToRef;
-                                        stringAdd = PE::Address(pointerToRef);
-                                    }*/
+                                        auto pointerToRef = *(LPVOID*)strBytes;
+                                        if (rdataSection.isInSection(pointerToRef)) // Credit: Ender
+                                        {
+                                            strBytes = (std::uint8_t*)pointerToRef;
+                                            stringAdd = PE::Address(pointerToRef);
+                                        }
+                                    }
 
                                     // Check if the first char is printable
                                     //if (ASM::byteIsAscii(strBytes[0]))
@@ -1016,13 +1020,16 @@ namespace Memcury
                                 if (rdataSection.isInSection(stringAdd))
                                 {
                                     auto strBytes = stringAdd.GetAs<std::uint8_t*>();
-                                    /*auto pointerToRef = *(LPVOID*)strBytes;
-
-                                    if (rdataSection.isInSection(pointerToRef)) // Credit: Ender
+                                    
+                                    if (bUE51)
                                     {
-                                        strBytes = (std::uint8_t*)pointerToRef;
-                                        stringAdd = PE::Address(pointerToRef);
-                                    }*/
+                                        auto pointerToRef = *(LPVOID*)strBytes;
+                                        if (rdataSection.isInSection(pointerToRef)) // Credit: Ender
+                                        {
+                                            strBytes = (std::uint8_t*)pointerToRef;
+                                            stringAdd = PE::Address(pointerToRef);
+                                        }
+                                    }
 
                                     // Check if the first char is printable
                                     //if (ASM::byteIsAscii(strBytes[0]))
@@ -1086,13 +1093,16 @@ namespace Memcury
                     if (rdataSection.isInSection(stringAdd))
                     {
                         auto strBytes = stringAdd.GetAs<std::uint8_t*>();
-                        /*auto pointerToRef = *(LPVOID*)strBytes;
-
-                        if (rdataSection.isInSection(pointerToRef)) // Credit: Ender
+                        
+                        if (bUE51)
                         {
-                            strBytes = (std::uint8_t*)pointerToRef;
-                            stringAdd = PE::Address(pointerToRef);
-                        }*/
+                            auto pointerToRef = *(LPVOID*)strBytes;
+                            if (rdataSection.isInSection(pointerToRef)) // Credit: Ender
+                            {
+                                strBytes = (std::uint8_t*)pointerToRef;
+                                stringAdd = PE::Address(pointerToRef);
+                            }
+                        }
 
                         // Check if the first char is printable
                         //if (ASM::byteIsAscii(strBytes[0]))

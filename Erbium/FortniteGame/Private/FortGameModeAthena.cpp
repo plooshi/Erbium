@@ -43,6 +43,7 @@ void ShowFoundation(const ABuildingFoundation* Foundation)
     Foundation->SetDynamicFoundationEnabled(true);
 }
 
+TArray<const UFortAbilitySet*> AbilitySets;
 
 void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameState)
 {
@@ -250,6 +251,8 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         else if (VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.26)
             GameState->OnRep_CurrentPlaylistInfo(); 
 
+        auto AbilitySet = VersionInfo.FortniteVersion >= 8.30 ? Utils::FindObject<UFortAbilitySet>(L"/Game/Abilities/Player/Generic/Traits/DefaultPlayer/GAS_AthenaPlayer.GAS_AthenaPlayer") : Utils::FindObject<UFortAbilitySet>(L"/Game/Abilities/Player/Generic/Traits/DefaultPlayer/GAS_DefaultPlayer.GAS_DefaultPlayer");
+        AbilitySets.Add(AbilitySet);
 
         auto AddToTierData = [&](const UDataTable* Table, UEAllocatedMap<FName, FFortLootTierData*>& TempArr) {
             if (!Table)
@@ -319,7 +322,10 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                     auto& LootTableData = GetFromOffset<FFortGameFeatureLootTableData>(Object, DefaultLootTableDataOffset);
                     auto LTDFeatureData = LootTableData.LootTierData.Get();
                     auto LootPackageData = LootTableData.LootPackageData.Get();
+                    auto AbilitySet = LootTableData.PlayerAbilitySet.Get();
 
+                    if (AbilitySet)
+                        AbilitySets.Add(AbilitySet);
 
                     if (LTDFeatureData)
                     {
@@ -694,8 +700,8 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
                 NewPlayer->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
         }
         
-        static auto AbilitySet = VersionInfo.FortniteVersion >= 8.30 ? Utils::FindObject<UFortAbilitySet>(L"/Game/Abilities/Player/Generic/Traits/DefaultPlayer/GAS_AthenaPlayer.GAS_AthenaPlayer") : Utils::FindObject<UFortAbilitySet>(L"/Game/Abilities/Player/Generic/Traits/DefaultPlayer/GAS_DefaultPlayer.GAS_DefaultPlayer");
-        NewPlayer->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
+        for (auto& AbilitySet : AbilitySets)
+            NewPlayer->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
 
         static auto ApplyCharacterCustomization = FindApplyCharacterCustomization();
 
