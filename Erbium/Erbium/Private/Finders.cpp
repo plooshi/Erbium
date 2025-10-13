@@ -111,6 +111,10 @@ uint64_t FindGetNetMode()
     {
         if (floor(VersionInfo.FortniteVersion) == 18)
             GetNetMode = Memcury::Scanner::FindPattern("48 83 EC 28 48 83 79 ? ? 75 20 48 8B 91 ? ? ? ? 48 85 D2 74 1E 48 8B 02 48 8B CA FF 90").Get();
+        else if (VersionInfo.FortniteVersion >= 23)
+            GetNetMode = Memcury::Scanner::FindPattern("48 8B 81 ? ? ? ? 48 63 89 ? ? ? ? 4C 8D 04 C8 49 3B C0 74 ? 48 8B 08 48 39 91 ? ? ? ? 75 ? 48 8B C1 C3").Get();
+            if (!GetNetMode)
+                GetNetMode = Memcury::Scanner::FindPattern("48 83 EC ? 48 83 79 ? ? 74 ? B8").Get();
         else {
             auto sRef = Memcury::Scanner::FindStringRef(L"PREPHYSBONES").Get();
 
@@ -715,6 +719,11 @@ uint64_t FindFinishedTargetSpline()
 
     if (FinishedTargetSpline == 0)
     {
+        auto sRef = Memcury::Scanner::FindStringRef("AFortPickup::FinishedTargetSpline");
+
+        if (sRef.Get())
+            return sRef.ScanFor(VersionInfo.FortniteVersion >= 20 ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C }, false).Get();
+
         if (VersionInfo.EngineVersion == 4.16 || VersionInfo.EngineVersion == 4.19)
             return Memcury::Scanner::FindPattern("4C 8B DC 53 55 56 48 83 EC 60 48 8B F1 48 8B 89 ? ? ? ? 48 85 C9").Get();
         else if (VersionInfo.EngineVersion == 4.20)
@@ -754,6 +763,9 @@ uint64_t FindFinishedTargetSpline()
         else if (VersionInfo.EngineVersion == 5.0)
         {
             FinishedTargetSpline = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 55 57 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 8B B9", false).Get();
+
+            if (!FinishedTargetSpline)
+                FinishedTargetSpline = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 55 57 41 54 48 8D AC 24 ? ? ? ? 48 81 EC A0 01 00 00").Get();
 
             if (!FinishedTargetSpline)
                 FinishedTargetSpline = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 10 48 89 70 18 48 89 78 20 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 8B B9 ? ? ? ? 45 33 E4 48 8B D9 48 85 FF 74 0F").Get();

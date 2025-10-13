@@ -156,6 +156,7 @@ public:
     DEFINE_PROP(WorldPackage, UObject*);
 
     DefHookOg(void, TickFlush, UNetDriver*, float);
+    DefHookOg(void, NotifyActorDestroyed, UNetDriver*, AActor*, bool);
 
     InitHooks;
 };

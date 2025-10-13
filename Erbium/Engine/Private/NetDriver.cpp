@@ -8,6 +8,7 @@ uint32_t ReplicationFrameOffset = 0;
 uint32_t ClientWorldPackageNameOffset = 0;
 
 std::map<UNetConnection*, TArray<FNetViewer*>> ViewerMap;
+
 void BuildViewerMap(UNetDriver* Driver)
 {
 	//Log(L"PC");
@@ -381,6 +382,7 @@ void UNetDriver::Hook()
 		ClientWorldPackageNameOffset = 0x17D0;
 	else if (VersionInfo.FortniteVersion >= 20 && VersionInfo.FortniteVersion < 25)
 		ClientWorldPackageNameOffset = 0x16b8;
+
 	if (!FindServerReplicateActors())
 	{
 		// cache
