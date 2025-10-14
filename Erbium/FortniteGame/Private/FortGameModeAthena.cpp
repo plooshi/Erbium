@@ -14,6 +14,7 @@
 #include "../Public/BuildingFoundation.h"
 #include "../../Erbium/Public/LateGame.h"
 #include "../Public/BuildingItemCollectorActor.h"
+#include "../../Erbium/Public/GUI.h"
 
 
 void ShowFoundation(const ABuildingFoundation* Foundation)
@@ -635,9 +636,8 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                 Utils::Patch<uint8_t>(CollectGarbage, 0xC3);
             }
         }
-        char buffer[67];
-        sprintf_s(buffer, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Joinable" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Joinable" : "Erbium (FN %.1f, UE %.2f): Joinable"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
-        SetConsoleTitleA(buffer);
+        sprintf_s(GUI::windowTitle, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Joinable" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Joinable" : "Erbium (FN %.1f, UE %.2f): Joinable"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
+        SetConsoleTitleA(GUI::windowTitle);
         GameMode->bWorldIsReady = true;
     }
 
@@ -822,10 +822,9 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
         {
             bMatchStarted = true;
             auto GameState = (AFortGameStateAthena*)GameMode->GameState;
-
-            char buffer[67];
-            sprintf_s(buffer, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Match started" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Match started" : "Erbium (FN %.1f, UE %.2f): Match started"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
-            SetConsoleTitleA(buffer);
+            
+            sprintf_s(GUI::windowTitle, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Match started" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Match started" : "Erbium (FN %.1f, UE %.2f): Match started"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
+            SetConsoleTitleA(GUI::windowTitle);
         }
     }
 

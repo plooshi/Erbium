@@ -221,6 +221,7 @@
     <ClInclude Include="Erbium\Public\Configuration.h" />
     <ClInclude Include="Erbium\Public\Events.h" />
     <ClInclude Include="Erbium\Public\Finders.h" />
+    <ClInclude Include="Erbium\Public\GUI.h" />
     <ClInclude Include="Erbium\Public\LateGame.h" />
     <ClInclude Include="Erbium\Public\MinHook.h" />
     <ClInclude Include="Erbium\Public\Misc.h" />
@@ -246,6 +247,14 @@
     <ClInclude Include="FortniteGame\Public\GameplayTagContainer.h" />
     <ClInclude Include="FortniteGame\Public\LevelStreamingDynamic.h" />
     <ClInclude Include="framework.h" />
+    <ClInclude Include="ImGui\imconfig.h" />
+    <ClInclude Include="ImGui\imgui.h" />
+    <ClInclude Include="ImGui\imgui_impl_dx11.h" />
+    <ClInclude Include="ImGui\imgui_impl_win32.h" />
+    <ClInclude Include="ImGui\imgui_internal.h" />
+    <ClInclude Include="ImGui\imstb_rectpack.h" />
+    <ClInclude Include="ImGui\imstb_textedit.h" />
+    <ClInclude Include="ImGui\imstb_truetype.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="SDK\Containers.h" />
     <ClInclude Include="SDK\Core.h" />
@@ -261,6 +270,7 @@
     <ClCompile Include="Erbium\Private\dllmain.cpp" />
     <ClCompile Include="Erbium\Private\Events.cpp" />
     <ClCompile Include="Erbium\Private\Finders.cpp" />
+    <ClCompile Include="Erbium\Private\GUI.cpp" />
     <ClCompile Include="Erbium\Private\LateGame.cpp" />
     <ClCompile Include="Erbium\Private\Misc.cpp" />
     <ClCompile Include="FortniteGame\Private\BuildingFoundation.cpp" />
@@ -273,6 +283,12 @@
     <ClCompile Include="FortniteGame\Private\FortPhysicsPawn.cpp" />
     <ClCompile Include="FortniteGame\Private\FortPlayerControllerAthena.cpp" />
     <ClCompile Include="FortniteGame\Private\FortPlayerPawnAthena.cpp" />
+    <ClCompile Include="ImGui\imgui.cpp" />
+    <ClCompile Include="ImGui\imgui_draw.cpp" />
+    <ClCompile Include="ImGui\imgui_impl_dx11.cpp" />
+    <ClCompile Include="ImGui\imgui_impl_win32.cpp" />
+    <ClCompile Include="ImGui\imgui_tables.cpp" />
+    <ClCompile Include="ImGui\imgui_widgets.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Z - Client|x64'">Create</PrecompiledHeader>

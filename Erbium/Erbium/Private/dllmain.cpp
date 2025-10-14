@@ -8,13 +8,19 @@
 #include <chrono>
 #include "../Public/Configuration.h"
 #include "../Public/Misc.h"
+#include "../Public/GUI.h"
 
 void Main()
 {
 #ifndef CLIENT
-    AllocConsole();
-    FILE* s;
-    freopen_s(&s, "CONOUT$", "w", stdout);
+    if (!FConfiguration::bGUI)
+    {
+        AllocConsole();
+        FILE* s;
+        freopen_s(&s, "CONOUT$", "w", stdout);
+    }
+    else
+        CreateThread(0, 0, (LPTHREAD_START_ROUTINE) GUI::Init, 0, 0, 0);
 
     printf("Initializing SDK...\n");
 #endif
@@ -29,9 +35,8 @@ void Main()
     return;
 #endif
 
-    char buffer[67];
-    sprintf_s(buffer, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Setting up" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Setting up" : "Erbium (FN %.1f, UE %.2f): Setting up"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
-    SetConsoleTitleA(buffer);
+    sprintf_s(GUI::windowTitle, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Setting up" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Setting up" : "Erbium (FN %.1f, UE %.2f): Setting up"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
+    SetConsoleTitleA(GUI::windowTitle);
 
     printf("Hooking & finding offsets... (this may take a while)\n");
 
