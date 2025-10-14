@@ -13,7 +13,7 @@
 void Main()
 {
 #ifndef CLIENT
-    if (!FConfiguration::bGUI)
+    if constexpr (!FConfiguration::bGUI)
     {
         AllocConsole();
         FILE* s;
