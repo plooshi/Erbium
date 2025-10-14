@@ -4,6 +4,7 @@
 #include "../../ImGui/imgui.h"
 #include "../../ImGui/imgui_impl_win32.h"
 #include "../../ImGui/imgui_impl_dx11.h"
+#include "../Public/Configuration.h"
 #pragma comment(lib, "d3d11.lib")
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -45,7 +46,9 @@ void GUI::Init()
     wc.lpfnWndProc = WndProc;
     RegisterClass(&wc);
 
-    auto hWnd = CreateWindow(wc.lpszClassName, L"Erbium", (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX), 670, 670, 800, 600, nullptr, nullptr, nullptr, nullptr);
+    wchar_t buffer[67];
+    swprintf_s(buffer, VersionInfo.EngineVersion >= 5.0 ? L"Erbium (FN %.2f, UE %.1f)" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? L"Erbium (FN %.2f, UE %.2f)" : L"Erbium (FN %.1f, UE %.2f)"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
+    auto hWnd = CreateWindow(wc.lpszClassName, buffer, (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX), 670, 670, 800, 600, nullptr, nullptr, nullptr, nullptr);
 
     IDXGISwapChain* g_pSwapChain = nullptr;
     ID3D11Device* g_pd3dDevice = nullptr;
@@ -115,10 +118,13 @@ void GUI::Init()
     style.Colors[ImGuiCol_TitleBg] = ImVec4(0.29f, 0.29f, 0.29f, 1.00f);
     style.Colors[ImGuiCol_TitleBgCollapsed] = ImVec4(0.20f, 0.22f, 0.27f, 0.75f);
     style.Colors[ImGuiCol_TitleBgActive] = ImVec4(0.29f, 0.29f, 0.29f, 1.00f);
+    style.Colors[ImGuiCol_FrameBg] = ImVec4(0.29f, 0.29f, 0.29f, 1.00f);
+    style.Colors[ImGuiCol_FrameBgHovered] = ImVec4(0.43f, 0.43f, 0.43f, 0.85f);
+    style.Colors[ImGuiCol_FrameBgActive] = ImVec4(0.46f, 0.46f, 0.46f, 1.00f);
     style.Colors[ImGuiCol_MenuBarBg] = ImVec4(0.20f, 0.22f, 0.27f, 0.47f);
     style.Colors[ImGuiCol_CheckMark] = ImVec4(0.67f, 0.67f, 0.67f, 1.00f);
-    style.Colors[ImGuiCol_SliderGrab] = ImVec4(0.47f, 0.77f, 0.83f, 0.14f);
-    style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(0.92f, 0.18f, 0.29f, 1.00f);
+    style.Colors[ImGuiCol_SliderGrab] = ImVec4(0.20f, 0.20f, 0.20f, 0.67f);
+    style.Colors[ImGuiCol_SliderGrabActive] = ImVec4(0.59f, 0.59f, 0.59f, 1.00f);
     style.Colors[ImGuiCol_Button] = ImVec4(0.25f, 0.25f, 0.25f, 0.75f);
     style.Colors[ImGuiCol_ButtonHovered] = ImVec4(0.43f, 0.43f, 0.43f, 0.85f);
     style.Colors[ImGuiCol_ButtonActive] = ImVec4(0.46f, 0.46f, 0.46f, 1.00f);
@@ -149,8 +155,8 @@ void GUI::Init()
 
         while (PeekMessage(&msg, nullptr, 0U, 0U, PM_REMOVE))
         {
-            ::TranslateMessage(&msg);
-            ::DispatchMessage(&msg);
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
             if (msg.message == WM_QUIT)
                 done = true;
         }
@@ -160,7 +166,7 @@ void GUI::Init()
 
         if (g_SwapChainOccluded && g_pSwapChain->Present(0, DXGI_PRESENT_TEST) == DXGI_STATUS_OCCLUDED)
         {
-            ::Sleep(10);
+            Sleep(10);
             continue;
         }
 
@@ -184,7 +190,7 @@ void GUI::Init()
         ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
         ImGui::SetNextWindowSize(ImVec2(800, 600), ImGuiCond_Always);
 
-        ImGui::Begin(windowTitle, nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize);
+        ImGui::Begin("Erbium", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
 
         int SelectedUI = 0;
         if (ImGui::BeginTabBar(""))
@@ -208,9 +214,34 @@ void GUI::Init()
         switch (SelectedUI)
         {
         case 0:
-            ImGui::Button("Tuff 2");
-            static bool v = false;
-            ImGui::Checkbox("Tuff 3", &v);
+            ImGui::Text((std::string("Status: ") + (gsStatus == 0 ? "Setting up" : (gsStatus == 1 ? "Joinable" : "Match started"))).c_str());
+            
+            ImGui::Checkbox("Infinite materials", &FConfiguration::bInfiniteMats);
+            ImGui::Checkbox("Infinite ammo", &FConfiguration::bInfiniteAmmo);
+            if (gsStatus <= 1)
+            {
+                ImGui::Checkbox("Lategame", &FConfiguration::bLateGame);
+            }
+
+            if (ImGui::Button("Start bus early"))
+            {
+                gsStatus = 2;
+
+                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
+            }
+
+            ImGui::SliderInt("Siphon amount", &FConfiguration::SiphonAmount, 0, 200);
+
+            static char commandBuffer[1024] = { 0 };
+            ImGui::InputText("Console command", commandBuffer, 1024);
+
+            if (ImGui::Button("Execute"))
+            {
+                std::string str = commandBuffer;
+                auto wstr = std::wstring(str.begin(), str.end());
+
+                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(wstr.c_str()), nullptr);
+            }
             break;
         }
 

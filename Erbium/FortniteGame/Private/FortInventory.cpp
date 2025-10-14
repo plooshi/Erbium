@@ -3,6 +3,7 @@
 #include "../Public/FortPlayerPawnAthena.h"
 #include "../Public/FortPlayerControllerAthena.h"
 #include "../Public/FortKismetLibrary.h"
+#include "../../Erbium/Public/Configuration.h"
 
 // OnItemInstanceRemoved is always + 1
 inline uint32_t FindOnItemInstanceAddedVft()
@@ -326,6 +327,9 @@ void AFortInventory::UpdateEntry(FFortItemEntry& Entry)
 
 bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool bForceRemoval)
 {
+    if (FConfiguration::bInfiniteAmmo)
+        return true;
+
     static auto InterfaceOffset = FindClass("FortPlayerController")->GetSuper()->GetPropertiesSize() + (VersionInfo.EngineVersion >= 4.27 ? 16 : 8);
     auto PlayerController = (AFortPlayerControllerAthena*)(__int64(Interface) - InterfaceOffset);
 

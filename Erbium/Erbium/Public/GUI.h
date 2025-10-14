@@ -4,6 +4,7 @@ class GUI
 {
 public:
     static inline char windowTitle[67];
+    static inline int gsStatus = 0;
     static void Init();
 };
 

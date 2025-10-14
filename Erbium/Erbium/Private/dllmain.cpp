@@ -19,12 +19,13 @@ void Main()
         FILE* s;
         freopen_s(&s, "CONOUT$", "w", stdout);
     }
-    else
-        CreateThread(0, 0, (LPTHREAD_START_ROUTINE) GUI::Init, 0, 0, 0);
 
     printf("Initializing SDK...\n");
 #endif
     SDK::Init();
+
+    if constexpr (FConfiguration::bGUI)
+        CreateThread(0, 0, (LPTHREAD_START_ROUTINE)GUI::Init, 0, 0, 0);
 
     if (VersionInfo.EngineVersion >= 5.1)
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"net.AllowEncryption 0"), nullptr);

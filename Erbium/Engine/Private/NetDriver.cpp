@@ -2,6 +2,7 @@
 #include "../Public/NetDriver.h"
 #include "../../Erbium/Public/Finders.h"
 #include "../../FortniteGame/Public/FortGameModeAthena.h"
+#include "../../Erbium/Public/GUI.h"
 
 uint32_t NetworkObjectListOffset = 0;
 uint32_t ReplicationFrameOffset = 0;
@@ -312,13 +313,12 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 	else if (!HasReplicationDriver_ || !ServerReplicateActors_)
 		ServerReplicateActors(Driver, DeltaSeconds);
 
-    static bool bStartedBus = false;
-    if (!bStartedBus && VersionInfo.FortniteVersion >= 11.00)
+    if (GUI::gsStatus == 1 && VersionInfo.FortniteVersion >= 11.00)
     { 
         auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
         if (Driver->ClientConnections.Num() > 0 && ((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->bWorldIsReady && ((AFortGameStateAthena*)UWorld::GetWorld()->GameState)->WarmupCountdownEndTime <= Time)
         {
-            bStartedBus = true;
+			GUI::gsStatus = 2;
 
             UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
         }
