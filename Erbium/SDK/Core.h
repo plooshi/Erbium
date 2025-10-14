@@ -650,7 +650,6 @@ namespace SDK
 		//ProcessEvent(Function, Function->CreateParams(Params));
 	}
 
-
 	template <typename Ret, typename... Args>
 	Ret UObject::Call(UFunction* Function, Args... args) const
 	{
@@ -674,10 +673,9 @@ namespace SDK
 			return ret;
 		}
 
-		auto PropertiesSize = Function->GetPropertiesSize();
 		auto Params = Function->GetParams();
-		auto Mem = FMemory::Malloc(PropertiesSize);
-		__stosb((PBYTE)Mem, 0, PropertiesSize);
+		auto Mem = FMemory::Malloc(Params.Size);
+		__stosb((PBYTE)Mem, 0, Params.Size);
 
 		size_t i = 0;
 		([&]
@@ -695,10 +693,7 @@ namespace SDK
 
 				const auto& Arg = args;
 
-				if constexpr (std::is_same_v<decltype(args), bool> || std::is_same_v<decltype(args), char> || std::is_same_v<decltype(args), uint8_t> || std::is_same_v<decltype(args), short> || std::is_same_v<decltype(args), uint16_t> || std::is_same_v<decltype(args), int> || std::is_same_v<decltype(args), uint32_t> || std::is_same_v<decltype(args), int64_t> || std::is_same_v<decltype(args), uint64_t> || std::is_same_v<decltype(args), float> || std::is_same_v<decltype(args), double> || std::is_pointer_v<decltype(args)>)
-					*(decltype(args)*)(__int64(Mem) + Param.Offset) = Arg;
-				else
-					__movsb(PBYTE(__int64(Mem) + Param.Offset), (const PBYTE)&Arg, Param.ElementSize);
+				__movsb(PBYTE(__int64(Mem) + Param.Offset), (const PBYTE)&Arg, Param.ElementSize);
 				i++;
 			}(), ...);
 
@@ -722,18 +717,12 @@ namespace SDK
 			if constexpr (std::is_pointer_v<decltype(args)>)
 			{
 				if (Arg != nullptr)
-					if constexpr (std::is_same_v<std::remove_pointer_t<decltype(args)>, bool> || std::is_same_v<std::remove_pointer_t<decltype(args)>, char> || std::is_same_v<std::remove_pointer_t<decltype(args)>, uint8_t> || std::is_same_v<std::remove_pointer_t<decltype(args)>, short> || std::is_same_v<std::remove_pointer_t<decltype(args)>, uint16_t> || std::is_same_v<std::remove_pointer_t<decltype(args)>, int> || std::is_same_v<std::remove_pointer_t<decltype(args)>, uint32_t> || std::is_same_v<std::remove_pointer_t<decltype(args)>, int64_t> || std::is_same_v<std::remove_pointer_t<decltype(args)>, uint64_t> || std::is_same_v<std::remove_pointer_t<decltype(args)>, float> || std::is_same_v<std::remove_pointer_t<decltype(args)>, double> || std::is_pointer_v<std::remove_pointer_t<decltype(args)>>)
-						*(decltype(args))Arg = *(decltype(args))(__int64(Mem) + Param.Offset);
-					else
-						__movsb((PBYTE)Arg, (const PBYTE)(__int64(Mem) + Param.Offset), Param.ElementSize);
+					__movsb((PBYTE)Arg, (const PBYTE)(__int64(Mem) + Param.Offset), Param.ElementSize);
 			}
 			else if constexpr (std::is_reference_v<decltype(args)>)
 			{
 				if ((Param.PropertyFlags & 0x2) != 0)
-					if constexpr (std::is_same_v<decltype(args), bool> || std::is_same_v<decltype(args), char> || std::is_same_v<decltype(args), uint8_t> || std::is_same_v<decltype(args), short> || std::is_same_v<decltype(args), uint16_t> || std::is_same_v<decltype(args), int> || std::is_same_v<decltype(args), uint32_t> || std::is_same_v<decltype(args), int64_t> || std::is_same_v<decltype(args), uint64_t> || std::is_same_v<decltype(args), float> || std::is_same_v<decltype(args), double> || std::is_pointer_v<decltype(args)>)
-						Arg = *(decltype(args)*)(__int64(Mem) + Param.Offset);
-					else
-						__movsb((PBYTE)&Arg, (const PBYTE)(__int64(Mem) + Param.Offset), Param.ElementSize);
+					__movsb((PBYTE)&Arg, (const PBYTE)(__int64(Mem) + Param.Offset), Param.ElementSize);
 			}
 			i++;
 			}(), ...);
@@ -746,10 +735,7 @@ namespace SDK
 				if ((Param.PropertyFlags & 0x400) == 0)
 					continue;
 
-				if constexpr (std::is_same_v<Ret, bool> || std::is_same_v<Ret, char> || std::is_same_v<Ret, uint8_t> || std::is_same_v<Ret, short> || std::is_same_v<Ret, uint16_t> || std::is_same_v<Ret, int> || std::is_same_v<Ret, uint32_t> || std::is_same_v<Ret, int64_t> || std::is_same_v<Ret, uint64_t> || std::is_same_v<Ret, float> || std::is_same_v<Ret, double> || std::is_pointer_v<Ret>)
-					ret = *(Ret*)(__int64(Mem) + Param.Offset);
-				else
-					__movsb((PBYTE)&ret, (const PBYTE)(__int64(Mem) + Param.Offset), Param.ElementSize);
+				__movsb((PBYTE)&ret, (const PBYTE)(__int64(Mem) + Param.Offset), Param.ElementSize);
 				break;
 			}
 
@@ -759,8 +745,6 @@ namespace SDK
 
 		FMemory::Free(Mem);
 	}
-
-
 
 
 	struct FUObjectItem final
@@ -1137,7 +1121,7 @@ namespace SDK
 
 		UEType* operator->() const
 		{
-			return Get();
+			return (UEType*) FWeakObjectPtr::Get();
 		}
 	};
 
@@ -1170,18 +1154,12 @@ namespace SDK
 
 	__forceinline static const UObject* StaticFindObject(const wchar_t* ObjectPath, const UClass* Class)
 	{
-		if (!SDK::Offsets::StaticFindObject)
-			return nullptr;
-
 		auto StaticFindObjectInternal = (UObject * (*)(const UClass*, UObject*, const wchar_t*, bool)) SDK::Offsets::StaticFindObject;
 		return StaticFindObjectInternal(Class, nullptr, ObjectPath, false);
 	}
 
 	__forceinline static const UObject* StaticLoadObject(const wchar_t* ObjectPath, const UClass* InClass, UObject* Outer = nullptr)
 	{
-		if (!SDK::Offsets::StaticLoadObject)
-			return nullptr;
-
 		auto StaticLoadObjectInternal = (UObject * (*)(const UClass*, UObject*, const wchar_t*, const wchar_t*, uint32_t, UObject*, bool)) SDK::Offsets::StaticLoadObject;
 		return StaticLoadObjectInternal(InClass, Outer, ObjectPath, nullptr, 0, nullptr, false);
 	}
@@ -1307,8 +1285,8 @@ namespace SDK
 	class FScriptInterface
 	{
 	public:
-		UObject* ObjectPointer = nullptr;
-		IInterface* InterfacePointer = nullptr;
+		const UObject* ObjectPointer = nullptr;
+		const IInterface* InterfacePointer = nullptr;
 	};
 
 	template<class InterfaceType>

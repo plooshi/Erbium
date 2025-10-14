@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "../Public/AbilitySystemComponent.h"
 #include "../../Erbium/Public/Finders.h"
+#include "../../FortniteGame/Public/FortKismetLibrary.h"
 
 void UAbilitySystemComponent::GiveAbility(const UObject* Ability)
 {
@@ -29,13 +30,20 @@ void UAbilitySystemComponent::GiveAbility(const UObject* Ability)
     free(Spec);
 }
 
+class IAbilitySystemInterface : public IInterface
+{
+public:
+    UCLASS_COMMON_MEMBERS(IAbilitySystemInterface);
+};
+
 void UAbilitySystemComponent::GiveAbilitySet(const UFortAbilitySet* Set)
 {
-    if (Set)
-    {
-        for (auto& GameplayAbility : Set->GameplayAbilities)
-            GiveAbility(GameplayAbility->GetDefaultObj());
-    }
+    TScriptInterface<class IAbilitySystemInterface> ScriptInterface;
+    ScriptInterface.ObjectPointer = this->GetOwner();
+    ScriptInterface.InterfacePointer = ScriptInterface.ObjectPointer->GetInterface(IAbilitySystemInterface::StaticClass());
+    printf("fr %llx %llx\n", ScriptInterface.InterfacePointer, IAbilitySystemInterface::StaticClass());
+
+    UFortKismetLibrary::EquipFortAbilitySet(ScriptInterface, Set, nullptr);
 }
 
 struct _Pad_0x10

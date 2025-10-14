@@ -55,7 +55,7 @@ struct FGameplayEffectContextHandle
     uint8_t Padding[0x18];
 };
 
-class UAbilitySystemComponent : public UObject
+class UAbilitySystemComponent : public UActorComponent
 {
 public:
     UCLASS_COMMON_MEMBERS(UAbilitySystemComponent);
