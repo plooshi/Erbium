@@ -288,12 +288,32 @@ bool UFortLootPackage::SpawnLootHook(ABuildingContainer* Container)
 	auto GameMode = ((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode);
 	if (GameMode->HasRedirectAthenaLootTierGroups())
 	{
-		for (const auto& [OldTierGroup, RedirectedTierGroup] : GameMode->RedirectAthenaLootTierGroups)
+		static auto RedirectAthenaLootTierGroupsOff = GameMode->GetOffset("RedirectAthenaLootTierGroups");
+
+		if (VersionInfo.FortniteVersion >= 20)
 		{
-			if (OldTierGroup == Container->SearchLootTierGroup)
+			auto& RedirectAthenaLootTierGroups = *(TMap<int32, int32>*)(__int64(GameMode) + RedirectAthenaLootTierGroupsOff);
+
+			for (const auto& [OldTierGroup, RedirectedTierGroup] : RedirectAthenaLootTierGroups)
 			{
-				RealTierGroup = RedirectedTierGroup;
-				break;
+				if (OldTierGroup == Container->SearchLootTierGroup.ComparisonIndex)
+				{
+					RealTierGroup.ComparisonIndex = RedirectedTierGroup;
+					break;
+				}
+			}
+		}
+		else
+		{
+			auto& RedirectAthenaLootTierGroups = *(TMap<FName, FName>*)(__int64(GameMode) + RedirectAthenaLootTierGroupsOff);
+
+			for (const auto& [OldTierGroup, RedirectedTierGroup] : RedirectAthenaLootTierGroups)
+			{
+				if (OldTierGroup == Container->SearchLootTierGroup)
+				{
+					RealTierGroup = RedirectedTierGroup;
+					break;
+				}
 			}
 		}
 	}
