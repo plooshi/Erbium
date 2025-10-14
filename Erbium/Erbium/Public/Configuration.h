@@ -12,4 +12,7 @@ struct FConfiguration
     static inline auto bForceRespawns = false;
     static inline constexpr auto bCreative = false;
     static inline constexpr auto bGUI = true;
+    static inline constexpr auto bSendWebhook = true;
+    static inline const char* WebhookUrl = "";
+
 };
