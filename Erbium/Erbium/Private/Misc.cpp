@@ -107,6 +107,42 @@ void Misc::InitClient()
 {
 	UEngine::GetEngine()->GameViewport->ViewportConsole = UGameplayStatics::SpawnObject(UEngine::GetEngine()->ConsoleClass, UEngine::GetEngine()->GameViewport);
 
+	auto ArenaUI = UKismetStringLibrary::Conv_StringToName(FString(L"/Game/UI/Competitive/Arena/ArenaScoringHUD.ArenaScoringHUD_C"));
+	FUIExtension ArenaUIExtension{};
+	ArenaUIExtension.Slot = 0;
+	ArenaUIExtension.WidgetClass.ObjectID.AssetPathName = ArenaUI;
+
+	auto ShowdownUI = UKismetStringLibrary::Conv_StringToName(FString(L"/Game/UI/Frontend/Showdown/ShowdownScoringHUD.ShowdownScoringHUD_C"));
+	FUIExtension ShowdownUIExtension{};
+	ShowdownUIExtension.Slot = 0;
+	ShowdownUIExtension.WidgetClass.ObjectID.AssetPathName = ShowdownUI;
+
+	auto AIKillsUI = UKismetStringLibrary::Conv_StringToName(FString(L"/Game/Athena/HUD/AthenaAIKillsWidget.AthenaAIKillsWidget_C"));
+	FUIExtension AIKillsUIExtension{};
+	AIKillsUIExtension.Slot = 2;
+	AIKillsUIExtension.WidgetClass.ObjectID.AssetPathName = AIKillsUI;
+
+	TArray<FUIExtension> ArenaExtensions, ShowdownExtensions;
+	ArenaExtensions.Add(ArenaUIExtension);
+	ShowdownExtensions.Add(ShowdownUIExtension);
+	ShowdownExtensions.Add(AIKillsUIExtension);
+		
+	auto PlaylistClass = FindClass("FortPlaylistAthena");
+
+
+	for (int i = 0; i < TUObjectArray::Num(); i++)
+	{
+		auto Object = TUObjectArray::GetObjectByIndex(i);
+		if (Object && Object->IsA((UClass*)PlaylistClass))
+		{
+			auto Playlist = (UFortPlaylistAthena*)Object;
+
+			auto Name = Object->Name.ToString();
+			if (Name.contains("Showdown"))
+				Playlist->UIExtensions = Name.contains("ShowdownAlt") ? ArenaExtensions : ShowdownExtensions;
+		}
+	}
+
 	auto SelectEditAddr = Memcury::Scanner::FindStringRef(L"EditModeInputComponent0").ScanFor({ 0x48, 0x8D, 0x05 }, true, 1).RelativeOffset(3).GetAs<void*>();
 	auto SelectResetAddr = Memcury::Scanner::FindStringRef(L"EditModeInputComponent0").ScanFor({ 0x48, 0x8D, 0x05 }, true, 2).RelativeOffset(3).GetAs<void*>();
 
