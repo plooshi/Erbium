@@ -291,7 +291,7 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	auto Resource = UFortKismetLibrary::K2_GetResourceItemDefinition(((ABuildingSMActor*)BuildingClass->GetDefaultObj())->ResourceType);
 
 	FFortItemEntry* ItemEntry = nullptr;
-	if (!PlayerController->bBuildFree)
+	if (!PlayerController->bBuildFree && !FConfiguration::bInfiniteMats)
 	{
 		ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
 			{ return entry.ItemDefinition == Resource; }, FFortItemEntry::Size());
@@ -326,7 +326,7 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	Building->InitializeKismetSpawnedBuildingActor(Building, PlayerController, true, nullptr);
 
 
-	if (!PlayerController->bBuildFree)
+	if (!PlayerController->bBuildFree && !FConfiguration::bInfiniteMats)
 	{
 		ItemEntry->Count -= 10;
 		if (ItemEntry->Count <= 0)
