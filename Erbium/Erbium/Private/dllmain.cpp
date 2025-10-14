@@ -26,7 +26,12 @@ void Main()
 
 #ifndef CLIENT
     if constexpr (FConfiguration::bGUI)
+    {
+        FILE* s;
+        freopen_s(&s, "stdout.log", "w", stdout);
+
         CreateThread(0, 0, (LPTHREAD_START_ROUTINE)GUI::Init, 0, 0, 0);
+    }
 #endif
 
     if (VersionInfo.EngineVersion >= 5.1)

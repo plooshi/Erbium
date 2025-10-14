@@ -957,7 +957,33 @@ uint64_t FindRemoveInventoryItem()
     {
         std::vector<uint8_t> funcStart = VersionInfo.EngineVersion == 4.16 ? std::vector<uint8_t>{ 0x44, 0x88, 0x4C } : (VersionInfo.FortniteVersion >= 16 && (VersionInfo.FortniteVersion < 20 || VersionInfo.FortniteVersion >= 22) ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
 
-        auto uFuncCall = FindFunctionCall(L"ServerRemoveInventoryItem", funcStart);
+        auto sRef = FindNameRef(L"ServerRemoveInventoryItem", 0, false);
+        uintptr_t uFuncCall = 0;
+        for (int i = 0; i < 2000; i++)
+        {
+            if (VersionInfo.EngineVersion == 4.16)
+            {
+                if (*(uint8_t*)(sRef - i) == 0x44 && *(uint8_t*)(sRef - i + 1) == 0x88 && *(uint8_t*)(sRef - i + 2) == 0x4C)
+                {
+                    uFuncCall = sRef - i;
+                    break;
+                }
+            }
+            else
+            {
+                if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x5C)
+                {
+                    uFuncCall = sRef - i;
+                    break;
+                }
+                else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
+                {
+                    uFuncCall = sRef - i;
+                    break;
+                }
+            }
+        }
+
         auto ServerRemoveInventoryItemCall = Memcury::Scanner::FindPointerRef((PVOID)uFuncCall, 0, true);
 
         for (int i = 0; i < 400; i++)
