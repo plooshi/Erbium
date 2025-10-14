@@ -24,8 +24,10 @@ void Main()
 #endif
     SDK::Init();
 
+#ifndef CLIENT
     if constexpr (FConfiguration::bGUI)
         CreateThread(0, 0, (LPTHREAD_START_ROUTINE)GUI::Init, 0, 0, 0);
+#endif
 
     if (VersionInfo.EngineVersion >= 5.1)
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"net.AllowEncryption 0"), nullptr);
