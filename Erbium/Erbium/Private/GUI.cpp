@@ -276,16 +276,16 @@ void GUI::Init()
             break;
         case 1:
             if (ImGui::Button("Resume zone"))
-                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), L"startsafezone", nullptr);
+                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startsafezone"), nullptr);
 
             if (ImGui::Button("Pause zone"))
-                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), L"pausesafezone", nullptr);
+                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"pausesafezone"), nullptr);
 
             if (ImGui::Button("Skip zone"))
-                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), L"skipsafezone", nullptr);
+                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"skipsafezone"), nullptr);
 
             if (ImGui::Button("Start shrinking"))
-                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), L"startshrinksafezone", nullptr);
+                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startshrinksafezone"), nullptr);
 
             break;
         case 2:
