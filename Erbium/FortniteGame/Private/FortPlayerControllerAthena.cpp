@@ -975,6 +975,7 @@ _help:
 	cheat giveitem <WID/path> <Count = 1> - Gives you an item
 	cheat startevent - Starts the event for the current version
 	cheat spawnpickup <WID/path> <Count = 1> - Spawns a pickup at your player's location
+	cheat spawnactor <class/path> - Spawns an actor at your location + 5 meters
     cheat tp <X> <Y> <Z> - Teleports to a location)"), FName(), 1);
 	}
 	else
@@ -1049,6 +1050,23 @@ _help:
 
 			if (PlayerController->Pawn)
 				AFortInventory::SpawnPickup(PlayerController->Pawn->K2_GetActorLocation(), ItemDefinition, Count, 0, EFortPickupSourceTypeFlag::GetTossed(), EFortPickupSpawnSource::GetUnset(), PlayerController->Pawn);
+		}
+
+		else if (command == "spawnactor")
+		{
+			if (args.size() != 2)
+				PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1);
+
+			auto Loc = PlayerController->Pawn->K2_GetActorLocation();
+			Loc.Z += 500.f;
+
+			auto Class = Utils::FindObject<UClass>(UEAllocatedWString(args[1].begin(), args[1].end()).c_str());
+
+			if (!Class)
+				Class = FindClass(args[1].c_str());
+
+			if (Class)
+				UWorld::SpawnActor(Class, Loc);
 		}
 		else
 			goto _help;
