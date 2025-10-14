@@ -840,7 +840,6 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
     if (!GameMode->SafeZoneIndicator)
         return;
 
-    printf("call\n");
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
     
     auto NewSafeZonePhase = NewSafeZonePhase_Inp >= 0 ? NewSafeZonePhase_Inp : GameMode->SafeZonePhase + 1;
@@ -911,8 +910,6 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
         {
             auto Duration = Durations[NewSafeZonePhase];
             auto HoldDuration = HoldDurations[NewSafeZonePhase];
-            printf("new dur %f\n", Duration);
-            printf("new holddur %f\n", HoldDuration);
 
             GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + HoldDuration;
             GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
@@ -1010,6 +1007,7 @@ bool AFortGameModeAthena::StartAircraftPhase(AFortGameModeAthena* GameMode, char
 
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 
+    printf("ud\n");
     if (FConfiguration::bLateGame)
     {
         /*if (VersionInfo.FortniteVersion < 16)
@@ -1051,7 +1049,7 @@ bool AFortGameModeAthena::StartAircraftPhase(AFortGameModeAthena* GameMode, char
         Aircraft->FlightStartTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
         Aircraft->FlightEndTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + 7.f;
         //GameState->bAircraftIsLocked = false;
-        GameState->SafeZonesStartTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + 8.f;
+        //GameState->SafeZonesStartTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + 8.f;
     }
 
     return Ret;

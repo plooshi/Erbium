@@ -90,7 +90,15 @@ void GUI::Init()
 
     ShowWindow(hWnd, SW_SHOWDEFAULT);
     UpdateWindow(hWnd);
-    SetWindowPos(hWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+    DWORD dwMyID = ::GetCurrentThreadId();
+    DWORD dwCurID = ::GetWindowThreadProcessId(hWnd, NULL);
+    AttachThreadInput(dwCurID, dwMyID, TRUE);
+    SetWindowPos(hWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE);
+    SetWindowPos(hWnd, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE);
+    SetForegroundWindow(hWnd);
+    SetFocus(hWnd);
+    SetActiveWindow(hWnd);
+    AttachThreadInput(dwCurID, dwMyID, FALSE);
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();

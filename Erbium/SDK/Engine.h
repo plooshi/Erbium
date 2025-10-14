@@ -550,7 +550,23 @@ namespace SDK
 			if (!GetTimeSeconds__Ptr)
 				GetTimeSeconds__Ptr = GetDefaultObj()->GetFunction("GetTimeSeconds");
 
-			if (VersionInfo.FortniteVersion >= 20.00)
+			static auto RetSize = 0;
+			
+			if (RetSize == 0)
+			{
+				auto Params = GetTimeSeconds__Ptr->GetParams();
+
+				for (auto& Param : Params.NameOffsetMap)
+				{
+					if ((Param.PropertyFlags & 0x400) == 0)
+						continue;
+
+					RetSize = Param.ElementSize;
+					break;
+				}
+			}
+
+			if (RetSize == 8)
 				return GetDefaultObj()->Call<double>(GetTimeSeconds__Ptr, WorldContextObject);
 			else
 				return GetDefaultObj()->Call<float>(GetTimeSeconds__Ptr, WorldContextObject);
