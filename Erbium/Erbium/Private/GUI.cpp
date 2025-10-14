@@ -5,6 +5,7 @@
 #include "../../ImGui/imgui_impl_win32.h"
 #include "../../ImGui/imgui_impl_dx11.h"
 #include "../Public/Configuration.h"
+#include "../Public/Events.h"
 #pragma comment(lib, "d3d11.lib")
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -89,6 +90,7 @@ void GUI::Init()
 
     ShowWindow(hWnd, SW_SHOWDEFAULT);
     UpdateWindow(hWnd);
+    SetWindowPos(hWnd, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -193,6 +195,19 @@ void GUI::Init()
         ImGui::Begin("Erbium", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
 
         int SelectedUI = 0;
+        int hasEvent = 0;
+
+        if (hasEvent == 0)
+        {
+            hasEvent = 1;
+            for (auto& Event : Events::EventsArray)
+            {
+                if (Event.EventVersion != VersionInfo.FortniteVersion)
+                    continue;
+
+                hasEvent = 2;
+            }
+        }
         if (ImGui::BeginTabBar(""))
         {
             if (ImGui::BeginTabItem("Main"))
@@ -201,38 +216,46 @@ void GUI::Init()
                 ImGui::EndTabItem();
             }
 
-            if (ImGui::BeginTabItem("Tab 2"))
+            if (gsStatus == 2)
             {
-                SelectedUI = 1;
-                ImGui::EndTabItem();
+                if (ImGui::BeginTabItem("Zones"))
+                {
+                    SelectedUI = 1;
+                    ImGui::EndTabItem();
+                }
+                
+                if (hasEvent == 2 && ImGui::BeginTabItem("Events"))
+                {
+                    SelectedUI = 2;
+                    ImGui::EndTabItem();
+                }
             }
 
+            if (ImGui::BeginTabItem("Misc"))
+            {
+                SelectedUI = 3;
+                ImGui::EndTabItem();
+            }
 
             ImGui::EndTabBar();
         }
 
+        static char commandBuffer[1024] = { 0 };
         switch (SelectedUI)
         {
         case 0:
             ImGui::Text((std::string("Status: ") + (gsStatus == 0 ? "Setting up" : (gsStatus == 1 ? "Joinable" : "Match started"))).c_str());
             
-            ImGui::Checkbox("Infinite materials", &FConfiguration::bInfiniteMats);
-            ImGui::Checkbox("Infinite ammo", &FConfiguration::bInfiniteAmmo);
             if (gsStatus <= 1)
-            {
                 ImGui::Checkbox("Lategame", &FConfiguration::bLateGame);
-            }
 
-            if (ImGui::Button("Start bus early"))
+            if (gsStatus == 1 && ImGui::Button("Start bus early"))
             {
                 gsStatus = 2;
 
                 UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
             }
 
-            ImGui::SliderInt("Siphon amount", &FConfiguration::SiphonAmount, 0, 200);
-
-            static char commandBuffer[1024] = { 0 };
             ImGui::InputText("Console command", commandBuffer, 1024);
 
             if (ImGui::Button("Execute"))
@@ -242,6 +265,31 @@ void GUI::Init()
 
                 UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(wstr.c_str()), nullptr);
             }
+            break;
+        case 1:
+            if (ImGui::Button("Resume zone"))
+                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), L"startsafezone", nullptr);
+
+            if (ImGui::Button("Pause zone"))
+                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), L"pausesafezone", nullptr);
+
+            if (ImGui::Button("Skip zone"))
+                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), L"skipsafezone", nullptr);
+
+            if (ImGui::Button("Start shrinking"))
+                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), L"startshrinksafezone", nullptr);
+
+            break;
+        case 2:
+            if (ImGui::Button("Start event"))
+                Events::StartEvent();
+
+            break;
+        case 3:
+            ImGui::Checkbox("Infinite materials", &FConfiguration::bInfiniteMats);
+            ImGui::Checkbox("Infinite ammo", &FConfiguration::bInfiniteAmmo);
+
+            ImGui::SliderInt("Siphon amount", &FConfiguration::SiphonAmount, 0, 200);
             break;
         }
 

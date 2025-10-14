@@ -1052,7 +1052,7 @@ _help:
 				AFortInventory::SpawnPickup(PlayerController->Pawn->K2_GetActorLocation(), ItemDefinition, Count, 0, EFortPickupSourceTypeFlag::GetTossed(), EFortPickupSpawnSource::GetUnset(), PlayerController->Pawn);
 		}
 
-		else if (command == "spawnactor")
+		else if (command == "spawnactor" || command == "summon")
 		{
 			if (args.size() != 2)
 				PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1);
@@ -1067,6 +1067,8 @@ _help:
 
 			if (Class)
 				UWorld::SpawnActor(Class, Loc);
+			else
+				return PlayerController->ClientMessage(FString(L"Failed to find class! Try passing it as a path or check your spelling & casing"), FName(), 1);
 		}
 		else
 			goto _help;
