@@ -8,7 +8,6 @@ struct FFortGameFeatureLootTableData
 {
     TSoftObjectPtr<UDataTable> LootTierData;
     TSoftObjectPtr<UDataTable> LootPackageData;
-    TSoftObjectPtr<UFortAbilitySet> PlayerAbilitySet;
 };
 
 struct FFortLootPackageData

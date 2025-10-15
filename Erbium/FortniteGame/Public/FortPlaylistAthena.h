@@ -3,6 +3,7 @@
 #include "../../Engine/Public/DataTable.h"
 #include "../../Engine/Public/DataTableFunctionLibrary.h"
 #include "../../Engine/Public/CurveTable.h"
+#include "GameplayTagContainer.h"
 
 struct FScalableFloat
 {
@@ -53,4 +54,5 @@ public:
     DEFINE_PROP(bAllowJoinInProgress, bool);
     DEFINE_PROP(GameData, TSoftObjectPtr<UCurveTable>);
     DEFINE_PROP(UIExtensions, TArray<FUIExtension>);
+    DEFINE_PROP(GameplayTagContainer, FGameplayTagContainer);
 };

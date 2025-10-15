@@ -324,8 +324,11 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                 if (Object->IsA(GameFeatureDataClass))
                 {
                     static auto DefaultLootTableDataOffset = Object->GetOffset("DefaultLootTableData");
+                    static auto PlaylistOverrideLootTableDataOffset = Object->GetOffset("PlaylistOverrideLootTableData");
 
                     auto& LootTableData = GetFromOffset<FFortGameFeatureLootTableData>(Object, DefaultLootTableDataOffset);
+                    auto& PlaylistOverrideLootTableData = GetFromOffset<TMap<FGameplayTag, FFortGameFeatureLootTableData>>(Object, PlaylistOverrideLootTableDataOffset);
+                    auto& PlaylistOverrideLootTableDataLWC = GetFromOffset<TMap<int32, FFortGameFeatureLootTableData>>(Object, PlaylistOverrideLootTableDataOffset);
                     auto LTDFeatureData = LootTableData.LootTierData.Get();
                     auto LootPackageData = LootTableData.LootPackageData.Get();
 
@@ -335,10 +338,18 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
                         AddToTierData(LTDFeatureData, LTDTempData);
 
-                        /*for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
-                            for (auto& Override : Object->PlaylistOverrideLootTableData)
-                                if (Tag.TagName == Override.First.TagName)
-                                    AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);*/
+                        if (VersionInfo.FortniteVersion < 20.00)
+                        {
+                            for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
+                                for (auto& Override : PlaylistOverrideLootTableData)
+                                    if (Tag.TagName == Override.First.TagName)
+                                        AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);
+                        }
+                        else
+                            for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
+                                for (auto& Override : PlaylistOverrideLootTableDataLWC)
+                                    if (Tag.TagName.ComparisonIndex == Override.First)
+                                        AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);
 
                         for (auto& [_, Val] : LTDTempData)
                             TierDataAllGroups.Add(Val);
@@ -350,10 +361,18 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
                         AddToPackages(LootPackageData, LPTempData);
 
-                        /*for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
-                            for (auto& Override : Object->PlaylistOverrideLootTableData)
-                                if (Tag.TagName == Override.First.TagName)
-                                    AddToPackages(Override.Second.LootPackageData.Get(), LPTempData);*/
+                        if (VersionInfo.FortniteVersion < 20.00)
+                        {
+                            for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
+                                for (auto& Override : PlaylistOverrideLootTableData)
+                                    if (Tag.TagName == Override.First.TagName)
+                                        AddToPackages(Override.Second.LootPackageData.Get(), LPTempData);
+                        }
+                        else
+                            for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
+                                for (auto& Override : PlaylistOverrideLootTableDataLWC)
+                                    if (Tag.TagName.ComparisonIndex == Override.First)
+                                        AddToPackages(Override.Second.LootPackageData.Get(), LPTempData);
 
                         for (auto& [_, Val] : LPTempData)
                             LPGroupsAll.Add(Val);
