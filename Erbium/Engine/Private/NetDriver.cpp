@@ -217,8 +217,8 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 				if (Channel && Channel->IsDormant())
 					continue;
 
-				if (Actor->GetNetDormancy() > 1 && Channel && !Channel->IsPendingDormancy() && !Channel->IsDormant())
-					((int32(*)(UActorChannel*))FindStartBecomingDormant())(Channel);
+				//if (Actor->GetNetDormancy() > 1 && Channel && !Channel->IsPendingDormancy() && !Channel->IsDormant())
+				//	((int32(*)(UActorChannel*))FindStartBecomingDormant())(Channel);
 			}
 
 			if (bRelevant && bLevelInitializedForActor)

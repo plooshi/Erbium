@@ -84,7 +84,7 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
 
     if (updateInventory)
     {
-        Update(&repEntry);
+        Update(&Item->ItemEntry);
 
         HandleInventoryLocalUpdate(); // calls UpdateItemInstances, the func we actually want
     }
@@ -162,7 +162,7 @@ void AFortInventory::Remove(FGuid Guid)
         static auto InterfaceClass = FindClass("FortInventoryOwnerInterface");
         ((bool(*)(const UFortItemDefinition*, const IInterface*, UFortWorldItem*)) Instance->ItemEntry.ItemDefinition->Vft[OnItemInstanceRemovedVft])(Instance->ItemEntry.ItemDefinition, Owner->GetInterface(InterfaceClass), Instance);
     }
-    
+
     if (VersionInfo.EngineVersion < 4.20)
     {
         auto PlayerController = (AFortPlayerControllerAthena*)Owner;
@@ -202,7 +202,7 @@ FFortRangedWeaponStats* AFortInventory::GetStats(UFortWeaponItemDefinition* Def)
 
 FFortItemEntry* AFortInventory::MakeItemEntry(const UFortItemDefinition* ItemDefinition, int32 Count, int32 Level)
 {
-    auto ItemEntry = (FFortItemEntry*) malloc(FFortItemEntry::Size());
+    auto ItemEntry = (FFortItemEntry*)malloc(FFortItemEntry::Size());
     __stosb((PBYTE)ItemEntry, 0, FFortItemEntry::Size());
 
     ItemEntry->MostRecentArrayReplicationKey = -1;
@@ -262,7 +262,7 @@ AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entr
     //NewPickup->OnRep_PrimaryPickupItemEntry();
     NewPickup->PawnWhoDroppedPickup = Pawn;
 
-    NewPickup->TossPickup(Loc, Pawn, -1, Toss, true, (uint8) SourceTypeFlag, (uint8) SpawnSource);
+    NewPickup->TossPickup(Loc, Pawn, -1, Toss, true, (uint8)SourceTypeFlag, (uint8)SpawnSource);
     if (SpawnSource != -1)
         NewPickup->bTossedFromContainer = SpawnSource == EFortPickupSpawnSource::GetChest() || SpawnSource == EFortPickupSpawnSource::GetAmmoBox();
     if (NewPickup->bTossedFromContainer)
@@ -374,12 +374,10 @@ void AFortInventory::UpdateEntry(FFortItemEntry& Entry)
     auto ent2 = Inventory.ItemInstances.Search([&](UFortWorldItem* item)
         { return item->ItemEntry.ItemGuid == Entry.ItemGuid; });
     if (ent2)
-    {
         (*ent2)->ItemEntry = Entry;
-        Update(&(*ent2)->ItemEntry);
-    }
-        //__movsb((PBYTE)&(*ent)->ItemEntry, (const PBYTE)&Entry, FFortItemEntry::Size());
+    //__movsb((PBYTE)&(*ent)->ItemEntry, (const PBYTE)&Entry, FFortItemEntry::Size());
 
+    Update(&Entry);
 }
 
 bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool bForceRemoval)
@@ -476,6 +474,6 @@ void AFortInventory::Hook()
                 Utils::Hook<UFortWorldItem>(uint32(SetOwningInventoryIdx - (VersionInfo.EngineVersion < 4.27 ? 1 : 2)), SetPhantomReserveAmmo);
         }
     }
-    
+
     Utils::ExecHook(DefaultObjImpl("FortAthenaSupplyDrop")->GetFunction("SpawnPickup"), SpawnPickup_);
 }
