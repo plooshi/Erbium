@@ -49,7 +49,7 @@ void GUI::Init()
 
     wchar_t buffer[67];
     swprintf_s(buffer, VersionInfo.EngineVersion >= 5.0 ? L"Erbium (FN %.2f, UE %.1f)" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? L"Erbium (FN %.2f, UE %.2f)" : L"Erbium (FN %.1f, UE %.2f)"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
-    auto hWnd = CreateWindow(wc.lpszClassName, buffer, (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX), 670, 670, 800, 600, nullptr, nullptr, nullptr, nullptr);
+    auto hWnd = CreateWindow(wc.lpszClassName, buffer, (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX), 100, 100, 800, 600, nullptr, nullptr, nullptr, nullptr);
 
     IDXGISwapChain* g_pSwapChain = nullptr;
     ID3D11Device* g_pd3dDevice = nullptr;

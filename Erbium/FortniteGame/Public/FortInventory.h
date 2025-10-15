@@ -91,6 +91,8 @@ public:
     DEFINE_STRUCT_PROP(ParentInventory, TWeakObjectPtr<class AFortInventory>);
     DEFINE_STRUCT_PROP(Level, int32);
     DEFINE_STRUCT_PROP(StateValues, TArray<FFortItemEntryStateValue>);
+    DEFINE_STRUCT_PROP(bIsReplicatedCopy, bool);
+    DEFINE_STRUCT_PROP(bIsDirty, bool);
 };
 
 class UFortWorldItem : public UObject
@@ -215,6 +217,7 @@ public:
 
     DEFINE_PROP(Inventory, FFortItemList);
     DEFINE_PROP(bRequiresLocalUpdate, bool);
+    DEFINE_PROP(bRequiresSaving, bool);
     
     DEFINE_FUNC(HandleInventoryLocalUpdate, void);
 
@@ -229,6 +232,7 @@ public:
     static FFortRangedWeaponStats* GetStats(UFortWeaponItemDefinition*);
     static bool IsPrimaryQuickbar(const UFortItemDefinition*);
     void UpdateEntry(FFortItemEntry&);
+    void SetRequiresUpdate();
 
     InitHooks;
 };

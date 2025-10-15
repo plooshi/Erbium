@@ -759,7 +759,7 @@ namespace SDK
 	class TUObjectArrayUnchunked
 	{
 	private:
-		const FUObjectItem* Objects;
+		FUObjectItem* Objects;
 		const int32 MaxElements;
 		const int32 NumElements;
 
@@ -774,7 +774,7 @@ namespace SDK
 			return MaxElements;
 		}
 
-		inline const FUObjectItem* GetItemByIndex(const int32 Index) const
+		inline FUObjectItem* GetItemByIndex(const int32 Index) const
 		{
 			if (Index < 0 || Index > NumElements)
 				return nullptr;
@@ -786,8 +786,8 @@ namespace SDK
 	class TUObjectArrayChunked
 	{
 	private:
-		const FUObjectItem** Objects;
-		const FUObjectItem* PreAllocatedObjects;
+		FUObjectItem** Objects;
+		FUObjectItem* PreAllocatedObjects;
 		const int32 MaxElements;
 		const int32 NumElements;
 		const int32 MaxChunks;
@@ -804,7 +804,7 @@ namespace SDK
 			return MaxElements;
 		}
 
-		inline const FUObjectItem* GetItemByIndex(const int32 Index) const
+		inline FUObjectItem* GetItemByIndex(const int32 Index) const
 		{
 			if (Index < 0 || Index > NumElements)
 				return nullptr;
@@ -832,7 +832,7 @@ namespace SDK
 			return GObjectsChunked ? GObjectsChunked->Max() : GObjectsUnchunked->Max();
 		}
 
-		static const FUObjectItem* GetItemByIndex(const int32 Index)
+		static FUObjectItem* GetItemByIndex(const int32 Index)
 		{
 			auto GObjectsChunked = (TUObjectArrayChunked*&)Offsets::GObjectsChunked;
 			auto GObjectsUnchunked = (TUObjectArrayUnchunked*&)Offsets::GObjectsUnchunked;
@@ -1039,6 +1039,7 @@ namespace SDK
 		return Struct->GetProperty(Name) != nullptr;
 	}
 
+	inline int StartingSerial = 676767676; // scuffed
 	class FWeakObjectPtr
 	{
 	public:
@@ -1056,7 +1057,18 @@ namespace SDK
 			if (Object)
 			{
 				ObjectIndex = Object->Index;
-				ObjectSerialNumber = TUObjectArray::GetItemByIndex(Object->Index)->SerialNumber;
+				auto Item = TUObjectArray::GetItemByIndex(Object->Index);
+
+				if (Item->SerialNumber == 0)
+					Item->SerialNumber = StartingSerial++;
+
+				ObjectSerialNumber = Item->SerialNumber;
+
+			}
+			else 
+			{
+				ObjectIndex = -1;
+				ObjectSerialNumber = 0;
 			}
 		}
 

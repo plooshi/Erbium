@@ -4,6 +4,7 @@
 #include "../Public/FortPlayerControllerAthena.h"
 #include "../Public/FortKismetLibrary.h"
 #include "../../Erbium/Public/Configuration.h"
+#include <objbase.h>
 
 // OnItemInstanceRemoved is always + 1
 inline uint32_t FindOnItemInstanceAddedVft()
@@ -52,7 +53,17 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
     if (Item->ItemEntry.HasStateValues()) // dk
         Item->ItemEntry.StateValues = StateValues;
 
-    this->Inventory.ReplicatedEntries.Add(Item->ItemEntry, FFortItemEntry::Size());
+    /*if (Item->ItemEntry.ItemGuid.A == 0 && Item->ItemEntry.ItemGuid.B == 0 && Item->ItemEntry.ItemGuid.C == 0 && Item->ItemEntry.ItemGuid.D == 0)
+    {
+        CoCreateGuid((GUID*)&Item->ItemEntry.ItemGuid);
+
+        if (FFortItemEntry::HasTrackerGuid() && Item->ItemEntry.TrackerGuid.A == 0 && Item->ItemEntry.TrackerGuid.B == 0 && Item->ItemEntry.TrackerGuid.C == 0 && Item->ItemEntry.TrackerGuid.D == 0)
+            CoCreateGuid((GUID*)&Item->ItemEntry.TrackerGuid);
+    }*/
+
+
+    auto& repEntry = this->Inventory.ReplicatedEntries.Add(Item->ItemEntry, FFortItemEntry::Size());
+    repEntry.bIsReplicatedCopy = true;
     this->Inventory.ItemInstances.Add(Item);
 
     static auto OnItemInstanceAddedVft = FindOnItemInstanceAddedVft();
@@ -72,7 +83,11 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
         ((AFortPlayerControllerAthena*)Owner)->QuickBars->ServerAddItemInternal(Item->ItemEntry.ItemGuid, !IsPrimaryQuickbar(Def), -1);
 
     if (updateInventory)
+    {
         Update(&Item->ItemEntry);
+
+        HandleInventoryLocalUpdate(); // calls UpdateItemInstances, the func we actually want
+    }
     return Item;
 }
 
@@ -84,12 +99,45 @@ UFortWorldItem* AFortInventory::GiveItem(FFortItemEntry& entry, int Count, bool 
     return GiveItem(entry.ItemDefinition, Count, entry.LoadedAmmo, entry.Level, ShowPickupNoti, updateInventory, entry.HasPhantomReserveAmmo() ? entry.PhantomReserveAmmo : 0, entry.HasStateValues() ? entry.StateValues : TArray<FFortItemEntryStateValue>{});
 }
 
+void AFortInventory::SetRequiresUpdate()
+{
+    Inventory.MarkArrayDirty();
+    bRequiresLocalUpdate = true;
+    bRequiresSaving = true;
+
+    ForceNetUpdate();
+}
+
 void AFortInventory::Update(FFortItemEntry* Entry)
 {
-    bRequiresLocalUpdate = true;
+    if (!Entry)
+        return SetRequiresUpdate();
+
+    if (Entry->bIsReplicatedCopy)
+    {
+        Inventory.MarkItemDirty(*Entry);
+        SetRequiresUpdate();
+        Entry->bIsDirty = true;
+        return;
+    }
+
+    for (int i = 0; i < Inventory.ReplicatedEntries.Num(); i++)
+    {
+        auto& repEntry = Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
+
+        if (repEntry.ItemGuid == Entry->ItemGuid)
+        {
+            repEntry = *Entry;
+            repEntry.bIsDirty = false;
+            Inventory.MarkItemDirty(repEntry);
+            SetRequiresUpdate();
+        }
+    }
+    Entry->bIsDirty = true;
+    /*bRequiresLocalUpdate = true;
     HandleInventoryLocalUpdate();
 
-    return Entry ? Inventory.MarkItemDirty(*Entry) : Inventory.MarkArrayDirty();
+    return Entry ? Inventory.MarkItemDirty(*Entry) : Inventory.MarkArrayDirty();*/
 }
 
 
@@ -136,6 +184,7 @@ void AFortInventory::Remove(FGuid Guid)
 
 _Skip:
     Update(nullptr);
+    HandleInventoryLocalUpdate();
 }
 
 FFortRangedWeaponStats* AFortInventory::GetStats(UFortWeaponItemDefinition* Def)
@@ -317,10 +366,10 @@ void AFortInventory::UpdateEntry(FFortItemEntry& Entry)
         return; // wtf 3.5
 
 
-    auto ent = Inventory.ReplicatedEntries.Search([&](FFortItemEntry& item)
+    /*auto ent = Inventory.ReplicatedEntries.Search([&](FFortItemEntry& item)
         { return item.ItemGuid == Entry.ItemGuid; }, FFortItemEntry::Size());
     if (ent)
-        *ent = Entry;
+        *ent = Entry;*/
 
     auto ent2 = Inventory.ItemInstances.Search([&](UFortWorldItem* item)
         { return item->ItemEntry.ItemGuid == Entry.ItemGuid; });

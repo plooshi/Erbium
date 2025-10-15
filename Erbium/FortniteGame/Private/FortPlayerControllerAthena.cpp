@@ -1142,6 +1142,100 @@ void OnUnEquip(UObject* Context, FFrame& Stack)
 	Weapon->ServerReleaseWeaponAbility(Weapon->PrimaryAbilitySpecHandle);
 }
 
+class UFortHeldObjectComponent : public UActorComponent
+{
+public:
+	UCLASS_COMMON_MEMBERS(UFortHeldObjectComponent);
+
+	DEFINE_PROP(EquippedWeaponItemDefinition, TSoftObjectPtr<UFortItemDefinition>);
+	DEFINE_PROP(HeldObjectState, uint8);
+	DEFINE_PROP(OwningPawn, AFortPlayerPawnAthena*);
+	DEFINE_PROP(PreviousOwningPawn, TWeakObjectPtr<AFortPlayerPawnAthena>);
+	DEFINE_PROP(GrantedWeaponItem, TWeakObjectPtr<UFortWorldItem>);
+	DEFINE_PROP(GrantedWeapon, TWeakObjectPtr<AFortWeapon>);
+
+	DEFINE_FUNC(OnRep_OwningPawn, void);
+};
+
+void PickupHeldObject(UObject* Context, FFrame& Stack)
+{
+	AFortPlayerPawnAthena* Pawn;
+	
+	Stack.StepCompiledIn(&Pawn);
+	Stack.IncrementCode();
+	auto HeldObjectComponent = (UFortHeldObjectComponent*)Context;
+
+	auto ItemDefinition = HeldObjectComponent->EquippedWeaponItemDefinition.Get();
+
+	auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
+
+	auto Item = PlayerController->WorldInventory->GiveItem(ItemDefinition, 1, 99999);
+
+	if (!Item)
+		return;
+
+	auto Weapon = (AFortWeapon*)Pawn->EquipWeaponDefinition(ItemDefinition, Item->ItemEntry.ItemGuid, FFortItemEntry::HasTrackerGuid() ? Item->ItemEntry.TrackerGuid : FGuid(), false);
+
+	if (!Weapon)
+		return;
+	PlayerController->ClientEquipItem(Item->ItemEntry.ItemGuid, true);
+
+	HeldObjectComponent->GrantedWeapon = Weapon;
+	HeldObjectComponent->GrantedWeaponItem = Item;
+
+	HeldObjectComponent->HeldObjectState = 1;
+
+	auto OldPawn = HeldObjectComponent->OwningPawn;
+	HeldObjectComponent->OwningPawn = Pawn;
+	HeldObjectComponent->OnRep_OwningPawn(OldPawn);
+}
+ 
+
+void PlaceHeldObject(UObject* Context, FFrame& Stack)
+{
+	Stack.IncrementCode();
+	printf("PlaceHeldObject\n");
+}
+
+void ThrowHeldObject(UObject* Context, FFrame& Stack)
+{
+	FVector DetachLocation;
+	FRotator ThrowDirection;
+
+	Stack.StepCompiledIn(&DetachLocation);
+	Stack.StepCompiledIn(&ThrowDirection);
+	Stack.IncrementCode();
+	printf("ThrowHeldObject\n");
+}
+
+void DropHeldObject(UObject* Context, FFrame& Stack)
+{
+	Stack.IncrementCode();
+	printf("DropHeldObject\n");
+	auto HeldObjectComponent = (UFortHeldObjectComponent*)Context;
+
+
+	auto PlayerController = (AFortPlayerControllerAthena*)HeldObjectComponent->OwningPawn->Controller;
+
+	auto Item = HeldObjectComponent->GrantedWeaponItem.Get();
+
+	if (!Item)
+		return;
+	printf("GUID: %d %d %d %d, ID: %s\n", Item->ItemEntry.ItemGuid.A, Item->ItemEntry.ItemGuid.B, Item->ItemEntry.ItemGuid.C, Item->ItemEntry.ItemGuid.D, Item->ItemEntry.ItemDefinition->Name.ToString().c_str());
+
+	PlayerController->WorldInventory->Remove(Item->ItemEntry.ItemGuid);
+	PlayerController->WorldInventory->Update(nullptr);
+
+	HeldObjectComponent->GrantedWeapon = nullptr;
+	HeldObjectComponent->GrantedWeaponItem = nullptr;
+
+	HeldObjectComponent->HeldObjectState = 4;
+
+	auto OldPawn = HeldObjectComponent->OwningPawn;
+	HeldObjectComponent->OwningPawn = nullptr;
+	HeldObjectComponent->OnRep_OwningPawn(OldPawn);
+}
+
 void AFortPlayerControllerAthena::Hook()
 {
 
@@ -1222,5 +1316,15 @@ void AFortPlayerControllerAthena::Hook()
 	if (DefaultWeaponComp)
 	{
 		Utils::ExecHook(DefaultWeaponComp->GetFunction("OnUnEquip"), OnUnEquip);
+	}
+
+	auto DefaultHeldObjComp = DefaultObjImpl("FortHeldObjectComponent");
+
+	if (DefaultHeldObjComp)
+	{
+		Utils::ExecHook(DefaultHeldObjComp->GetFunction("PickupHeldObject"), PickupHeldObject);
+		//Utils::ExecHook(DefaultHeldObjComp->GetFunction("DropHeldObject"), DropHeldObject);
+		//Utils::ExecHook(DefaultHeldObjComp->GetFunction("PlaceHeldObject"), PlaceHeldObject);
+		//Utils::ExecHook(DefaultHeldObjComp->GetFunction("ThrowHeldObject"), ThrowHeldObject);
 	}
 }
