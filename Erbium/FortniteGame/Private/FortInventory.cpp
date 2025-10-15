@@ -84,9 +84,15 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
 
     if (updateInventory)
     {
-        Update(&Item->ItemEntry);
+        //Update(&Item->ItemEntry);
+
+        bRequiresLocalUpdate = true;
+        bRequiresSaving = true;
 
         HandleInventoryLocalUpdate(); // calls UpdateItemInstances, the func we actually want
+
+        Inventory.MarkItemDirty(repEntry);
+        ForceNetUpdate();
     }
     return Item;
 }
@@ -183,8 +189,8 @@ void AFortInventory::Remove(FGuid Guid)
     }
 
 _Skip:
-    Update(nullptr);
     HandleInventoryLocalUpdate();
+    Update(nullptr);
 }
 
 FFortRangedWeaponStats* AFortInventory::GetStats(UFortWeaponItemDefinition* Def)
