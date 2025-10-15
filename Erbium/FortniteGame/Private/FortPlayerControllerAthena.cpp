@@ -1132,6 +1132,16 @@ void AFortPlayerControllerAthena::ServerDropAllItems(UObject* Context, FFrame& S
 	}
 }
 
+void OnUnEquip(UObject* Context, FFrame& Stack)
+{
+	AFortWeapon* Weapon;
+	
+	Stack.StepCompiledIn(&Weapon);
+	Stack.IncrementCode();
+
+	Weapon->ServerReleaseWeaponAbility(Weapon->PrimaryAbilitySpecHandle);
+}
+
 void AFortPlayerControllerAthena::Hook()
 {
 
@@ -1206,4 +1216,11 @@ void AFortPlayerControllerAthena::Hook()
 		Utils::ExecHook(ServerAttemptInteractPC, ServerAttemptInteract_, ServerAttemptInteract_OG);
 	
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerDropAllItems"), ServerDropAllItems);
+
+	auto DefaultWeaponComp = DefaultObjImpl("FortWeaponComponent");
+
+	if (DefaultWeaponComp)
+	{
+		Utils::ExecHook(DefaultWeaponComp->GetFunction("OnUnEquip"), OnUnEquip);
+	}
 }
