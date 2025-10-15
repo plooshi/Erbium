@@ -189,8 +189,17 @@ void AFortInventory::Remove(FGuid Guid)
     }
 
 _Skip:
-    HandleInventoryLocalUpdate();
-    Update(nullptr);
+
+    bRequiresLocalUpdate = true;
+    bRequiresSaving = true;
+
+    HandleInventoryLocalUpdate(); // calls UpdateItemInstances, the func we actually want
+
+    Inventory.MarkArrayDirty();
+    ForceNetUpdate();
+
+    //HandleInventoryLocalUpdate();
+    //Update(nullptr);
 }
 
 FFortRangedWeaponStats* AFortInventory::GetStats(UFortWeaponItemDefinition* Def)
