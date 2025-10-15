@@ -1485,7 +1485,9 @@ void FindNullsAndRetTrues()
         NullFuncs.push_back(sRef.ScanFor(VersionInfo.EngineVersion >= 4.27 ? std::vector<uint8>{ 0x48, 0x89, 0x5C } : std::vector<uint8>{ 0x40, 0x55 }, false, 0, 1, 2000).Get());
     }
 
-    if (VersionInfo.EngineVersion >= 4.24 && VersionInfo.EngineVersion < 4.27) {
+    if (VersionInfo.EngineVersion == 4.23)
+        NullFuncs.push_back(Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 56 57 41 56 48 81 EC ? ? ? ? 0F B6 FA").Get());
+    else if (VersionInfo.EngineVersion >= 4.24 && VersionInfo.EngineVersion < 4.27) {
         auto sRef = Memcury::Scanner::FindStringRef(L"STAT_CollectGarbageInternal").Get();
         uint64_t CollectGarbage = 0;
 
