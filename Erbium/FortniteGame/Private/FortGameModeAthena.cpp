@@ -15,6 +15,7 @@
 #include "../../Erbium/Public/LateGame.h"
 #include "../Public/BuildingItemCollectorActor.h"
 #include "../../Erbium/Public/GUI.h"
+#include <random>
 
 
 void ShowFoundation(const ABuildingFoundation* Foundation)
@@ -452,7 +453,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
             SupplyDropClass = Utils::FindObject<UClass>(L"/Game/Athena/SupplyDrops/AthenaSupplyDrop_BDay.AthenaSupplyDrop_BDay_C");
         }
-        else if (VersionInfo.FortniteVersion == 1.8 || VersionInfo.FortniteVersion == 6.20 || VersionInfo.FortniteVersion == 6.21 || VersionInfo.FortniteVersion == 11.10 || VersionInfo.FortniteVersion == 14.40 || VersionInfo.FortniteVersion == 18.21)
+        else if (VersionInfo.FortniteVersion == 6.20 || VersionInfo.FortniteVersion == 6.21 || VersionInfo.FortniteVersion == 11.10 || VersionInfo.FortniteVersion == 14.40 || VersionInfo.FortniteVersion == 18.21)
             BattleBusDef = Utils::FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_HalloweenBus.BBID_HalloweenBus");
         else if (VersionInfo.FortniteVersion == 14.30)
             BattleBusDef = Utils::FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_BusUpgrade1.BBID_BusUpgrade1");
@@ -724,6 +725,20 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
         
         for (auto& AbilitySet : AbilitySets)
             NewPlayer->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
+
+        if (VersionInfo.FortniteVersion == 1.72 || VersionInfo.FortniteVersion == 1.8 || VersionInfo.FortniteVersion == 1.81 || VersionInfo.FortniteVersion == 1.82)
+        {
+            static auto Head = Utils::FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Heads/F_Med_Head1.F_Med_Head1");
+            static auto Body = Utils::FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Bodies/F_Med_Soldier_01.F_Med_Soldier_01");
+            static auto Backpack = Utils::FindObject<UObject>(L"/Game/Characters/CharacterParts/Backpacks/NoBackpack.NoBackpack");
+            static auto CharacterPartsOffset = NewPlayer->PlayerState->GetOffset("CharacterParts");
+            auto& CharacterParts = GetFromOffset<const UObject*[0x6]>(NewPlayer->PlayerState, CharacterPartsOffset);
+
+            CharacterParts[0] = Head;
+            CharacterParts[1] = Body;
+            CharacterParts[3] = Backpack;
+        }
+
 
         static auto ApplyCharacterCustomization = FindApplyCharacterCustomization();
 

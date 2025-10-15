@@ -1224,7 +1224,6 @@ void DropHeldObject(UObject* Context, FFrame& Stack)
 	printf("GUID: %d %d %d %d, ID: %s\n", Item->ItemEntry.ItemGuid.A, Item->ItemEntry.ItemGuid.B, Item->ItemEntry.ItemGuid.C, Item->ItemEntry.ItemGuid.D, Item->ItemEntry.ItemDefinition->Name.ToString().c_str());
 
 	PlayerController->WorldInventory->Remove(Item->ItemEntry.ItemGuid);
-	PlayerController->WorldInventory->Update(nullptr);
 
 	HeldObjectComponent->GrantedWeapon = nullptr;
 	HeldObjectComponent->GrantedWeaponItem = nullptr;
@@ -1280,7 +1279,7 @@ void AFortPlayerControllerAthena::Hook()
 	auto ServerReturnToMainMenuIdx = GetDefaultObj()->GetFunction("ServerReturnToMainMenu")->GetVTableIndex();
 	Utils::Hook<AFortPlayerControllerAthena>(ServerReturnToMainMenuIdx, DefaultFortPC->Vft[ServerReturnToMainMenuIdx]);
 
-	if (VersionInfo.FortniteVersion != 1.72 && VersionInfo.FortniteVersion != 1.8)
+	if (VersionInfo.FortniteVersion != 1.72 && VersionInfo.FortniteVersion != 1.8 && VersionInfo.FortniteVersion != 1.81 && VersionInfo.FortniteVersion != 1.82)
 	{
 		Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCreateBuildingActor"), ServerCreateBuildingActor);
 		Utils::ExecHook(GetDefaultObj()->GetFunction("ServerBeginEditingBuildingActor"), ServerBeginEditingBuildingActor);
@@ -1289,7 +1288,11 @@ void AFortPlayerControllerAthena::Hook()
 		Utils::ExecHook(GetDefaultObj()->GetFunction("ServerRepairBuildingActor"), ServerRepairBuildingActor);
 
 	}
-	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerAttemptInventoryDrop"), ServerAttemptInventoryDrop);
+	auto ServerAttemptInventoryDropFn = GetDefaultObj()->GetFunction("ServerAttemptInventoryDrop");
+	if (ServerAttemptInventoryDropFn)
+		Utils::ExecHook(ServerAttemptInventoryDropFn, ServerAttemptInventoryDrop);
+	else
+		Utils::ExecHook(GetDefaultObj()->GetFunction("ServerSpawnInventoryDrop"), ServerAttemptInventoryDrop);
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerPlayEmoteItem"), ServerPlayEmoteItem);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerPlaySprayItem"), ServerPlayEmoteItem);

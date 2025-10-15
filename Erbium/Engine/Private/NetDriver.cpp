@@ -362,7 +362,7 @@ void UNetDriver::Hook()
 
 	if (VersionInfo.FortniteVersion == 1.72)
 		ClientWorldPackageNameOffset = 0x336A8;
-	else if (VersionInfo.FortniteVersion == 1.8 || VersionInfo.FortniteVersion == 1.9)
+	else if (VersionInfo.FortniteVersion == 1.8 || VersionInfo.FortniteVersion == 1.81 || VersionInfo.FortniteVersion == 1.82 || VersionInfo.FortniteVersion == 1.9)
 		ClientWorldPackageNameOffset = 0x33788;
 	else if (VersionInfo.FortniteVersion == 1.10)
 		ClientWorldPackageNameOffset = 0x337A8;

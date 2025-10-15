@@ -84,7 +84,7 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
 
     if (updateInventory)
     {
-        Update(&Item->ItemEntry);
+        Update(&repEntry);
 
         HandleInventoryLocalUpdate(); // calls UpdateItemInstances, the func we actually want
     }
@@ -374,10 +374,12 @@ void AFortInventory::UpdateEntry(FFortItemEntry& Entry)
     auto ent2 = Inventory.ItemInstances.Search([&](UFortWorldItem* item)
         { return item->ItemEntry.ItemGuid == Entry.ItemGuid; });
     if (ent2)
+    {
         (*ent2)->ItemEntry = Entry;
+        Update(&(*ent2)->ItemEntry);
+    }
         //__movsb((PBYTE)&(*ent)->ItemEntry, (const PBYTE)&Entry, FFortItemEntry::Size());
 
-    Update(&Entry);
 }
 
 bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool bForceRemoval)

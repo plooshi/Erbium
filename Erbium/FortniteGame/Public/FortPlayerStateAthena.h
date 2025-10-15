@@ -57,6 +57,7 @@ public:
     DEFINE_PROP(Place, int32);
     DEFINE_PROP(RespawnData, FFortRespawnData);
     DEFINE_PROP(SeasonLevelUIDisplay, int32);
+    DEFINE_PROP(CharacterParts, const UObject**);
 
     DEFINE_FUNC(OnRep_SquadId, void);
     DEFINE_FUNC(OnRep_DeathInfo, void);
