@@ -27,5 +27,5 @@ public:
     static FLateGameItem GetHeal();
 
     static const UFortItemDefinition* GetAmmo(EAmmoType);
-    static const UFortItemDefinition* GetResource(long long);
+    static const UFortItemDefinition* GetResource(EFortResourceType);
 };

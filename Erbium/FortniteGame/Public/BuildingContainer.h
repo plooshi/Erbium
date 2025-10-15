@@ -23,6 +23,7 @@ public:
     DEFINE_PROP(LootTossConeHalfAngle_Athena, float);
     DEFINE_PROP(LootTossDirection_Athena, FRotator);
     DEFINE_PROP(LootTossSpeed_Athena, float);
+    DEFINE_BITFIELD_PROP(bForceHidePickupMinimapIndicator);
 
     DEFINE_FUNC(OnRep_bAlreadySearched, void);
     DEFINE_FUNC(BounceContainer, void);

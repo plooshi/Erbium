@@ -41,7 +41,6 @@ void UAbilitySystemComponent::GiveAbilitySet(const UFortAbilitySet* Set)
     TScriptInterface<class IAbilitySystemInterface> ScriptInterface;
     ScriptInterface.ObjectPointer = this->GetOwner();
     ScriptInterface.InterfacePointer = ScriptInterface.ObjectPointer->GetInterface(IAbilitySystemInterface::StaticClass());
-    printf("fr %llx %llx\n", ScriptInterface.InterfacePointer, IAbilitySystemInterface::StaticClass());
 
     UFortKismetLibrary::EquipFortAbilitySet(ScriptInterface, Set, nullptr);
 }

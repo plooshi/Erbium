@@ -81,7 +81,7 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 
 	
 	if (ResCount > 0)
-		InstigatedBy->ClientReportDamagedResourceBuilding(Actor, ResCount == 0 ? EFortResourceType::GetNone() : Actor->ResourceType, ResCount, Actor->GetHealth() - Damage <= 0, Damage == 100.f);
+		InstigatedBy->ClientReportDamagedResourceBuilding(Actor, ResCount == 0 ? EFortResourceType::None : Actor->ResourceType, ResCount, Actor->GetHealth() - Damage <= 0, Damage == 100.f);
 
 	Actor->ForceNetUpdate();
 	return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
