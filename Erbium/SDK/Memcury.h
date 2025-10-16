@@ -1183,7 +1183,7 @@ namespace Memcury
                     {
                         //if (!bSkunky ? (*(uint8_t*)(add.Get() - i) == 0x48 && *(uint8_t*)(add.Get() - i + 1) == 0x83) :
                         //    (*(uint8_t*)(add.Get() - i) == 0x4C && *(uint8_t*)(add.Get() - i + 1) == 0x8B && *(uint8_t*)(add.Get() - i + 2) == 0xDC))
-                        if (*(uint8_t*)(add.Get() - i) == 0x48 && *(uint8_t*)(add.Get() - i + 1) == 0x83 && *(uint8_t*)(add.Get() - i + 1) == 0xEC)
+                        if (*(uint8_t*)(add.Get() - i) == 0x48 && *(uint8_t*)(add.Get() - i + 1) == 0x83 && *(uint8_t*)(add.Get() - i + 2) == 0xEC)
                         {
                            int sub = 0;
                            if (*(uint8_t*)(add.Get() - i - 3) == 0x4C && *(uint8_t*)(add.Get() - i - 2) == 0x8B && *(uint8_t*)(add.Get() - i - 1) == 0xDC)
