@@ -20,7 +20,7 @@ public:
     bool IsPendingDormancy()
     {
         static auto BitfieldOffset = GetOffset("Connection") + 8;
-        return *(uint8_t*)(__int64(this) + BitfieldOffset) & (1 << 6);
+        return *(uint8_t*)(__int64(this) + BitfieldOffset) & (1 << 7);
     }
 
     bool IsDormant()
@@ -127,11 +127,13 @@ public:
 
         if (ViewingController)
         {
-            //FRotator ViewRotation = ViewingController->ControlRotation;
+            //FRotator ViewRotation = ViewingController->GetControlRotation();
             FRotator ViewRotation;
             AFortPlayerControllerAthena::GetPlayerViewPoint(ViewingController, NetViewer->ViewLocation, ViewRotation);
             constexpr auto radian = 0.017453292519943295;
-            double cosPitch = cos(ViewRotation.Pitch * radian), sinPitch = sin(ViewRotation.Pitch * radian), cosYaw = cos(ViewRotation.Yaw * radian), sinYaw = sin(ViewRotation.Yaw * radian);
+            auto UnwindedPitch = FRotator::UnwindDegrees(ViewRotation.Pitch);
+            auto UnwindedYaw = FRotator::UnwindDegrees(ViewRotation.Pitch);
+            double cosPitch = cos(UnwindedPitch * radian), sinPitch = sin(UnwindedPitch * radian), cosYaw = cos(UnwindedYaw * radian), sinYaw = sin(UnwindedYaw * radian);
             NetViewer->ViewDir = FVector(cosPitch * cosYaw, cosPitch * sinYaw, sinPitch);
         }
         else

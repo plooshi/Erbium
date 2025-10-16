@@ -210,11 +210,9 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 					continue;
 				}
 			}
-			else if (VersionInfo.FortniteVersion >= 20)
+			else
 			{
-				//if (ActorInfo->DormantConnections.Contains(Conn))
-				//	continue;
-				if (Channel && Channel->IsDormant())
+				if (ActorInfo->DormantConnections.Contains(Conn))
 					continue;
 
 				if (Actor->GetNetDormancy() > 1 && Channel && !Channel->IsPendingDormancy() && !Channel->IsDormant())
@@ -327,6 +325,33 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
     return TickFlushOG(Driver, DeltaSeconds);
 }
 
+
+void (*SetNetDormancyOG)(AActor* Actor, int NewDormancy);
+void SetNetDormancy(AActor* Actor, int NewDormancy)
+{
+	auto Driver = (UNetDriver*)UWorld::GetWorld()->NetDriver;
+
+	SetNetDormancyOG(Actor, NewDormancy);
+
+	if (Driver)
+		if (NewDormancy <= 1)
+			for (auto& Conn : Driver->ClientConnections)
+				((void(*)(UNetConnection*, AActor*)) FindFlushDormancy())(Conn, Actor);
+}
+
+void (*FlushNetDormancyOG)(AActor* Actor);
+void FlushNetDormancy(AActor* Actor)
+{
+	auto Driver = (UNetDriver*)UWorld::GetWorld()->NetDriver;
+
+	FlushNetDormancyOG(Actor);
+
+	if (Driver)
+		if (Actor->NetDormancy > 1)
+			for (auto& Conn : Driver->ClientConnections)
+				((void(*)(UNetConnection*, AActor*)) FindFlushDormancy())(Conn, Actor);
+}
+
 void UNetDriver::Hook()
 {
 	if (VersionInfo.EngineVersion == 4.16)
@@ -395,7 +420,16 @@ void UNetDriver::Hook()
 		FindCloseActorChannel();
 		FindStartBecomingDormant();
 		FindClientHasInitializedLevelFor();
+
+		if (VersionInfo.FortniteVersion < 3.4)
+			FindFlushDormancy();
 	}
 
-    Utils::Hook(FindTickFlush(), TickFlush, TickFlushOG);
+    Utils::Hook(FindTickFlush(), TickFlush, TickFlushOG); 
+
+	if (VersionInfo.FortniteVersion < 3.4)
+	{
+		Utils::Hook(__int64(AActor::GetDefaultObj()->GetFunction("FlushNetDormancy")->GetImpl()), FlushNetDormancy, FlushNetDormancyOG);
+		Utils::Hook(__int64(AActor::GetDefaultObj()->GetFunction("SetNetDormancy")->GetImpl()), SetNetDormancy, SetNetDormancyOG);
+	}
 }

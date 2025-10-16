@@ -40,6 +40,7 @@ uint64 FindReplicateActor();
 uint64 FindCloseActorChannel();
 uint64 FindClientHasInitializedLevelFor();
 uint64 FindStartBecomingDormant();
+uint64 FindFlushDormancy();
 int32 FindIsNetRelevantForVft();
 
 inline std::vector<uint64_t> NullFuncs = {};

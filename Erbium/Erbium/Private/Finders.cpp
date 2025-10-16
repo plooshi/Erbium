@@ -1409,12 +1409,33 @@ uint64 FindStartBecomingDormant()
         {
             if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x5C)
                 return StartBecomingDormant = sRef - i;
-            else if (VersionInfo.FortniteVersion >= 20 && *(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
+            else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
                 return StartBecomingDormant = sRef - i;
         }
     }
 
     return StartBecomingDormant;
+}
+
+
+
+uint64 FindFlushDormancy()
+{
+    static uint64_t FlushDormancy = 0;
+
+    if (FlushDormancy == 0)
+    {
+        auto sRef = Memcury::Scanner::FindStringRef(L"FlushDormancy: %s. Connection: %s", false, 0, VersionInfo.FortniteVersion >= 19).Get();
+
+        if (!sRef)
+            return 0;
+
+        for (int i = 0; i < 2000; i++)
+            if (*(uint8_t*)(sRef - i) == 0x40 && *(uint8_t*)(sRef - i + 1) == 0x55)
+                return FlushDormancy = sRef - i;
+    }
+
+    return FlushDormancy;
 }
 
 void FindNullsAndRetTrues()

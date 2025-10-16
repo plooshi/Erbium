@@ -489,7 +489,15 @@ namespace SDK
 			if (!this)
 				return nullptr;
 
-			return (void*)Memcury::Scanner(GetNativeFunc()).ScanFor({ 0x40, 0x0F, 0x95, 0xC7 }).ScanFor({ 0xE8 }).RelativeOffset(1).Get();
+			auto setnzAddr = Memcury::Scanner(GetNativeFunc()).ScanFor({ 0x0F, 0x95 }).Get();
+			
+			for (int i = 0; i < 0x200; i++)
+			{
+				auto Ptr = (uint8_t*)(setnzAddr + i);
+
+				if (*Ptr == 0xe9 || *Ptr == 0xe8)
+					return Memcury::Scanner(Ptr).RelativeOffset(1).GetAs<void*>();
+			}
 
 		}
 
