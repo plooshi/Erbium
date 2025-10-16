@@ -388,20 +388,40 @@ void AFortPlayerControllerAthena::ServerBeginEditingBuildingActor(UObject* Conte
 	Stack.StepCompiledIn(&Building);
 	Stack.IncrementCode();
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
-	if (!PlayerController || !PlayerController->MyFortPawn || !Building || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex)
+	if (!PlayerController || !PlayerController->MyFortPawn || !Building)
 		return;
 
-
-	AFortPlayerStateAthena* PlayerState = (AFortPlayerStateAthena*)PlayerController->PlayerState;
-	if (!PlayerState)
+	auto PlayerStateAthena = static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState);
+	if (!PlayerStateAthena)
 		return;
 
+	const bool bTeamMismatch = (Building->Team != PlayerStateAthena->TeamIndex);
+	const bool bTeamIndexKnown = Building->HasTeamIndex();
+	if (bTeamMismatch && bTeamIndexKnown)
+		return;
+
+	AFortPlayerStateAthena* PlayerState = PlayerStateAthena;
 	SetEditingPlayer(Building, PlayerState);
 
 	static auto EditToolClass = FindClass("FortEditToolItemDefinition");
 	auto EditToolEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) {
 		return entry.ItemDefinition->IsA(EditToolClass);
 		}, FFortItemEntry::Size());
+
+	// Fallback: if the edit tool isn't present in the inventory, grant it from the canonical asset path
+	if (!EditToolEntry)
+	{
+		auto EditToolDef = Utils::FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/EditTool.EditTool");
+		if (EditToolDef)
+		{
+			PlayerController->WorldInventory->GiveItem(EditToolDef);
+			EditToolEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) {
+				return entry.ItemDefinition->IsA(EditToolClass);
+			}, FFortItemEntry::Size());
+		}
+	}
+	if (!EditToolEntry)
+		return; // still no edit tool; bail out safely
 
 
 	PlayerController->MyFortPawn->EquipWeaponDefinition((UFortWeaponItemDefinition*)EditToolEntry->ItemDefinition, EditToolEntry->ItemGuid, EditToolEntry->HasTrackerGuid() ? EditToolEntry->TrackerGuid : FGuid(), false);
@@ -432,10 +452,18 @@ void AFortPlayerControllerAthena::ServerEditBuildingActor(UObject* Context, FFra
 	Stack.IncrementCode();
 
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
-	if (!PlayerController || !Building || !NewClass || !Building->IsA<ABuildingSMActor>() || !CanBePlacedByPlayer(NewClass) || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex || Building->bDestroyed)
+	if (!PlayerController || !Building || !NewClass || !Building->IsA<ABuildingSMActor>() || !CanBePlacedByPlayer(NewClass) || Building->bDestroyed)
 	{
 		return;
 	}
+
+	auto PlayerStateAthena = static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState);
+	if (!PlayerStateAthena)
+		return;
+	const bool bTeamMismatch2 = (Building->Team != PlayerStateAthena->TeamIndex);
+	const bool bTeamIndexKnown2 = Building->HasTeamIndex();
+	if (bTeamMismatch2 && bTeamIndexKnown2)
+		return;
 
 
 	SetEditingPlayer(Building, nullptr);
@@ -447,6 +475,10 @@ void AFortPlayerControllerAthena::ServerEditBuildingActor(UObject* Context, FFra
 	if (NewBuild)
 	{
 		NewBuild->bPlayerPlaced = true;
+		// Ensure the replaced structure inherits the player's team to avoid future edit/ownership mismatches
+		NewBuild->Team = PlayerStateAthena->TeamIndex;
+		if (NewBuild->HasTeamIndex())
+			NewBuild->TeamIndex = NewBuild->Team;
 	}
 }
 
@@ -457,7 +489,16 @@ void AFortPlayerControllerAthena::ServerEndEditingBuildingActor(UObject* Context
 	Stack.IncrementCode();
 
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
-	if (!PlayerController || !PlayerController->MyFortPawn || !Building || Building->EditingPlayer != PlayerController->PlayerState || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex || Building->bDestroyed)
+	if (!PlayerController || !PlayerController->MyFortPawn || !Building || Building->bDestroyed)
+		return;
+
+	auto PlayerStateAthena = static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState);
+	if (!PlayerStateAthena)
+		return;
+
+	const bool bTeamMismatch3 = (Building->Team != PlayerStateAthena->TeamIndex);
+	const bool bTeamIndexKnown3 = Building->HasTeamIndex();
+	if (bTeamMismatch3 && bTeamIndexKnown3)
 		return;
 
 	SetEditingPlayer(Building, nullptr);
