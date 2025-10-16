@@ -1005,6 +1005,8 @@ _help:
 
 			PlayerState->TeamIndex = AFortGameModeAthena::PickTeam(GameMode, 0, PlayerController);
 			PlayerState->SquadId = PlayerState->TeamIndex - 3;
+			if (PlayerState->HasbIsABot())
+				PlayerState->bIsABot = true;
 
 
 			if (GameState->HasGameMemberInfoArray())

@@ -59,6 +59,7 @@ public:
     DEFINE_PROP(SeasonLevelUIDisplay, int32);
     DEFINE_PROP(CharacterParts, const UObject**);
     DEFINE_PROP(HeroType, const UObject*);
+    DEFINE_PROP(bIsABot, bool);
 
     DEFINE_FUNC(OnRep_SquadId, void);
     DEFINE_FUNC(OnRep_DeathInfo, void);
