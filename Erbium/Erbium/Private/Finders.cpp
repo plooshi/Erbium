@@ -238,7 +238,7 @@ uint64_t FindCreateNetDriverWorldContext()
         if (!Ptr.Get())
             return 0;
 
-        auto scuffness = Ptr.ScanFor({ 0xC3 }, false).ScanFor({ 0x48 }); // should land us right at the start of CreateNetDriver
+        auto scuffness = Ptr.ScanFor({ 0x48, 0x83, 0xEC }, false).ScanFor({ 0xC3 }, false).ScanFor({ 0x48 }); // should land us right at the start of CreateNetDriver
 
         return CreateNetDriver = scuffness.Get();
     }
