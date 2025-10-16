@@ -180,8 +180,7 @@ void Misc::InitClient()
 void Misc::Hook()
 {
 	Utils::Hook(FindGetNetMode(), GetNetMode);
-	if (VersionInfo.FortniteVersion != 1.8 && VersionInfo.FortniteVersion != 1.81 && VersionInfo.FortniteVersion != 1.82) // fixes a weird mcp crash
-		Utils::Hook(FindSendRequestNow(), SendRequestNow, SendRequestNowOG);
+	Utils::Hook(FindSendRequestNow(), SendRequestNow, SendRequestNowOG);
 	Utils::Hook(FindGetMaxTickRate(), GetMaxTickRate);
 	if (VersionInfo.FortniteVersion >= 17)
 		Utils::Hook(Memcury::Scanner::FindPattern("48 89 5C 24 10 48 89 6C 24 20 56 57 41 54 41 56 41 57 48 81 EC ? ? ? ? 65 48 8B 04 25 ? ? ? ? 4C 8B F9").Get(), CheckCheckpointHeartBeat);

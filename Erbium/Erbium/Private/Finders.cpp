@@ -887,7 +887,7 @@ uint64_t FindKickPlayer()
         return Memcury::Scanner::FindPattern("48 89 5C 24 08 48 89 74 24 10 57 48 83 EC ? 49 8B F0 48 8B DA 48 85 D2").Get();
     }
 
-    auto sRef = Memcury::Scanner::FindStringRef(L"Validation Failure: %s. kicking %s", false, VersionInfo.EngineVersion == 4.20 || VersionInfo.EngineVersion == 4.21, VersionInfo.FortniteVersion >= 19).Get();
+    auto sRef = Memcury::Scanner::FindStringRef(L"Validation Failure: %s. kicking %s", false, VersionInfo.EngineVersion == 4.19 || VersionInfo.EngineVersion == 4.20 || VersionInfo.EngineVersion == 4.21, VersionInfo.FortniteVersion >= 19).Get();
 
 
     if (sRef)
