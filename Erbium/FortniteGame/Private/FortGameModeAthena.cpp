@@ -61,8 +61,8 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
             Playlist->RespawnType = 1; // InfiniteRespawns
             Playlist->bAllowJoinInProgress = true;
         }
-        //if (Playlist->HasGarbageCollectionFrequency())
-        //    Playlist->GarbageCollectionFrequency = 9999999999999999.f; // easier than hooking collectgarbage
+        if (Playlist->HasGarbageCollectionFrequency())
+            Playlist->GarbageCollectionFrequency = 9999999999999999.f; // easier than hooking collectgarbage
         if (GameState->HasCurrentPlaylistInfo())
         {
             //if (VersionInfo.EngineVersion >= 4.27)
