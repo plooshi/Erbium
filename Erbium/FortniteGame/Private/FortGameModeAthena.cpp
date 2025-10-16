@@ -388,7 +388,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             GameMode->bDisableGCOnServerDuringMatch = true;
         if (GameMode->HasbPlaylistHotfixChangedGCDisabling())
             GameMode->bPlaylistHotfixChangedGCDisabling = true;
-
+        
         if (VersionInfo.EngineVersion >= 5.0)
         {
             GameState->DefaultParachuteDeployTraceForGroundDistance = 10000;
@@ -724,7 +724,7 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
         for (auto& AbilitySet : AbilitySets)
             NewPlayer->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
 
-        if (VersionInfo.FortniteVersion == 1.72)
+        if (VersionInfo.FortniteVersion == 1.72 || VersionInfo.FortniteVersion == 1.8 || VersionInfo.FortniteVersion == 1.81 || VersionInfo.FortniteVersion == 1.82)
         {
             static auto Head = Utils::FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Heads/F_Med_Head1.F_Med_Head1");
             static auto Body = Utils::FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Bodies/F_Med_Soldier_01.F_Med_Soldier_01");
