@@ -457,7 +457,7 @@ void AFortPlayerControllerAthena::ServerEndEditingBuildingActor(UObject* Context
 	Stack.IncrementCode();
 
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
-	if (!PlayerController || !PlayerController->MyFortPawn || !Building || Building->EditingPlayer != PlayerController->PlayerState || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex || Building->bDestroyed)
+	if (!PlayerController || !PlayerController->MyFortPawn || !Building || (Building->EditingPlayer && Building->EditingPlayer != PlayerController->PlayerState) || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex || Building->bDestroyed)
 		return;
 
 	SetEditingPlayer(Building, nullptr);
