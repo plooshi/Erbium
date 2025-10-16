@@ -533,6 +533,7 @@ namespace SDK
 		DEFINE_FUNC(GetActorRightVector, FVector);
 		DEFINE_FUNC(GetDistanceTo, float);
 		DEFINE_FUNC(SetLifeSpan, void);
+		DEFINE_FUNC(K2_AttachToComponent, void);
 	};
 
 	class UGameplayStatics : public SDK::UObject

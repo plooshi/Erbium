@@ -38,11 +38,11 @@ public:
 
 void UAbilitySystemComponent::GiveAbilitySet(const UFortAbilitySet* Set)
 {
-    TScriptInterface<class IAbilitySystemInterface> ScriptInterface;
-    ScriptInterface.ObjectPointer = this->GetOwner();
-    ScriptInterface.InterfacePointer = ScriptInterface.ObjectPointer->GetInterface(IAbilitySystemInterface::StaticClass());
-
-    UFortKismetLibrary::EquipFortAbilitySet(ScriptInterface, Set, nullptr);
+    if (Set)
+    {
+        for (auto& GameplayAbility : Set->GameplayAbilities)
+            GiveAbility(GameplayAbility->GetDefaultObj());
+    }
 }
 
 struct _Pad_0x10
