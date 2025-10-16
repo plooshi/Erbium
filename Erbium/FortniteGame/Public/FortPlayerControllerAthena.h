@@ -142,6 +142,7 @@ public:
     DEFINE_FUNC(ServerAttemptInteract, void);
     DEFINE_FUNC(ServerExecuteInventoryItem, void);
     DEFINE_FUNC(ClientEquipItem, void);
+    DEFINE_FUNC(OnRep_PlayerState, void);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);

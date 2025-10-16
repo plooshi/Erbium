@@ -38,6 +38,8 @@ public:
     DEFINE_PROP(GameplayTags, FGameplayTagContainer);
     DEFINE_BITFIELD_PROP(bIsInAnyStorm);
     DEFINE_BITFIELD_PROP(bIsInsideSafeZone);
+    DEFINE_PROP(AIControllerClass, TSubclassOf<AActor>);
+    DEFINE_PROP(PlayerState, AActor*);
 
     DEFINE_FUNC(BeginSkydiving, void);
     DEFINE_FUNC(GetHealth, float);
@@ -53,6 +55,7 @@ public:
     DEFINE_FUNC(PickUpActor, void);
     DEFINE_FUNC(OnRep_IsInAnyStorm, void);
     DEFINE_FUNC(OnRep_IsInsideSafeZone, void);
+    DEFINE_FUNC(OnRep_PlayerState, void);
 
     DefUHookOg(ServerHandlePickup_);
     DefUHookOg(ServerHandlePickupInfo);

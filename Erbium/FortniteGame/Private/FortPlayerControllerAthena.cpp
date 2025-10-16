@@ -994,11 +994,22 @@ _help:
 
 			auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
 			auto GameState = GameMode->GameState;
-			auto PlayerController = (AFortPlayerControllerAthena*)UWorld::SpawnActor(GameMode->PlayerControllerClass, FVector{});
-			auto PlayerState = PlayerController->PlayerState;
-			auto Pawn = (AFortPlayerPawnAthena*) GameMode->SpawnDefaultPawnAtTransform(PlayerController, Transform);
+			//auto PlayerController = (AFortPlayerControllerAthena*)UWorld::SpawnActor(GameMode->PlayerControllerClass, FVector{});
+			auto Pawn = (AFortPlayerPawnAthena*)UWorld::SpawnActor(GameMode->DefaultPawnClass, Transform);
+			auto PlayerController = (AFortPlayerControllerAthena*)UWorld::SpawnActor(Pawn->AIControllerClass, FVector{});
+			//auto PlayerState = PlayerController->PlayerState;
 
 			PlayerController->Possess(Pawn);
+
+			auto PlayerState = (AFortPlayerStateAthena*) UWorld::SpawnActor(AFortPlayerStateAthena::StaticClass(), FVector{});
+
+			PlayerState->SetOwner(PlayerController);
+
+			PlayerController->PlayerState = PlayerState;
+			PlayerController->OnRep_PlayerState();
+
+			Pawn->PlayerState = PlayerState;
+			Pawn->OnRep_PlayerState();
 
 			Pawn->SetMaxHealth(100.f);
 			Pawn->SetHealth(100.f);
@@ -1030,10 +1041,10 @@ _help:
 			for (auto& AbilitySet : AFortGameModeAthena::AbilitySets)
 				PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
 
-			PlayerController->WorldInventory = (AFortInventory*)UWorld::SpawnActor(AFortInventory::StaticClass(), FVector{});
+			/*PlayerController->WorldInventory = (AFortInventory*)UWorld::SpawnActor(AFortInventory::StaticClass(), FVector{});
 			PlayerController->WorldInventory->SetOwner(PlayerController);
-			PlayerController->WorldInventory->InventoryType = 0;
-			PlayerController->bHasInitializedWorldInventory = true;
+			PlayerController->WorldInventory->InventoryType = 0;*/
+			//PlayerController->bHasInitializedWorldInventory = true;
 
 			GameState->PlayersLeft++;
 			GameState->OnRep_PlayersLeft();
@@ -1049,7 +1060,7 @@ _help:
 			if (ApplyCharacterCustomization)
 				((void (*)(AActor*, AFortPlayerPawnAthena*)) ApplyCharacterCustomization)(PlayerState, Pawn);
 
-			static auto DefaultPickaxe = Utils::FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
+			/*static auto DefaultPickaxe = Utils::FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
 
 			PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
 
@@ -1061,7 +1072,7 @@ _help:
 
 				if (StartingItem.Count && (!SmartItemDefClass || !StartingItem.Item->IsA(SmartItemDefClass)))
 					PlayerController->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
-			}
+			}*/
 		} 
 		else if (command == "startevent")
 		{
