@@ -631,6 +631,9 @@ uint64 FindApplyCharacterCustomization()
 
     if (ApplyCharacterCustomization == 0)
     {
+        if (VersionInfo.FortniteVersion == 17.50)
+            return ApplyCharacterCustomization = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 80 B9 ? ? ? ? ? 4C 8B EA").Get();
+
         auto sRef = Memcury::Scanner::FindStringRef(L"AFortPlayerState::ApplyCharacterCustomization - Failed initialization, using default parts. Player Controller: %s PlayerState: %s, HeroId: %s", false, 0, VersionInfo.FortniteVersion >= 17, VersionInfo.FortniteVersion < 20 && VersionInfo.FortniteVersion != 19.01).Get();
 
         if (!sRef)
