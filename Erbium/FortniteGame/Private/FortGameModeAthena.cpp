@@ -61,10 +61,11 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
             Playlist->RespawnType = 1; // InfiniteRespawns
             Playlist->bAllowJoinInProgress = true;
         }
+        if (Playlist->HasGarbageCollectionFrequency())
+            Playlist->GarbageCollectionFrequency = 9999999999999999.f; // easier than hooking collectgarbage
         if (GameState->HasCurrentPlaylistInfo())
         {
-            if (VersionInfo.EngineVersion >= 4.27)
-                Playlist->GarbageCollectionFrequency = 9999999999999999.f; // 4.27 needs a different GC disable method
+            //if (VersionInfo.EngineVersion >= 4.27)
             GameState->CurrentPlaylistInfo.BasePlaylist = Playlist;
             GameState->CurrentPlaylistInfo.OverridePlaylist = Playlist;
             GameState->CurrentPlaylistInfo.PlaylistReplicationKey++;
@@ -383,11 +384,10 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         UFortLootPackage::SpawnFloorLootForContainer(Utils::FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_Warmup.Tiered_Athena_FloorLoot_Warmup_C"));
         UFortLootPackage::SpawnFloorLootForContainer(Utils::FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_01.Tiered_Athena_FloorLoot_01_C"));
 
-        if (VersionInfo.EngineVersion >= 4.27)
-        {
+        if (GameMode->HasbDisableGCOnServerDuringMatch())
             GameMode->bDisableGCOnServerDuringMatch = true;
+        if (GameMode->HasbPlaylistHotfixChangedGCDisabling())
             GameMode->bPlaylistHotfixChangedGCDisabling = true;
-        }
 
         if (VersionInfo.EngineVersion >= 5.0)
         {
