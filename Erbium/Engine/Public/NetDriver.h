@@ -105,6 +105,27 @@ public:
     TMap<TWeakObjectPtr<UNetConnection>, int32> NumDormantObjectsPerConnection;
 };
 
+
+struct FActorDestructionInfo
+{
+public:
+    FActorDestructionInfo()
+        : Reason(0)
+        , bIgnoreDistanceCulling(false)
+    {
+    }
+
+    TWeakObjectPtr<class ULevel> Level;
+    TWeakObjectPtr<class UObject> ObjOuter;
+    struct SDK::FVector DestroyedPosition;
+    uint32 NetGUID;
+    class FString PathName;
+    class SDK::FName StreamingLevelName;
+    uint8_t Reason;
+
+    bool bIgnoreDistanceCulling;
+};
+
 struct FNetViewer
 {
 public:

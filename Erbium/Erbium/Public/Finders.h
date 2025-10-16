@@ -35,6 +35,7 @@ uint64 FindSetPickupItems();
 uint64 FindCallPreReplication();
 uint64 FindSendClientAdjustment();
 uint64 FindSetChannelActor();
+uint64 FindSetChannelActorForDestroy();
 uint64 FindCreateChannel();
 uint64 FindReplicateActor();
 uint64 FindCloseActorChannel();
@@ -42,6 +43,7 @@ uint64 FindClientHasInitializedLevelFor();
 uint64 FindStartBecomingDormant();
 uint64 FindFlushDormancy();
 int32 FindIsNetRelevantForVft();
+uint64 FindSendDestructionInfo();
 
 inline std::vector<uint64_t> NullFuncs = {};
 inline std::vector<uint64_t> RetTrueFuncs = {};

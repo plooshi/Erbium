@@ -1298,6 +1298,50 @@ uint64 FindSetChannelActor()
     return SetChannelActor;
 }
 
+
+uint64 FindSetChannelActorForDestroy()
+{
+    static uint64_t SetChannelActorForDestroy = 0;
+
+    if (SetChannelActorForDestroy == 0)
+    {
+        auto sRef = Memcury::Scanner::FindStringRef(L"SetChannelActorForDestroy: Channel %d. NetGUID <%s> Path: %s. Bits: %d", false, 0, VersionInfo.FortniteVersion >= 19, true).Get();
+
+        if (!sRef)
+            return SetChannelActorForDestroy = 0;
+
+        for (int i = 0; i < 2000; i++)
+        {
+            if (*(uint8_t*)(sRef - i) == 0x40 && *(uint8_t*)(sRef - i + 1) == 0x55)
+                return SetChannelActorForDestroy = sRef - i;
+        }
+    }
+
+    return SetChannelActorForDestroy;
+}
+
+
+uint64 FindSendDestructionInfo()
+{
+    static uint64_t SendDestructionInfo = 0;
+
+    if (SendDestructionInfo == 0)
+    {
+        auto sRef = Memcury::Scanner::FindStringRef(L"STAT_NetSendDestructionInfo").Get();
+
+        if (!sRef)
+            return SendDestructionInfo = 0;
+
+        for (int i = 0; i < 2000; i++)
+        {
+            if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x4c)
+                return SendDestructionInfo = sRef - i;
+        }
+    }
+
+    return SendDestructionInfo;
+}
+
 uint64 FindCreateChannel()
 {
     static uint64_t CreateChannel = 0;

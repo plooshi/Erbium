@@ -7,6 +7,9 @@
 uint32_t NetworkObjectListOffset = 0;
 uint32_t ReplicationFrameOffset = 0;
 uint32_t ClientWorldPackageNameOffset = 0;
+uint32_t DestroyedStartupOrDormantActorsOffset = 0;
+uint32_t DestroyedStartupOrDormantActorGUIDsOffset = 0;
+uint32_t ClientVisibleLevelNamesOffset = 0;
 
 std::map<UNetConnection*, TArray<FNetViewer*>> ViewerMap;
 
@@ -138,6 +141,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 	if (ViewerMap.size() == 0)
 		return;
 
+	static FName ActorName = UKismetStringLibrary::Conv_StringToName(FString(L"Actor"));
 
 	auto& NetworkObjectList = GetNetworkObjectList(Driver);
 	auto& ActiveNetworkObjects = NetworkObjectList.ActiveNetworkObjects;
@@ -149,6 +153,46 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 
 		TArray<FPrioActor> List;
 		List.Reserve(ActiveNetworkObjects.Num());
+
+		if (DestroyedStartupOrDormantActorGUIDsOffset)
+		{
+			static auto& DestroyedStartupOrDormantActors = *(TMap<uint32, FActorDestructionInfo*>*)(__int64(Driver) + DestroyedStartupOrDormantActorsOffset);
+			auto& DestroyedStartupOrDormantActorGUIDs = *(TSet<uint32>*)(__int64(Conn) + DestroyedStartupOrDormantActorGUIDsOffset);
+			auto& ClientVisibleLevelNames = *(TSet<int32>*)(__int64(Conn) + ClientVisibleLevelNamesOffset);
+			static auto SetChannelActorForDestroy = (void(*)(UActorChannel*, FActorDestructionInfo*)) FindSetChannelActorForDestroy();
+			static auto SendDestructionInfo = (void(*)(UNetDriver*, UNetConnection*, FActorDestructionInfo*)) FindSendDestructionInfo();
+
+			for (auto& NetGUID : DestroyedStartupOrDormantActorGUIDs)
+			{
+
+				auto Equals = [](const uint32& LeftKey, const uint32& RightKey) -> bool
+					{
+						return LeftKey == RightKey;
+					};
+
+				auto DestructionInfoPtr = DestroyedStartupOrDormantActors.Search([&](uint32& GUID, FActorDestructionInfo*& InfoUPtr)
+					{
+						return GUID == NetGUID/* && (InfoUPtr->StreamingLevelName == FName(0) || ClientVisibleLevelNames.Contains(InfoUPtr->StreamingLevelName.ComparisonIndex))*/;
+					});
+
+				if (DestructionInfoPtr)
+				{
+					auto DestructionInfo = *DestructionInfoPtr;
+
+					if (SetChannelActorForDestroy)
+					{
+						auto Channel = ((UActorChannel * (*)(UNetConnection*, FName*, uint8_t, int))FindCreateChannel())(Conn, &ActorName, 2, -1);
+
+						if (Channel)
+							SetChannelActorForDestroy(Channel, DestructionInfo);
+					}
+					else if (SendDestructionInfo)
+						SendDestructionInfo(Driver, Conn, DestructionInfo);
+					//printf("Path: %s\n", DestructionInfo->PathName.ToString().c_str());
+				}
+			}
+			DestroyedStartupOrDormantActorGUIDs.Reset();
+		}
 
 		PriorityLists[Conn] = List;
 	}
@@ -265,11 +309,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 				if (!Channel)
 				{
 					if (VersionInfo.FortniteVersion >= 20)
-					{
-						static FName ActorName = UKismetStringLibrary::Conv_StringToName(FString(L"Actor"));
-
 						Channel = ((UActorChannel * (*)(UNetConnection*, FName*, uint8_t, int))FindCreateChannel())(Conn, &ActorName, 2, -1);
-					}
 					else
 						Channel = ((UActorChannel*(*)(UNetConnection*, int, bool, int32_t))FindCreateChannel())(Conn, 2, true, -1);
 
@@ -408,6 +448,19 @@ void UNetDriver::Hook()
 	else if (VersionInfo.FortniteVersion >= 20 && VersionInfo.FortniteVersion < 25)
 		ClientWorldPackageNameOffset = 0x16b8;
 
+	if (VersionInfo.FortniteVersion >= 23)
+	{
+		DestroyedStartupOrDormantActorsOffset = VersionInfo.FortniteVersion >= 24 ? 0x2f8 : 0x300;
+		DestroyedStartupOrDormantActorGUIDsOffset = 0x14b0;
+		ClientVisibleLevelNamesOffset = DestroyedStartupOrDormantActorGUIDsOffset + (VersionInfo.FortniteVersion < 24 ? 0x190 : 0x1e0);
+	}
+	else if (VersionInfo.FortniteVersion >= 20)
+	{
+		DestroyedStartupOrDormantActorsOffset = 0x2e8;
+		DestroyedStartupOrDormantActorGUIDsOffset = VersionInfo.EngineVersion >= 5.1 ? 0x14b0 : 0x1488;
+		ClientVisibleLevelNamesOffset = DestroyedStartupOrDormantActorGUIDsOffset + (VersionInfo.EngineVersion >= 5.1 ? 0xf0 : 0xa0);
+	}
+
 	if (!FindServerReplicateActors())
 	{
 		// cache
@@ -420,6 +473,8 @@ void UNetDriver::Hook()
 		FindCloseActorChannel();
 		FindStartBecomingDormant();
 		FindClientHasInitializedLevelFor();
+		FindSetChannelActorForDestroy();
+		FindSendDestructionInfo();
 
 		if (VersionInfo.FortniteVersion < 3.4)
 			FindFlushDormancy();

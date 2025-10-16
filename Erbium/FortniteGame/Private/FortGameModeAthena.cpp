@@ -1041,7 +1041,6 @@ bool AFortGameModeAthena::StartAircraftPhase(AFortGameModeAthena* GameMode, char
 
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 
-    printf("ud\n");
     if (FConfiguration::bLateGame)
     {
         /*if (VersionInfo.FortniteVersion < 16)
