@@ -44,6 +44,7 @@ public:
     DEFINE_FUNC(GetShield, float);
     DEFINE_FUNC(SetHealth, void);
     DEFINE_FUNC(SetShield, void);
+    DEFINE_FUNC(SetMaxHealth, void);
     DEFINE_FUNC(EquipWeaponDefinition, AActor*);
     DEFINE_FUNC(LaunchCharacterJump, void);
     DEFINE_FUNC(OnCapsuleBeginOverlap, void);

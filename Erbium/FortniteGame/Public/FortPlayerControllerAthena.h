@@ -122,6 +122,8 @@ public:
     DEFINE_PROP(XPComponent, UFortPlayerControllerAthenaXPComponent*);
     DEFINE_PROP(CheatManager, UObject*);
     DEFINE_PROP(CheatClass, TSubclassOf<UObject>);
+    DEFINE_PROP(WorldInventoryClass, TSubclassOf<AFortInventory>);
+    DEFINE_PROP(bHasInitializedWorldInventory, bool);
 
     DEFINE_FUNC(GetViewTarget, AActor*);
     DEFINE_FUNC(GetControlRotation, FRotator);

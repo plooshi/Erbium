@@ -218,6 +218,7 @@ public:
     DEFINE_PROP(Inventory, FFortItemList);
     DEFINE_PROP(bRequiresLocalUpdate, bool);
     DEFINE_PROP(bRequiresSaving, bool);
+    DEFINE_PROP(InventoryType, uint8_t);
     
     DEFINE_FUNC(HandleInventoryLocalUpdate, void);
 

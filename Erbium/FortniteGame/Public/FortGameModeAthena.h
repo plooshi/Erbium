@@ -12,6 +12,7 @@ class AFortGameModeAthena : public AActor
 public:
     static inline uint8_t CurrentTeam = 3;
     static inline uint8_t PlayersOnCurTeam = 0;
+    static inline TArray<const UFortAbilitySet*> AbilitySets;
 
     UCLASS_COMMON_MEMBERS(AFortGameModeAthena);
 
@@ -33,6 +34,7 @@ public:
     DEFINE_PROP(WarmupEarlyCountdownDuration, float);
     DEFINE_PROP(SafeZoneLocations, TArray<FVector>);
     DEFINE_PROP(DefaultPawnClass, const UClass*);
+    DEFINE_PROP(PlayerControllerClass, const UClass*);
 
     DEFINE_FUNC(SpawnDefaultPawnAtTransform, AFortPlayerPawnAthena*);
     DEFINE_FUNC(RestartPlayer, void);

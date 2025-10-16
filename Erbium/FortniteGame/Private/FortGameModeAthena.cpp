@@ -45,8 +45,6 @@ void ShowFoundation(const ABuildingFoundation* Foundation)
     Foundation->SetDynamicFoundationEnabled(true);
 }
 
-TArray<const UFortAbilitySet*> AbilitySets;
-
 void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameState)
 {
     static auto Playlist = Utils::FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);

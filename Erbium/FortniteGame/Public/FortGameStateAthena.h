@@ -124,4 +124,5 @@ public:
     DEFINE_FUNC(OnRep_WinningTeam, void);
     DEFINE_FUNC(OnRep_WinningPlayerState, void);
     DEFINE_FUNC(OnRep_GamePhase, void);
+    DEFINE_FUNC(OnRep_PlayersLeft, void);
 };

@@ -498,6 +498,7 @@ namespace SDK
 				if (*Ptr == 0xe9 || *Ptr == 0xe8)
 					return Memcury::Scanner(Ptr).RelativeOffset(1).GetAs<void*>();
 			}
+			return nullptr;
 
 		}
 
