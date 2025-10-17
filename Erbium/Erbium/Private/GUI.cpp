@@ -313,4 +313,14 @@ void GUI::Init()
         HRESULT hr = g_pSwapChain->Present(1, 0);
         g_SwapChainOccluded = (hr == DXGI_STATUS_OCCLUDED);
     }
+
+    ImGui_ImplDX11_Shutdown();
+    ImGui_ImplWin32_Shutdown();
+    ImGui::DestroyContext();
+
+    g_pSwapChain->Release();
+    g_pd3dDeviceContext->Release();
+    g_pd3dDevice->Release();
+    DestroyWindow(hWnd);
+    UnregisterClass(wc.lpszClassName, wc.hInstance);
 }

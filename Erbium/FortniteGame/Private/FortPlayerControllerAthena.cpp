@@ -830,9 +830,9 @@ void AFortPlayerControllerAthena::ServerClientIsReadyToRespawn(UObject* Context,
 		auto RespawnData = PlayerState->RespawnData;
 		FTransform SpawnTransform{};
 
-		FQuat Rotation = PlayerState->RespawnData.RespawnRotation;
-		SpawnTransform.Translation = PlayerState->RespawnData.RespawnLocation;
-		SpawnTransform.Rotation = Rotation;
+		auto Center = GameMode->SafeZoneIndicator->GetSafeZoneCenter();
+		Center.Z = GameState->CurrentPlaylistInfo.BasePlaylist->RespawnHeight.Evaluate();
+		SpawnTransform.Translation = Center;
 
 		auto Scale = FVector(1, 1, 1);
 		SpawnTransform.Scale3D = Scale;
