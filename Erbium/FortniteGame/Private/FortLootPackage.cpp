@@ -156,7 +156,7 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 			found = true;
 		}
 
-		if (LootDrop->ItemDefinition == AmmoDef)
+		if (AmmoDef && LootDrop->ItemDefinition == AmmoDef)
 		{
 			LootDrop->Count += AmmoDef->DropCount;
 
