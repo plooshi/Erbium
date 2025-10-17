@@ -913,7 +913,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 				if (StateValue.StateType != 2)
 					continue;
 
-				StateValue.IntValue = 0;
+				StateValue.IntValue = 1;
 			}
 
 			if ((itemEntry->Count += PickupEntry->Count) > MaxStack)
@@ -935,7 +935,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 				if (StateValue.StateType != 2)
 					continue;
 
-				StateValue.IntValue = 0;
+				StateValue.IntValue = 1;
 			}
 
 			if (PickupEntry->Count > MaxStack)

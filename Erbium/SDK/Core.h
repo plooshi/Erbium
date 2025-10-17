@@ -985,7 +985,7 @@ namespace SDK
 
 				if (Name.ComparisonIndex)
 				{
-					if (Name.ToString().contains(EnumMemberName))
+					if (Name.ToString() == EnumMemberName)
 						return Value;
 				}
 			}
