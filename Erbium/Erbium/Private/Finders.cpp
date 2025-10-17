@@ -1485,6 +1485,42 @@ uint64 FindFlushDormancy()
     return FlushDormancy;
 }
 
+uint64_t FindEnterAircraft()
+{
+    static uint64_t EnterAircraft = 0;
+
+    if (EnterAircraft == 0)
+    {
+        auto sRef = Memcury::Scanner::FindStringRef(L"EnterAircraft: [%s] is attempting to enter aircraft after having already exited.", true, 0, VersionInfo.FortniteVersion >= 19).Get();
+
+        if (!sRef)
+            return 0;
+
+        for (int i = 0; i < 1000; i++)
+        {
+            auto Ptr = (uint8_t*)(sRef - i);
+
+            if (*(uint8_t*)(sRef - i) == 0x40 && (*(uint8_t*)(sRef - i + 1) == 0x53 || *(uint8_t*)(sRef - i + 1) == 0x55))
+            {
+                EnterAircraft = uint64_t(Ptr);
+                break;
+            }
+            else if (VersionInfo.FortniteVersion >= 15 && *Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5c && *(Ptr + 3) == 0x24)
+            {
+                EnterAircraft = uint64_t(Ptr);
+                break;
+            }
+            else if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x74)
+            {
+                EnterAircraft = uint64_t(Ptr);
+                break;
+            }
+        }
+    }
+
+    return EnterAircraft;
+}
+
 void FindNullsAndRetTrues()
 {
     if (VersionInfo.EngineVersion == 4.16)

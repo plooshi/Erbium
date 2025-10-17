@@ -91,8 +91,10 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
 
         HandleInventoryLocalUpdate(); // calls UpdateItemInstances, the func we actually want
 
+        repEntry.bIsDirty = false;
         Inventory.MarkItemDirty(repEntry);
         ForceNetUpdate();
+        Item->ItemEntry.bIsDirty = true;
     }
     return Item;
 }
