@@ -93,7 +93,7 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 			LPGroups.Add(Val);
 		}
 	}
-	else 
+	else
 	{
 		for (auto const& Val : LPGroupsAll)
 		{
@@ -204,7 +204,7 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 				TierDataGroups.Add(Val);
 		}
 	}
-	else 
+	else
 	{
 		for (auto const& Val : TierDataAllGroups)
 		{
@@ -321,7 +321,7 @@ bool UFortLootPackage::SpawnLootHook(ABuildingContainer* Container)
 			}
 		}
 	}
-	else 
+	else
 	{
 		static auto Loot_Treasure = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_Treasure"));
 		static auto Loot_Ammo = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_Ammo"));
@@ -397,7 +397,7 @@ bool ServerOnAttemptInteract(ABuildingContainer* BuildingContainer, AFortPlayerP
 
 	//SpawnLoot(BuildingContainer->SearchLootTierGroup, BuildingContainer->K2_GetActorLocation() + BuildingContainer->GetActorRightVector() * 70.f + FVector{ 0, 0, 50 });
 	UFortLootPackage::SpawnLootHook(BuildingContainer);
-	
+
 	/*BuildingContainer->bAlreadySearched = true;
 	BuildingContainer->OnRep_bAlreadySearched();
 	BuildingContainer->SearchBounceData.SearchAnimationCount++;
@@ -416,7 +416,7 @@ void UFortLootPackage::SpawnFloorLootForContainer(const UClass* ContainerType)
 		{
 			BuildingContainer->K2_DestroyActor();
 		}
-			//SpawnLootHook(BuildingContainer);
+		//SpawnLootHook(BuildingContainer);
 		else
 		{
 			SpawnLootHook(BuildingContainer);
@@ -436,7 +436,7 @@ void UFortLootPackage::SpawnConsumableActor(ABGAConsumableSpawner* Spawner)
 
 	auto ItemDefinition = (UBGAConsumableWrapperItemDefinition*)LootDrops[0]->ItemDefinition;
 
-	auto GroundLoc = UFortKismetLibrary::FindGroundLocationAt(UWorld::GetWorld(), nullptr, Spawner->K2_GetActorLocation(), -1000.f, 2500.f, UKismetStringLibrary::Conv_StringToName(FString(L"FindGroundLocationAt")));
+	auto GroundLoc = UFortKismetLibrary::FindGroundLocationAt(UWorld::GetWorld(), nullptr, Spawner->K2_GetActorLocation(), -1000.f, 2500.f, UKismetStringLibrary::Conv_StringToName(FString(L"FortDynamicMeshPhysics")));
 	auto SpawnTransform = FTransform(GroundLoc, Spawner->K2_GetActorRotation());
 
 	UWorld::SpawnActor(ItemDefinition->ConsumableClass, SpawnTransform);
