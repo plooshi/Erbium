@@ -126,8 +126,7 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayer(UObject* Context, FFrame& Stack
 	auto RemoveCount = max(AmountToRemove, 0);
 	itemEntry->Count -= RemoveCount;
 
-	static auto GadgetClass = FindClass("FortGadgetItemDefinition");
-	if (AmountToRemove < 0 || itemEntry->Count <= 0 || ItemDefinition->IsA(GadgetClass))
+	if (AmountToRemove < 0 || itemEntry->Count <= 0 || ItemDefinition->IsA(UFortGadgetItemDefinition::StaticClass()))
 	{
 		RemoveCount += itemEntry->Count;
 		PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
@@ -162,8 +161,7 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayerByGuid(UObject* Context, FFrame&
 	auto RemoveCount = max(AmountToRemove, 0);
 	ItemEntry->Count -= RemoveCount;
 
-	static auto GadgetClass = FindClass("FortGadgetItemDefinition");
-	if (AmountToRemove < 0 || ItemEntry->Count <= 0 || ItemEntry->ItemDefinition->IsA(GadgetClass)) {
+	if (AmountToRemove < 0 || ItemEntry->Count <= 0 || ItemEntry->ItemDefinition->IsA(UFortGadgetItemDefinition::StaticClass())) {
 		RemoveCount += ItemEntry->Count;
 		PlayerController->WorldInventory->Remove(ItemEntry->ItemGuid);
 	}
@@ -181,7 +179,7 @@ void UFortKismetLibrary::SpawnItemVariantPickupInWorld(UObject* Object, FFrame& 
 	auto& Params = Stack.StepCompiledInRef<FSpawnItemVariantParams>();
 	Stack.IncrementCode();
 
-	*Ret = AFortInventory::SpawnPickup(Params.Position, Params.WorldItemDefinition, Params.NumberToSpawn, 0, Params.SourceType, Params.Source, nullptr, Params.bToss, Params.bRandomRotation);
+	*Ret = AFortInventory::SpawnPickup(FSpawnItemVariantParams::HasPosition() ? Params.Position : Params.position, Params.WorldItemDefinition, Params.NumberToSpawn, 0, Params.SourceType, Params.Source, nullptr, Params.bToss, Params.bRandomRotation);
 }
 
 bool bHasOptionalLootTags = false;

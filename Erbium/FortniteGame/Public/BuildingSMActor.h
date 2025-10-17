@@ -2,6 +2,7 @@
 #include "../../pch.h"
 #include "FortPlayerControllerAthena.h"
 #include "GameplayTagContainer.h"
+#include "FortWeapon.h"
 
 enum class EFortResourceType : uint8
 {
@@ -38,4 +39,14 @@ public:
     DefHookOg(void, OnDamageServer, ABuildingSMActor*, float, FGameplayTagContainer, FVector, __int64, AFortPlayerControllerAthena*, AActor*, __int64);
 
     InitHooks;
+};
+
+class AFortWeap_EditingTool : public AFortWeapon
+{
+public:
+    UCLASS_COMMON_MEMBERS(AFortWeap_EditingTool);
+
+    DEFINE_PROP(EditActor, ABuildingSMActor*);
+
+    DEFINE_FUNC(OnRep_EditActor, void);
 };

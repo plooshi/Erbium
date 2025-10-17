@@ -3,6 +3,8 @@
 #include "../../Erbium/Public/Finders.h"
 #include "../../FortniteGame/Public/FortKismetLibrary.h"
 
+uint64 ConstructAbilitySpec;
+uint64 GiveAbility_;
 void UAbilitySystemComponent::GiveAbility(const UObject* Ability)
 {
     if (!this || !Ability)
@@ -11,7 +13,6 @@ void UAbilitySystemComponent::GiveAbility(const UObject* Ability)
     auto Spec = (FGameplayAbilitySpec*) malloc(FGameplayAbilitySpec::Size());
     __stosb(PBYTE(Spec), 0, FGameplayAbilitySpec::Size());
 
-    static auto ConstructAbilitySpec = FindConstructAbilitySpec();
     if (ConstructAbilitySpec)
         ((void (*)(FGameplayAbilitySpec*, const UObject*, int, int, UObject*)) ConstructAbilitySpec)(Spec, Ability, 1, -1, nullptr);
     else
@@ -26,7 +27,7 @@ void UAbilitySystemComponent::GiveAbility(const UObject* Ability)
         if (VersionInfo.FortniteVersion <= 23) Spec->SourceObject = nullptr;
     }
 
-    ((FGameplayAbilitySpecHandle * (*)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle*, __int64)) FindGiveAbility())(this, &Spec->Handle, __int64(Spec));
+    ((FGameplayAbilitySpecHandle * (*)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle*, __int64)) GiveAbility_)(this, &Spec->Handle, __int64(Spec));
     free(Spec);
 }
 
@@ -55,6 +56,7 @@ struct _Pad_0x18
     uint8_t Padding[0x18];
 };
 
+uint64_t InternalTryActivateAbility_ = 0;
 void UAbilitySystemComponent::InternalServerTryActivateAbility(UAbilitySystemComponent* AbilitySystemComponent, FGameplayAbilitySpecHandle Handle, bool InputPressed, FPredictionKey* PredictionKey, void* TriggerEventData)
 {
     auto Spec = AbilitySystemComponent->ActivatableAbilities.Items.Search([&](FGameplayAbilitySpec& item) {
@@ -67,8 +69,8 @@ void UAbilitySystemComponent::InternalServerTryActivateAbility(UAbilitySystemCom
     Spec->InputPressed |= 1; // it's a bitfield, so we cant just set it to true
 
     UFortGameplayAbility* InstancedAbility = nullptr;
-    auto InternalTryActivateAbility = (bool (*)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle, _Pad_0x10, UFortGameplayAbility**, void*, void*)) FindInternalTryActivateAbility();
-    auto InternalTryActivateAbilityNew = (bool (*)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle, _Pad_0x18, UFortGameplayAbility**, void*, void*)) FindInternalTryActivateAbility();
+    auto InternalTryActivateAbility = (bool (*)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle, _Pad_0x10, UFortGameplayAbility**, void*, void*)) InternalTryActivateAbility_;
+    auto InternalTryActivateAbilityNew = (bool (*)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle, _Pad_0x18, UFortGameplayAbility**, void*, void*)) InternalTryActivateAbility_;
     
     if (!(FPredictionKey::Size() == 0x18 ? InternalTryActivateAbilityNew(AbilitySystemComponent, Handle, *(_Pad_0x18*)PredictionKey, &InstancedAbility, nullptr, TriggerEventData) : InternalTryActivateAbility(AbilitySystemComponent, Handle, *(_Pad_0x10*)PredictionKey, &InstancedAbility, nullptr, TriggerEventData)))
     {
@@ -80,6 +82,10 @@ void UAbilitySystemComponent::InternalServerTryActivateAbility(UAbilitySystemCom
 
 void UAbilitySystemComponent::Hook()
 {
+    ConstructAbilitySpec = FindConstructAbilitySpec();
+    GiveAbility_ = FindGiveAbility();
+    InternalTryActivateAbility_ = FindInternalTryActivateAbility();
+
     uint32 istaIdx = 0;
 
     if (VersionInfo.EngineVersion > 4.20)

@@ -2,7 +2,7 @@
 
 struct FConfiguration
 {
-    static inline auto Playlist = L"/Game/Athena/Playlists/Respawn/Playlist_Respawn_Solo.Playlist_Respawn_Solo";
+    static inline auto Playlist = L"/Game/Athena/Playlists/Playlist_DefaultSolo.Playlist_DefaultSolo";
     static inline auto MaxTickRate = 30.f;
     static inline auto bLateGame = false;
     static inline auto bEnableCheats = true;
@@ -11,5 +11,5 @@ struct FConfiguration
     static inline auto bInfiniteAmmo = false;
     static inline auto bForceRespawns = false;
     static inline constexpr auto bCreative = false;
-    static inline constexpr auto bGUI = false;
+    static inline constexpr auto bGUI = true;
 };

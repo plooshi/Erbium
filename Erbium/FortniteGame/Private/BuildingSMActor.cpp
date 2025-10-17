@@ -8,18 +8,10 @@
 
 void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGameplayTagContainer DamageTags, FVector Momentum, __int64 HitInfo, AFortPlayerControllerAthena* InstigatedBy, AActor* DamageCauser, __int64 EffectContext) {
 	auto GameState = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState);
-	static auto MeleeClass = FindClass("FortWeaponMeleeItemDefinition");
 
 	if (!InstigatedBy || !Actor->IsA<ABuildingSMActor>() || Actor->bPlayerPlaced || Actor->GetHealth() == 1 || !Actor->bAllowResourceDrop)
 		return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
-	if (!DamageCauser || !DamageCauser->IsA<AFortWeapon>() || !((AFortWeapon*)DamageCauser)->WeaponData->IsA(MeleeClass)) 
-		return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
-
-	static auto PickaxeTag = UKismetStringLibrary::Conv_StringToName(FString(L"Weapon.Melee.Impact.Pickaxe"));
-	auto entry = DamageTags.GameplayTags.Search([](FGameplayTag& entry) {
-		return entry.TagName.ComparisonIndex == PickaxeTag.ComparisonIndex;
-		}, FGameplayTag::Size());
-	if (!entry)
+	if (!DamageCauser || !DamageCauser->IsA<AFortWeapon>() || !((AFortWeapon*)DamageCauser)->WeaponData->IsA(UFortWeaponMeleeItemDefinition::StaticClass())) 
 		return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
 
 	auto Resource = UFortKismetLibrary::K2_GetResourceItemDefinition(Actor->ResourceType);

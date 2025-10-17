@@ -9,6 +9,7 @@ public:
 	USCRIPTSTRUCT_COMMON_MEMBERS(FSpawnItemVariantParams);
 
 	DEFINE_STRUCT_PROP(Position, FVector);
+	DEFINE_STRUCT_PROP(position, FVector); // WHY
 	DEFINE_STRUCT_PROP(WorldItemDefinition, UFortItemDefinition*);
 	DEFINE_STRUCT_PROP(NumberToSpawn, int32);
 	DEFINE_STRUCT_PROP(SourceType, uint8);

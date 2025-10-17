@@ -687,6 +687,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 }
 
 auto SpawnDefaultPawnForIdx = 0;
+uint64_t ApplyCharacterCustomization;
 
 void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor** Ret) 
 {
@@ -749,7 +750,6 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
         }
 
 
-        static auto ApplyCharacterCustomization = FindApplyCharacterCustomization();
 
         if (ApplyCharacterCustomization)
             ((void (*)(AActor*, AFortPlayerPawnAthena*)) ApplyCharacterCustomization)(NewPlayer->PlayerState, Pawn);
@@ -777,24 +777,6 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
     {
         //NewPlayer->WorldInventory->Inventory.ReplicatedEntries.ResetNum();
         //NewPlayer->WorldInventory->Inventory.ItemInstances.ResetNum();
-        static auto AmmoClass = FindClass("FortAmmoItemDefinition");
-        static auto ResourceClass = FindClass("FortResourceItemDefinition");
-
-        UEAllocatedVector<FGuid> GuidsToRemove;
-        for (int i = 0; i < NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
-        {
-            auto& Entry = NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
-
-            if (AFortInventory::IsPrimaryQuickbar(Entry.ItemDefinition) || Entry.ItemDefinition->IsA(AmmoClass) || Entry.ItemDefinition->IsA(ResourceClass))
-            {
-                //NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Remove(i, FFortItemEntry::Size());
-                //i--;
-                GuidsToRemove.push_back(Entry.ItemGuid);
-            }
-        }
-
-        for (auto& Guid : GuidsToRemove)
-            NewPlayer->WorldInventory->Remove(Guid);
 
         /*for (int i = 0; i < NewPlayer->WorldInventory->Inventory.ItemInstances.Num(); i++)
         {
@@ -808,70 +790,6 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
         }
 
         NewPlayer->WorldInventory->Update(nullptr);*/
-
-
-        if (FConfiguration::bLateGame && Pawn && GameState->Aircrafts.Num() > 0 && GameState->Aircrafts[0])
-        {
-            FVector AircraftLocation = GameState->Aircrafts[0]->K2_GetActorLocation();
-
-            float Angle = (float)rand() / 5215.03002625f;
-            float Radius = (float)(rand() % 1000);
-
-            float OffsetX = cosf(Angle) * Radius;
-            float OffsetY = sinf(Angle) * Radius;
-
-            FVector Offset;
-            Offset.X = OffsetX;
-            Offset.Y = OffsetY;
-            Offset.Z = 0.0f;
-
-            FVector NewLoc = AircraftLocation + Offset;
-
-            Pawn->K2_SetActorLocation(NewLoc, false, nullptr, false);
-
-            Pawn->SetShield(100.f);
-
-            auto Shotgun = LateGame::GetShotgun();
-            auto AssaultRifle = LateGame::GetAssaultRifle();
-            auto Sniper = LateGame::GetSniper();
-            auto Heal = LateGame::GetHeal();
-            auto HealSlot2 = LateGame::GetHeal();
-
-            int ShotgunClipSize = AFortInventory::GetStats((UFortWeaponItemDefinition*)Shotgun.Item)->ClipSize;
-            int AssaultRifleClipSize = AFortInventory::GetStats((UFortWeaponItemDefinition*)AssaultRifle.Item)->ClipSize;
-            int SniperClipSize = AFortInventory::GetStats((UFortWeaponItemDefinition*)Sniper.Item)->ClipSize;
-            // for grappler
-            int HealClipSize = Heal.Item->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)Heal.Item)->ClipSize : 0;
-            int HealSlot2ClipSize = HealSlot2.Item->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)HealSlot2.Item)->ClipSize : 0;
-
-            NewPlayer->WorldInventory->GiveItem(LateGame::GetResource(EFortResourceType::Wood), 500);
-            NewPlayer->WorldInventory->GiveItem(LateGame::GetResource(EFortResourceType::Stone), 500);
-            NewPlayer->WorldInventory->GiveItem(LateGame::GetResource(EFortResourceType::Metal), 500);
-
-            NewPlayer->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Assault), 250);
-            NewPlayer->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Shotgun), 50);
-            NewPlayer->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Submachine), 400);
-            NewPlayer->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Rocket), 6);
-            NewPlayer->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Sniper), 20);
-
-            NewPlayer->WorldInventory->GiveItem(Shotgun.Item, Shotgun.Count, ShotgunClipSize);
-            NewPlayer->WorldInventory->GiveItem(AssaultRifle.Item, AssaultRifle.Count, AssaultRifleClipSize);
-            NewPlayer->WorldInventory->GiveItem(Sniper.Item, Sniper.Count, SniperClipSize);
-            NewPlayer->WorldInventory->GiveItem(Heal.Item, Heal.Count, HealClipSize);
-            NewPlayer->WorldInventory->GiveItem(HealSlot2.Item, HealSlot2.Count, HealSlot2ClipSize);
-        }
-
-        static bool bMatchStarted = false;
-
-        if (!bMatchStarted)
-        {
-            bMatchStarted = true;
-            auto GameState = (AFortGameStateAthena*)GameMode->GameState;
-            
-            GUI::gsStatus = 2;
-            sprintf_s(GUI::windowTitle, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Match started" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Match started" : "Erbium (FN %.1f, UE %.2f): Match started"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
-            SetConsoleTitleA(GUI::windowTitle);
-        }
     }
 
     *Ret = Pawn;
@@ -889,10 +807,10 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
 
     constexpr static std::array<float, 8> LateGameDurations{
         0.f,
-        65.f,
+        120.f,
+        90.f,
         60.f,
         50.f,
-        45.f,
         35.f,
         30.f,
         40.f,
@@ -900,9 +818,9 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
 
     constexpr static std::array<float, 8> LateGameHoldDurations{
         0.f,
+        90.f,
+        75.f,
         60.f,
-        55.f,
-        50.f,
         45.f,
         30.f,
         0.f,
@@ -963,8 +881,8 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
 
     if (FConfiguration::bLateGame && GameMode->SafeZonePhase > 3)
     {
-        auto Duration = LateGameDurations[NewSafeZonePhase];
-        auto HoldDuration = LateGameHoldDurations[NewSafeZonePhase];
+        auto Duration = LateGameDurations[GameMode->SafeZonePhase - 2];
+        auto HoldDuration = LateGameHoldDurations[GameMode->SafeZonePhase - 2];
 
         GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + HoldDuration;
         GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
@@ -978,7 +896,7 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
     }
     else if (FConfiguration::bLateGame && GameMode->SafeZonePhase == 3)
     {
-        auto Duration = LateGameDurations[GameMode->SafeZonePhase - 1];
+        auto Duration = LateGameDurations[GameMode->SafeZonePhase - 2];
 
         GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = (float) UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + 30.f;
         GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
@@ -1049,6 +967,10 @@ bool AFortGameModeAthena::StartAircraftPhase(AFortGameModeAthena* GameMode, char
     auto Ret = StartAircraftPhaseOG(GameMode, a2);
 
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
+
+    GUI::gsStatus = 2;
+    sprintf_s(GUI::windowTitle, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Match started" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Match started" : "Erbium (FN %.1f, UE %.2f): Match started"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
+    SetConsoleTitleA(GUI::windowTitle);
 
     if (FConfiguration::bLateGame)
     {
@@ -1145,6 +1067,8 @@ void AFortGameModeAthena::OnAircraftExitedDropZone_(UObject* Context, FFrame& St
 
 void AFortGameModeAthena::Hook()
 {
+    ApplyCharacterCustomization = FindApplyCharacterCustomization();
+    
     auto spdf = GetDefaultObj()->GetFunction("SpawnDefaultPawnFor");
     SpawnDefaultPawnForIdx = spdf->GetVTableIndex();
     Utils::ExecHook(GetDefaultObj()->GetFunction("ReadyToStartMatch"), ReadyToStartMatch_, ReadyToStartMatch_OG);

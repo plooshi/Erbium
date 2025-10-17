@@ -44,6 +44,7 @@ public:
     DEFINE_BITFIELD_PROP(bInventorySizeLimited);
     DEFINE_BITFIELD_PROP(bForceFocusWhenAdded);
     DEFINE_BITFIELD_PROP(bPersistInInventoryWhenFinalStackEmpty);
+    DEFINE_BITFIELD_PROP(bCanBeDropped);
 
     DEFINE_FUNC(CreateTemporaryItemInstanceBP, UFortItem*);
     DEFINE_FUNC(GetWeaponItemDefinition, UFortItemDefinition*);
@@ -64,6 +65,12 @@ public:
         auto& ScalableFloat = GetFromOffset<FScalableFloat>(this, MaxStackSizeOffset);
         return (int32)ScalableFloat.Evaluate();
     }
+};
+
+class UFortWorldItemDefinition : public UFortItemDefinition
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortWorldItemDefinition);
 };
 
 struct FFortItemEntryStateValue
@@ -191,7 +198,7 @@ public:
     DEFINE_FUNC(OnRep_PickupLocationData, void);
 };
 
-class UFortWeaponItemDefinition : public UObject
+class UFortWeaponItemDefinition : public UFortWorldItemDefinition
 {
 public:
     UCLASS_COMMON_MEMBERS(UFortWeaponItemDefinition);
@@ -209,6 +216,60 @@ public:
 
     DEFINE_STRUCT_PROP(ClipSize, int32);
     DEFINE_STRUCT_PROP(InitialClips, int32);
+};
+
+class IFortInventoryOwnerInterface : public IInterface
+{
+public:
+    UCLASS_COMMON_MEMBERS(IFortInventoryOwnerInterface);
+};
+
+class UFortWeaponMeleeItemDefinition : public UFortWeaponItemDefinition
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortWeaponMeleeItemDefinition);
+};
+
+class UFortWeaponRangedItemDefinition : public UFortWeaponItemDefinition
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortWeaponRangedItemDefinition);
+};
+
+class UFortGadgetItemDefinition : public UFortWorldItemDefinition
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortGadgetItemDefinition);
+};
+
+class UFortResourceItemDefinition : public UFortWorldItemDefinition
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortResourceItemDefinition);
+};
+
+class UFortAmmoItemDefinition : public UFortWorldItemDefinition
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortAmmoItemDefinition);
+};
+
+class UFortDecoItemDefinition : public UFortWorldItemDefinition
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortDecoItemDefinition);
+};
+
+class UFortBuildingItemDefinition : public UFortWorldItemDefinition
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortBuildingItemDefinition);
+};
+
+class UFortEditToolItemDefinition : public UFortWorldItemDefinition
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortEditToolItemDefinition);
 };
 
 class AFortInventory : public AActor

@@ -30,7 +30,7 @@ inline uint32_t FindOnItemInstanceAddedVft()
             }
         }
 
-        auto AmmoDefObj = DefaultObjImpl("FortAmmoItemDefinition");
+        auto AmmoDefObj = UFortAmmoItemDefinition::GetDefaultObj();
 
 
         for (int i = 0; i < 0x100; i++)
@@ -40,6 +40,8 @@ inline uint32_t FindOnItemInstanceAddedVft()
 
     return OnItemInstanceAddedVft;
 }
+
+uint32_t OnItemInstanceAddedVft;
 
 UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Count, int LoadedAmmo, int Level, bool ShowPickupNoti, bool updateInventory, int PhantomReserveAmmo, TArray<FFortItemEntryStateValue> StateValues)
 {
@@ -69,8 +71,7 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
     static auto OnItemInstanceAddedVft = FindOnItemInstanceAddedVft();
     if (OnItemInstanceAddedVft && VersionInfo.FortniteVersion >= 4)
     {
-        static auto InterfaceClass = FindClass("FortInventoryOwnerInterface");
-        ((bool(*)(const UFortItemDefinition*, const IInterface*, UFortWorldItem*, uint8)) Def->Vft[OnItemInstanceAddedVft])(Def, Owner->GetInterface(InterfaceClass), Item, 1);
+        ((bool(*)(const UFortItemDefinition*, const IInterface*, UFortWorldItem*, uint8)) Def->Vft[OnItemInstanceAddedVft])(Def, Owner->GetInterface(IFortInventoryOwnerInterface::StaticClass()), Item, 1);
     }
 
     /*if (Item->ItemEntry.ItemDefinition->bForceFocusWhenAdded)
@@ -164,11 +165,9 @@ void AFortInventory::Remove(FGuid Guid)
     if (ItemInstanceIdx != -1)
         Inventory.ItemInstances.Remove(ItemInstanceIdx);
 
-    static auto OnItemInstanceRemovedVft = FindOnItemInstanceAddedVft() + 1;
-    if (ItemInstanceIdx != -1 && OnItemInstanceRemovedVft && VersionInfo.FortniteVersion >= 4)
+    if (OnItemInstanceAddedVft && VersionInfo.FortniteVersion >= 4)
     {
-        static auto InterfaceClass = FindClass("FortInventoryOwnerInterface");
-        ((bool(*)(const UFortItemDefinition*, const IInterface*, UFortWorldItem*)) Instance->ItemEntry.ItemDefinition->Vft[OnItemInstanceRemovedVft])(Instance->ItemEntry.ItemDefinition, Owner->GetInterface(InterfaceClass), Instance);
+        ((bool(*)(const UFortItemDefinition*, const IInterface*, UFortWorldItem*)) Instance->ItemEntry.ItemDefinition->Vft[OnItemInstanceAddedVft + 1])(Instance->ItemEntry.ItemDefinition, Owner->GetInterface(IFortInventoryOwnerInterface::StaticClass()), Instance);
     }
 
     if (VersionInfo.EngineVersion < 4.20)
@@ -246,6 +245,7 @@ FFortItemEntry* AFortInventory::MakeItemEntry(const UFortItemDefinition* ItemDef
     return ItemEntry;
 }
 
+uint64_t SetPickupItems;
 AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entry, long long SourceTypeFlag, long long SpawnSource, AFortPlayerPawnAthena* Pawn, int OverrideCount, bool Toss, bool RandomRotation, bool bCombine)
 {
     if (!&Entry)
@@ -265,7 +265,6 @@ AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entr
     if (HasPhantomReserveAmmo)
         NewPickup->PrimaryPickupItemEntry.PhantomReserveAmmo = Entry.PhantomReserveAmmo;
 
-    static auto SetPickupItems = FindSetPickupItems();
     if (SetPickupItems)
     {
         TArray<FFortItemEntry> a{};
@@ -324,7 +323,7 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
     static auto HasPhantomReserveAmmo = Entry.HasPhantomReserveAmmo();
     if (HasPhantomReserveAmmo)
         NewPickup->PrimaryPickupItemEntry.PhantomReserveAmmo = Entry.PhantomReserveAmmo;
-    static auto SetPickupItems = FindSetPickupItems();
+
     if (SetPickupItems)
     {
         TArray<FFortItemEntry> a{};
@@ -366,14 +365,15 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
 
 bool AFortInventory::IsPrimaryQuickbar(const UFortItemDefinition* ItemDefinition)
 {
-    static auto MeleeClass = FindClass("FortWeaponMeleeItemDefinition");
-    static auto ResourceClass = FindClass("FortResourceItemDefinition");
-    static auto AmmoClass = FindClass("FortAmmoItemDefinition");
-    static auto TrapClass = FindClass("FortTrapItemDefinition");
-    static auto BuildingClass = FindClass("FortBuildingItemDefinition");
-    static auto EditToolClass = FindClass("FortEditToolItemDefinition");
-
-    return ItemDefinition->IsA(MeleeClass) || ItemDefinition->IsA(ResourceClass) || ItemDefinition->IsA(AmmoClass) || ItemDefinition->IsA(TrapClass) || ItemDefinition->IsA(BuildingClass) || ItemDefinition->IsA(EditToolClass) || (ItemDefinition->HasbForceIntoOverflow() && ItemDefinition->bForceIntoOverflow) ? false : true;
+    return 
+        ItemDefinition->IsA(UFortWeaponMeleeItemDefinition::StaticClass()) || 
+        ItemDefinition->IsA(UFortResourceItemDefinition::StaticClass()) || 
+        ItemDefinition->IsA(UFortAmmoItemDefinition::StaticClass()) || 
+        ItemDefinition->IsA(UFortDecoItemDefinition::StaticClass()) ||
+        ItemDefinition->IsA(UFortBuildingItemDefinition::StaticClass()) || 
+        ItemDefinition->IsA(UFortEditToolItemDefinition::StaticClass()) || 
+        (ItemDefinition->HasbForceIntoOverflow() && ItemDefinition->bForceIntoOverflow)
+        ? false : true;
 }
 
 
@@ -475,6 +475,9 @@ void SpawnPickup_(UObject* Object, FFrame& Stack, AFortPickupAthena** Ret)
 
 void AFortInventory::Hook()
 {
+    SetPickupItems = FindSetPickupItems();
+    OnItemInstanceAddedVft = FindOnItemInstanceAddedVft();
+
     Utils::Hook(FindRemoveInventoryItem(), RemoveInventoryItem);
 
     auto SetOwningInventory = Memcury::Scanner::FindPattern("48 85 D2 74 ? 80 BA ? ? ? ? ? 75 ? 48 89 91").Get();
