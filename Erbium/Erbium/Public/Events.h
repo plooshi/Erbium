@@ -19,6 +19,7 @@ struct FEvent
 class Events
 {
 public:
+#ifndef CLIENT
 	static inline std::vector<FEvent> EventsArray =
 	{
 		FEvent
@@ -115,5 +116,10 @@ public:
 		}
 	};
 
+#else
+
+	static inline std::vector<FEvent> EventsArray =
+	{};
+#endif
     static void StartEvent();
 };

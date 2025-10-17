@@ -127,8 +127,7 @@ void Misc::InitClient()
 	ShowdownExtensions.Add(ShowdownUIExtension);
 	ShowdownExtensions.Add(AIKillsUIExtension);
 		
-	auto PlaylistClass = FindClass("FortPlaylistAthena");
-
+	/*auto PlaylistClass = FindClass("FortPlaylistAthena");
 
 	for (int i = 0; i < TUObjectArray::Num(); i++)
 	{
@@ -141,7 +140,7 @@ void Misc::InitClient()
 			if (Name.contains("Showdown"))
 				Playlist->UIExtensions = Name.contains("ShowdownAlt") ? ArenaExtensions : ShowdownExtensions;
 		}
-	}
+	}*/
 
 	auto SelectEditAddr = Memcury::Scanner::FindStringRef(L"EditModeInputComponent0").ScanFor({ 0x48, 0x8D, 0x05 }, true, 1).RelativeOffset(3).GetAs<void*>();
 	auto SelectResetAddr = Memcury::Scanner::FindStringRef(L"EditModeInputComponent0").ScanFor({ 0x48, 0x8D, 0x05 }, true, 2).RelativeOffset(3).GetAs<void*>();
