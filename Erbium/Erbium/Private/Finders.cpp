@@ -1563,7 +1563,7 @@ void FindNullsAndRetTrues()
 
     if (VersionInfo.EngineVersion == 4.23)
         NullFuncs.push_back(Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 56 57 41 56 48 81 EC ? ? ? ? 0F B6 FA").Get());
-    else if (VersionInfo.EngineVersion >= 4.24 && VersionInfo.EngineVersion < 4.27) {
+    /*else if (VersionInfo.EngineVersion >= 4.24 && VersionInfo.EngineVersion < 4.27) {
         auto sRef = Memcury::Scanner::FindStringRef(L"STAT_CollectGarbageInternal").Get();
         uint64_t CollectGarbage = 0;
 
@@ -1590,7 +1590,7 @@ void FindNullsAndRetTrues()
             }
             NullFuncs.push_back(CollectGarbage);
         }
-    }
+    }*/
 
     NullFuncs.push_back(FindKickPlayer());
     if (VersionInfo.FortniteVersion == 1.10 || VersionInfo.FortniteVersion == 1.11 || (VersionInfo.FortniteVersion >= 2.2 && VersionInfo.FortniteVersion <= 2.4))
