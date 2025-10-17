@@ -93,7 +93,7 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 			PlayerController = (AFortPlayerControllerAthena*)Context;
 
 		GameMode->RestartPlayer(PlayerController);
-		PlayerController->ClientSetRotation(Rotation, true);
+		PlayerController->SetControlRotation(Rotation);
 
 		if (PlayerController->MyFortPawn)
 		{
@@ -533,6 +533,14 @@ void AFortPlayerControllerAthena::ServerAttemptInventoryDrop(UObject* Context, F
 		PlayerController->WorldInventory->UpdateEntry(*ItemEntry);
 }
 
+class UAthenaToyItemDefinition : public UObject
+{
+public:
+	UCLASS_COMMON_MEMBERS(UAthenaToyItemDefinition);
+
+	DEFINE_PROP(ToySpawnAbility, TSoftClassPtr<UClass>);
+};
+
 void AFortPlayerControllerAthena::ServerPlayEmoteItem(UObject* Context, FFrame& Stack)
 {
 	UObject* Asset;
@@ -556,9 +564,8 @@ void AFortPlayerControllerAthena::ServerPlayEmoteItem(UObject* Context, FFrame& 
 		static auto SprayAbilityClass = Utils::FindObject<UClass>(L"/Game/Abilities/Sprays/GAB_Spray_Generic.GAB_Spray_Generic_C");
 		AbilityToUse = SprayAbilityClass->GetDefaultObj();
 	}
-	//else if (auto ToyAsset = Asset->Cast<UAthenaToyItemDefinition>()) {
-	//	AbilityToUse = ToyAsset->ToySpawnAbility->DefaultObject;
-	//}
+	else if (auto ToyAsset = Asset->Cast<UAthenaToyItemDefinition>())
+		AbilityToUse = ToyAsset->ToySpawnAbility->GetDefaultObj();
 	else if (auto DanceAsset = Asset->Cast<UAthenaDanceItemDefinition>())
 	{
 		static auto HasbMovingEmote = PlayerController->MyFortPawn->HasbMovingEmote();
@@ -1318,6 +1325,22 @@ void DropHeldObject(UObject* Context, FFrame& Stack)
 	HeldObjectComponent->OnRep_OwningPawn(OldPawn);
 }
 
+void AFortPlayerControllerAthena::SpawnToyInstance(UObject* Context, FFrame& Stack, AActor** Ret)
+{
+	TSubclassOf<AActor> ToyClass;
+	FTransform SpawnPosition;
+
+	Stack.StepCompiledIn(&ToyClass);
+	Stack.StepCompiledIn(&SpawnPosition);
+	Stack.IncrementCode();
+	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+
+	auto Toy = UWorld::SpawnActor(ToyClass, SpawnPosition, PlayerController);
+	PlayerController->ActiveToyInstances.Add(Toy);
+
+	*Ret = Toy;
+}
+
 void AFortPlayerControllerAthena::Hook()
 {
 
@@ -1413,4 +1436,6 @@ void AFortPlayerControllerAthena::Hook()
 		//Utils::ExecHook(DefaultHeldObjComp->GetFunction("PlaceHeldObject"), PlaceHeldObject);
 		//Utils::ExecHook(DefaultHeldObjComp->GetFunction("ThrowHeldObject"), ThrowHeldObject);
 	}
+
+	Utils::ExecHook(GetDefaultObj()->GetFunction("SpawnToyInstance"), SpawnToyInstance);
 }

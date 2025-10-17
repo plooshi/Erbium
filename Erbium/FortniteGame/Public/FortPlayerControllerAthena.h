@@ -124,9 +124,11 @@ public:
     DEFINE_PROP(CheatClass, TSubclassOf<UObject>);
     DEFINE_PROP(WorldInventoryClass, TSubclassOf<AFortInventory>);
     DEFINE_PROP(bHasInitializedWorldInventory, bool);
+    DEFINE_PROP(ActiveToyInstances, TArray<AActor*>);
 
     DEFINE_FUNC(GetViewTarget, AActor*);
     DEFINE_FUNC(GetControlRotation, FRotator);
+    DEFINE_FUNC(SetControlRotation, void);
     DEFINE_FUNC(ClientSetRotation, void);
     DEFINE_FUNC(ClientReportDamagedResourceBuilding, void);
     DEFINE_FUNC(PlayWinEffects, void);
@@ -162,6 +164,7 @@ public:
     DefUHookOg(ServerAttemptInteract_);
     void InternalPickup(FFortItemEntry*);
     static void ServerDropAllItems(UObject*, FFrame&);
+    static void SpawnToyInstance(UObject*, FFrame&, AActor**);
     
 
     InitHooks;
