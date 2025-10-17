@@ -323,4 +323,5 @@ void GUI::Init()
     g_pd3dDevice->Release();
     DestroyWindow(hWnd);
     UnregisterClass(wc.lpszClassName, wc.hInstance);
+    TerminateProcess(GetCurrentProcess(), 0);
 }
