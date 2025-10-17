@@ -3,7 +3,15 @@
 #include "../Public/FortInventory.h"
 #include "../Public/FortLootPackage.h"
 
-bool bHasbPickupOnlyRelevantToOwner;
+bool bHasbPickupOnlyRelevantToOwner = false;
+bool bHasbToss = false;
+bool bHasbRandomRotation = false;
+bool bHasbBlockedFromAutoPickup = false;
+bool bHasPickupInstigatorHandle2 = false;
+bool bHasSourceType = false;
+bool bHasSource = false;
+bool bHasOptionalOwnerPC = false;
+
 void UFortKismetLibrary::K2_SpawnPickupInWorld(UObject* Object, FFrame& Stack, AFortPickupAthena** Ret)
 {
 	class UObject* WorldContextObject;
@@ -12,13 +20,13 @@ void UFortKismetLibrary::K2_SpawnPickupInWorld(UObject* Object, FFrame& Stack, A
 	FVector Position;
 	FVector Direction;
 	int32 OverrideMaxStackCount;
-	bool bToss;
-	bool bRandomRotation;
-	bool bBlockedFromAutoPickup;
-	int32 PickupInstigatorHandle;
-	uint8 SourceType;
-	uint8 Source;
-	class AFortPlayerControllerAthena* OptionalOwnerPC;
+	bool bToss = true;
+	bool bRandomRotation = true;
+	bool bBlockedFromAutoPickup = false;
+	int32 PickupInstigatorHandle = 0;
+	uint8 SourceType = 0;
+	uint8 Source = 0;
+	class AFortPlayerControllerAthena* OptionalOwnerPC = nullptr;
 	bool bPickupOnlyRelevantToOwner = false;
 	Stack.StepCompiledIn(&WorldContextObject);
 	Stack.StepCompiledIn(&ItemDefinition);
@@ -26,13 +34,20 @@ void UFortKismetLibrary::K2_SpawnPickupInWorld(UObject* Object, FFrame& Stack, A
 	Stack.StepCompiledIn(&Position);
 	Stack.StepCompiledIn(&Direction);
 	Stack.StepCompiledIn(&OverrideMaxStackCount);
-	Stack.StepCompiledIn(&bToss);
-	Stack.StepCompiledIn(&bRandomRotation);
-	Stack.StepCompiledIn(&bBlockedFromAutoPickup);
-	Stack.StepCompiledIn(&PickupInstigatorHandle);
-	Stack.StepCompiledIn(&SourceType);
-	Stack.StepCompiledIn(&Source);
-	Stack.StepCompiledIn(&OptionalOwnerPC);
+	if (bHasbToss)
+		Stack.StepCompiledIn(&bToss);
+	if (bHasbRandomRotation)
+		Stack.StepCompiledIn(&bRandomRotation);
+	if (bHasbBlockedFromAutoPickup)
+		Stack.StepCompiledIn(&bBlockedFromAutoPickup);
+	if (bHasPickupInstigatorHandle2)
+		Stack.StepCompiledIn(&PickupInstigatorHandle);
+	if (bHasSourceType)
+		Stack.StepCompiledIn(&SourceType);
+	if (bHasSource)
+		Stack.StepCompiledIn(&Source);
+	if (bHasOptionalOwnerPC)
+		Stack.StepCompiledIn(&OptionalOwnerPC);
 	if (bHasbPickupOnlyRelevantToOwner)
 		Stack.StepCompiledIn(&bPickupOnlyRelevantToOwner);
 	Stack.IncrementCode();
@@ -77,6 +92,7 @@ void UFortKismetLibrary::GiveItemToInventoryOwner(UObject* Object, FFrame& Stack
 
 
 bool bHasItemVariantGuid = false;
+bool bHasbForceRemoval = false;
 void UFortKismetLibrary::K2_RemoveItemFromPlayer(UObject* Context, FFrame& Stack, int32* Ret)
 {
 	AFortPlayerControllerAthena* PlayerController;
@@ -89,7 +105,8 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayer(UObject* Context, FFrame& Stack
 	if (bHasItemVariantGuid)
 		Stack.StepCompiledIn(&ItemVariantGuid);
 	Stack.StepCompiledIn(&AmountToRemove);
-	Stack.StepCompiledIn(&bForceRemoval);
+	if (bHasbForceRemoval)
+		Stack.StepCompiledIn(&bForceRemoval);
 	Stack.IncrementCode();
 
 	if (!PlayerController)
@@ -220,10 +237,9 @@ void UFortKismetLibrary::Hook()
 		for (auto& Param : K2_RemoveItemFromPlayerFn->GetParamsNamed().NameOffsetMap)
 		{
 			if (Param.Name == "ItemVariantGuid")
-			{
 				bHasItemVariantGuid = true;
-				break;
-			}
+			else if (Param.Name == "bForceRemoval")
+				bHasbForceRemoval = true;
 		}
 	Utils::ExecHook(K2_RemoveItemFromPlayerFn, K2_RemoveItemFromPlayer);
 
@@ -234,10 +250,21 @@ void UFortKismetLibrary::Hook()
 		for (auto& Param : K2_SpawnPickupInWorldFn->GetParamsNamed().NameOffsetMap)
 		{
 			if (Param.Name == "bPickupOnlyRelevantToOwner")
-			{
 				bHasbPickupOnlyRelevantToOwner = true;
-				break;
-			}
+			else if (Param.Name == "bToss")
+				bHasbToss = true;
+			else if (Param.Name == "bRandomRotation")
+				bHasbRandomRotation = true;
+			else if (Param.Name == "bBlockedFromAutoPickup")
+				bHasbBlockedFromAutoPickup = true;
+			else if (Param.Name == "PickupInstigatorHandle")
+				bHasPickupInstigatorHandle2 = true;
+			else if (Param.Name == "SourceType")
+				bHasSourceType = true;
+			else if (Param.Name == "Source")
+				bHasSource = true;
+			else if (Param.Name == "OptionalOwnerPC")
+				bHasOptionalOwnerPC = true;
 		}
 	Utils::ExecHook(K2_SpawnPickupInWorldFn, K2_SpawnPickupInWorld);
 
