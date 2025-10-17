@@ -30,7 +30,7 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return 0;
         break;
     case WM_DESTROY:
-        ExitProcess(0);
+        PostQuitMessage(0);
         return 0;
     }
 
