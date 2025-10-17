@@ -106,10 +106,11 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayer(UObject* Context, FFrame& Stack
 		return;
 	}
 
-	auto RemoveCount = AmountToRemove;
-	itemEntry->Count -= AmountToRemove;
+	auto RemoveCount = max(AmountToRemove, 0);
+	itemEntry->Count -= RemoveCount;
+
 	static auto GadgetClass = FindClass("FortGadgetItemDefinition");
-	if (itemEntry->Count <= 0 || ItemDefinition->IsA(GadgetClass))
+	if (AmountToRemove < 0 || itemEntry->Count <= 0 || ItemDefinition->IsA(GadgetClass))
 	{
 		RemoveCount += itemEntry->Count;
 		PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
@@ -140,11 +141,12 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayerByGuid(UObject* Context, FFrame&
 		return;
 	}
 
-	auto RemoveCount = AmountToRemove;
-	ItemEntry->Count -= AmountToRemove;
+
+	auto RemoveCount = max(AmountToRemove, 0);
+	ItemEntry->Count -= RemoveCount;
 
 	static auto GadgetClass = FindClass("FortGadgetItemDefinition");
-	if (ItemEntry->Count <= 0 || ItemEntry->ItemDefinition->IsA(GadgetClass)) {
+	if (AmountToRemove < 0 || ItemEntry->Count <= 0 || ItemEntry->ItemDefinition->IsA(GadgetClass)) {
 		RemoveCount += ItemEntry->Count;
 		PlayerController->WorldInventory->Remove(ItemEntry->ItemGuid);
 	}

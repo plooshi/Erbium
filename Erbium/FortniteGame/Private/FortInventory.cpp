@@ -408,9 +408,22 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
 
     if (ItemEntry)
     {
-        ItemEntry->Count -= Count;
-        if (ItemEntry->Count <= 0 || bForceRemoval)
-            PlayerController->WorldInventory->Remove(ItemGuid);
+        ItemEntry->Count -= max(Count, 0);
+        if (Count < 0 || ItemEntry->Count <= 0 || bForceRemoval)
+        {
+            if (ItemEntry->ItemDefinition->HasbPersistInInventoryWhenFinalStackEmpty() && ItemEntry->ItemDefinition->bPersistInInventoryWhenFinalStackEmpty && Count > 0)
+            {
+                auto OtherStack = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& item)
+                    { return item.ItemDefinition == ItemEntry->ItemDefinition && item.ItemGuid != ItemGuid; }, FFortItemEntry::Size());
+
+                if (!OtherStack)
+                    PlayerController->WorldInventory->UpdateEntry(*ItemEntry);
+                else
+                    PlayerController->WorldInventory->Remove(ItemGuid);
+            }
+            else
+                PlayerController->WorldInventory->Remove(ItemGuid);
+        }
         else
             PlayerController->WorldInventory->UpdateEntry(*ItemEntry);
 

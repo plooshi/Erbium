@@ -43,6 +43,7 @@ public:
     DEFINE_PROP(Tier, uint8);
     DEFINE_BITFIELD_PROP(bInventorySizeLimited);
     DEFINE_BITFIELD_PROP(bForceFocusWhenAdded);
+    DEFINE_BITFIELD_PROP(bPersistInInventoryWhenFinalStackEmpty);
 
     DEFINE_FUNC(CreateTemporaryItemInstanceBP, UFortItem*);
     DEFINE_FUNC(GetWeaponItemDefinition, UFortItemDefinition*);
