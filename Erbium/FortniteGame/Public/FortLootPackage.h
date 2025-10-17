@@ -64,6 +64,22 @@ static T* PickWeighted(TArray<T*>& Map, float (*RandFunc)(float), bool bCheckZer
     return nullptr;
 }
 
+class UBGAConsumableWrapperItemDefinition : public UFortItemDefinition
+{
+public:
+    UCLASS_COMMON_MEMBERS(UBGAConsumableWrapperItemDefinition);
+
+    DEFINE_PROP(ConsumableClass, TSoftClassPtr<UClass>);
+};
+
+class ABGAConsumableSpawner : public AActor
+{
+public:
+    UCLASS_COMMON_MEMBERS(ABGAConsumableSpawner);
+
+    DEFINE_PROP(SpawnLootTierGroup, FName);
+};
+
 class UFortLootPackage
 {
 public:
@@ -72,6 +88,7 @@ public:
     static void SpawnFloorLootForContainer(const UClass*);
     static bool SpawnLootHook(ABuildingContainer*);
     static void SpawnLoot(FName&, FVector);
+    static void SpawnConsumableActor(ABGAConsumableSpawner*);
 
     InitHooks;
 };

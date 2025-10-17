@@ -3,6 +3,7 @@
 #include "../Public/BuildingContainer.h"
 #include "../Public/FortGameModeAthena.h"
 #include "../../Erbium/Public/Configuration.h"
+#include "../Public/FortKismetLibrary.h"
 
 struct FFortLootLevelData
 {
@@ -423,6 +424,24 @@ void UFortLootPackage::SpawnFloorLootForContainer(const UClass* ContainerType)
 
 	Containers.Free();
 }
+
+void UFortLootPackage::SpawnConsumableActor(ABGAConsumableSpawner* Spawner)
+{
+	auto LootDrops = ChooseLootForContainer(Spawner->SpawnLootTierGroup);
+	if (LootDrops.Num() == 0)
+		return;
+
+	auto ItemDefinition = (UBGAConsumableWrapperItemDefinition*)LootDrops[0]->ItemDefinition;
+
+	auto GroundLoc = UFortKismetLibrary::FindGroundLocationAt(UWorld::GetWorld(), nullptr, Spawner->K2_GetActorLocation(), -1000.f, 2500.f, UKismetStringLibrary::Conv_StringToName(FString(L"FindGroundLocationAt")));
+	auto SpawnTransform = FTransform(GroundLoc, Spawner->K2_GetActorRotation());
+
+	UWorld::SpawnActor(ItemDefinition->ConsumableClass, SpawnTransform);
+
+	for (auto& LootDrop : LootDrops)
+		free(LootDrop);
+}
+
 
 bool bDidntFind = false;
 void UFortLootPackage::Hook()
