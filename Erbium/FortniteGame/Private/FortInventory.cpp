@@ -282,17 +282,17 @@ AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entr
     //NewPickup->OnRep_PrimaryPickupItemEntry();
     NewPickup->PawnWhoDroppedPickup = Pawn;
 
-    NewPickup->TossPickup(Loc, Pawn, -1, Toss, true, (uint8)SourceTypeFlag, (uint8)SpawnSource);
-    if (SpawnSource != -1)
-        NewPickup->bTossedFromContainer = SpawnSource == EFortPickupSpawnSource::GetChest() || SpawnSource == EFortPickupSpawnSource::GetAmmoBox();
-    if (NewPickup->bTossedFromContainer)
-        NewPickup->OnRep_TossedFromContainer();
-
     if (VersionInfo.FortniteVersion < 6)
     {
         static auto ProjectileMovementClass = FindClass("ProjectileMovementComponent");
         NewPickup->MovementComponent = UGameplayStatics::SpawnObject(ProjectileMovementClass, NewPickup);
     }
+
+    NewPickup->TossPickup(Loc, Pawn, -1, Toss, true, (uint8)SourceTypeFlag, (uint8)SpawnSource);
+    if (SpawnSource != -1)
+        NewPickup->bTossedFromContainer = SpawnSource == EFortPickupSpawnSource::GetChest() || SpawnSource == EFortPickupSpawnSource::GetAmmoBox();
+    if (NewPickup->bTossedFromContainer)
+        NewPickup->OnRep_TossedFromContainer();
 
     return NewPickup;
 }
@@ -341,6 +341,13 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
     //NewPickup->OnRep_PrimaryPickupItemEntry();
 
     NewPickup->PawnWhoDroppedPickup = Pawn;
+
+    if (VersionInfo.FortniteVersion < 6)
+    {
+        static auto ProjectileMovementClass = FindClass("ProjectileMovementComponent");
+        NewPickup->MovementComponent = UGameplayStatics::SpawnObject(ProjectileMovementClass, NewPickup);
+    }
+
     //auto bFloorLoot = Container->IsA<ATiered_Athena_FloorLoot_01_C>() || Container->IsA<ATiered_Athena_FloorLoot_Warmup_C>();
     //UFortKismetLibrary::TossPickupFromContainer(UWorld::GetWorld(), Container, NewPickup, 1, 0, Container->LootTossConeHalfAngle_Athena, Container->LootTossDirection_Athena, Container->LootTossSpeed_Athena, false);
     static auto tpfcPtr = UFortKismetLibrary::GetDefaultObj()->GetFunction("TossPickupFromContainer");
@@ -360,12 +367,6 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
 
     NewPickup->bTossedFromContainer = true;
     NewPickup->OnRep_TossedFromContainer();
-
-    if (VersionInfo.FortniteVersion < 6)
-    {
-        static auto ProjectileMovementClass = FindClass("ProjectileMovementComponent");
-        NewPickup->MovementComponent = UGameplayStatics::SpawnObject(ProjectileMovementClass, NewPickup);
-    }
 
     return NewPickup;
 }
