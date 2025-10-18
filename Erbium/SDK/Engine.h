@@ -515,6 +515,7 @@ namespace SDK
 		DEFINE_BITFIELD_PROP(bNetStartup);
 		DEFINE_BITFIELD_PROP(bOnlyRelevantToOwner);
 		DEFINE_PROP(RootComponent, UObject*);
+		DEFINE_PROP(Instigator, AActor*);
 
 		DEFINE_FUNC(AddComponentByClass, UActorComponent*);
 		DEFINE_FUNC(GetComponentByClass, UActorComponent*);

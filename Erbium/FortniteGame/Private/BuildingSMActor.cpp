@@ -34,15 +34,17 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 
 	if (ResCount > 0)
 	{
-		auto itemEntry = InstigatedBy->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) {
-			return entry.ItemDefinition == Resource;
-			}, FFortItemEntry::Size());
+		auto ItemP = InstigatedBy->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* entry) {
+			return entry->ItemEntry.ItemDefinition == Resource;
+			});
 
-		if (itemEntry)
+		if (ItemP)
 		{
-			for (int i = 0; i < itemEntry->StateValues.Num(); i++)
+			auto Item = *ItemP;
+
+			for (int i = 0; i < Item->ItemEntry.StateValues.Num(); i++)
 			{
-				auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
+				auto& StateValue = Item->ItemEntry.StateValues.Get(i, FFortItemEntryStateValue::Size());
 
 				if (StateValue.StateType != 2)
 					continue;
@@ -50,14 +52,14 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 				StateValue.IntValue = 0;
 			}
 
-			itemEntry->Count += ResCount;
-			if (itemEntry->Count > MaxMat)
+			Item->ItemEntry.Count += ResCount;
+			if (Item->ItemEntry.Count > MaxMat)
 			{
-				AFortInventory::SpawnPickup(InstigatedBy->Pawn->K2_GetActorLocation(), itemEntry->ItemDefinition, itemEntry->Count - MaxMat, 0, EFortPickupSourceTypeFlag::GetTossed(), EFortPickupSpawnSource::GetUnset(), InstigatedBy->MyFortPawn);
-				itemEntry->Count = MaxMat;
+				AFortInventory::SpawnPickup(InstigatedBy->Pawn->K2_GetActorLocation(), Item->ItemEntry.ItemDefinition, Item->ItemEntry.Count - MaxMat, 0, EFortPickupSourceTypeFlag::GetTossed(), EFortPickupSpawnSource::GetUnset(), InstigatedBy->MyFortPawn);
+				Item->ItemEntry.Count = MaxMat;
 			}
 
-			InstigatedBy->WorldInventory->UpdateEntry(*itemEntry);
+			InstigatedBy->WorldInventory->UpdateEntry(Item->ItemEntry);
 		}
 		else
 		{

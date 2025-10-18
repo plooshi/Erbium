@@ -45,6 +45,7 @@ uint64 FindFlushDormancy();
 int32 FindIsNetRelevantForVft();
 uint64 FindSendDestructionInfo();
 uint64 FindEnterAircraft();
+uint64 FindClearAbility();
 
 inline std::vector<uint64_t> NullFuncs = {};
 inline std::vector<uint64_t> RetTrueFuncs = {};

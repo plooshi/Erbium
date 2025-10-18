@@ -130,6 +130,9 @@ void AFortInventory::Update(FFortItemEntry* Entry)
         return;
     }
 
+    if (Entry->ItemGuid.A == 0 && Entry->ItemGuid.B == 0 && Entry->ItemGuid.C == 0 && Entry->ItemGuid.D == 0)
+        return;
+
     for (int i = 0; i < Inventory.ReplicatedEntries.Num(); i++)
     {
         auto& repEntry = Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
@@ -140,6 +143,7 @@ void AFortInventory::Update(FFortItemEntry* Entry)
             repEntry.bIsDirty = false;
             Inventory.MarkItemDirty(repEntry);
             SetRequiresUpdate();
+            break;
         }
     }
     Entry->bIsDirty = true;
@@ -348,7 +352,11 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
         UFortKismetLibrary::TossPickupFromContainer(UWorld::GetWorld(), Container, NewPickup, 10, (int32)std::clamp((float)rand() * 0.0003357036f, 0.f, 10.f), Container->LootTossConeHalfAngle_Athena, Container->LootTossDirection_Athena, Container->LootTossSpeed_Athena, Container->bForceHidePickupMinimapIndicator);
     }
     else
-        NewPickup->TossPickup(Loc, Pawn, -1, true, true, EFortPickupSourceTypeFlag::GetContainer(), EFortPickupSpawnSource::GetChest());
+    {
+        auto FinalLoc = Loc + (Container->GetActorForwardVector() * Container->LootFinalLocation.X) + (Container->GetActorRightVector() * Container->LootFinalLocation.Y) + (Container->GetActorUpVector() * Container->LootFinalLocation.Z);
+
+        NewPickup->TossPickup(FinalLoc, Pawn, -1, true, true, EFortPickupSourceTypeFlag::GetContainer(), EFortPickupSpawnSource::GetChest());
+    }
 
     NewPickup->bTossedFromContainer = true;
     NewPickup->OnRep_TossedFromContainer();
@@ -388,10 +396,10 @@ void AFortInventory::UpdateEntry(FFortItemEntry& Entry)
     if (ent)
         *ent = Entry;*/
 
-    auto ent2 = Inventory.ItemInstances.Search([&](UFortWorldItem* item)
+    /*auto ent2 = Inventory.ItemInstances.Search([&](UFortWorldItem* item)
         { return item->ItemEntry.ItemGuid == Entry.ItemGuid; });
     if (ent2)
-        (*ent2)->ItemEntry = Entry;
+        (*ent2)->ItemEntry = Entry;*/
     //__movsb((PBYTE)&(*ent)->ItemEntry, (const PBYTE)&Entry, FFortItemEntry::Size());
 
     Update(&Entry);
@@ -405,21 +413,23 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
     static auto InterfaceOffset = FindClass("FortPlayerController")->GetSuper()->GetPropertiesSize() + (VersionInfo.EngineVersion >= 4.27 ? 16 : 8);
     auto PlayerController = (AFortPlayerControllerAthena*)(__int64(Interface) - InterfaceOffset);
 
-    auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
-        { return entry.ItemGuid == ItemGuid; }, FFortItemEntry::Size());
+    auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* entry)
+        { return entry->ItemEntry.ItemGuid == ItemGuid; });
 
-    if (ItemEntry)
+    if (ItemP)
     {
-        ItemEntry->Count -= max(Count, 0);
-        if (Count < 0 || ItemEntry->Count <= 0 || bForceRemoval)
+        auto Item = *ItemP;
+
+        Item->ItemEntry.Count -= max(Count, 0);
+        if (Count < 0 || Item->ItemEntry.Count <= 0 || bForceRemoval)
         {
-            if (ItemEntry->ItemDefinition->HasbPersistInInventoryWhenFinalStackEmpty() && ItemEntry->ItemDefinition->bPersistInInventoryWhenFinalStackEmpty && Count > 0)
+            if (Item->ItemEntry.ItemDefinition->HasbPersistInInventoryWhenFinalStackEmpty() && Item->ItemEntry.ItemDefinition->bPersistInInventoryWhenFinalStackEmpty && Count > 0)
             {
                 auto OtherStack = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& item)
-                    { return item.ItemDefinition == ItemEntry->ItemDefinition && item.ItemGuid != ItemGuid; }, FFortItemEntry::Size());
+                    { return item.ItemDefinition == Item->ItemEntry.ItemDefinition && item.ItemGuid != ItemGuid; }, FFortItemEntry::Size());
 
                 if (!OtherStack)
-                    PlayerController->WorldInventory->UpdateEntry(*ItemEntry);
+                    PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
                 else
                     PlayerController->WorldInventory->Remove(ItemGuid);
             }
@@ -427,7 +437,7 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
                 PlayerController->WorldInventory->Remove(ItemGuid);
         }
         else
-            PlayerController->WorldInventory->UpdateEntry(*ItemEntry);
+            PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
 
         return true;
     }

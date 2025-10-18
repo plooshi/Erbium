@@ -1064,6 +1064,31 @@ uint64 FindGiveAbilityAndActivateOnce()
     return GiveAbilityAndActivateOnce;
 }
 
+uint64_t FindClearAbility()
+{
+    static uint64_t ClearAbility = 0;
+
+    if (ClearAbility == 0)
+    {
+        auto GiveAbilityAndActivateOnce = FindGiveAbilityAndActivateOnce();
+
+        if (!GiveAbilityAndActivateOnce)
+            return 0;
+
+        int skip = 0;
+        for (int i = 0; i < 2048; i++)
+        {
+            if (*(uint8_t*)(GiveAbilityAndActivateOnce + i) == 0xE8 && *(uint8_t*)(GiveAbilityAndActivateOnce + i + 1) != 0x7D)
+            {
+                if (++skip == 4)
+                    return ClearAbility = Memcury::Scanner(GiveAbilityAndActivateOnce + i).RelativeOffset(1).Get();
+            }
+        }
+    }
+
+    return ClearAbility;
+}
+
 uint64 FindGameSessionPatch()
 {
     auto sRef = Memcury::Scanner::FindStringRef(L"Gamephase Step: %s", false).Get();

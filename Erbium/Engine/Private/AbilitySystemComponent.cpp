@@ -5,16 +5,16 @@
 
 uint64 ConstructAbilitySpec;
 uint64 GiveAbility_;
-void UAbilitySystemComponent::GiveAbility(const UObject* Ability)
+FGameplayAbilitySpecHandle UAbilitySystemComponent::GiveAbility(const UObject* Ability, UObject* SourceObject)
 {
     if (!this || !Ability)
-        return;
+        return {};
 
     auto Spec = (FGameplayAbilitySpec*) malloc(FGameplayAbilitySpec::Size());
     __stosb(PBYTE(Spec), 0, FGameplayAbilitySpec::Size());
 
     if (ConstructAbilitySpec)
-        ((void (*)(FGameplayAbilitySpec*, const UObject*, int, int, UObject*)) ConstructAbilitySpec)(Spec, Ability, 1, -1, nullptr);
+        ((void (*)(FGameplayAbilitySpec*, const UObject*, int, int, UObject*)) ConstructAbilitySpec)(Spec, Ability, 1, -1, SourceObject);
     else
     {
         Spec->MostRecentArrayReplicationKey = -1;
@@ -24,11 +24,13 @@ void UAbilitySystemComponent::GiveAbility(const UObject* Ability)
         Spec->Level = 1;
         Spec->InputID = -1;
         Spec->Handle.Handle = rand();
-        if (VersionInfo.FortniteVersion <= 23) Spec->SourceObject = nullptr;
+        if (VersionInfo.FortniteVersion <= 23) Spec->SourceObject = SourceObject;
     }
 
-    ((FGameplayAbilitySpecHandle * (*)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle*, __int64)) GiveAbility_)(this, &Spec->Handle, __int64(Spec));
+    FGameplayAbilitySpecHandle OutHandle;
+    ((FGameplayAbilitySpecHandle * (*)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle*, __int64)) GiveAbility_)(this, &OutHandle, __int64(Spec));
     free(Spec);
+    return OutHandle;
 }
 
 class IAbilitySystemInterface : public IInterface

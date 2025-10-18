@@ -312,13 +312,18 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 
 	auto Resource = UFortKismetLibrary::K2_GetResourceItemDefinition(((ABuildingSMActor*)BuildingClass->GetDefaultObj())->ResourceType);
 
-	FFortItemEntry* ItemEntry = nullptr;
+	UFortWorldItem* Item = nullptr;
 	if (!PlayerController->bBuildFree && !FConfiguration::bInfiniteMats)
 	{
-		ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
-			{ return entry.ItemDefinition == Resource; }, FFortItemEntry::Size());
+		auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* entry)
+			{ return entry->ItemEntry.ItemDefinition == Resource; });
 
-		if (!ItemEntry || ItemEntry->Count < 10)
+		if (!ItemP)
+			return;
+
+		Item = *ItemP;
+
+		if (Item->ItemEntry.Count < 10)
 			return;
 	}
 
@@ -350,11 +355,11 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 
 	if (!PlayerController->bBuildFree && !FConfiguration::bInfiniteMats)
 	{
-		ItemEntry->Count -= 10;
-		if (ItemEntry->Count <= 0)
-			PlayerController->WorldInventory->Remove(ItemEntry->ItemGuid);
+		Item->ItemEntry.Count -= 10;
+		if (Item->ItemEntry.Count <= 0)
+			PlayerController->WorldInventory->Remove(Item->ItemEntry.ItemGuid);
 		else
-			PlayerController->WorldInventory->UpdateEntry(*ItemEntry);
+			PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
 	}
 
 	Building->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
@@ -505,15 +510,20 @@ void AFortPlayerControllerAthena::ServerRepairBuildingActor(UObject* Context, FF
 
 	auto Price = (int32)std::floor((10.f * (1.f - Building->GetHealthPercent())) * 0.75f);
 	auto res = UFortKismetLibrary::K2_GetResourceItemDefinition(Building->ResourceType);
-	auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([res](FFortItemEntry& entry) {
-		return entry.ItemDefinition == res;
-		}, FFortItemEntry::Size());
+	auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search([res](UFortWorldItem* entry) {
+		return entry->ItemEntry.ItemDefinition == res;
+	});
+	if (!ItemP)
+		return;
+	auto Item = *ItemP;
+	if ((Item->ItemEntry.Count - Price) < 0)
+		return;
 
-	itemEntry->Count -= Price;
-	if (itemEntry->Count <= 0)
-		PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
+	Item->ItemEntry.Count -= Price;
+	if (Item->ItemEntry.Count <= 0)
+		PlayerController->WorldInventory->Remove(Item->ItemEntry.ItemGuid);
 	else
-		PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+		PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
 
 	Building->RepairBuilding(PlayerController, Price);
 }
@@ -532,17 +542,20 @@ void AFortPlayerControllerAthena::ServerAttemptInventoryDrop(UObject* Context, F
 	if (!PlayerController || !PlayerController->Pawn)
 		return;
 
-	auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
-		{ return entry.ItemGuid == Guid; }, FFortItemEntry::Size());
-	if (!ItemEntry || (ItemEntry->Count - Count) < 0)
+	auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* entry)
+		{ return entry->ItemEntry.ItemGuid == Guid; });
+	if (!ItemP)
+		return;
+	auto Item = *ItemP;
+	if ((Item->ItemEntry.Count - Count) < 0)
 		return;
 
-	ItemEntry->Count -= Count;
-	AFortInventory::SpawnPickup(PlayerController->Pawn->K2_GetActorLocation() + PlayerController->Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), *ItemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn, Count);
-	if (ItemEntry->Count == 0)
+	Item->ItemEntry.Count -= Count;
+	AFortInventory::SpawnPickup(PlayerController->Pawn->K2_GetActorLocation() + PlayerController->Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), Item->ItemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn, Count);
+	if (Item->ItemEntry.Count == 0)
 		PlayerController->WorldInventory->Remove(Guid);
 	else
-		PlayerController->WorldInventory->UpdateEntry(*ItemEntry);
+		PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
 }
 
 class UAthenaToyItemDefinition : public UObject
@@ -906,14 +919,14 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 
 	if (MaxStack > 1)
 	{
-		auto itemEntry = WorldInventory->Inventory.ReplicatedEntries.Search([PickupEntry, MaxStack](FFortItemEntry& entry)
-			{ return entry.ItemDefinition == PickupEntry->ItemDefinition && entry.Count < MaxStack; }, FFortItemEntry::Size());
+		auto item = WorldInventory->Inventory.ItemInstances.Search([PickupEntry, MaxStack](UFortWorldItem* entry)
+			{ return entry->ItemEntry.ItemDefinition == PickupEntry->ItemDefinition && entry->ItemEntry.Count < MaxStack; });
 
-		if (itemEntry)
+		if (item)
 		{
-			for (int i = 0; i < itemEntry->StateValues.Num(); i++)
+			for (int i = 0; i < (*item)->ItemEntry.StateValues.Num(); i++)
 			{
-				auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
+				auto& StateValue = (*item)->ItemEntry.StateValues.Get(i, FFortItemEntryStateValue::Size());
 
 				if (StateValue.StateType != 2)
 					continue;
@@ -921,15 +934,15 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 				StateValue.IntValue = 1;
 			}
 
-			if ((itemEntry->Count += PickupEntry->Count) > MaxStack)
+			if (((*item)->ItemEntry.Count += PickupEntry->Count) > MaxStack)
 			{
-				auto OriginalCount = itemEntry->Count;
-				itemEntry->Count = MaxStack;
+				auto OriginalCount = (*item)->ItemEntry.Count;
+				(*item)->ItemEntry.Count = MaxStack;
 
 				GiveOrSwapStack(OriginalCount);
 			}
 
-			WorldInventory->UpdateEntry(*itemEntry);
+			WorldInventory->UpdateEntry((*item)->ItemEntry);
 		}
 		else
 		{
@@ -1224,14 +1237,87 @@ void AFortPlayerControllerAthena::ServerDropAllItems(UObject* Context, FFrame& S
 	}
 }
 
+
+void OnEquip(UObject* Context, FFrame& Stack)
+{
+	AFortWeapon* Weapon;
+
+	Stack.StepCompiledIn(&Weapon);
+	Stack.IncrementCode();
+	auto PlayerController = (AFortPlayerControllerAthena*)((AFortPlayerPawnAthena*)Weapon->Instigator)->Controller;
+	auto AbilitySystemComponent = PlayerController->PlayerState->AbilitySystemComponent;
+
+	//printf("ud2 %s\n", Weapon->Name.ToString().c_str());
+	if (Weapon->WeaponData->EquippedAbilitySet)
+	{
+		//printf("ud2 %s\n", Weapon->WeaponData->EquippedAbilitySet->Name.ToString().c_str());
+	}
+	if (Weapon->PrimaryAbilitySpecHandle.Handle == -1)
+		Weapon->PrimaryAbilitySpecHandle = AbilitySystemComponent->GiveAbility(Weapon->WeaponData->PrimaryFireAbility->GetDefaultObj(), Weapon);
+	if (Weapon->SecondaryAbilitySpecHandle.Handle == -1)
+		Weapon->SecondaryAbilitySpecHandle = AbilitySystemComponent->GiveAbility(Weapon->WeaponData->SecondaryFireAbility->GetDefaultObj(), Weapon);
+	if (Weapon->ReloadAbilitySpecHandle.Handle == -1)
+		Weapon->ReloadAbilitySpecHandle = AbilitySystemComponent->GiveAbility(Weapon->WeaponData->ReloadAbility->GetDefaultObj(), Weapon);
+	if (Weapon->ImpactAbilitySpecHandle.Handle == -1)
+		Weapon->ImpactAbilitySpecHandle = AbilitySystemComponent->GiveAbility(Weapon->WeaponData->OnHitAbility->GetDefaultObj(), Weapon);
+	if (!Weapon->EquippedAbilityHandles.Num())
+	{
+		for (auto& Ability : Weapon->WeaponData->EquippedAbilities)
+		{
+			Weapon->EquippedAbilityHandles.Add(AbilitySystemComponent->GiveAbility(Ability->GetDefaultObj(), Weapon));
+		}
+	}
+}
+
+uint64_t ClearAbility_ = 0;
 void OnUnEquip(UObject* Context, FFrame& Stack)
 {
 	AFortWeapon* Weapon;
 	
 	Stack.StepCompiledIn(&Weapon);
 	Stack.IncrementCode();
+	auto ClearAbility = (void(*)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle&)) ClearAbility_;
+	auto PlayerController = (AFortPlayerControllerAthena*)((AFortPlayerPawnAthena*)Weapon->Instigator)->Controller;
+	auto AbilitySystemComponent = PlayerController->PlayerState->AbilitySystemComponent;
 
-	Weapon->ServerReleaseWeaponAbility(Weapon->PrimaryAbilitySpecHandle);
+	//printf("ud %s\n", Weapon->Name.ToString().c_str());
+	if (Weapon->PrimaryAbilitySpecHandle.Handle != -1)
+	{
+		//printf("handle %d\n", Weapon->PrimaryAbilitySpecHandle.Handle);
+		ClearAbility(AbilitySystemComponent, Weapon->PrimaryAbilitySpecHandle);
+		Weapon->PrimaryAbilitySpecHandle.Handle = -1;
+	}
+	if (Weapon->SecondaryAbilitySpecHandle.Handle != -1)
+	{
+		ClearAbility(AbilitySystemComponent, Weapon->SecondaryAbilitySpecHandle);
+		Weapon->SecondaryAbilitySpecHandle.Handle = -1;
+	}
+	if (Weapon->ReloadAbilitySpecHandle.Handle != -1)
+	{
+		ClearAbility(AbilitySystemComponent, Weapon->ReloadAbilitySpecHandle);
+		Weapon->ReloadAbilitySpecHandle.Handle = -1;
+	}
+	if (Weapon->ImpactAbilitySpecHandle.Handle != -1)
+	{
+		ClearAbility(AbilitySystemComponent, Weapon->ImpactAbilitySpecHandle);
+		Weapon->ImpactAbilitySpecHandle.Handle = -1;
+	}
+	if (Weapon->EquippedAbilityHandles.Num())
+	{
+		for (auto& Handle : Weapon->EquippedAbilityHandles)
+		{
+			if (Handle.Handle != -1)
+			{
+				//printf("777\n");
+				ClearAbility(AbilitySystemComponent, Handle);
+			}
+		}
+		Weapon->EquippedAbilityHandles.Free();
+	}
+	if (Weapon->WeaponData->EquippedAbilitySet)
+	{
+		//printf("ud2 %s\n", Weapon->WeaponData->EquippedAbilitySet->Name.ToString().c_str());
+	}
 }
 
 class UFortHeldObjectComponent : public UActorComponent
@@ -1411,6 +1497,7 @@ void AFortPlayerControllerAthena::Hook()
 	ReplaceBuildingActor_ = FindReplaceBuildingActor(); // pre-cache building offsets
 	RemoveFromAlivePlayers_ = FindRemoveFromAlivePlayers();
 	GiveAbilityAndActivateOnce = FindGiveAbilityAndActivateOnce();
+	ClearAbility_ = FindClearAbility();
 
 	auto DefaultFortPC = DefaultObjImpl("FortPlayerController");
 
@@ -1486,7 +1573,8 @@ void AFortPlayerControllerAthena::Hook()
 
 	if (DefaultWeaponComp)
 	{
-		Utils::ExecHook(DefaultWeaponComp->GetFunction("OnUnEquip"), OnUnEquip);
+		//Utils::ExecHook(DefaultWeaponComp->GetFunction("OnEquip"), OnEquip);
+		//Utils::ExecHook(DefaultWeaponComp->GetFunction("OnUnEquip"), OnUnEquip);
 	}
 
 	auto DefaultHeldObjComp = DefaultObjImpl("FortHeldObjectComponent");

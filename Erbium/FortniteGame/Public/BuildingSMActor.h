@@ -14,6 +14,14 @@ enum class EFortResourceType : uint8
     None = 5
 };
 
+struct FTierMeshSets final
+{
+public:
+    int32                                         Tier;                                              // 0x0000(0x0004)(Edit, BlueprintVisible, ZeroConstructor, DisableEditOnInstance, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+    uint8                                         Pad_4[0x4];                                        // 0x0004(0x0004)(Fixing Size After Last Property [ Dumper-7 ])
+    TArray<void*>                                 MeshSets;                                          // 0x0008(0x0010)(Edit, BlueprintVisible, ZeroConstructor, DisableEditOnInstance, NativeAccessSpecifierPublic)
+};
+
 class ABuildingSMActor : public AActor
 {
 public:
@@ -28,6 +36,7 @@ public:
     DEFINE_BITFIELD_PROP(bDestroyed);
     DEFINE_PROP(CurrentBuildingLevel, int32);
     DEFINE_BITFIELD_PROP(bAllowResourceDrop);
+    DEFINE_PROP(AlternateMeshes, TArray<FTierMeshSets>);
 
     DEFINE_FUNC(GetHealth, float);
     DEFINE_FUNC(GetMaxHealth, float);

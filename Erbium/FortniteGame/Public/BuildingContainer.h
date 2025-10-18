@@ -24,7 +24,11 @@ public:
     DEFINE_PROP(LootTossDirection_Athena, FRotator);
     DEFINE_PROP(LootTossSpeed_Athena, float);
     DEFINE_BITFIELD_PROP(bForceHidePickupMinimapIndicator);
+    DEFINE_PROP(ChosenRandomUpgrade, int32);
+    DEFINE_PROP(ReplicatedLootTier, int32);
+    DEFINE_PROP(LootFinalLocation, FVector);
 
     DEFINE_FUNC(OnRep_bAlreadySearched, void);
     DEFINE_FUNC(BounceContainer, void);
+    DEFINE_FUNC(OnRep_LootTier, void);
 };

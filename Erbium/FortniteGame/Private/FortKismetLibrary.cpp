@@ -115,24 +115,25 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayer(UObject* Context, FFrame& Stack
 		return;
 	}
 
-	auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
-		{ return entry.ItemDefinition == ItemDefinition; }, FFortItemEntry::Size());
-	if (!itemEntry)
+	auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* entry)
+		{ return entry->ItemEntry.ItemDefinition == ItemDefinition; });
+	if (!ItemP)
 	{
 		*Ret = 0;
 		return;
 	}
+	auto Item = *ItemP;
 
 	auto RemoveCount = max(AmountToRemove, 0);
-	itemEntry->Count -= RemoveCount;
+	Item->ItemEntry.Count -= RemoveCount;
 
-	if (AmountToRemove < 0 || itemEntry->Count <= 0 || ItemDefinition->IsA(UFortGadgetItemDefinition::StaticClass()))
+	if (AmountToRemove < 0 || Item->ItemEntry.Count <= 0 || ItemDefinition->IsA(UFortGadgetItemDefinition::StaticClass()))
 	{
-		RemoveCount += itemEntry->Count;
-		PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
+		RemoveCount += Item->ItemEntry.Count;
+		PlayerController->WorldInventory->Remove(Item->ItemEntry.ItemGuid);
 	}
 	else
-		PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+		PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
 
 	*Ret = RemoveCount;
 }
@@ -149,24 +150,24 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayerByGuid(UObject* Context, FFrame&
 	Stack.StepCompiledIn(&bForceRemoval);
 	Stack.IncrementCode();
 
-	auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
-		{ return entry.ItemGuid == ItemGuid; }, FFortItemEntry::Size());
-	if (!ItemEntry)
+	auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* entry)
+		{ return entry->ItemEntry.ItemGuid == ItemGuid; });
+	if (!ItemP)
 	{
 		*Ret = 0;
 		return;
 	}
-
+	auto Item = *ItemP;
 
 	auto RemoveCount = max(AmountToRemove, 0);
-	ItemEntry->Count -= RemoveCount;
+	Item->ItemEntry.Count -= RemoveCount;
 
-	if (AmountToRemove < 0 || ItemEntry->Count <= 0 || ItemEntry->ItemDefinition->IsA(UFortGadgetItemDefinition::StaticClass())) {
-		RemoveCount += ItemEntry->Count;
-		PlayerController->WorldInventory->Remove(ItemEntry->ItemGuid);
+	if (AmountToRemove < 0 || Item->ItemEntry.Count <= 0 || Item->ItemEntry.ItemDefinition->IsA(UFortGadgetItemDefinition::StaticClass())) {
+		RemoveCount += Item->ItemEntry.Count;
+		PlayerController->WorldInventory->Remove(Item->ItemEntry.ItemGuid);
 	}
 	else
-		PlayerController->WorldInventory->UpdateEntry(*ItemEntry);
+		PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
 
 	*Ret = RemoveCount;
 	return;

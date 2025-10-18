@@ -67,7 +67,7 @@ public:
     DEFINE_FUNC(NetMulticast_InvokeGameplayCueExecuted, void);
     DEFINE_FUNC(MakeEffectContext, FGameplayEffectContextHandle);
 
-    void GiveAbility(const UObject* Ability);
+    FGameplayAbilitySpecHandle GiveAbility(const UObject* Ability, UObject* SourceObject = nullptr);
     void GiveAbilitySet(const UFortAbilitySet* Set);
     static void InternalServerTryActivateAbility(UAbilitySystemComponent*, FGameplayAbilitySpecHandle, bool, FPredictionKey*, void*);
 

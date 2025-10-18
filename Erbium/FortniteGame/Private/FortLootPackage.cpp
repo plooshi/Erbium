@@ -134,7 +134,7 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 	if (!ItemDefinition)
 		return;
 
-	auto AmmoDef = VersionInfo.FortniteVersion >= 11.00 && ItemDefinition->IsA(UFortWeaponRangedItemDefinition::StaticClass()) ? ((UFortWeaponItemDefinition*)ItemDefinition)->GetAmmoWorldItemDefinition_BP() : nullptr;
+	auto AmmoDef = VersionInfo.FortniteVersion >= 11.00 && ItemDefinition->IsA(UFortWeaponRangedItemDefinition::StaticClass()) && !((UFortWeaponItemDefinition*)ItemDefinition)->bUsesCustomAmmoType ? ((UFortWeaponItemDefinition*)ItemDefinition)->GetAmmoWorldItemDefinition_BP() : nullptr;
 
 	bool found = false;
 	bool foundAmmo = false;
@@ -442,6 +442,21 @@ void UFortLootPackage::SpawnConsumableActor(ABGAConsumableSpawner* Spawner)
 		free(LootDrop);
 }
 
+void PostUpdate(ABuildingSMActor* BuildingSMActor)
+{
+	if (auto Container = BuildingSMActor->Cast<ABuildingContainer>())
+	{
+		auto ChosenRandomUpgrade = Container->ChosenRandomUpgrade;
+
+		if (ChosenRandomUpgrade < 0 || ChosenRandomUpgrade >= BuildingSMActor->AlternateMeshes.Num())
+			return;
+
+		auto& AlternateMeshSet = BuildingSMActor->AlternateMeshes[ChosenRandomUpgrade];
+
+		Container->ReplicatedLootTier = AlternateMeshSet.Tier;
+		Container->OnRep_LootTier();
+	}
+}
 
 bool bDidntFind = false;
 void UFortLootPackage::Hook()
@@ -449,6 +464,9 @@ void UFortLootPackage::Hook()
 	if (VersionInfo.FortniteVersion >= 11.00)
 	{
 		Utils::Hook(FindSpawnLoot(), SpawnLootHook);
+		auto PostUpdate_ = Memcury::Scanner::FindStringRef(L"ABuildingSMActor::PostUpdate() Building: %s, AltMeshIdx: %d", false, 0, VersionInfo.FortniteVersion >= 19).ScanFor({ 0x40, 0x53 }, false).Get();
+
+		Utils::Hook(PostUpdate_, PostUpdate);
 		return;
 	}
 	else

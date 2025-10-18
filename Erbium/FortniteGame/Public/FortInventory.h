@@ -205,6 +205,13 @@ public:
 
     DEFINE_BITFIELD_PROP(bUsesPhantomReserveAmmo);
     DEFINE_PROP(WeaponStatHandle, FDataTableRowHandle);
+    DEFINE_PROP(PrimaryFireAbility, TSoftClassPtr<UClass>);
+    DEFINE_PROP(SecondaryFireAbility, TSoftClassPtr<UClass>);
+    DEFINE_PROP(ReloadAbility, TSoftClassPtr<UClass>);
+    DEFINE_PROP(OnHitAbility, TSoftClassPtr<UClass>);
+    DEFINE_PROP(EquippedAbilities, TArray<TSoftClassPtr<UClass>>);
+    DEFINE_PROP(EquippedAbilitySet, TSoftObjectPtr<class UFortAbilitySet>);
+    DEFINE_BITFIELD_PROP(bUsesCustomAmmoType);
     
     DEFINE_FUNC(GetAmmoWorldItemDefinition_BP, UFortItemDefinition*);
 };
