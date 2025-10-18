@@ -256,7 +256,14 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 			}
 			else
 			{
-				if (ActorInfo->DormantConnections.Contains(Conn))
+				if (VersionInfo.FortniteVersion <= 1.72)
+				{
+					auto& DormantConnections = *(TSet<TWeakObjectPtr<UNetConnection>>*)(__int64(ActorInfo.Get()) + 0x8);
+
+					if (DormantConnections.Contains(Conn))
+					    continue;
+				}
+				else if (ActorInfo->DormantConnections.Contains(Conn))
 					continue;
 
 				if (Actor->GetNetDormancy() > 1 && Channel && !Channel->IsPendingDormancy() && !Channel->IsDormant())
@@ -482,7 +489,7 @@ void UNetDriver::Hook()
 
     Utils::Hook(FindTickFlush(), TickFlush, TickFlushOG); 
 
-	if (VersionInfo.FortniteVersion < 3.4)
+	if (VersionInfo.FortniteVersion < 3.4 && FindFlushDormancy())
 	{
 		Utils::Hook(__int64(AActor::GetDefaultObj()->GetFunction("FlushNetDormancy")->GetImpl()), FlushNetDormancy, FlushNetDormancyOG);
 		Utils::Hook(__int64(AActor::GetDefaultObj()->GetFunction("SetNetDormancy")->GetImpl()), SetNetDormancy, SetNetDormancyOG);
