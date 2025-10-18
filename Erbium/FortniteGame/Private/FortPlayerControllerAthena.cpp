@@ -1517,14 +1517,14 @@ void AFortPlayerControllerAthena::Hook()
 	auto DefaultFortPCZone = DefaultObjImpl("FortPlayerControllerZone");
 	Utils::Hook<AFortPlayerControllerAthena>(ServerSuicideIdx, DefaultFortPCZone->Vft[ServerSuicideIdx]);
 
-	if (VersionInfo.FortniteVersion >= 11)
-	{
+	//if (VersionInfo.FortniteVersion >= 11)
+	//{
 		auto ServerAttemptAircraftJumpPC = GetDefaultObj()->GetFunction("ServerAttemptAircraftJump");
 		if (!ServerAttemptAircraftJumpPC)
 			Utils::ExecHook(DefaultObjImpl("FortControllerComponent_Aircraft")->GetFunction("ServerAttemptAircraftJump"), ServerAttemptAircraftJump_, ServerAttemptAircraftJump_OG);
 		else
 			Utils::ExecHook(ServerAttemptAircraftJumpPC, ServerAttemptAircraftJump_);
-	}
+	//}
 
 	//Utils::ExecHook(GetDefaultObj()->GetFunction("ServerAcknowledgePossession"), ServerAcknowledgePossession);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerExecuteInventoryItem"), ServerExecuteInventoryItem_);
