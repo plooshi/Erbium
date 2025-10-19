@@ -218,6 +218,7 @@
     <ClInclude Include="Engine\Public\DataTable.h" />
     <ClInclude Include="Engine\Public\DataTableFunctionLibrary.h" />
     <ClInclude Include="Engine\Public\NetDriver.h" />
+    <ClInclude Include="Erbium\Plugins\CrashReporter\Public\CrashReporter.h" />
     <ClInclude Include="Erbium\Public\Configuration.h" />
     <ClInclude Include="Erbium\Public\Events.h" />
     <ClInclude Include="Erbium\Public\Finders.h" />
@@ -267,6 +268,7 @@
   <ItemGroup>
     <ClCompile Include="Engine\Private\AbilitySystemComponent.cpp" />
     <ClCompile Include="Engine\Private\NetDriver.cpp" />
+    <ClCompile Include="Erbium\Plugins\CrashReporter\Private\CrashReporter.cpp" />
     <ClCompile Include="Erbium\Private\dllmain.cpp" />
     <ClCompile Include="Erbium\Private\Events.cpp" />
     <ClCompile Include="Erbium\Private\Finders.cpp" />

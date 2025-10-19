@@ -37,6 +37,18 @@
     <Filter Include="ImGui">
       <UniqueIdentifier>{2665ea75-93ff-4597-8707-9410bd0d274e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Erbium\Plugins">
+      <UniqueIdentifier>{4af572c3-6755-426f-82bc-162a2c99ac4d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Erbium\Plugins\CrashReporter">
+      <UniqueIdentifier>{f7026405-45f3-4758-a907-0396dab4c10a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Erbium\Plugins\CrashReporter\Public">
+      <UniqueIdentifier>{c2714c94-6944-46ba-ba80-98b663df8766}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Erbium\Plugins\CrashReporter\Private">
+      <UniqueIdentifier>{b6e07165-4ce4-4e5b-b75a-897e3c381e85}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SDK\Includes.h">
@@ -189,6 +201,9 @@
     <ClInclude Include="ImGui\imgui_impl_dx11.h">
       <Filter>ImGui</Filter>
     </ClInclude>
+    <ClInclude Include="Erbium\Plugins\CrashReporter\Public\CrashReporter.h">
+      <Filter>Erbium\Plugins\CrashReporter\Public</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Erbium\Private\dllmain.cpp">
@@ -265,6 +280,9 @@
     </ClCompile>
     <ClCompile Include="ImGui\imgui_impl_dx11.cpp">
       <Filter>ImGui</Filter>
+    </ClCompile>
+    <ClCompile Include="Erbium\Plugins\CrashReporter\Private\CrashReporter.cpp">
+      <Filter>Erbium\Plugins\CrashReporter\Private</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

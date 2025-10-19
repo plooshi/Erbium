@@ -9,9 +9,13 @@
 #include "../Public/Configuration.h"
 #include "../Public/Misc.h"
 #include "../Public/GUI.h"
+#include "../../Erbium/Plugins/CrashReporter/Public/CrashReporter.h"
 
 void Main()
 {
+    if constexpr (FConfiguration::bCustomCrashReporter)
+        FCrashReporter::Register();
+
 #ifndef CLIENT
     if constexpr (!FConfiguration::bGUI)
     {
