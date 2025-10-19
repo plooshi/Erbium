@@ -95,13 +95,11 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 	}
 	else
 	{
-		for (auto const& Val : LPGroupsAll)
+		for (auto const& Val : LootPackageMap[Package.ComparisonIndex])
 		{
 			if (!Val)
 				continue;
 
-			if (Val->LootPackageID != Package)
-				continue;
 			if (i != -1 && Val->LootPackageCategory != i)
 				continue;
 			if (WorldLevel >= 0) {
@@ -203,9 +201,9 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 	}
 	else
 	{
-		for (auto const& Val : TierDataAllGroups)
+		for (auto const& Val : TierDataMap[TierGroup.ComparisonIndex])
 		{
-			if (Val->TierGroup == TierGroup && (LootTier == -1 ? true : LootTier == Val->LootTier))
+			if (LootTier == -1 ? true : LootTier == Val->LootTier)
 				TierDataGroups.Add(Val);
 		}
 	}

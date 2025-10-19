@@ -294,7 +294,8 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             AddToTierData(LootTierData, LootTierDataTempArr);
 
         for (auto& [_, Val] : LootTierDataTempArr)
-            TierDataAllGroups.Add(Val);
+            TierDataMap[Val->TierGroup.ComparisonIndex].Add(Val);
+        //    TierDataAllGroups.Add(Val);
 
         UEAllocatedMap<FName, FFortLootPackageData*> LootPackageTempArr;
         auto LootPackages = Playlist ? Playlist->LootPackages.Get() : nullptr;
@@ -304,7 +305,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             AddToPackages(LootPackages, LootPackageTempArr);
 
         for (auto& [_, Val] : LootPackageTempArr)
-            LPGroupsAll.Add(Val);
+             LootPackageMap[Val->LootPackageID.ComparisonIndex].Add(Val);
 
         if (VersionInfo.FortniteVersion >= 21)
         {
@@ -354,8 +355,11 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                                             AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);
                         }
 
+                        //for (auto& [_, Val] : LTDTempData)
+                        //    TierDataAllGroups.Add(Val);
+
                         for (auto& [_, Val] : LTDTempData)
-                            TierDataAllGroups.Add(Val);
+                            TierDataMap[Val->TierGroup.ComparisonIndex].Add(Val);
                     }
 
                     if (LootPackageData)
@@ -381,7 +385,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                         }
 
                         for (auto& [_, Val] : LPTempData)
-                            LPGroupsAll.Add(Val);
+                            LootPackageMap[Val->LootPackageID.ComparisonIndex].Add(Val);
                     }
                 }
             }

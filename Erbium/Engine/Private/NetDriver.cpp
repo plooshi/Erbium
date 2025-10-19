@@ -11,7 +11,7 @@ uint32_t DestroyedStartupOrDormantActorsOffset = 0;
 uint32_t DestroyedStartupOrDormantActorGUIDsOffset = 0;
 uint32_t ClientVisibleLevelNamesOffset = 0;
 
-std::map<UNetConnection*, TArray<FNetViewer*>> ViewerMap;
+std::unordered_map<UNetConnection*, TArray<FNetViewer*>> ViewerMap;
 
 void BuildViewerMap(UNetDriver* Driver)
 {
@@ -128,7 +128,7 @@ struct FPrioActor
 	UActorChannel* Channel;
 };
 
-std::map<UNetConnection*, TArray<FPrioActor>> PriorityLists;
+std::unordered_map<UNetConnection*, TArray<FPrioActor>> PriorityLists;
 
 void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 {
