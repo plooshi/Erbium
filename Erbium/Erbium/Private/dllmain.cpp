@@ -13,10 +13,10 @@
 
 void Main()
 {
+#ifndef CLIENT
     if constexpr (FConfiguration::bCustomCrashReporter)
         FCrashReporter::Register();
 
-#ifndef CLIENT
     if constexpr (!FConfiguration::bGUI)
     {
         AllocConsole();

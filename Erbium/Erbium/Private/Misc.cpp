@@ -108,7 +108,7 @@ void Misc::InitClient()
 {
 	UEngine::GetEngine()->GameViewport->ViewportConsole = UGameplayStatics::SpawnObject(UEngine::GetEngine()->ConsoleClass, UEngine::GetEngine()->GameViewport);
 
-	/*auto ArenaUI = UKismetStringLibrary::Conv_StringToName(FString(L"/Game/UI/Competitive/Arena/ArenaScoringHUD.ArenaScoringHUD_C"));
+	auto ArenaUI = UKismetStringLibrary::Conv_StringToName(FString(L"/Game/UI/Competitive/Arena/ArenaScoringHUD.ArenaScoringHUD_C"));
 	FUIExtension ArenaUIExtension{};
 	ArenaUIExtension.Slot = 0;
 	ArenaUIExtension.WidgetClass.ObjectID.AssetPathName = ArenaUI;
@@ -128,7 +128,7 @@ void Misc::InitClient()
 	ShowdownExtensions.Add(ShowdownUIExtension);
 	ShowdownExtensions.Add(AIKillsUIExtension);
 		
-	auto PlaylistClass = FindClass("FortPlaylistAthena");
+	/*auto PlaylistClass = FindClass("FortPlaylistAthena");
 
 	for (int i = 0; i < TUObjectArray::Num(); i++)
 	{
@@ -143,10 +143,10 @@ void Misc::InitClient()
 		}
 	}*/
 
-	auto SelectEditAddr = Memcury::Scanner::FindStringRef(L"EditModeInputComponent0").ScanFor({0x48, 0x8D, 0x05}, true, 1).RelativeOffset(3).GetAs<void*>();
+	auto SelectEditAddr = Memcury::Scanner::FindStringRef(L"EditModeInputComponent0").ScanFor({ 0x48, 0x8D, 0x05 }, true, 1).RelativeOffset(3).GetAs<void*>();
 	auto SelectResetAddr = Memcury::Scanner::FindStringRef(L"EditModeInputComponent0").ScanFor({ 0x48, 0x8D, 0x05 }, true, 2).RelativeOffset(3).GetAs<void*>();
 
-	auto sRef = Memcury::Scanner::FindStringRef("CompleteBuildingEditInteraction", true, 0).Get();
+	auto sRef = Memcury::Scanner::FindStringRef("CompleteBuildingEditInteraction", true, VersionInfo.EngineVersion >= 4.27).Get();
 	uintptr_t CompleteBuildingEditInteractionLea = 0;
 
 	for (int i = 1; i < 2000; i++)
@@ -171,7 +171,7 @@ void Misc::InitClient()
 		MH_CreateHook(SelectEditAddr, SelectEdit, (LPVOID*)&SelectEditOG);
 	if (VersionInfo.FortniteVersion < 24.40)
 		MH_CreateHook(SelectResetAddr, SelectReset, (LPVOID*)&SelectResetOG);
-		
+
 	MH_EnableHook(MH_ALL_HOOKS);
 
 	CreateThread(0, 0, (LPTHREAD_START_ROUTINE)ClientThread, 0, 0, 0);
