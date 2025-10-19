@@ -145,7 +145,7 @@ void Misc::InitClient()
 	auto SelectEditAddr = Memcury::Scanner::FindStringRef(L"EditModeInputComponent0").ScanFor({ 0x48, 0x8D, 0x05 }, true, 1).RelativeOffset(3).GetAs<void*>();
 	auto SelectResetAddr = Memcury::Scanner::FindStringRef(L"EditModeInputComponent0").ScanFor({ 0x48, 0x8D, 0x05 }, true, 2).RelativeOffset(3).GetAs<void*>();
 
-	auto sRef = Memcury::Scanner::FindStringRef("CompleteBuildingEditInteraction", true).Get();
+	auto sRef = Memcury::Scanner::FindStringRef("CompleteBuildingEditInteraction", true, VersionInfo.EngineVersion >= 4.27).Get();
 	uintptr_t CompleteBuildingEditInteractionLea = 0;
 
 	for (int i = 1; i < 2000; i++)
