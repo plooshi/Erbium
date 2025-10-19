@@ -936,10 +936,10 @@ uint64_t FindEncryptionPatch()
             EncryptionPatchPoint = Memcury::Scanner::FindPattern("83 BD ? ? ? ? ? 7F 18 49 8D 4D D8 48 8B D7 E8").Get();
 
         if (!EncryptionPatchPoint)
-            EncryptionPatchPoint = Memcury::Scanner::FindPattern("83 7C 24 ? ? 7F ? 49 8B CE").Get();
+            EncryptionPatchPoint = Memcury::Scanner::FindPattern("83 7C 24 ? ? 7F 0D 49 8B CE").Get();
 
         if (!EncryptionPatchPoint)
-            EncryptionPatchPoint = Memcury::Scanner::FindPattern("83 7C 24 ? ? 7F ? 48 8B CE").Get();
+            EncryptionPatchPoint = Memcury::Scanner::FindPattern("83 7C 24 ? ? 7F 0D 48 8B CE").Get();
 
         if (EncryptionPatchPoint)
             for (int i = 0; i < 9; i++)
