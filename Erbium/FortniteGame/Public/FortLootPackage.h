@@ -44,8 +44,8 @@ public:
 
 //inline TArray<FFortLootTierData*> TierDataAllGroups;
 //inline TArray<FFortLootPackageData*> LPGroupsAll;
-inline UEAllocatedMap<int32, TArray<FFortLootTierData*>> TierDataMap;
-inline UEAllocatedMap<int32, TArray<FFortLootPackageData*>> LootPackageMap;
+inline std::map<int32, TArray<FFortLootTierData*>> TierDataMap;
+inline std::map<int32, TArray<FFortLootPackageData*>> LootPackageMap;
 
 template <typename T>
 static T* PickWeighted(TArray<T*>& Map, float (*RandFunc)(float), bool bCheckZero = true) {
