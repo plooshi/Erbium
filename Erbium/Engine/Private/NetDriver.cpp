@@ -256,18 +256,19 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 			}
 			else
 			{
-				if (VersionInfo.FortniteVersion <= 1.72)
+				if (VersionInfo.FortniteVersion == 1.72 || VersionInfo.FortniteVersion == 0.00)
 				{
-					auto& DormantConnections = *(TSet<TWeakObjectPtr<UNetConnection>>*)(__int64(ActorInfo.Get()) + 0x8);
-
+					auto& DormantConnections = *(TSet<TWeakObjectPtr<UNetConnection>>*)(__int64(ActorInfo.Get()) + 0x28);
+					
 					if (DormantConnections.Contains(Conn))
-					    continue;
+						continue;
 				}
 				else if (ActorInfo->DormantConnections.Contains(Conn))
 					continue;
 
-				if (Actor->GetNetDormancy() > 1 && Channel && !Channel->IsPendingDormancy() && !Channel->IsDormant())
-					((int32(*)(UActorChannel*))FindStartBecomingDormant())(Channel);
+				if (VersionInfo.FortniteVersion != 1.72 && VersionInfo.FortniteVersion != 0.00)
+					if (Actor->GetNetDormancy() > 1 && Channel && !Channel->IsPendingDormancy() && !Channel->IsDormant())
+						((int32(*)(UActorChannel*))FindStartBecomingDormant())(Channel);
 			}
 
 			if (bRelevant && bLevelInitializedForActor)
