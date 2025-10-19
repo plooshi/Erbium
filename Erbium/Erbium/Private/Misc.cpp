@@ -94,6 +94,7 @@ void ClientThread()
 				auto PlayerController = (AFortPlayerControllerAthena*) LocalPlayers[0]->PlayerController;
 
 				PlayerController->CheatManager = UGameplayStatics::SpawnObject(PlayerController->CheatClass, PlayerController);
+				PlayerController->CheatManager->ObjectFlags &= ~0x1000000;
 			}
 		}
 		else if (!GetAsyncKeyState(VK_F3) && !GetAsyncKeyState(VK_F2))

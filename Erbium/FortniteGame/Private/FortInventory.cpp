@@ -286,6 +286,7 @@ AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entr
     {
         static auto ProjectileMovementClass = FindClass("ProjectileMovementComponent");
         NewPickup->MovementComponent = UGameplayStatics::SpawnObject(ProjectileMovementClass, NewPickup);
+        NewPickup->MovementComponent->ObjectFlags &= ~0x1000000;
     }
 
     NewPickup->TossPickup(Loc, Pawn, -1, Toss, true, (uint8)SourceTypeFlag, (uint8)SpawnSource);
@@ -346,6 +347,7 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
     {
         static auto ProjectileMovementClass = FindClass("ProjectileMovementComponent");
         NewPickup->MovementComponent = UGameplayStatics::SpawnObject(ProjectileMovementClass, NewPickup);
+        NewPickup->MovementComponent->ObjectFlags &= ~0x1000000;
     }
 
     //auto bFloorLoot = Container->IsA<ATiered_Athena_FloorLoot_01_C>() || Container->IsA<ATiered_Athena_FloorLoot_Warmup_C>();
