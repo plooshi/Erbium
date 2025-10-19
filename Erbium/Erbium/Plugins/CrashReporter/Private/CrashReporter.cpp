@@ -53,7 +53,7 @@ DWORD FormatNtStatus(NTSTATUS nsCode, TCHAR** ppszMessage)
 
 LONG WINAPI ErbiumUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo)
 {
-    if (SUCCEEDED(ExceptionInfo->ExceptionRecord->ExceptionCode) || (ExceptionInfo->ExceptionRecord->ExceptionCode & 0x3) != 0)
+    if ((ExceptionInfo->ExceptionRecord->ExceptionCode & 0x80000000) == 0 || (ExceptionInfo->ExceptionRecord->ExceptionCode & 0x30000000) != 0)
         return EXCEPTION_CONTINUE_SEARCH;
 
     FreezeOtherThreads();
