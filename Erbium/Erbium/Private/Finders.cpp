@@ -1525,12 +1525,23 @@ uint64_t FindEnterAircraft()
         {
             auto Ptr = (uint8_t*)(sRef - i);
 
+            if (*Ptr == 0x48 && (*(Ptr + 1) == 0x83 || *(Ptr + 1) == 0x81) && *(Ptr + 2) == 0xEC)
+            {
+                sRef = uint64_t(Ptr);
+                break;
+            }
+        }
+
+        for (int i = 0; i < 1000; i++)
+        {
+            auto Ptr = (uint8_t*)(sRef - i);
+
             if (*(uint8_t*)(sRef - i) == 0x40 && (*(uint8_t*)(sRef - i + 1) == 0x53 || *(uint8_t*)(sRef - i + 1) == 0x55))
             {
                 EnterAircraft = uint64_t(Ptr);
                 break;
             }
-            else if (VersionInfo.FortniteVersion >= 15 && *Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5c && *(Ptr + 3) == 0x24)
+            else if (VersionInfo.FortniteVersion >= 15 && *Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5c)
             {
                 EnterAircraft = uint64_t(Ptr);
                 break;

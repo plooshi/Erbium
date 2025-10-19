@@ -129,6 +129,8 @@ LONG WINAPI ErbiumUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo)
             reportStream << "\n- Trying to execute ";
             break;
         }
+        if (ExceptionInfo->ExceptionRecord->ExceptionInformation[1] == 0xFFFFF78000000900) // fn anti debug check ig
+            return EXCEPTION_CONTINUE_SEARCH;
 
         char addr[19];
         snprintf(addr, 19, "0x%016llx", ExceptionInfo->ExceptionRecord->ExceptionInformation[1]);
