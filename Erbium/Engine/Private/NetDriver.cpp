@@ -266,7 +266,8 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 				else if (ActorInfo->DormantConnections.Contains(Conn))
 					continue;
 
-				if (VersionInfo.FortniteVersion != 1.72 && VersionInfo.FortniteVersion != 0.00)
+				static auto FlushDormancy = FindFlushDormancy();
+				if (VersionInfo.FortniteVersion != 1.72 && VersionInfo.FortniteVersion != 0.00 && (VersionInfo.FortniteVersion >= 20 || FlushDormancy))
 					if (Actor->GetNetDormancy() > 1 && Channel && !Channel->IsPendingDormancy() && !Channel->IsDormant())
 						((int32(*)(UActorChannel*))FindStartBecomingDormant())(Channel);
 			}
