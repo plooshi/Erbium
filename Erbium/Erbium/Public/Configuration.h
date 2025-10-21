@@ -12,5 +12,5 @@ struct FConfiguration
     static inline auto bForceRespawns = false;
     static inline constexpr auto bCreative = false;
     static inline constexpr auto bGUI = false;
-    static inline constexpr auto bCustomCrashReporter = false;
+    static inline constexpr auto bCustomCrashReporter = true;
 };
