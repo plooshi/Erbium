@@ -1498,7 +1498,7 @@ void AFortPlayerControllerAthena::Hook()
 
 	if (VersionInfo.FortniteVersion >= 14.00)
 	{
-		auto OnUnEquipAddr = FindFunctionCall(L"K2_OnUnEquip", VersionInfo.EngineVersion >= 4.27 ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
+		auto OnUnEquipAddr = FindFunctionCall(L"K2_OnUnEquip", std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
 
 		Utils::Hook(OnUnEquipAddr, OnUnEquip, OnUnEquipOG);
 
