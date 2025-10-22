@@ -103,7 +103,7 @@ void ClientThread()
 		else if (!GetAsyncKeyState(VK_F3) && !GetAsyncKeyState(VK_F2))
 			bPressed = false;
 
-		Sleep(33); // thread runs at 30tps
+		Sleep(33); // thread runs at 30tps	
 	}
 }
 

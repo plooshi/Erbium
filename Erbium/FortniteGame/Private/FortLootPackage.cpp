@@ -132,13 +132,13 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 	if (!ItemDefinition)
 		return;
 
-	auto AmmoDef = VersionInfo.FortniteVersion >= 11.00 && ItemDefinition->IsA(UFortWeaponRangedItemDefinition::StaticClass()) && !((UFortWeaponItemDefinition*)ItemDefinition)->bUsesCustomAmmoType ? ((UFortWeaponItemDefinition*)ItemDefinition)->GetAmmoWorldItemDefinition_BP() : nullptr;
+	//auto AmmoDef = VersionInfo.FortniteVersion >= 11.00 && ItemDefinition->IsA(UFortWeaponRangedItemDefinition::StaticClass()) && !((UFortWeaponItemDefinition*)ItemDefinition)->bUsesCustomAmmoType ? ((UFortWeaponItemDefinition*)ItemDefinition)->GetAmmoWorldItemDefinition_BP() : nullptr;
 
 	bool found = false;
 	bool foundAmmo = false;
 	for (auto& LootDrop : LootDrops)
 	{
-		if ((!AmmoDef || AmmoDef->DropCount) && LootDrop->ItemDefinition == ItemDefinition)
+		if (/*(!AmmoDef || AmmoDef->DropCount) && */LootDrop->ItemDefinition == ItemDefinition)
 		{
 			LootDrop->Count += LootPackage->Count;
 
@@ -154,7 +154,7 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 			found = true;
 		}
 
-		if (AmmoDef && LootDrop->ItemDefinition == AmmoDef)
+		/*if (AmmoDef && LootDrop->ItemDefinition == AmmoDef)
 		{
 			LootDrop->Count += AmmoDef->DropCount;
 
@@ -168,14 +168,14 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 
 			//if (Inventory::GetQuickbar(LootDrop.ItemDefinition) == EFortQuickBars::Secondary)
 			foundAmmo = true;
-		}
+		}*/
 	}
 
 	if (!found && LootPackage->Count > 0)
 		LootDrops.Add(AFortInventory::MakeItemEntry(ItemDefinition, LootPackage->Count, ItemDefinition->IsA(UFortWorldItemDefinition::StaticClass()) ? std::clamp(GetLevel(ItemDefinition->LootLevelData), ItemDefinition->MinLevel, ItemDefinition->MaxLevel > 0 ? ItemDefinition->MaxLevel : 99999) : 0));
 
-	if (AmmoDef && AmmoDef->DropCount > 0 && !foundAmmo && LootPackage->Count > 0)
-		LootDrops.Add(AFortInventory::MakeItemEntry(AmmoDef, AmmoDef->DropCount, AmmoDef->IsA(UFortWorldItemDefinition::StaticClass()) ? std::clamp(GetLevel(AmmoDef->LootLevelData), AmmoDef->MinLevel, AmmoDef->MaxLevel > 0 ? AmmoDef->MaxLevel : 99999) : 0));
+	//if (AmmoDef && AmmoDef->DropCount > 0 && !foundAmmo && LootPackage->Count > 0)
+	//	LootDrops.Add(AFortInventory::MakeItemEntry(AmmoDef, AmmoDef->DropCount, AmmoDef->IsA(UFortWorldItemDefinition::StaticClass()) ? std::clamp(GetLevel(AmmoDef->LootLevelData), AmmoDef->MinLevel, AmmoDef->MaxLevel > 0 ? AmmoDef->MaxLevel : 99999) : 0));
 }
 
 TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup, int LootTier, int WorldLevel)
@@ -212,8 +212,18 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 	if (!LootTierData)
 		return {};
 
-	if (LootTierData->NumLootPackageDrops < 0)
+	if (LootTierData->NumLootPackageDrops <= 0)
 		return {};
+
+	if (VersionInfo.FortniteVersion >= 11)
+	{
+		auto& MinArr = LootTierData->LootPackageCategoryMinArray;
+		if (MinArr.Num() > 1 && MinArr[1] == 0 && LootTierData->LootPackage.ToString().starts_with("WorldPKG.AthenaLoot.Weapon."))
+		{
+			MinArr[1] = 1;
+			LootTierData->NumLootPackageDrops++;
+		}
+	}
 
 	int DropCount;
 	if (LootTierData->NumLootPackageDrops < 1.f)
@@ -283,7 +293,7 @@ bool UFortLootPackage::SpawnLootHook(ABuildingContainer* Container)
 	if (Container->bAlreadySearched)
 		return false;
 
-	auto& RealTierGroup = Container->SearchLootTierGroup;
+	auto RealTierGroup = Container->SearchLootTierGroup;
 	auto GameMode = ((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode);
 	if (GameMode->HasRedirectAthenaLootTierGroups())
 	{

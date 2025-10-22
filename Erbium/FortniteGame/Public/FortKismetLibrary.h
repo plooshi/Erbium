@@ -7,6 +7,7 @@ struct FSpawnItemVariantParams
 {
 public:
 	USCRIPTSTRUCT_COMMON_MEMBERS(FSpawnItemVariantParams);
+	uint8_t Padding[0x80];
 
 	DEFINE_STRUCT_PROP(Position, FVector);
 	DEFINE_STRUCT_PROP(position, FVector); // WHY

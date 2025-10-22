@@ -5,24 +5,6 @@
 #include "../../Engine/Public/CurveTable.h"
 #include "GameplayTagContainer.h"
 
-struct FScalableFloat
-{
-public:
-    float Value;
-    uint8 _Padding[0x4];
-    FCurveTableRowHandle Curve;
-
-    inline float Evaluate()
-    {
-        if (!Curve.CurveTable)
-            return Value;
-
-        float Out;
-        UDataTableFunctionLibrary::EvaluateCurveTableRow(Curve.CurveTable, Curve.RowName, (float)0, nullptr, &Out, FString());
-        return Out;
-    }
-};
-
 struct FUIExtension final
 {
 public:

@@ -1,5 +1,6 @@
 #pragma once
 #include "../../pch.h"
+#include "DataTableFunctionLibrary.h"
 
 struct FRealCurve
 {
@@ -40,4 +41,22 @@ struct FCurveTableRowHandle
 {
     const UCurveTable* CurveTable;
     FName RowName;
+};
+
+struct FScalableFloat
+{
+public:
+    float Value;
+    uint8 _Padding[0x4];
+    FCurveTableRowHandle Curve;
+
+    inline float Evaluate()
+    {
+        if (!Curve.CurveTable)
+            return Value;
+
+        float Out;
+        UDataTableFunctionLibrary::EvaluateCurveTableRow(Curve.CurveTable, Curve.RowName, (float)0, nullptr, &Out, FString());
+        return Out;
+    }
 };

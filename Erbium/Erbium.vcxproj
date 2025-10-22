@@ -231,6 +231,7 @@
     <ClInclude Include="FortniteGame\Public\BuildingFoundation.h" />
     <ClInclude Include="FortniteGame\Public\BuildingItemCollectorActor.h" />
     <ClInclude Include="FortniteGame\Public\BuildingSMActor.h" />
+    <ClInclude Include="FortniteGame\Public\FortAthenaMutator.h" />
     <ClInclude Include="FortniteGame\Public\FortGameModeAthena.h" />
     <ClInclude Include="FortniteGame\Public\FortGameSessionAthena.h" />
     <ClInclude Include="FortniteGame\Public\FortGameStateAthena.h" />
@@ -277,6 +278,7 @@
     <ClCompile Include="Erbium\Private\Misc.cpp" />
     <ClCompile Include="FortniteGame\Private\BuildingFoundation.cpp" />
     <ClCompile Include="FortniteGame\Private\BuildingSMActor.cpp" />
+    <ClCompile Include="FortniteGame\Private\FortAthenaMutator.cpp" />
     <ClCompile Include="FortniteGame\Private\FortGameModeAthena.cpp" />
     <ClCompile Include="FortniteGame\Private\FortInventory.cpp" />
     <ClCompile Include="FortniteGame\Private\FortKismetLibrary.cpp" />

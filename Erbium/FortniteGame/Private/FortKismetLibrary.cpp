@@ -176,8 +176,10 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayerByGuid(UObject* Context, FFrame&
 void UFortKismetLibrary::SpawnItemVariantPickupInWorld(UObject* Object, FFrame& Stack, AFortPickupAthena** Ret)
 {
 	UObject* WorldContextObject;
+	FSpawnItemVariantParams Params;
+
 	Stack.StepCompiledIn(&WorldContextObject);
-	auto& Params = Stack.StepCompiledInRef<FSpawnItemVariantParams>();
+	Stack.StepCompiledIn(&Params);
 	Stack.IncrementCode();
 
 	*Ret = AFortInventory::SpawnPickup(FSpawnItemVariantParams::HasPosition() ? Params.Position : Params.position, Params.WorldItemDefinition, Params.NumberToSpawn, 0, Params.SourceType, Params.Source, nullptr, Params.bToss, Params.bRandomRotation);
