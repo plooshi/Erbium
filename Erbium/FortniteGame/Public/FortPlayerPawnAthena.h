@@ -56,6 +56,7 @@ public:
     DEFINE_FUNC(OnRep_IsInAnyStorm, void);
     DEFINE_FUNC(OnRep_IsInsideSafeZone, void);
     DEFINE_FUNC(OnRep_PlayerState, void);
+    DEFINE_FUNC(ServerSetAttachment, void);
 
     DefUHookOg(ServerHandlePickup_);
     DefUHookOg(ServerHandlePickupInfo);

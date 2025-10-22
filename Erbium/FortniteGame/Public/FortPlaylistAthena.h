@@ -55,4 +55,5 @@ public:
     DEFINE_PROP(GameData, TSoftObjectPtr<UCurveTable>);
     DEFINE_PROP(UIExtensions, TArray<FUIExtension>);
     DEFINE_PROP(GameplayTagContainer, FGameplayTagContainer);
+    DEFINE_PROP(bSkipAircraft, bool);
 };

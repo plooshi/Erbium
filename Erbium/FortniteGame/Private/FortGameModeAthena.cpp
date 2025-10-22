@@ -231,6 +231,14 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         if (VersionInfo.FortniteVersion >= 4.0)
             SetupPlaylist(GameMode, GameState);
 
+        if (VersionInfo.EngineVersion >= 4.27)
+        {
+            auto MeshNetworkSubsystem = TUObjectArray::FindFirstObject("MeshNetworkSubsystem");
+
+            if (MeshNetworkSubsystem)
+                MeshNetworkSubsystem->Get<"NodeType", uint8_t>() = 2;
+        }
+        
         *Ret = false;
         return;
     }

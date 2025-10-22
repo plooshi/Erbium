@@ -24,13 +24,13 @@ public:
 	{
 		FEvent
 		{
-			L"",
+			nullptr,
 			L"/Game/Athena/Maps/Test/Events/BP_GeodeScripting.BP_GeodeScripting_C",
 			{
 				FEventFunction{ false, L"/Game/Athena/Maps/Test/Events/BP_GeodeScripting.BP_GeodeScripting_C.LaunchSequence" }
 			},
 			4.5,
-			L""
+			nullptr
 		},
 
 		FEvent
@@ -42,13 +42,13 @@ public:
 				FEventFunction{ true, L"/Game/Athena/Prototype/Blueprints/Cube/CUBE.CUBE_C.Final" }
 			},
 			5.30,
-			L""
+			nullptr
 		},
 
 		FEvent
 		{
 			L"/Game/Athena/Prototype/Blueprints/Island/BP_Butterfly.BP_Butterfly_C",
-			L"",
+			nullptr,
 			{
 				FEventFunction{ true, L"/Game/Athena/Prototype/Blueprints/Island/BP_Butterfly.BP_Butterfly_C.ButterflySequence" }
 			},
@@ -58,7 +58,7 @@ public:
 
 		FEvent
 		{
-			L"",
+			nullptr,
 			L"/Game/Athena/Prototype/Blueprints/White/BP_SnowScripting.BP_SnowScripting_C",
 			{
 				FEventFunction{ false, L"/Game/Athena/Prototype/Blueprints/White/BP_SnowScripting.BP_SnowScripting_C.FinalSequence" }
@@ -70,7 +70,7 @@ public:
 		FEvent
 		{
 			L"/Game/Athena/Prototype/Blueprints/Cattus/BP_CattusDoggus_Scripting.BP_CattusDoggus_Scripting_C",
-			L"",
+			nullptr,
 			{
 				FEventFunction{ true, L"/Game/Athena/Prototype/Blueprints/Cattus/BP_CattusDoggus_Scripting.BP_CattusDoggus_Scripting_C.OnReady_C11CA7624A74FBAEC54753A3C2BD4506" },
 				FEventFunction{ true, L"/Game/Athena/Prototype/Blueprints/Cattus/BP_CattusDoggus_Scripting.BP_CattusDoggus_Scripting_C.startevent" }
@@ -81,7 +81,7 @@ public:
 
 		FEvent
 		{
-			L"",
+			nullptr,
 			L"/Game/Athena/Prototype/Blueprints/NightNight/BP_NightNight_Scripting.BP_NightNight_Scripting_C",
 			{
 				FEventFunction{ false, L"/Game/Athena/Prototype/Blueprints/NightNight/BP_NightNight_Scripting.BP_NightNight_Scripting_C.OnReady_D0847F7B4E80F01E77156AA4E7131AF6" },
@@ -113,6 +113,26 @@ public:
 			},
 			12.41,
 			L"/CycloneJerky/Gameplay/BP_Jerky_Loader.BP_Jerky_Loader_C.LoadJerkyLevel"
+		},
+		FEvent
+		{
+			nullptr,
+			L"/Buffet/Gameplay/Blueprints/Buffet_SpecialEventScript.Buffet_SpecialEventScript_C",
+			{
+				FEventFunction{ false, L"/Script/SpecialEventGameplayRuntime.SpecialEventScript.StartEventAtIndex" }
+			},
+			17.30,
+			nullptr
+		},
+		FEvent
+		{
+			nullptr,
+			L"/Guava/Gameplay/BP_Guava_SpecialEventScript.BP_Guava_SpecialEventScript_C",
+			{
+				FEventFunction{ false, L"/Script/SpecialEventGameplayRuntime.SpecialEventScript.StartEventAtIndex" }
+			},
+			18.40,
+			nullptr
 		}
 	};
 

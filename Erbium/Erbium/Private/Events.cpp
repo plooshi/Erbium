@@ -58,6 +58,11 @@ void Events::StartEvent()
 				Params{ GameMode->GameState, Playlist, FGameplayTagContainer() };
 				Target->ProcessEvent(const_cast<UFunction*>(Function), &Params);
 			}
+			else if (wcsstr(EventFunction.FunctionPath, L"StartEventAtIndex"))
+			{
+				int StartingIndex = 0;
+				Target->Call(const_cast<UFunction*>(Function), StartingIndex);
+			}
 			else 
 				Target->ProcessEvent(const_cast<UFunction*>(Function), nullptr);
 
@@ -73,6 +78,26 @@ void Events::StartEvent()
 					ScriptingObject->ProcessEvent(const_cast<UFunction*>(SetUnvaultFn), &Name);
 					ScriptingObject->ProcessEvent(const_cast<UFunction*>(PillarsFn), &Name);
 				}).detach();
+			}
+		}
+
+		for (auto& UncastedPC : GameMode->AlivePlayers)
+		{
+			auto PlayerController = (AFortPlayerControllerAthena*)UncastedPC;
+
+			auto PickaxeInstance = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+			{
+				return entry.ItemDefinition->Cast<UFortWeaponMeleeItemDefinition>();
+			});
+
+			if (PickaxeInstance)
+				PlayerController->WorldInventory->Remove(PickaxeInstance->ItemGuid);
+
+			if (VersionInfo.FortniteVersion >= 16.00)
+			{
+				auto EventModeActivator = Utils::FindObject<UFortItemDefinition>(L"/EventMode/Items/WID_EventMode_Activator.WID_EventMode_Activator");
+
+				PlayerController->WorldInventory->GiveItem(EventModeActivator);
 			}
 		}
 

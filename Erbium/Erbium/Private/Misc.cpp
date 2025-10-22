@@ -81,7 +81,16 @@ void ClientThread()
 		{
 			bPressed = true;
 
-			bEOREnabled ^= 1;
+			//bEOREnabled ^= 1;
+			auto& LocalPlayers = UWorld::GetWorld()->OwningGameInstance->LocalPlayers;
+
+			if (LocalPlayers.Num() > 0)
+			{
+				auto PlayerController = (AFortPlayerControllerAthena*)LocalPlayers[0]->PlayerController;
+
+				//PlayerController->ServerChangeName(FString(L"chargedcum"));
+
+			}
 		}
 		else if (!bPressed && GetAsyncKeyState(VK_F2))
 		{
@@ -93,8 +102,11 @@ void ClientThread()
 			{
 				auto PlayerController = (AFortPlayerControllerAthena*) LocalPlayers[0]->PlayerController;
 
-				PlayerController->CheatManager = UGameplayStatics::SpawnObject(PlayerController->CheatClass, PlayerController);
-				PlayerController->CheatManager->ObjectFlags &= ~0x1000000;
+				if (!PlayerController->CheatManager)
+				{
+					PlayerController->CheatManager = UGameplayStatics::SpawnObject(PlayerController->CheatClass, PlayerController);
+					PlayerController->CheatManager->ObjectFlags &= ~0x1000000;
+				}
 			}
 		}
 		else if (!GetAsyncKeyState(VK_F3) && !GetAsyncKeyState(VK_F2))

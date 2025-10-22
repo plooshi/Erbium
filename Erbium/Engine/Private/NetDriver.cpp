@@ -362,7 +362,10 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
     if (GUI::gsStatus == 1 && VersionInfo.FortniteVersion >= 11.00)
     { 
         auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
-        if (Driver->ClientConnections.Num() > 0 && ((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->bWorldIsReady && ((AFortGameStateAthena*)UWorld::GetWorld()->GameState)->WarmupCountdownEndTime <= Time)
+		auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+		auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
+		static auto bSkipAircraft = GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft;
+        if (!bSkipAircraft && Driver->ClientConnections.Num() > 0 && GameMode->bWorldIsReady && GameState->WarmupCountdownEndTime <= Time)
         {
 			GUI::gsStatus = 2;
 

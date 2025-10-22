@@ -103,7 +103,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Z - Client|x64'">
     <IncludePath>.;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
-    <TargetName>$(ProjectName)Client</TargetName>
+    <TargetName>$(ProjectName)Client3</TargetName>
     <OutDir>$(SolutionDir)$(Platform)\Client\</OutDir>
     <IntDir>$(Platform)\Client\</IntDir>
   </PropertyGroup>
