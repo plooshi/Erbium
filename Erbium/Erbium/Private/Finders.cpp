@@ -1076,17 +1076,7 @@ uint64_t FindClearAbility()
     static uint64_t ClearAbility = 0;
 
     if (ClearAbility == 0)
-    {
-        if (VersionInfo.EngineVersion == 4.26)
-        {
-            ClearAbility = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 7C 24 ? 41 56 48 83 EC ? 80 89").Get();
-
-            if (!ClearAbility)
-                ClearAbility = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 80 89").Get();
-
-            return ClearAbility;
-        }
-         
+    {    
         auto GiveAbilityAndActivateOnce = FindGiveAbilityAndActivateOnce();
 
         if (!GiveAbilityAndActivateOnce)
@@ -1095,10 +1085,15 @@ uint64_t FindClearAbility()
         int skip = 0;
         for (int i = 0; i < 2048; i++)
         {
-            if (*(uint8_t*)(GiveAbilityAndActivateOnce + i) == 0xE8 && *(uint8_t*)(GiveAbilityAndActivateOnce + i + 1) != 0x7D)
+            // mov rcx, (rdi|rsi)
+            // call ClearAbility
+            // jmp
+            if (
+                *(uint8_t*)(GiveAbilityAndActivateOnce + i) == 0x48 && *(uint8_t*)(GiveAbilityAndActivateOnce + i + 1) == 0x8B && 
+                *(uint8_t*)(GiveAbilityAndActivateOnce + i + 3) == 0xE8 &&
+                (*(uint8_t*)(GiveAbilityAndActivateOnce + i + 8) == 0xE9 || *(uint8_t*)(GiveAbilityAndActivateOnce + i + 8) == 0xEB))
             {
-                if (++skip == (VersionInfo.EngineVersion >= 5.0 ? 6 : 4))
-                    return ClearAbility = Memcury::Scanner(GiveAbilityAndActivateOnce + i).RelativeOffset(1).Get();
+                return ClearAbility = Memcury::Scanner(GiveAbilityAndActivateOnce + i + 4).RelativeOffset(1).Get();
             }
         }
     }
