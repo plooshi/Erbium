@@ -1097,7 +1097,7 @@ uint64_t FindClearAbility()
         {
             if (*(uint8_t*)(GiveAbilityAndActivateOnce + i) == 0xE8 && *(uint8_t*)(GiveAbilityAndActivateOnce + i + 1) != 0x7D)
             {
-                if (++skip == 4)
+                if (++skip == (VersionInfo.EngineVersion >= 5.0 ? 6 : 4))
                     return ClearAbility = Memcury::Scanner(GiveAbilityAndActivateOnce + i).RelativeOffset(1).Get();
             }
         }
