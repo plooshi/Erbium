@@ -218,6 +218,7 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 	if (VersionInfo.FortniteVersion >= 11)
 	{
 		auto& MinArr = LootTierData->LootPackageCategoryMinArray;
+
 		if (MinArr.Num() > 1 && MinArr[1] == 0 && LootTierData->LootPackage.ToString().starts_with("WorldPKG.AthenaLoot.Weapon."))
 		{
 			MinArr[1] = 1;
@@ -270,12 +271,12 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 		return {};
 
 	TArray<FFortItemEntry*> LootDrops;
-	LootDrops.Reserve((int)AmountOfLootDrops);
+	LootDrops.Reserve((int)DropCount);
 
 
 	int SpawnedItems = 0;
 	int CurrentCategory = 0;
-	while (SpawnedItems < AmountOfLootDrops && CurrentCategory < LootTierData->LootPackageCategoryMinArray.Num())
+	while (SpawnedItems < DropCount && CurrentCategory < LootTierData->LootPackageCategoryMinArray.Num())
 	{
 		for (int j = 0; j < LootTierData->LootPackageCategoryMinArray[CurrentCategory]; j++)
 			SetupLDSForPackage(LootDrops, LootTierData->LootPackage, CurrentCategory, TierGroup, WorldLevel);

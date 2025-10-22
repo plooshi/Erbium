@@ -412,7 +412,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         if (GameMode->HasbPlaylistHotfixChangedGCDisabling())
             GameMode->bPlaylistHotfixChangedGCDisabling = true;
         
-        if (VersionInfo.EngineVersion >= 5.0)
+        if (VersionInfo.EngineVersion >= 4.27)
         {
             GameState->DefaultParachuteDeployTraceForGroundDistance = 10000;
         }
