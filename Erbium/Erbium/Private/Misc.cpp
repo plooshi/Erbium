@@ -81,16 +81,7 @@ void ClientThread()
 		{
 			bPressed = true;
 
-			//bEOREnabled ^= 1;
-			auto& LocalPlayers = UWorld::GetWorld()->OwningGameInstance->LocalPlayers;
-
-			if (LocalPlayers.Num() > 0)
-			{
-				auto PlayerController = (AFortPlayerControllerAthena*)LocalPlayers[0]->PlayerController;
-
-				//PlayerController->ServerChangeName(FString(L"chargedcum"));
-
-			}
+			bEOREnabled ^= 1;
 		}
 		else if (!bPressed && GetAsyncKeyState(VK_F2))
 		{

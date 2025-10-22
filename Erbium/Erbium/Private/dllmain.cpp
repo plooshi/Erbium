@@ -12,44 +12,6 @@
 #include "../../Erbium/Plugins/CrashReporter/Public/CrashReporter.h"
 #include <FortniteGame/Public/FortPlayerControllerAthena.h>
 
-
-struct FRepFortMeshAttachment
-{
-public:
-    USCRIPTSTRUCT_COMMON_MEMBERS(FRepFortMeshAttachment);
-
-    const UObject* SkeletalMesh;
-    const UObject* AnimBP;
-};
-
-
-void (*DrawTransitionOG)(UObject* Canvas);
-void DrawTransition(UObject* Canvas)
-{
-    static bool bPressed = false;
-    if (!bPressed && GetAsyncKeyState(VK_F5))
-    {
-        bPressed = true;
-        auto& LocalPlayers = UWorld::GetWorld()->OwningGameInstance->LocalPlayers;
-
-        for (auto& Player : LocalPlayers)
-        {
-
-            auto PlayerController = (AFortPlayerControllerAthena*)Player->PlayerController;
-
-
-            FRepFortMeshAttachment Attachment;
-            Attachment.AnimBP = Utils::FindObject<UClass>(L"/Game/Animation/Game/Enemies/StormKing/StormKing_AnimBP.StormKing_AnimBP_C");
-            Attachment.SkeletalMesh = Utils::FindObject<UObject>(L"/Game/Characters/Enemies/StormKing/Meshes/SK_StormKing_01.SK_StormKing_01");
-            PlayerController->Pawn->ServerSetAttachment(Attachment);
-        }
-    }
-    else if (!GetAsyncKeyState(VK_F5))
-        bPressed = false;
-
-    return DrawTransitionOG(Canvas);
-}
-
 void Main()
 {
 #ifndef CLIENT
@@ -81,13 +43,6 @@ void Main()
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"net.AllowEncryption 0"), nullptr);
 
 #ifdef CLIENT
-    MH_Initialize();
-
-    //for (auto& HookFunc : _HookFuncs)
-    //    HookFunc();
-    Utils::Hook(ImageBase + 0x4E77EC0, DrawTransition, DrawTransitionOG);
-
-    MH_EnableHook(MH_ALL_HOOKS);
     Misc::InitClient();
 
     return;
