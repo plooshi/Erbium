@@ -1225,7 +1225,7 @@ uint64_t FindSetPickupItems()
 
     if (SetPickupItems == 0)
     {
-        if (VersionInfo.EngineVersion == 4.19)
+        if (VersionInfo.EngineVersion == 4.16 || VersionInfo.EngineVersion == 4.19)
             return SetPickupItems = Memcury::Scanner::FindPattern("48 89 6C 24 ? 48 89 74 24 ? 57 48 83 EC 20 80 B9 ? ? ? ? ? 41 0F B6 E9").Get();
         else if (VersionInfo.FortniteVersion <= 3.3)
             return SetPickupItems = Memcury::Scanner::FindPattern("48 89 6C 24 ? 48 89 74 24 ? 57 48 83 EC 20 80 B9 ? ? ? ? ? 41 0F B6 E9 49 8B F8 48 8B F1 0F 85 ? ? ? ? 48 83 7A").Get();

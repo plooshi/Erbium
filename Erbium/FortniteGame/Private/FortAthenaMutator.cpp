@@ -41,10 +41,16 @@ void AFortAthenaMutator_GiveItemsAtGamePhase::OnGamePhaseChanged(UObject* Contex
 
 void AFortAthenaMutator_GiveItemsAtGamePhaseStep::Hook()
 {
+    if (!GetDefaultObj())
+        return;
+
     Utils::ExecHook(GetDefaultObj()->GetFunction("OnGamePhaseStepChanged"), OnGamePhaseStepChanged);
 }
 
 void AFortAthenaMutator_GiveItemsAtGamePhase::Hook()
 {
+    if (!GetDefaultObj())
+        return;
+
     Utils::ExecHook(GetDefaultObj()->GetFunction("OnGamePhaseChanged"), OnGamePhaseChanged);
 }
