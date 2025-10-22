@@ -365,7 +365,7 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
         auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
 		auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
 		auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
-		static auto bSkipAircraft = GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft;
+		static auto bSkipAircraft = GameState->CurrentPlaylistInfo.BasePlaylist ? GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft : false;
         if (!bSkipAircraft && Driver->ClientConnections.Num() > 0 && GameMode->bWorldIsReady && GameState->WarmupCountdownEndTime <= Time)
         {
 			GUI::gsStatus = 2;
