@@ -45,7 +45,7 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
         ((AFortPlayerControllerAthena*)Owner)->ClientEquipItem(Item->ItemEntry.ItemGuid, true);
     }*/
 
-    if (VersionInfo.EngineVersion < 4.20)
+    if (VersionInfo.FortniteVersion < 3)
         ((AFortPlayerControllerAthena*)Owner)->QuickBars->ServerAddItemInternal(Item->ItemEntry.ItemGuid, !IsPrimaryQuickbar(Def), -1);
 
     if (updateInventory)
@@ -139,7 +139,7 @@ void AFortInventory::Remove(FGuid Guid)
         ((bool(*)(const UFortItemDefinition*, const IInterface*, UFortWorldItem*)) Instance->ItemEntry.ItemDefinition->Vft[OnItemInstanceAddedVft + 1])(Instance->ItemEntry.ItemDefinition, Owner->GetInterface(IFortInventoryOwnerInterface::StaticClass()), Instance);
     }
 
-    if (VersionInfo.EngineVersion < 4.20)
+    if (VersionInfo.FortniteVersion < 3)
     {
         auto PlayerController = (AFortPlayerControllerAthena*)Owner;
         auto& QuickBar = IsPrimaryQuickbar(ItemEntry.ItemDefinition) ? PlayerController->QuickBars->PrimaryQuickBar : PlayerController->QuickBars->SecondaryQuickBar;
