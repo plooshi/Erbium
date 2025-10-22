@@ -49,6 +49,7 @@ public:
     float Value;
     uint8 _Padding[0x4];
     FCurveTableRowHandle Curve;
+    uint8 _Padding2[0x10];
 
     inline float Evaluate()
     {

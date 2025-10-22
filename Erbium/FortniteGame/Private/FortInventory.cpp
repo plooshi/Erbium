@@ -6,41 +6,6 @@
 #include "../../Erbium/Public/Configuration.h"
 #include <objbase.h>
 
-// OnItemInstanceRemoved is always + 1
-inline uint32_t FindOnItemInstanceAddedVft()
-{
-    uint32_t OnItemInstanceAddedVft = 0;
-
-    if (OnItemInstanceAddedVft == 0)
-    {
-        auto sRef = Memcury::Scanner::FindStringRef("AmmoCountPistol").Get();
-
-        uint64_t AmmoDef__OnItemInstanceAdded = 0;
-        for (int i = 0; i < 1000; i++)
-        {
-            if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
-            {
-                AmmoDef__OnItemInstanceAdded = sRef - i;
-                break;
-            }
-            else if (*(uint8_t*)(sRef - i) == 0x40 && *(uint8_t*)(sRef - i + 1) == 0x53)
-            {
-                AmmoDef__OnItemInstanceAdded = sRef - i;
-                break;
-            }
-        }
-
-        auto AmmoDefObj = UFortAmmoItemDefinition::GetDefaultObj();
-
-
-        for (int i = 0; i < 0x100; i++)
-            if (uint64_t(AmmoDefObj->Vft[i]) == AmmoDef__OnItemInstanceAdded)
-                return OnItemInstanceAddedVft = i;
-    }
-
-    return OnItemInstanceAddedVft;
-}
-
 uint32_t OnItemInstanceAddedVft;
 
 UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Count, int LoadedAmmo, int Level, bool ShowPickupNoti, bool updateInventory, int PhantomReserveAmmo, TArray<FFortItemEntryStateValue> StateValues)

@@ -9,46 +9,6 @@
 #include "../../Erbium/Public/Events.h"
 #include "../../Erbium/Public/LateGame.h"
 
-uint64_t FindGetPlayerViewPoint()
-{
-	uint64 ftspAddr = 0;
-	auto ftspRef = Memcury::Scanner::FindStringRef(L"%s failed to spawn a pawn", true, 0, VersionInfo.FortniteVersion >= 19).Get();
-
-	for (int i = 0; i < 1000; i++)
-	{
-		if (*(uint8_t*)(ftspRef - i) == 0x40 && *(uint8_t*)(ftspRef - i + 1) == 0x53)
-		{
-			ftspAddr = ftspRef - i;
-			break;
-		}
-		else if (*(uint8_t*)(ftspRef - i) == 0x48 && *(uint8_t*)(ftspRef - i + 1) == 0x89 && *(uint8_t*)(ftspRef - i + 2) == 0x5C)
-		{
-			ftspAddr = ftspRef - i;
-			break;
-		}
-	}
-
-	if (!ftspAddr)
-		return 0;
-
-	auto PCVft = AFortPlayerControllerAthena::GetDefaultObj()->Vft;
-	int ftspIdx = 0;
-
-	for (int i = 0; i < 500; i++)
-	{
-		if (PCVft[i] == (void*)ftspAddr)
-		{
-			ftspIdx = i;
-			break;
-		}
-	}
-
-	if (ftspIdx == 0)
-		return 0;
-
-	return __int64(PCVft[ftspIdx - 1]);
-}
-
 void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena* PlayerController, FVector& Loc, FRotator& Rot)
 {
 	static auto SFName = UKismetStringLibrary::Conv_StringToName(FString(L"Spectating"));
@@ -1237,53 +1197,16 @@ void AFortPlayerControllerAthena::ServerDropAllItems(UObject* Context, FFrame& S
 	}
 }
 
-
-void OnEquip(UObject* Context, FFrame& Stack)
-{
-	AFortWeapon* Weapon;
-
-	Stack.StepCompiledIn(&Weapon);
-	Stack.IncrementCode();
-	auto PlayerController = (AFortPlayerControllerAthena*)((AFortPlayerPawnAthena*)Weapon->Instigator)->Controller;
-	auto AbilitySystemComponent = PlayerController->PlayerState->AbilitySystemComponent;
-
-	//printf("ud2 %s\n", Weapon->Name.ToString().c_str());
-	if (Weapon->WeaponData->EquippedAbilitySet)
-	{
-		//printf("ud2 %s\n", Weapon->WeaponData->EquippedAbilitySet->Name.ToString().c_str());
-	}
-	if (Weapon->PrimaryAbilitySpecHandle.Handle == -1)
-		Weapon->PrimaryAbilitySpecHandle = AbilitySystemComponent->GiveAbility(Weapon->WeaponData->PrimaryFireAbility->GetDefaultObj(), Weapon);
-	if (Weapon->SecondaryAbilitySpecHandle.Handle == -1)
-		Weapon->SecondaryAbilitySpecHandle = AbilitySystemComponent->GiveAbility(Weapon->WeaponData->SecondaryFireAbility->GetDefaultObj(), Weapon);
-	if (Weapon->ReloadAbilitySpecHandle.Handle == -1)
-		Weapon->ReloadAbilitySpecHandle = AbilitySystemComponent->GiveAbility(Weapon->WeaponData->ReloadAbility->GetDefaultObj(), Weapon);
-	if (Weapon->ImpactAbilitySpecHandle.Handle == -1)
-		Weapon->ImpactAbilitySpecHandle = AbilitySystemComponent->GiveAbility(Weapon->WeaponData->OnHitAbility->GetDefaultObj(), Weapon);
-	if (!Weapon->EquippedAbilityHandles.Num())
-	{
-		for (auto& Ability : Weapon->WeaponData->EquippedAbilities)
-		{
-			Weapon->EquippedAbilityHandles.Add(AbilitySystemComponent->GiveAbility(Ability->GetDefaultObj(), Weapon));
-		}
-	}
-}
-
 uint64_t ClearAbility_ = 0;
-void OnUnEquip(UObject* Context, FFrame& Stack)
+void (*OnUnEquipOG)(AFortWeapon*);
+void OnUnEquip(AFortWeapon* Weapon)
 {
-	AFortWeapon* Weapon;
-	
-	Stack.StepCompiledIn(&Weapon);
-	Stack.IncrementCode();
 	auto ClearAbility = (void(*)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle&)) ClearAbility_;
 	auto PlayerController = (AFortPlayerControllerAthena*)((AFortPlayerPawnAthena*)Weapon->Instigator)->Controller;
 	auto AbilitySystemComponent = PlayerController->PlayerState->AbilitySystemComponent;
 
-	//printf("ud %s\n", Weapon->Name.ToString().c_str());
 	if (Weapon->PrimaryAbilitySpecHandle.Handle != -1)
 	{
-		//printf("handle %d\n", Weapon->PrimaryAbilitySpecHandle.Handle);
 		ClearAbility(AbilitySystemComponent, Weapon->PrimaryAbilitySpecHandle);
 		Weapon->PrimaryAbilitySpecHandle.Handle = -1;
 	}
@@ -1308,7 +1231,6 @@ void OnUnEquip(UObject* Context, FFrame& Stack)
 		{
 			if (Handle.Handle != -1)
 			{
-				//printf("777\n");
 				ClearAbility(AbilitySystemComponent, Handle);
 			}
 		}
@@ -1316,8 +1238,11 @@ void OnUnEquip(UObject* Context, FFrame& Stack)
 	}
 	if (Weapon->WeaponData->EquippedAbilitySet)
 	{
+		// ill do this later
 		//printf("ud2 %s\n", Weapon->WeaponData->EquippedAbilitySet->Name.ToString().c_str());
 	}
+
+	return OnUnEquipOG(Weapon);
 }
 
 class UFortHeldObjectComponent : public UActorComponent
@@ -1571,9 +1496,12 @@ void AFortPlayerControllerAthena::Hook()
 
 	auto DefaultWeaponComp = DefaultObjImpl("FortWeaponComponent");
 
-	if (DefaultWeaponComp)
+	if (VersionInfo.FortniteVersion >= 14.00)
 	{
-		//Utils::ExecHook(DefaultWeaponComp->GetFunction("OnEquip"), OnEquip);
+		auto OnUnEquipAddr = FindFunctionCall(L"K2_OnUnEquip", VersionInfo.EngineVersion >= 4.27 ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
+
+		Utils::Hook(OnUnEquipAddr, OnUnEquip, OnUnEquipOG);
+
 		//Utils::ExecHook(DefaultWeaponComp->GetFunction("OnUnEquip"), OnUnEquip);
 	}
 

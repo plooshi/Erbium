@@ -1,5 +1,6 @@
 #pragma once
 #include "pch.h"
+#include "../../FortniteGame/Public/FortPlayerControllerAthena.h"
 
 // credit to milxnor for a lot of these
 
@@ -1076,6 +1077,16 @@ uint64_t FindClearAbility()
 
     if (ClearAbility == 0)
     {
+        if (VersionInfo.EngineVersion == 4.26)
+        {
+            ClearAbility = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 7C 24 ? 41 56 48 83 EC ? 80 89").Get();
+
+            if (!ClearAbility)
+                ClearAbility = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 80 89").Get();
+
+            return ClearAbility;
+        }
+         
         auto GiveAbilityAndActivateOnce = FindGiveAbilityAndActivateOnce();
 
         if (!GiveAbilityAndActivateOnce)
@@ -1561,6 +1572,80 @@ uint64_t FindEnterAircraft()
     }
 
     return EnterAircraft;
+}
+
+uint64_t FindGetPlayerViewPoint()
+{
+    uint64 ftspAddr = 0;
+    auto ftspRef = Memcury::Scanner::FindStringRef(L"%s failed to spawn a pawn", true, 0, VersionInfo.FortniteVersion >= 19).Get();
+
+    for (int i = 0; i < 1000; i++)
+    {
+        if (*(uint8_t*)(ftspRef - i) == 0x40 && *(uint8_t*)(ftspRef - i + 1) == 0x53)
+        {
+            ftspAddr = ftspRef - i;
+            break;
+        }
+        else if (*(uint8_t*)(ftspRef - i) == 0x48 && *(uint8_t*)(ftspRef - i + 1) == 0x89 && *(uint8_t*)(ftspRef - i + 2) == 0x5C)
+        {
+            ftspAddr = ftspRef - i;
+            break;
+        }
+    }
+
+    if (!ftspAddr)
+        return 0;
+
+    auto PCVft = AFortPlayerControllerAthena::GetDefaultObj()->Vft;
+    int ftspIdx = 0;
+
+    for (int i = 0; i < 500; i++)
+    {
+        if (PCVft[i] == (void*)ftspAddr)
+        {
+            ftspIdx = i;
+            break;
+        }
+    }
+
+    if (ftspIdx == 0)
+        return 0;
+
+    return __int64(PCVft[ftspIdx - 1]);
+}
+
+uint32_t FindOnItemInstanceAddedVft()
+{
+    uint32_t OnItemInstanceAddedVft = 0;
+
+    if (OnItemInstanceAddedVft == 0)
+    {
+        auto sRef = Memcury::Scanner::FindStringRef("AmmoCountPistol").Get();
+
+        uint64_t AmmoDef__OnItemInstanceAdded = 0;
+        for (int i = 0; i < 1000; i++)
+        {
+            if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
+            {
+                AmmoDef__OnItemInstanceAdded = sRef - i;
+                break;
+            }
+            else if (*(uint8_t*)(sRef - i) == 0x40 && *(uint8_t*)(sRef - i + 1) == 0x53)
+            {
+                AmmoDef__OnItemInstanceAdded = sRef - i;
+                break;
+            }
+        }
+
+        auto AmmoDefObj = UFortAmmoItemDefinition::GetDefaultObj();
+
+
+        for (int i = 0; i < 0x100; i++)
+            if (uint64_t(AmmoDefObj->Vft[i]) == AmmoDef__OnItemInstanceAdded)
+                return OnItemInstanceAddedVft = i;
+    }
+
+    return OnItemInstanceAddedVft;
 }
 
 void FindNullsAndRetTrues()

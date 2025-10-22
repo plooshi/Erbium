@@ -35,7 +35,7 @@ public:
 class AFortAthenaMutator_GiveItemsAtGamePhase : public AFortAthenaMutator
 {
 public:
-    UCLASS_COMMON_MEMBERS(AFortAthenaMutator_GiveItemsAtGamePhaseStep);
+    UCLASS_COMMON_MEMBERS(AFortAthenaMutator_GiveItemsAtGamePhase);
 
     DEFINE_PROP(PhaseToGiveItems, uint8);
     DEFINE_PROP(ItemsToGive, TArray<FItemsToGive>);

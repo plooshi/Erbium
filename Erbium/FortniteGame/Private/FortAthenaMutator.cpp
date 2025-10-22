@@ -17,7 +17,7 @@ void AFortAthenaMutator_GiveItemsAtGamePhaseStep::OnGamePhaseStepChanged(UObject
             auto PlayerController = (AFortPlayerControllerAthena*)UncastedPC;
 
             for (auto& Item : Mutator->ItemsToGive)
-                PlayerController->WorldInventory->GiveItem(Item.ItemToDrop, Item.NumberToGive.Evaluate());
+                PlayerController->WorldInventory->GiveItem(Item.ItemToDrop, (int)Item.NumberToGive.Evaluate());
         }
 }
 
@@ -27,7 +27,7 @@ void AFortAthenaMutator_GiveItemsAtGamePhase::OnGamePhaseChanged(UObject* Contex
 
     Stack.StepCompiledIn(&GamePhase);
     Stack.IncrementCode();
-    auto Mutator = (AFortAthenaMutator_GiveItemsAtGamePhaseStep*)Context;
+    auto Mutator = (AFortAthenaMutator_GiveItemsAtGamePhase*)Context;
 
     if (GamePhase == Mutator->PhaseToGiveItems)
         for (auto& UncastedPC : Mutator->CachedGameMode->AlivePlayers)
@@ -35,7 +35,7 @@ void AFortAthenaMutator_GiveItemsAtGamePhase::OnGamePhaseChanged(UObject* Contex
             auto PlayerController = (AFortPlayerControllerAthena*)UncastedPC;
 
             for (auto& Item : Mutator->ItemsToGive)
-                PlayerController->WorldInventory->GiveItem(Item.ItemToDrop, Item.NumberToGive.Evaluate());
+                PlayerController->WorldInventory->GiveItem(Item.ItemToDrop, (int)Item.NumberToGive.Evaluate());
         }
 }
 
