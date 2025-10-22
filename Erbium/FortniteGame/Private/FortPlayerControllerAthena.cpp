@@ -81,7 +81,7 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 
 				FVector NewLoc = AircraftLocation + Offset;
 
-				PlayerController->MyFortPawn->K2_SetActorLocation(NewLoc, false, nullptr, false);
+				PlayerController->MyFortPawn->K2_SetActorLocation(NewLoc, false, nullptr, true);
 			}
 		}
 	}
@@ -1075,7 +1075,7 @@ _help:
 			Z = strtod(args[3].c_str(), nullptr);
 
 			if (PlayerController->Pawn)
-				PlayerController->Pawn->K2_SetActorLocation(FVector(X, Y, Z));
+				PlayerController->Pawn->K2_SetActorLocation(FVector(X, Y, Z), false, nullptr, true);
 		}
 		else if (command == "giveitem")
 		{
