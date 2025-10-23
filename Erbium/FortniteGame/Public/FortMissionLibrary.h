@@ -8,5 +8,5 @@ public:
 
     static void TeleportPlayerPawn(UObject* Context, FFrame& Stack, bool* Ret);
 
-    InitHooks;
+    InitPostLoadHooks;
 };

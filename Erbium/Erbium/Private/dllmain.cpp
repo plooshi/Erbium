@@ -70,12 +70,6 @@ void Main()
         Utils::Patch<uint8_t>(RetTrueFunc + 4, 0xc3);
     }
 
-    auto EncryptionPatch = FindEncryptionPatch();
-    if (EncryptionPatch)
-        Utils::Patch<uint8_t>(EncryptionPatch, 0x74);
-    else
-        printf("Matchmaking is NOT supported on this version, please make a github issue.\n");
-
     auto GameSessionPatch = FindGameSessionPatch();
     if (GameSessionPatch)
         Utils::Patch<uint8_t>(GameSessionPatch, 0x85);
@@ -112,6 +106,18 @@ void Main()
             terrainOpen = L"open Apollo_Terrain";
 
     UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(terrainOpen), nullptr);
+
+    auto EncryptionPatch = FindEncryptionPatch();
+    if (EncryptionPatch)
+        Utils::Patch<uint8_t>(EncryptionPatch, 0x74);
+    else
+        printf("Matchmaking is NOT supported on this version, please make a github issue.\n");
+
+    for (auto& HookFunc : _PostLoadHookFuncs)
+        HookFunc();
+
+    MH_EnableHook(MH_ALL_HOOKS);
+    Misc::bHookedAll = true;
 }
 
 BOOL APIENTRY DllMain( HMODULE hModule,

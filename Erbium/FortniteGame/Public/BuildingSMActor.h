@@ -47,7 +47,7 @@ public:
     
     DefHookOg(void, OnDamageServer, ABuildingSMActor*, float, FGameplayTagContainer, FVector, __int64, AFortPlayerControllerAthena*, AActor*, __int64);
 
-    InitHooks;
+    InitPostLoadHooks;
 };
 
 class AFortWeap_EditingTool : public AFortWeapon

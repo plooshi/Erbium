@@ -26,7 +26,7 @@ void UFortMissionLibrary::TeleportPlayerPawn(UObject* Context, FFrame& Stack, bo
 	*Ret = true;
 }
 
-void UFortMissionLibrary::Hook()
+void UFortMissionLibrary::PostLoadHook()
 {
 	auto TeleportPlayerPawnFn = GetDefaultObj()->GetFunction("TeleportPlayerPawn");
 	if (TeleportPlayerPawnFn)

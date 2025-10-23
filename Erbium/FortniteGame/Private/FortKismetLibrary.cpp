@@ -218,34 +218,6 @@ void UFortKismetLibrary::PickLootDrops(UObject* Object, FFrame& Stack, bool* Ret
 
 void UFortKismetLibrary::Hook()
 {
-	auto GiveItemToInventoryOwnerFn = GetDefaultObj()->GetFunction("GiveItemToInventoryOwner");
-	if (GiveItemToInventoryOwnerFn)
-		for (auto& Param : GiveItemToInventoryOwnerFn->GetParamsNamed().NameOffsetMap)
-		{
-			if (Param.Name == "ItemVariantGuid")
-				bHasItemVariantGuid2 = true;
-			else if (Param.Name == "ItemLevel")
-				bHasItemLevel = true;
-			else if (Param.Name == "PickupInstigatorHandle")
-				bHasPickupInstigatorHandle = true;
-			else if (Param.Name == "bUseItemPickupAnalyticEvent")
-				bHasbUseItemPickupAnalyticEvent = true;
-		}
-	Utils::ExecHook(GiveItemToInventoryOwnerFn, GiveItemToInventoryOwner);
-
-	auto K2_RemoveItemFromPlayerFn = GetDefaultObj()->GetFunction("K2_RemoveItemFromPlayer");
-	if (K2_RemoveItemFromPlayerFn)
-		for (auto& Param : K2_RemoveItemFromPlayerFn->GetParamsNamed().NameOffsetMap)
-		{
-			if (Param.Name == "ItemVariantGuid")
-				bHasItemVariantGuid = true;
-			else if (Param.Name == "bForceRemoval")
-				bHasbForceRemoval = true;
-		}
-	Utils::ExecHook(K2_RemoveItemFromPlayerFn, K2_RemoveItemFromPlayer);
-
-	Utils::ExecHook(GetDefaultObj()->GetFunction("K2_RemoveItemFromPlayerByGuid"), K2_RemoveItemFromPlayerByGuid);
-
 	auto K2_SpawnPickupInWorldFn = GetDefaultObj()->GetFunction("K2_SpawnPickupInWorld");
 	if (K2_SpawnPickupInWorldFn)
 		for (auto& Param : K2_SpawnPickupInWorldFn->GetParamsNamed().NameOffsetMap)
@@ -288,4 +260,35 @@ void UFortKismetLibrary::Hook()
 			}
 		}
 	Utils::ExecHook(PickLootDropsFn, PickLootDrops);
+}
+
+void UFortKismetLibrary::PostLoadHook()
+{
+	auto GiveItemToInventoryOwnerFn = GetDefaultObj()->GetFunction("GiveItemToInventoryOwner");
+	if (GiveItemToInventoryOwnerFn)
+		for (auto& Param : GiveItemToInventoryOwnerFn->GetParamsNamed().NameOffsetMap)
+		{
+			if (Param.Name == "ItemVariantGuid")
+				bHasItemVariantGuid2 = true;
+			else if (Param.Name == "ItemLevel")
+				bHasItemLevel = true;
+			else if (Param.Name == "PickupInstigatorHandle")
+				bHasPickupInstigatorHandle = true;
+			else if (Param.Name == "bUseItemPickupAnalyticEvent")
+				bHasbUseItemPickupAnalyticEvent = true;
+		}
+	Utils::ExecHook(GiveItemToInventoryOwnerFn, GiveItemToInventoryOwner);
+
+	auto K2_RemoveItemFromPlayerFn = GetDefaultObj()->GetFunction("K2_RemoveItemFromPlayer");
+	if (K2_RemoveItemFromPlayerFn)
+		for (auto& Param : K2_RemoveItemFromPlayerFn->GetParamsNamed().NameOffsetMap)
+		{
+			if (Param.Name == "ItemVariantGuid")
+				bHasItemVariantGuid = true;
+			else if (Param.Name == "bForceRemoval")
+				bHasbForceRemoval = true;
+		}
+	Utils::ExecHook(K2_RemoveItemFromPlayerFn, K2_RemoveItemFromPlayer);
+
+	Utils::ExecHook(GetDefaultObj()->GetFunction("K2_RemoveItemFromPlayerByGuid"), K2_RemoveItemFromPlayerByGuid);
 }

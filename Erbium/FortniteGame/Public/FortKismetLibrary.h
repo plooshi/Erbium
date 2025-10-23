@@ -56,4 +56,5 @@ public:
 	static void PickLootDrops(UObject*, FFrame&, bool*);
 
 	InitHooks;
+	InitPostLoadHooks;
 };

@@ -1593,6 +1593,9 @@ uint64 FindClientHasInitializedLevelFor()
 
         if (!ClientHasInitializedLevelFor)
             ClientHasInitializedLevelFor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 20 48 8B F9 48 85 D2 74 35 48").Get();
+
+        if (!ClientHasInitializedLevelFor)
+            ClientHasInitializedLevelFor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC 20 48 8B DA 48 8B F9 E8 ? ? ? ? 48 8B D0 48 8B CB E8 ? ? ? ? 48 8B C8").Get();
     }
 
     return ClientHasInitializedLevelFor;
@@ -1796,6 +1799,34 @@ uint64_t FindGetNamePool()
     }
 
     return GetNamePool;
+}
+
+
+uint64_t FindIsNetReady()
+{
+    static uint64_t IsNetReady = 0;
+    static bool bInitialized = false;
+
+    if (!bInitialized)
+    {
+        bInitialized = true;
+
+        auto IsNetReady_ = Memcury::Scanner::FindPattern("84 D2 74 ? 8B 81 ? ? ? ? F7 D8");
+
+        if (VersionInfo.FortniteVersion >= 20 && IsNetReady_.Get())
+        {
+            for (int i = 0; i < 0x30; i++)
+            {
+                if (*(uint8_t*)(IsNetReady_.Get() - i) == 0x48 && *(uint8_t*)(IsNetReady_.Get() - i + 1) == 0x83 && *(uint8_t*)(IsNetReady_.Get() - i + 2) == 0xEC)
+                    return IsNetReady = IsNetReady_.Get() - i;
+            }
+            return IsNetReady = IsNetReady_.Get();
+        }
+        else
+            IsNetReady = IsNetReady_.Get();
+    }
+
+    return IsNetReady;
 }
 
 void FindNullsAndRetTrues()

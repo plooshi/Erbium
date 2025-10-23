@@ -16,7 +16,7 @@
 #include "../Public/BuildingItemCollectorActor.h"
 #include "../../Erbium/Public/GUI.h"
 #include <random>
-
+#include "../../Erbium/Public/Misc.h"
 
 void ShowFoundation(const ABuildingFoundation* Foundation)
 {
@@ -255,7 +255,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         auto Starts = Utils::GetAll(WarmupStartClass);
         auto StartsNum = Starts.Num();
         Starts.Free();
-        if (StartsNum == 0 || !GameState->MapInfo)
+        if (!Misc::bHookedAll && StartsNum == 0 || !GameState->MapInfo)
         {
             *Ret = false;
             return;
@@ -1080,11 +1080,16 @@ void AFortGameModeAthena::OnAircraftExitedDropZone_(UObject* Context, FFrame& St
 
 void AFortGameModeAthena::Hook()
 {
+    Utils::ExecHook(GetDefaultObj()->GetFunction("ReadyToStartMatch"), ReadyToStartMatch_, ReadyToStartMatch_OG);
+}
+
+void AFortGameModeAthena::PostLoadHook()
+{
     ApplyCharacterCustomization = FindApplyCharacterCustomization();
-    
+
     auto spdf = GetDefaultObj()->GetFunction("SpawnDefaultPawnFor");
     SpawnDefaultPawnForIdx = spdf->GetVTableIndex();
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ReadyToStartMatch"), ReadyToStartMatch_, ReadyToStartMatch_OG);
+
     Utils::ExecHook(spdf, SpawnDefaultPawnFor);
     Utils::Hook(FindHandlePostSafeZonePhaseChanged(), HandlePostSafeZonePhaseChanged, HandlePostSafeZonePhaseChangedOG);
     Utils::ExecHook(GetDefaultObj()->GetFunction("HandleStartingNewPlayer"), HandleStartingNewPlayer_, HandleStartingNewPlayer_OG);

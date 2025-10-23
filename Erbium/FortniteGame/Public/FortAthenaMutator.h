@@ -29,7 +29,7 @@ public:
 
     DefUHookOg(OnGamePhaseStepChanged);
 
-    InitHooks;
+    InitPostLoadHooks;
 };
 
 class AFortAthenaMutator_GiveItemsAtGamePhase : public AFortAthenaMutator
@@ -42,5 +42,5 @@ public:
 
     DefUHookOg(OnGamePhaseChanged);
 
-    InitHooks;
+    InitPostLoadHooks;
 };

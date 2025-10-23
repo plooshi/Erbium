@@ -315,13 +315,16 @@ public:
     __VA_ARGS__* Name;
 
 inline std::vector<void(*)()> _HookFuncs;
+inline std::vector<void(*)()> _PostLoadHookFuncs;
 #define DefHookOg(_Rt, _Name, ...) static inline _Rt (*_Name##OG)(##__VA_ARGS__); static _Rt _Name(##__VA_ARGS__); 
 #define DefUHookOg(_Name) static inline void (*_Name##OG)(UObject*, FFrame&); static void _Name(UObject*, FFrame&); 
 #define DefUHookOgRet(_Rt, _Name) static inline void (*_Name##OG)(UObject*, FFrame&, _Rt*); static void _Name(UObject *, FFrame&, _Rt*);
 #ifdef CLIENT
 #define InitHooks static void Hook();
+#define InitPostLoadHooks static void PostLoadHook();
 #else
 #define InitHooks static void Hook(); static int _AddHook() { _HookFuncs.push_back(Hook); return 0; }; static inline auto _HookAdder = _AddHook();
+#define InitPostLoadHooks static void PostLoadHook(); static int _AddPostLoadHook() { _PostLoadHookFuncs.push_back(PostLoadHook); return 0; }; static inline auto _PostLoadHookAdder = _AddPostLoadHook();
 #endif
 #define callOG(_Tr, _Fn, _Th, ...) ([&](){ _Fn->ExecFunction = _Th##_OG; _Tr->_Th(##__VA_ARGS__); _Fn->ExecFunction = _Th##_; })()
 #define callOGWithRet(_Tr, _Fn, _Th, ...) ([&](){ _Fn->ExecFunction = _Th##_OG; auto _Rt = _Tr->_Th(##__VA_ARGS__); _Fn->ExecFunction = _Th##_; return _Rt; })()

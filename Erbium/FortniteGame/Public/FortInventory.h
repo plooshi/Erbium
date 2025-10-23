@@ -304,5 +304,5 @@ public:
     void UpdateEntry(FFortItemEntry&);
     void SetRequiresUpdate();
 
-    InitHooks;
+    InitPostLoadHooks;
 };

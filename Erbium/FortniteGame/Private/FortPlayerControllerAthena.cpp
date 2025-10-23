@@ -1401,7 +1401,7 @@ void AFortPlayerControllerAthena::EnterAircraft(UObject* Object, AActor* Aircraf
 	return EnterAircraftOG(Object, Aircraft);
 }
 
-void AFortPlayerControllerAthena::Hook()
+void AFortPlayerControllerAthena::PostLoadHook()
 {
 
 	CantBuild_ = FindCantBuild();

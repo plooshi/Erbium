@@ -79,5 +79,5 @@ public:
     void GiveAbilitySet(const UFortAbilitySet* Set);
     static void InternalServerTryActivateAbility(UAbilitySystemComponent*, FGameplayAbilitySpecHandle, bool, FPredictionKey*, void*);
 
-    InitHooks;
+    InitPostLoadHooks;
 };

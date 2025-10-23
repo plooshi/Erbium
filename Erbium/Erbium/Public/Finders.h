@@ -49,6 +49,7 @@ uint64 FindClearAbility();
 uint64 FindGetPlayerViewPoint();
 uint32 FindOnItemInstanceAddedVft();
 uint64 FindGetNamePool();
+uint64 FindIsNetReady();
 
 inline std::vector<uint64_t> NullFuncs = {};
 inline std::vector<uint64_t> RetTrueFuncs = {};

@@ -170,5 +170,5 @@ public:
     DefHookOg(void, EnterAircraft, UObject*, AActor*);
     
 
-    InitHooks;
+    InitPostLoadHooks;
 };

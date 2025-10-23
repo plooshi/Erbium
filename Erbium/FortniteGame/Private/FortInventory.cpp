@@ -458,7 +458,7 @@ void SpawnPickup_(UObject* Object, FFrame& Stack, AFortPickupAthena** Ret)
     *Ret = AFortInventory::SpawnPickup(Position, ItemDefinition, NumberToSpawn, ItemDefinition->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)ItemDefinition)->ClipSize : 0, EFortPickupSourceTypeFlag::GetOther(), EFortPickupSpawnSource::GetSupplyDrop());
 }
 
-void AFortInventory::Hook()
+void AFortInventory::PostLoadHook()
 {
     SetPickupItems = FindSetPickupItems();
     OnItemInstanceAddedVft = FindOnItemInstanceAddedVft();

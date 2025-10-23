@@ -237,7 +237,7 @@ void AFortPlayerPawnAthena::MovingEmoteStopped(UObject* Context, FFrame& Stack)
 		Pawn->bMovingEmoteFollowingOnly = false;
 }
 
-void AFortPlayerPawnAthena::Hook()
+void AFortPlayerPawnAthena::PostLoadHook()
 {
 	OnRep_ZiplineState = FindOnRep_ZiplineState();
 

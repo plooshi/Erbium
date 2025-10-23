@@ -181,5 +181,5 @@ public:
     DefHookOg(void, TickFlush, UNetDriver*, float);
     DefHookOg(void, NotifyActorDestroyed, UNetDriver*, AActor*, bool);
 
-    InitHooks;
+    InitPostLoadHooks;
 };

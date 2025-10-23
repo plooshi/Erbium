@@ -65,5 +65,5 @@ public:
     DefUHookOg(OnCapsuleBeginOverlap_);
     static void MovingEmoteStopped(UObject*, FFrame&);
 
-    InitHooks;
+    InitPostLoadHooks;
 };

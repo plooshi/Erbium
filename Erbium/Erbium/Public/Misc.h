@@ -6,6 +6,8 @@
 class Misc
 {
 public:
+    static inline bool bHookedAll = false;
+
     static int GetNetMode();
     DefHookOg(void*, SendRequestNow, void*, void*, int);
     DefHookOg(float, GetMaxTickRate, UEngine*, float, bool);

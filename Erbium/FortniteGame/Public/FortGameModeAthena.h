@@ -52,4 +52,5 @@ public:
     DefUHookOg(OnAircraftExitedDropZone_);
     
     InitHooks;
+    InitPostLoadHooks;
 };
