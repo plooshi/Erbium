@@ -620,15 +620,18 @@ uint8 ToDeathCause(AFortPlayerPawnAthena* Pawn, FGameplayTagContainer& DeathTags
 		}
 
 
-		if (VersionInfo.EngineVersion == 4.19)
+		if (ToDeathCauseNative)
 		{
-			static uint8(*ToDeathCause_)(AFortPlayerPawnAthena * Pawn, FGameplayTagContainer TagContainer, char bDBNO) = decltype(ToDeathCause_)(ToDeathCauseNative);
-			return ToDeathCause_(Pawn, DeathTags, bDBNO);
-		}
-		else
-		{
-			static uint8(*ToDeathCause_)(FGameplayTagContainer TagContainer, char bDBNO) = decltype(ToDeathCause_)(ToDeathCauseNative);
-			return ToDeathCause_(DeathTags, bDBNO);
+			if (VersionInfo.EngineVersion == 4.19)
+			{
+				static uint8(*ToDeathCause_)(AFortPlayerPawnAthena * Pawn, FGameplayTagContainer TagContainer, char bDBNO) = decltype(ToDeathCause_)(ToDeathCauseNative);
+				return ToDeathCause_(Pawn, DeathTags, bDBNO);
+			}
+			else
+			{
+				static uint8(*ToDeathCause_)(FGameplayTagContainer TagContainer, char bDBNO) = decltype(ToDeathCause_)(ToDeathCauseNative);
+				return ToDeathCause_(DeathTags, bDBNO);
+			}
 		}
 	}
 	

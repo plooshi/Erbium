@@ -11,9 +11,13 @@
 	static const SDK::UClass* StaticClass()                                                                                                                          \
 	{                                                                                                                                                                \
 		static const SDK::UClass* _storage = nullptr;                                                                                                                \
+        static bool bInitialized = false;                                                                                                                            \
                                                                                                                                                                      \
-		if (!_storage)                                                                                                                                               \
+		if (!bInitialized)                                                                                                                                           \
+        {                                                                                                                                                            \
+            bInitialized = true;                                                                                                                                     \
 	        _storage = SDK::FindClass(#__Class + 1);                                                                                                                 \
+        }                                                                                                                                                            \
                                                                                                                                                                      \
 		return _storage;                                                                                                                                             \
 	}                                                                                                                                                                \
@@ -21,9 +25,13 @@
 	static const __Class* GetDefaultObj()                                                                                                                            \
     {                                                                                                                                                                \
          static const SDK::UObject* _storage = nullptr;                                                                                                              \
+        static bool bInitialized = false;                                                                                                                            \
                                                                                                                                                                      \
-         if (!_storage)                                                                                                                                              \
-             _storage = StaticClass()->GetDefaultObj();                                                                                                              \
+		if (!bInitialized)                                                                                                                                           \
+        {                                                                                                                                                            \
+            bInitialized = true;                                                                                                                                     \
+            _storage = StaticClass()->GetDefaultObj();                                                                                                               \
+        }                                                                                                                                                            \
                                                                                                                                                                      \
          return (const __Class*)_storage;                                                                                                                            \
 	}                                                                                                                                                                \
@@ -37,9 +45,13 @@
 	static const SDK::UStruct* StaticStruct()                                                                                                                        \
 	{                                                                                                                                                                \
 		static const SDK::UStruct* _storage = nullptr;                                                                                                               \
+        static bool bInitialized = false;                                                                                                                            \
                                                                                                                                                                      \
-		if (!_storage)                                                                                                                                               \
+		if (!bInitialized)                                                                                                                                           \
+        {                                                                                                                                                            \
+            bInitialized = true;                                                                                                                                     \
 	        _storage = SDK::FindStruct(#__Class + 1);                                                                                                                \
+        }                                                                                                                                                            \
                                                                                                                                                                      \
 		return _storage;                                                                                                                                             \
 	}                                                                                                                                                                \
@@ -65,9 +77,13 @@
 	static const SDK::UEnum* StaticEnum()                                                                                                                            \
 	{                                                                                                                                                                \
 		static const SDK::UEnum* _storage = nullptr;                                                                                                                 \
+        static bool bInitialized = false;                                                                                                                            \
                                                                                                                                                                      \
-		if (!_storage)                                                                                                                                               \
+		if (!bInitialized)                                                                                                                                           \
+        {                                                                                                                                                            \
+            bInitialized = true;                                                                                                                                     \
 	        _storage = SDK::FindEnum(#__Class);                                                                                                                      \
+        }                                                                                                                                                            \
                                                                                                                                                                      \
 		return _storage;                                                                                                                                             \
 	}

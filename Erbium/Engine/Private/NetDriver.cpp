@@ -126,10 +126,17 @@ struct FPrioActor
 {
 	FNetworkObjectInfo* ActorInfo;
 	UActorChannel* Channel;
+	float Priority;
+
+	bool operator<(FPrioActor& _Rhs)
+	{
+		return Priority < _Rhs.Priority;
+	}
 };
 
-std::unordered_map<UNetConnection*, TArray<FPrioActor>> PriorityLists;
+std::unordered_map<UNetConnection*, UEAllocatedVector<FPrioActor>> PriorityLists;
 
+void (*GetActorLocation)(AActor*, FFrame&, FVector*);
 void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 {
 	if (!ReplicationFrameOffset)
@@ -151,8 +158,8 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 		auto& Conn = ViewerPair.first;
 		auto& Viewers = ViewerPair.second;
 
-		TArray<FPrioActor> List;
-		List.Reserve(ActiveNetworkObjects.Num());
+		UEAllocatedVector<FPrioActor> List;
+		List.reserve(ActiveNetworkObjects.Num());
 
 		if (DestroyedStartupOrDormantActorGUIDsOffset)
 		{
@@ -198,6 +205,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 		PriorityLists[Conn] = List;
 	}
 
+	FFrame FakeStack;
 	for (auto& ActorInfo : ActiveNetworkObjects)
 	{
 		//if (!ActorInfo->bPendingNetUpdate && Time <= ActorInfo->NextUpdateTime)
@@ -224,7 +232,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 
 			for (auto& Chan : Conn->OpenChannels)
 			{
-				if (!Chan->IsA<UActorChannel>() || Chan->Actor != Actor)	
+				if (Chan->Class != UActorChannel::StaticClass() || Chan->Actor != Actor)	
 					continue;
 
 				Channel = Chan;
@@ -245,9 +253,14 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 
 
 			auto PriorityConn = Conn;
+			bool bDoCullCheck = true;
+
+			if (Actor->bAlwaysRelevant)
+				bDoCullCheck = false;
 
 			if (Actor->bOnlyRelevantToOwner)
 			{
+				bDoCullCheck = false;
 				bool bHasNullViewTarget = false;
 
 				if (!(PriorityConn = IsActorOwnedByAndRelevantToConnection(Actor, Viewers, bHasNullViewTarget)))
@@ -276,8 +289,46 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 			if (bRelevant && bLevelInitializedForActor)
 			{
 				bAnyRelevant = true;
+				auto Priority = 0.f;
+
+				static auto PCClass = FindClass("PlayerController");
+				if (Actor->RootComponent && !Actor->IsA(PCClass))
+				{
+					FVector Loc;
+
+					GetActorLocation(Actor, FakeStack, &Loc);
+
+					float SmallestDisSquared = (std::numeric_limits<float>::max)();
+					int32 ViewersThatSkipActor = 0;
+
+					for (auto& Viewer : Viewers)
+					{
+						auto DistanceSquared = (Loc - Viewer->ViewLocation).SizeSquared();
+						SmallestDisSquared = (float)min(SmallestDisSquared, DistanceSquared);
+
+						if (bDoCullCheck && DistanceSquared > Actor->NetCullDistanceSquared)
+							ViewersThatSkipActor++;
+					}
+
+					if (bDoCullCheck && ViewersThatSkipActor == Viewers.Num())
+						continue;
+
+					const float MaxDistanceScaling = 60000.f * 60000.f;
+
+					const float DistanceFactor = std::clamp((SmallestDisSquared) / MaxDistanceScaling, 0.f, 1.f);
+
+					Priority += DistanceFactor;
+				}
+
+				if (Actor->NetDormancy > 1)
+					Priority -= 1.5f;
+
+				for (auto& Viewer : Viewers)
+					if (Actor == Viewer->ViewTarget || Actor == Viewer->InViewer)
+						Priority = -(std::numeric_limits<float>::max)();;
+
 				auto& PriorityList = PriorityLists[Conn];
-				PriorityList.Add({ ActorInfo.Get(), Channel });
+				PriorityList.push_back({ ActorInfo.Get(), Channel, Priority });
 			}
 		}
 
@@ -293,6 +344,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 		if (!Conn->ViewTarget)
 			continue;
 		auto& PriorityActors = PriorityListPair.second;
+		std::sort(PriorityActors.begin(), PriorityActors.end());
 
 		auto& Viewers = ViewerMap[Conn];
 
@@ -337,7 +389,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 			}
 		}
 
-		PriorityActors.Free();
+		PriorityActors.clear();
 	}
 	PriorityLists.clear();
 
@@ -498,6 +550,8 @@ void UNetDriver::Hook()
 			FindFlushDormancy();
 		else
 			FindGetNamePool();
+
+		GetActorLocation = (void(*)(AActor*, FFrame&, FVector*))AActor::GetDefaultObj()->GetFunction("K2_GetActorLocation")->GetNativeFunc();
 	}
 
     Utils::Hook(FindTickFlush(), TickFlush, TickFlushOG); 

@@ -1642,8 +1642,12 @@ uint64 FindFlushDormancy()
             return 0;
 
         for (int i = 0; i < 2000; i++)
+        {
             if (*(uint8_t*)(sRef - i) == 0x40 && *(uint8_t*)(sRef - i + 1) == 0x55)
                 return FlushDormancy = sRef - i;
+            else if (*(uint8_t*)(sRef - i) == 0x4C && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xDC)
+                return FlushDormancy = sRef - i;
+        }
     }
 
     return FlushDormancy;

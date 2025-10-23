@@ -121,6 +121,11 @@ namespace SDK
 		FVector(const FVector&) = default;
 
 	public:
+		UnderlayingType SizeSquared() const
+		{
+			return X * X + Y * Y + Z * Z;
+		}
+
 		FVector& Normalize()
 		{
 			*this /= Magnitude();
@@ -517,6 +522,8 @@ namespace SDK
 		DEFINE_PROP(RootComponent, UObject*);
 		DEFINE_PROP(Instigator, AActor*);
 		DEFINE_PROP(NetUpdateFrequency, float);
+		DEFINE_PROP(NetCullDistanceSquared, float);
+		DEFINE_BITFIELD_PROP(bAlwaysRelevant);
 
 		DEFINE_FUNC(AddComponentByClass, UActorComponent*);
 		DEFINE_FUNC(GetComponentByClass, UActorComponent*);
