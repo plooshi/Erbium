@@ -884,16 +884,6 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 
 		if (item)
 		{
-			for (int i = 0; i < (*item)->ItemEntry.StateValues.Num(); i++)
-			{
-				auto& StateValue = (*item)->ItemEntry.StateValues.Get(i, FFortItemEntryStateValue::Size());
-
-				if (StateValue.StateType != 2)
-					continue;
-
-				StateValue.IntValue = 1;
-			}
-
 			if (((*item)->ItemEntry.Count += PickupEntry->Count) > MaxStack)
 			{
 				auto OriginalCount = (*item)->ItemEntry.Count;
@@ -906,16 +896,6 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 		}
 		else
 		{
-			for (int i = 0; i < PickupEntry->StateValues.Num(); i++)
-			{
-				auto& StateValue = PickupEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
-
-				if (StateValue.StateType != 2)
-					continue;
-
-				StateValue.IntValue = 1;
-			}
-
 			if (PickupEntry->Count > MaxStack)
 			{
 				auto OriginalCount = PickupEntry->Count;

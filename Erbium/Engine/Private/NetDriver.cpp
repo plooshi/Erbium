@@ -141,7 +141,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 	if (ViewerMap.size() == 0)
 		return;
 
-	static FName ActorName = UKismetStringLibrary::Conv_StringToName(FString(L"Actor"));
+	//static FName ActorName = UKismetStringLibrary::Conv_StringToName(FString(L"Actor"));
 
 	auto& NetworkObjectList = GetNetworkObjectList(Driver);
 	auto& ActiveNetworkObjects = NetworkObjectList.ActiveNetworkObjects;
@@ -181,7 +181,8 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 
 					if (SetChannelActorForDestroy)
 					{
-						auto Channel = ((UActorChannel * (*)(UNetConnection*, FName*, uint8_t, int))FindCreateChannel())(Conn, &ActorName, 2, -1);
+						static auto ActorName = (FName*)(((__int64(*)())FindGetNamePool())() + 0x141D8);
+						auto Channel = ((UActorChannel * (*)(UNetConnection*, FName*, uint8_t, int))FindCreateChannel())(Conn, ActorName, 2, -1);
 
 						if (Channel)
 							SetChannelActorForDestroy(Channel, DestructionInfo);
@@ -208,7 +209,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 			continue;
 
 		auto Outer = Actor->Outer;
-		if ((VersionInfo.FortniteVersion >= 23.00 ? false : Actor->bActorIsBeingDestroyed) || Actor->RemoteRole == 0 || ((Actor->HasbNetStartup() ? Actor->bNetStartup : false) && Actor->NetDormancy == 4))
+		if ((VersionInfo.FortniteVersion >= 23.00 ? false : (Actor->bActorIsBeingDestroyed || (TUObjectArray::GetItemByIndex(Actor->Index)->Flags & ((1 << 29) | (1 << 21))))) || Actor->RemoteRole == 0 || ((Actor->HasbNetStartup() ? Actor->bNetStartup : false) && Actor->NetDormancy == 4))
 		{
 			//RemoveNetworkActor(&NetworkObjectList, Actor);
 			continue;
@@ -318,7 +319,10 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 				if (!Channel)
 				{
 					if (VersionInfo.FortniteVersion >= 20)
-						Channel = ((UActorChannel * (*)(UNetConnection*, FName*, uint8_t, int))FindCreateChannel())(Conn, &ActorName, 2, -1);
+					{
+						static auto ActorName = (FName*)(((__int64(*)())FindGetNamePool())() + 0x141D8);
+						Channel = ((UActorChannel * (*)(UNetConnection*, FName*, uint8_t, int))FindCreateChannel())(Conn, ActorName, 2, -1);
+					}
 					else
 						Channel = ((UActorChannel*(*)(UNetConnection*, int, bool, int32_t))FindCreateChannel())(Conn, 2, true, -1);
 
@@ -492,6 +496,8 @@ void UNetDriver::Hook()
 
 		if (VersionInfo.FortniteVersion < 3.4)
 			FindFlushDormancy();
+		else
+			FindGetNamePool();
 	}
 
     Utils::Hook(FindTickFlush(), TickFlush, TickFlushOG); 

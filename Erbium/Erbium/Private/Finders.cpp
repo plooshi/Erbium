@@ -1773,6 +1773,24 @@ uint32_t FindOnItemInstanceAddedVft()
     return OnItemInstanceAddedVft;
 }
 
+uint64_t FindGetNamePool()
+{
+    static uint64_t GetNamePool = 0;
+    static bool bInitialized = false;
+
+    if (!bInitialized)
+    {
+        bInitialized = true;
+
+        GetNamePool = Memcury::Scanner::FindPattern("48 83 EC ? 80 3D ? ? ? ? ? 0F 84 ? ? ? ? 48 8D 05 ? ? ? ? 48 83 C4 ? C3").Get();
+
+        if (!GetNamePool)
+            GetNamePool = Memcury::Scanner::FindPattern("48 83 EC ? 80 3D ? ? ? ? ? 74 ? 48 8D 05 ? ? ? ? 48 83 C4 ? C3 48 8D 0D").Get();
+    }
+
+    return GetNamePool;
+}
+
 void FindNullsAndRetTrues()
 {
     if (VersionInfo.EngineVersion == 4.16)

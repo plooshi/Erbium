@@ -41,7 +41,13 @@ public:
 
 void UAbilitySystemComponent::GiveAbilitySet(const UFortAbilitySet* Set)
 {
-    if (Set)
+    TScriptInterface<class IAbilitySystemInterface> ScriptInterface;
+    ScriptInterface.ObjectPointer = this->GetOwner();
+    ScriptInterface.InterfacePointer = ScriptInterface.ObjectPointer->GetInterface(IAbilitySystemInterface::StaticClass());
+
+    if (ScriptInterface.ObjectPointer && ScriptInterface.InterfacePointer)
+        UFortKismetLibrary::EquipFortAbilitySet(ScriptInterface, Set, nullptr);
+    else if (Set)
     {
         for (auto& GameplayAbility : Set->GameplayAbilities)
             GiveAbility(GameplayAbility->GetDefaultObj());
