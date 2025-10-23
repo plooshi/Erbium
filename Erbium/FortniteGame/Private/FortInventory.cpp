@@ -33,7 +33,7 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
     repEntry.bIsReplicatedCopy = true;
     this->Inventory.ItemInstances.Add(Item);
 
-    static auto OnItemInstanceAddedVft = FindOnItemInstanceAddedVft();
+    auto OnItemInstanceAddedVft = FindOnItemInstanceAddedVft();
     if (OnItemInstanceAddedVft && VersionInfo.FortniteVersion >= 4)
     {
         ((bool(*)(const UFortItemDefinition*, const IInterface*, UFortWorldItem*, uint8)) Def->Vft[OnItemInstanceAddedVft])(Def, Owner->GetInterface(IFortInventoryOwnerInterface::StaticClass()), Item, 1);

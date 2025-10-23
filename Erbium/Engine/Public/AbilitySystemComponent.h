@@ -55,6 +55,14 @@ struct FGameplayEffectContextHandle
     uint8_t Padding[0x18];
 };
 
+struct FActiveGameplayEffectHandle
+{
+public:
+    int32 Handle;
+    bool bPassedFiltersAndWasExecuted;
+    uint8 Pad_5[0x3];
+};
+
 class UAbilitySystemComponent : public UActorComponent
 {
 public:

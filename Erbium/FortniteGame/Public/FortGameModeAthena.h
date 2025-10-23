@@ -35,6 +35,7 @@ public:
     DEFINE_PROP(SafeZoneLocations, TArray<FVector>);
     DEFINE_PROP(DefaultPawnClass, const UClass*);
     DEFINE_PROP(PlayerControllerClass, const UClass*);
+    DEFINE_PROP(PlaylistHotfixOriginalGCFrequency, float);
 
     DEFINE_FUNC(SpawnDefaultPawnAtTransform, AFortPlayerPawnAthena*);
     DEFINE_FUNC(RestartPlayer, void);

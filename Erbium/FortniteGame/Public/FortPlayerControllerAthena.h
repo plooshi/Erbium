@@ -125,6 +125,7 @@ public:
     DEFINE_PROP(WorldInventoryClass, TSubclassOf<AFortInventory>);
     DEFINE_PROP(bHasInitializedWorldInventory, bool);
     DEFINE_PROP(ActiveToyInstances, TArray<AActor*>);
+    DEFINE_PROP(AppliedInGameModifierAbilitySetHandles, TMap<FGuid, void*>);
 
     DEFINE_FUNC(GetViewTarget, AActor*);
     DEFINE_FUNC(GetControlRotation, FRotator);

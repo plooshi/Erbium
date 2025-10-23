@@ -35,7 +35,7 @@ public:
     {
         for (int i = 0; i < TUObjectArray::Num(); i++) {
             auto Obj = TUObjectArray::GetObjectByIndex(i);
-            if (Obj && Obj->IsA<_Ct>()) {
+            if (Obj && Obj->IsDefaultObject() && Obj->IsA<_Ct>()) {
                 _HookVT(Obj->Vft, _Ind, _Detour);
             }
         }

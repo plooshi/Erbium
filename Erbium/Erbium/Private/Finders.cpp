@@ -7,9 +7,12 @@
 uint64_t FindGIsClient()
 {
     static uintptr_t GIsClient = 0;
+    static bool bInitialized = false;
 
-    if (GIsClient == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         std::vector<std::vector<uint8_t>> GIsClientLoads = {
             {0x88, 0x05},
             {0xC6, 0x05},
@@ -57,9 +60,12 @@ uint64_t FindGIsClient()
 uint64_t FindGIsServer()
 {
     static uintptr_t GIsServer = 0;
+    static bool bInitialized = false;
 
-    if (GIsServer == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         std::vector<std::vector<uint8_t>> GIsServerLoads = {
             {0x88, 0x05},
             {0xC6, 0x05},
@@ -107,9 +113,12 @@ uint64_t FindGIsServer()
 uint64_t FindGetNetMode()
 {
     static uint64_t GetNetMode = 0;
+    static bool bInitialized = false;
 
-    if (GetNetMode == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         if (floor(VersionInfo.FortniteVersion) == 18)
             GetNetMode = Memcury::Scanner::FindPattern("48 83 EC 28 48 83 79 ? ? 75 20 48 8B 91 ? ? ? ? 48 85 D2 74 1E 48 8B 02 48 8B CA FF 90").Get();
         else if (VersionInfo.FortniteVersion >= 23)
@@ -150,8 +159,12 @@ uint64_t FindGetNetMode()
 uint64_t FindGetWorldContext()
 {
     static uint64_t GetWorldContext = 0;
-    if (GetWorldContext == 0)
+    static bool bInitialized = false;
+
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         GetWorldContext = Memcury::Scanner::FindPattern("48 8B 81 ? ? ? ? 48 63 89 ? ? ? ? 4C 8D 04 C8 49 3B C0 74 ? 48 8B 08 48 39 91 80 02 00 00 75 ? 48 8B C1 C3").Get();
 
         if (!GetWorldContext)
@@ -175,9 +188,12 @@ uint64_t FindGetWorldContext()
 uint64_t FindCreateNetDriver()
 {
     static uint64_t CreateNetDriver = 0;
+    static bool bInitialized = false;
 
-    if (CreateNetDriver == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         CreateNetDriver = Memcury::Scanner::FindPattern("49 8B D8 48 8B F9 E8 ?? ?? ?? ?? 48 8B D0 4C 8B C3 48 8B CF 48 8B 5C 24 ?? 48 83 C4 ?? 5F E9 ?? ?? ?? ??").Get();
         if (!CreateNetDriver)
         {
@@ -212,9 +228,12 @@ uint64_t FindCreateNetDriver()
 uint64_t FindCreateNetDriverWorldContext()
 {
     static uint64_t CreateNetDriver = 0;
+    static bool bInitialized = false;
 
-    if (CreateNetDriver == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         if (VersionInfo.FortniteVersion >= 20)
         {
             CreateNetDriver = Memcury::Scanner::FindPattern("48 89 5C 24 ? 44 89 44 24 ? 55 56 57 41 56 41 57 48 83 EC ? 48 63 81").Get();
@@ -250,9 +269,12 @@ uint64_t FindCreateNetDriverWorldContext()
 uint64_t FindInitListen()
 {
     static uint64_t InitListen = 0;
+    static bool bInitialized = false;
 
-    if (InitListen == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         if (VersionInfo.EngineVersion >= 5.0) {
             InitListen = Memcury::Scanner::FindPattern("4D 8B C8 4C 8B C2 33 D2 FF 90 ? ? ? ? 84 C0 75 ? 80 3D").ScanFor({ 0x4C, 0x8B, 0xDC }, false).Get();
             if (!InitListen)
@@ -289,9 +311,12 @@ uint64_t FindInitListen()
 uint64_t FindSetWorld()
 {
     static uint64_t SetWorld = 0;
+    static bool bInitialized = false;
 
-    if (SetWorld == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         SetWorld = VersionInfo.FortniteVersion < 13 ? Memcury::Scanner::FindStringRef(L"AOnlineBeaconHost::InitHost failed").ScanFor({ 0x48, 0x8B, 0xD0, 0xE8 }, false).RelativeOffset(4).Get() : 0;
 
         if (VersionInfo.FortniteVersion >= 13)
@@ -340,9 +365,12 @@ uint64_t FindSetWorld()
 uint64_t FindTickFlush()
 {
     static uint64_t TickFlush = 0;
+    static bool bInitialized = false;
 
-    if (TickFlush == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         TickFlush = VersionInfo.EngineVersion == 4.16 ? Memcury::Scanner::FindPattern("4C 8B DC 55 53 56 57 49 8D AB ? ? ? ? 48 81 EC ? ? ? ? 41 0F 29 7B").Get() : 0;
 
         if (VersionInfo.EngineVersion == 4.19)
@@ -390,8 +418,12 @@ int32_t FindIsNetRelevantForVft()
 {
     static int32_t IsNetRelevantForIdx = -1;
 
-    if (IsNetRelevantForIdx == -1)
+    static bool bInitialized = false;
+
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         auto sRef = Memcury::Scanner::FindStringRef(L"Actor %s / %s has no root component in AActor::IsNetRelevantFor. (Make bAlwaysRelevant=true?)", false, 0, VersionInfo.FortniteVersion >= 19);
 
         auto IsNetRelevantFor = sRef.ScanFor({ 0x48, 0x89, 0x5C }, false).Get();
@@ -414,9 +446,12 @@ int32_t FindIsNetRelevantForVft()
 uint64_t FindServerReplicateActors()
 {
     static uint64_t ServerReplicateActors = 0;
+    static bool bInitialized = false;
 
-    if (ServerReplicateActors == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         int ServerReplicateActorsVft = 0;
         switch ((int)floor(VersionInfo.FortniteVersion)) {
         case 3:
@@ -481,9 +516,12 @@ uint64_t FindServerReplicateActors()
 uint64_t FindSendRequestNow()
 {
     static uint64_t SendRequestNow = 0;
+    static bool bInitialized = false;
 
-    if (SendRequestNow == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         auto sRef = Memcury::Scanner::FindStringRef(L"MCP-Profile: Dispatching request to %s", true, 0, VersionInfo.FortniteVersion >= 19).Get();
         if (!sRef)
             sRef = Memcury::Scanner::FindStringRef(L"MCP-Profile: Dispatching request to %s - ContextCredentials: %s", true, 0, VersionInfo.FortniteVersion >= 19).Get();
@@ -514,9 +552,12 @@ uint64_t FindSendRequestNow()
 uint64 FindGetMaxTickRate()
 {
     static uint64_t GetMaxTickRate = 0;
+    static bool bInitialized = false;
 
-    if (GetMaxTickRate == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         if (VersionInfo.EngineVersion >= 5.0)
             return Memcury::Scanner::FindPattern("40 53 48 83 EC 50 0F 29 74 24 ? 48 8B D9 0F 29 7C 24 ? 0F 28 F9 44 0F 29").Get();
 
@@ -549,9 +590,12 @@ uint64 FindGetMaxTickRate()
 uint64_t FindGiveAbility()
 {
     static uint64_t GiveAbility = 0;
+    static bool bInitialized = false;
 
-    if (GiveAbility == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         if (VersionInfo.EngineVersion <= 4.20)
             return GiveAbility = Memcury::Scanner::FindPattern("48 89 5C 24 ? 56 57 41 56 48 83 EC 20 83 B9").Get();
         else if (VersionInfo.EngineVersion == 4.21)
@@ -580,9 +624,12 @@ uint64_t FindGiveAbility()
 uint64_t FindConstructAbilitySpec()
 {
     static uint64_t ConstructAbilitySpec = 0;
+    static bool bInitialized = false;
 
-    if (ConstructAbilitySpec == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         if (VersionInfo.EngineVersion >= 4.20 && VersionInfo.EngineVersion <= 4.24)
             return ConstructAbilitySpec = Memcury::Scanner::FindPattern("80 61 29 F8 48 8B 44 24 ?").Get();
         else if (VersionInfo.EngineVersion == 4.25)
@@ -607,9 +654,12 @@ uint64_t FindConstructAbilitySpec()
 uint64_t FindInternalTryActivateAbility()
 {
     static uint64_t InternalTryActivateAbility = 0;
+    static bool bInitialized = false;
 
-    if (InternalTryActivateAbility == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         auto sRef = Memcury::Scanner::FindStringRef(L"InternalTryActivateAbility called with invalid Handle! ASC: %s. AvatarActor: %s", true, 0, VersionInfo.FortniteVersion >= 16).Get();
 
         for (int i = 0; i < 1000; i++)
@@ -629,9 +679,12 @@ uint64_t FindInternalTryActivateAbility()
 uint64 FindApplyCharacterCustomization()
 {
     static uint64_t ApplyCharacterCustomization = 0;
+    static bool bInitialized = false;
 
-    if (ApplyCharacterCustomization == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         if (VersionInfo.FortniteVersion == 17.50)
             return ApplyCharacterCustomization = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 80 B9 ? ? ? ? ? 4C 8B EA").Get();
 
@@ -667,9 +720,12 @@ uint64 FindApplyCharacterCustomization()
 uint64 FindHandlePostSafeZonePhaseChanged()
 {
     static uint64_t HandlePostSafeZonePhaseChanged = 0;
+    static bool bInitialized = false;
 
-    if (HandlePostSafeZonePhaseChanged == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         if (VersionInfo.EngineVersion == 4.19)
             return HandlePostSafeZonePhaseChanged = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 70 48 8B B9 ? ? ? ? 33 DB 0F 29 74 24 ? 48 8B F1 48 85 FF 74 2C E8").Get();
         else if (VersionInfo.EngineVersion == 4.20)
@@ -703,9 +759,12 @@ uint64 FindHandlePostSafeZonePhaseChanged()
 uint64 FindSpawnLoot()
 {
     static uint64 SpawnLoot = 0;
+    static bool bInitialized = false;
 
-    if (SpawnLoot == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         auto sRef = Memcury::Scanner::FindStringRef(L"ABuildingContainer::SpawnLoot() called on %s (%s)...", false, 0, VersionInfo.FortniteVersion >= 19).Get();
 
         if (!sRef)
@@ -734,9 +793,12 @@ uint64 FindSpawnLoot()
 uint64_t FindFinishedTargetSpline()
 {
     static uint64 FinishedTargetSpline = 0;
+    static bool bInitialized = false;
 
-    if (FinishedTargetSpline == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         if (VersionInfo.EngineVersion == 4.16 || VersionInfo.EngineVersion == 4.19)
             return Memcury::Scanner::FindPattern("4C 8B DC 53 55 56 48 83 EC 60 48 8B F1 48 8B 89 ? ? ? ? 48 85 C9").Get();
         else if (VersionInfo.EngineVersion == 4.20)
@@ -804,9 +866,12 @@ uint64_t FindFinishedTargetSpline()
 uint64_t FindPickTeam()
 {
     static uint64_t PickTeam = 0;
+    static bool bInitialized = false;
 
-    if (PickTeam == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         if (VersionInfo.EngineVersion == 4.26)
         {
             PickTeam = Memcury::Scanner::FindPattern("88 54 24 10 53 56 41 54 41 55 41 56 48 83 EC 60 4C 8B A1", false).Get();
@@ -834,9 +899,12 @@ uint64_t FindPickTeam()
 uint64_t FindCantBuild()
 {
     static uint64_t CantBuild = 0;
+    static bool bInitialized = false;
 
-    if (CantBuild == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         CantBuild = Memcury::Scanner::FindPattern("48 89 5C 24 10 48 89 6C 24 18 48 89 74 24 20 41 56 48 83 EC ? 49 8B E9 4D 8B F0", false).Get();
 
         if (!CantBuild)
@@ -858,9 +926,12 @@ uint64_t FindCantBuild()
 uint64_t FindReplaceBuildingActor()
 {
     static uint64_t ReplaceBuildingActor = 0;
+    static bool bInitialized = false;
 
-    if (ReplaceBuildingActor == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         auto sRef = Memcury::Scanner::FindStringRef(L"STAT_Fort_BuildingSMActorReplaceBuildingActor", false);
 
         if (!sRef.Get())
@@ -962,9 +1033,12 @@ uint64_t FindEncryptionPatch()
 uint64_t FindRemoveInventoryItem()
 {
     static uint64_t RemoveInventoryItem = 0;
+    static bool bInitialized = false;
 
-    if (RemoveInventoryItem == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         std::vector<uint8_t> funcStart = VersionInfo.EngineVersion == 4.16 ? std::vector<uint8_t>{ 0x44, 0x88, 0x4C } : (VersionInfo.FortniteVersion >= 16 && (VersionInfo.FortniteVersion < 20 || VersionInfo.FortniteVersion >= 22) ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
 
         auto sRef = FindNameRef(L"ServerRemoveInventoryItem", 0, false);
@@ -1011,9 +1085,12 @@ uint64_t FindRemoveInventoryItem()
 uint64_t FindOnRep_ZiplineState()
 {
     static uint64_t OnRep_ZiplineState = 0;
+    static bool bInitialized = false;
 
-    if (OnRep_ZiplineState == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         auto sRef = Memcury::Scanner::FindStringRef(L"ZIPLINES!! Role(%s)  AFortPlayerPawn::OnRep_ZiplineState ZiplineState.bIsZiplining=%d", false).Get();
         if (!sRef)
             sRef = Memcury::Scanner::FindStringRef(L"ZIPLINES!! GetLocalRole()(%s)  AFortPlayerPawn::OnRep_ZiplineState ZiplineState.bIsZiplining=%d", false).Get();
@@ -1042,9 +1119,12 @@ uint64_t FindOnRep_ZiplineState()
 uint64 FindGiveAbilityAndActivateOnce()
 {
     static uint64_t GiveAbilityAndActivateOnce = 0;
+    static bool bInitialized = false;
 
-    if (GiveAbilityAndActivateOnce == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         if (VersionInfo.EngineVersion == 4.26)
         {
             GiveAbilityAndActivateOnce = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 40 49 8B 40 10 49 8B D8 48 8B FA 48 8B F1", false).Get();
@@ -1074,9 +1154,12 @@ uint64 FindGiveAbilityAndActivateOnce()
 uint64_t FindClearAbility()
 {
     static uint64_t ClearAbility = 0;
+    static bool bInitialized = false;
 
-    if (ClearAbility == 0)
-    {    
+    if (!bInitialized)
+    {
+        bInitialized = true;
+
         auto GiveAbilityAndActivateOnce = FindGiveAbilityAndActivateOnce();
 
         if (!GiveAbilityAndActivateOnce)
@@ -1150,9 +1233,12 @@ uint64 FindGameSessionPatch()
 uint64 FindRemoveFromAlivePlayers()
 {
     static uint64 RemoveFromAlivePlayers = 0;
+    static bool bInitialized = false;
 
-    if (RemoveFromAlivePlayers == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         auto sRef = Memcury::Scanner::FindStringRef(L"FortGameModeAthena: Player [%s] removed from alive players list (Team [%d]).  Player count is now [%d].  Team count is now [%d].", false).Get();
 
         if (!sRef)
@@ -1187,9 +1273,12 @@ uint64 FindRemoveFromAlivePlayers()
 uint64 FindStartAircraftPhase()
 {
     static uint64_t StartAircraftPhase = 0;
+    static bool bInitialized = false;
 
-    if (StartAircraftPhase == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         if (VersionInfo.EngineVersion < 4.27)
         {
             auto sRef = Memcury::Scanner::FindStringRef(L"STARTAIRCRAFT").Get();
@@ -1222,9 +1311,12 @@ uint64 FindStartAircraftPhase()
 uint64_t FindSetPickupItems()
 {
     static uint64_t SetPickupItems = 0;
+    static bool bInitialized = false;
 
-    if (SetPickupItems == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         if (VersionInfo.EngineVersion == 4.16 || VersionInfo.EngineVersion == 4.19)
             return SetPickupItems = Memcury::Scanner::FindPattern("48 89 6C 24 ? 48 89 74 24 ? 57 48 83 EC 20 80 B9 ? ? ? ? ? 41 0F B6 E9").Get();
         else if (VersionInfo.FortniteVersion <= 3.3)
@@ -1272,9 +1364,11 @@ uint64_t FindSetPickupItems()
 uint64_t FindCallPreReplication()
 {
     static uint64_t CallPreReplication = 0;
+    static bool bInitialized = false;
 
-    if (CallPreReplication == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
 
         if (VersionInfo.EngineVersion == 4.16)
             return CallPreReplication = Memcury::Scanner::FindPattern("48 85 D2 0F 84 ? ? ? ? 48 8B C4 55 57 41 57 48 8D 68 A1 48 81 EC").Get();
@@ -1296,9 +1390,12 @@ uint64_t FindCallPreReplication()
 uint64_t FindSendClientAdjustment()
 {
     static uint64_t SendClientAdjustment = 0;
+    static bool bInitialized = false;
 
-    if (SendClientAdjustment == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         if (VersionInfo.FortniteVersion >= 23.00)
             SendClientAdjustment = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 83 3D ? ? ? ? ? 48 8B D9 75").Get();
         else if (VersionInfo.FortniteVersion >= 20.00)
@@ -1313,9 +1410,12 @@ uint64_t FindSendClientAdjustment()
 uint64 FindSetChannelActor()
 {
     static uint64_t SetChannelActor = 0;
+    static bool bInitialized = false;
 
-    if (SetChannelActor == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         if (VersionInfo.EngineVersion == 4.16)
             return SetChannelActor = Memcury::Scanner::FindPattern("4C 8B DC 55 53 57 41 54 49 8D AB ? ? ? ? 48 81 EC ? ? ? ? 45 33").Get();
         else if (VersionInfo.FortniteVersion == 3.3)
@@ -1342,9 +1442,12 @@ uint64 FindSetChannelActor()
 uint64 FindSetChannelActorForDestroy()
 {
     static uint64_t SetChannelActorForDestroy = 0;
+    static bool bInitialized = false;
 
-    if (SetChannelActorForDestroy == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         auto sRef = Memcury::Scanner::FindStringRef(L"SetChannelActorForDestroy: Channel %d. NetGUID <%s> Path: %s. Bits: %d", false, 0, VersionInfo.FortniteVersion >= 19, true).Get();
 
         if (!sRef)
@@ -1364,9 +1467,12 @@ uint64 FindSetChannelActorForDestroy()
 uint64 FindSendDestructionInfo()
 {
     static uint64_t SendDestructionInfo = 0;
+    static bool bInitialized = false;
 
-    if (SendDestructionInfo == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         auto sRef = Memcury::Scanner::FindStringRef(L"STAT_NetSendDestructionInfo").Get();
 
         if (!sRef)
@@ -1385,9 +1491,12 @@ uint64 FindSendDestructionInfo()
 uint64 FindCreateChannel()
 {
     static uint64_t CreateChannel = 0;
+    static bool bInitialized = false;
 
-    if (CreateChannel == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         if (VersionInfo.FortniteVersion <= 3.3)
             return CreateChannel = Memcury::Scanner::FindPattern("40 56 57 41 54 41 55 41 57 48 83 EC 60 48 8B 01 41 8B F9 45 0F B6 E0").Get();
         else if (VersionInfo.FortniteVersion >= 20)
@@ -1400,9 +1509,12 @@ uint64 FindCreateChannel()
 uint64 FindReplicateActor()
 {
     static uint64_t ReplicateActor = 0;
+    static bool bInitialized = false;
 
-    if (ReplicateActor == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         if (VersionInfo.EngineVersion == 4.16)
             return ReplicateActor = Memcury::Scanner::FindPattern("40 55 53 57 41 56 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8D 59 68 4C 8B F1 48 8B").Get();
         else if (VersionInfo.FortniteVersion == 3.3)
@@ -1436,9 +1548,12 @@ uint64 FindReplicateActor()
 uint64 FindCloseActorChannel()
 {
     static uint64_t CloseActorChannel = 0;
+    static bool bInitialized = false;
 
-    if (CloseActorChannel == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         auto sRef = Memcury::Scanner::FindStringRef(L"UActorChannel::Close: ChIndex: %d, Actor: %s", false, 0, VersionInfo.FortniteVersion >= 19).Get();
 
         if (!sRef)
@@ -1462,9 +1577,12 @@ uint64 FindCloseActorChannel()
 uint64 FindClientHasInitializedLevelFor()
 {
     static uint64_t ClientHasInitializedLevelFor = 0;
+    static bool bInitialized = false;
 
-    if (ClientHasInitializedLevelFor == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         ClientHasInitializedLevelFor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 20 48 8B 5A 20 48 8B F1 4C 8B C3", false).Get();
 
         if (!ClientHasInitializedLevelFor)
@@ -1481,9 +1599,12 @@ uint64 FindClientHasInitializedLevelFor()
 uint64 FindStartBecomingDormant()
 {
     static uint64_t StartBecomingDormant = 0;
+    static bool bInitialized = false;
 
-    if (StartBecomingDormant == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         auto sRef = Memcury::Scanner::FindStringRef(L"StartBecomingDormant: %s", false, 0, VersionInfo.FortniteVersion >= 19).Get();
 
         if (!sRef)
@@ -1506,9 +1627,12 @@ uint64 FindStartBecomingDormant()
 uint64 FindFlushDormancy()
 {
     static uint64_t FlushDormancy = 0;
+    static bool bInitialized = false;
 
-    if (FlushDormancy == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         auto sRef = Memcury::Scanner::FindStringRef(L"FlushDormancy: %s. Connection: %s", false, 0, VersionInfo.FortniteVersion >= 19).Get();
 
         if (!sRef)
@@ -1525,9 +1649,12 @@ uint64 FindFlushDormancy()
 uint64_t FindEnterAircraft()
 {
     static uint64_t EnterAircraft = 0;
+    static bool bInitialized = false;
 
-    if (EnterAircraft == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         auto sRef = Memcury::Scanner::FindStringRef(L"EnterAircraft: [%s] is attempting to enter aircraft after having already exited.", true, 0, VersionInfo.FortniteVersion >= 19).Get();
 
         if (!sRef)
@@ -1612,9 +1739,12 @@ uint64_t FindGetPlayerViewPoint()
 uint32_t FindOnItemInstanceAddedVft()
 {
     uint32_t OnItemInstanceAddedVft = 0;
+    static bool bInitialized = false;
 
-    if (OnItemInstanceAddedVft == 0)
+    if (!bInitialized)
     {
+        bInitialized = true;
+
         auto sRef = Memcury::Scanner::FindStringRef("AmmoCountPistol").Get();
 
         uint64_t AmmoDef__OnItemInstanceAdded = 0;

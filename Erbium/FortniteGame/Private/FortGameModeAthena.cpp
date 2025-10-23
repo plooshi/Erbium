@@ -63,6 +63,12 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
         }
         if (Playlist->HasGarbageCollectionFrequency())
             Playlist->GarbageCollectionFrequency = 9999999999999999.f; // easier than hooking collectgarbage
+        if (GameMode->HasPlaylistHotfixOriginalGCFrequency())
+            GameMode->PlaylistHotfixOriginalGCFrequency = 9999999999999999.f;
+        if (GameMode->HasbDisableGCOnServerDuringMatch())
+            GameMode->bDisableGCOnServerDuringMatch = true;
+        if (GameMode->HasbPlaylistHotfixChangedGCDisabling())
+            GameMode->bPlaylistHotfixChangedGCDisabling = true;
         if (GameState->HasCurrentPlaylistInfo())
         {
             //if (VersionInfo.EngineVersion >= 4.27)
@@ -406,11 +412,6 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
         for (auto& Spawner : ConsumableSpawners)
             UFortLootPackage::SpawnConsumableActor(Spawner);
-
-        if (GameMode->HasbDisableGCOnServerDuringMatch())
-            GameMode->bDisableGCOnServerDuringMatch = true;
-        if (GameMode->HasbPlaylistHotfixChangedGCDisabling())
-            GameMode->bPlaylistHotfixChangedGCDisabling = true;
         
         if (VersionInfo.EngineVersion >= 4.27)
         {

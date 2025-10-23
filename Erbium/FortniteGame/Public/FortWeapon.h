@@ -3,6 +3,15 @@
 #include "FortInventory.h"
 #include "../../Engine/Public/AbilitySystemComponent.h"
 
+struct FFortAbilitySetHandle final
+{
+public:
+    TWeakObjectPtr<UAbilitySystemComponent> TargetAbilitySystemComponent;
+    TArray<FGameplayAbilitySpecHandle> GrantedAbilityHandles;
+    TArray<FActiveGameplayEffectHandle> AppliedEffectHandles;
+    TArray<FGuid> ItemGuidsForAdditionalItems;
+};
+
 class AFortWeapon : public AActor
 {
 public:
@@ -17,6 +26,7 @@ public:
     DEFINE_PROP(ImpactAbilitySpecHandle, FGameplayAbilitySpecHandle);
     DEFINE_PROP(ReticleTraceOverrideSpecHandle, FGameplayAbilitySpecHandle);
     DEFINE_PROP(EquippedAbilityHandles, TArray<FGameplayAbilitySpecHandle>);
+    DEFINE_PROP(EquippedAbilitySetHandles, TArray<FFortAbilitySetHandle>);
 
     DEFINE_FUNC(ServerReleaseWeaponAbility, void);
 };

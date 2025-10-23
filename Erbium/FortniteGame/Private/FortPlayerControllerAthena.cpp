@@ -1236,10 +1236,13 @@ void OnUnEquip(AFortWeapon* Weapon)
 		}
 		Weapon->EquippedAbilityHandles.Free();
 	}
-	if (Weapon->WeaponData->EquippedAbilitySet)
+	if (Weapon->EquippedAbilitySetHandles.Num())
 	{
-		// ill do this later
-		//printf("ud2 %s\n", Weapon->WeaponData->EquippedAbilitySet->Name.ToString().c_str());
+		for (auto& Handle : Weapon->EquippedAbilitySetHandles)
+			UFortKismetLibrary::UnequipFortAbilitySet(Handle);
+
+		PlayerController->AppliedInGameModifierAbilitySetHandles.Reset();
+		Weapon->EquippedAbilitySetHandles.Free();
 	}
 
 	return OnUnEquipOG(Weapon);

@@ -770,26 +770,7 @@ namespace Memcury
                     }
                 }
             }
-            for (; i < sizeOfImage - s; i++)
-            {
-                bool found = true;
-                for (auto j = h; j < s; ++j)
-                {
-                    if (scanBytes[i + j] != d[j] && d[j] != -1)
-                    {
-                        found = false;
-                        break;
-                    }
-                }
-
-                if (found)
-                {
-                    add = reinterpret_cast<uintptr_t>(&scanBytes[i]);
-                    break;
-                }
-            }
         _out:
-
             // MemcuryAssertM(add != 0, "FindPattern return nullptr");
 
             if (bWarnIfNotFound)
@@ -817,54 +798,66 @@ namespace Memcury
             int aa = 0;
 
             // scan only text section
-            for (DWORD i = 0x0; i < textSection.GetSectionSize(); i++)
+
+            __m128i t = _mm_set1_epi8((char)0x89);
+            __m128i s = _mm_set1_epi8((char)0xf9);
+
+            __m128i t2 = _mm_set1_epi8((char)0xe8);
+            // scan only text section
+            DWORD i = 0;
+
+            for (; i < textSection.GetSectionSize() - (textSection.GetSectionSize() % 16); i += 16)
             {
-                if ((scanBytes[i] == ASM::CMOVL || scanBytes[i] == ASM::CMOVS) && (scanBytes[i + 1] == ASM::LEA || scanBytes[i + 1] == 0x8B))
+                auto bytes = _mm_load_si128((const __m128i*)(scanBytes + i));
+                __m128i masked = _mm_and_si128(bytes, s);
+                int offset = _mm_movemask_epi8(_mm_cmpeq_epi8(masked, t));
+
+                if (offset != 0)
                 {
-                    if (PE::Address(&scanBytes[i]).RelativeOffset(3).GetAs<void*>() == Pointer)
+                    for (int q = 0; q < 16; q++)
                     {
-                        add = PE::Address(&scanBytes[i]);
+                        int c = offset & (1 << q);
+                        if (c)
+                        {
+                            if (PE::Address(&scanBytes[i + q]).RelativeOffset(2).GetAs<void*>() == Pointer)
+                            {
+                                add = PE::Address(&scanBytes[i + q]);
 
-                        // LOG_INFO(LogDev, "2add: 0x{:x}", add.Get() - __int64(GetModuleHandleW(0)));
+                                // LOG_INFO(LogDev, "2add: 0x{:x}", add.Get() - __int64(GetModuleHandleW(0)));
 
-                        if (bUseFirstResult)
-                            return Scanner(add);
+                                if (bUseFirstResult)
+                                    return Scanner(add);
 
-                        /* if (++aa > useRefNum)
-                            break; */
+                                /* if (++aa > useRefNum)
+                                    break; */
+                            }
+                        }
                     }
                 }
 
 
-                if ((scanBytes[i] == ASM::LEA || scanBytes[i] == 0x8B))
+                int offset2 = _mm_movemask_epi8(_mm_cmpeq_epi8(bytes, t2));
+
+                if (offset2 != 0)
                 {
-                    if (PE::Address(&scanBytes[i]).RelativeOffset(2).GetAs<void*>() == Pointer)
+                    for (int q = 0; q < 16; q++)
                     {
-                        add = PE::Address(&scanBytes[i]);
+                        int c = offset2 & (1 << q);
+                        if (c)
+                        {
+                            if (PE::Address(&scanBytes[i + q]).RelativeOffset(1).GetAs<void*>() == Pointer)
+                            {
+                                add = PE::Address(&scanBytes[i + q]);
 
-                        // LOG_INFO(LogDev, "2add: 0x{:x}", add.Get() - __int64(GetModuleHandleW(0)));
+                                // LOG_INFO(LogDev, "1add: 0x{:x}", add.Get() - __int64(GetModuleHandleW(0)));
 
-                        if (bUseFirstResult)
-                            return Scanner(add);
+                                if (bUseFirstResult)
+                                    return Scanner(add);
 
-                        /* if (++aa > useRefNum)
-                            break; */
-                    }
-                }
-
-                if (scanBytes[i] == ASM::CALL)
-                {
-                    if (PE::Address(&scanBytes[i]).RelativeOffset(1).GetAs<void*>() == Pointer)
-                    {
-                        add = PE::Address(&scanBytes[i]);
-
-                        // LOG_INFO(LogDev, "1add: 0x{:x}", add.Get() - __int64(GetModuleHandleW(0)));
-
-                        if (bUseFirstResult)
-                            return Scanner(add);
-
-                        /* if (++aa > useRefNum)
-                            break; */
+                                /* if (++aa > useRefNum)
+                                    break; */
+                            }
+                        }
                     }
                 }
             }
@@ -902,6 +895,12 @@ namespace Memcury
 
             int aa = 0;
 
+            size_t slen = 0;
+            if constexpr (bIsWide)
+                slen = (wcslen(string) + 1) * sizeof(wchar_t);
+            else if constexpr (bIsChar)
+                slen = strlen(string) + 1;
+
             DWORD i = 0x0;
             if (HasAVX2)
             { 
@@ -931,7 +930,7 @@ namespace Memcury
                                 {
                                     auto strBytes = stringAdd.GetAs<std::uint8_t*>();
 
-                                    if (bUE51)
+                                    if (bUE51 && bIsInFunc)
                                     {
                                         auto pointerToRef = *(LPVOID*)strBytes;
                                         if (rdataSection.isInSection(pointerToRef)) // Credit: Ender
@@ -967,7 +966,7 @@ namespace Memcury
 
                                             if constexpr (bIsWide)
                                             {
-                                                if (wcscmp(string, lea) == 0)
+                                                if (memcmp(string, lea, slen) == 0)
                                                 {
                                                     add = PE::Address(&scanBytes[i + q]);
 
@@ -977,7 +976,7 @@ namespace Memcury
                                             }
                                             else
                                             {
-                                                if (strcmp(string, lea) == 0)
+                                                if (memcmp(string, lea, slen) == 0)
                                                 {
                                                     add = PE::Address(&scanBytes[i + q]);
 
@@ -1021,7 +1020,7 @@ namespace Memcury
                                 {
                                     auto strBytes = stringAdd.GetAs<std::uint8_t*>();
                                     
-                                    if (bUE51)
+                                    if (bUE51 && bIsInFunc)
                                     {
                                         auto pointerToRef = *(LPVOID*)strBytes;
                                         if (rdataSection.isInSection(pointerToRef)) // Credit: Ender
@@ -1057,7 +1056,7 @@ namespace Memcury
 
                                             if constexpr (bIsWide)
                                             {
-                                                if (wcscmp(string, lea) == 0)
+                                                if (memcmp(string, lea, slen) == 0)
                                                 {
                                                     add = PE::Address(&scanBytes[i + q]);
 
@@ -1067,7 +1066,7 @@ namespace Memcury
                                             }
                                             else
                                             {
-                                                if (strcmp(string, lea) == 0)
+                                                if (memcmp(string, lea, slen) == 0)
                                                 {
                                                     add = PE::Address(&scanBytes[i + q]);
 
@@ -1076,76 +1075,6 @@ namespace Memcury
                                                 }
                                             }
                                         }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            for (; i < textSection.GetSectionSize(); i++)
-            {
-                if ((scanBytes[i] == ASM::CMOVL || scanBytes[i] == ASM::CMOVS) && scanBytes[i + 1] == ASM::LEA)
-                {
-                    auto stringAdd = PE::Address(&scanBytes[i]).RelativeOffset(3);
-
-                    // Check if the string is in the .rdata section
-                    if (rdataSection.isInSection(stringAdd))
-                    {
-                        auto strBytes = stringAdd.GetAs<std::uint8_t*>();
-                        
-                        if (bUE51)
-                        {
-                            auto pointerToRef = *(LPVOID*)strBytes;
-                            if (rdataSection.isInSection(pointerToRef)) // Credit: Ender
-                            {
-                                strBytes = (std::uint8_t*)pointerToRef;
-                                stringAdd = PE::Address(pointerToRef);
-                            }
-                        }
-
-                        // Check if the first char is printable
-                        //if (ASM::byteIsAscii(strBytes[0]))
-                        {
-                            if constexpr (!bIsPtr)
-                            {
-                                // typedef T::value_type char_type;
-                                using char_type = std::decay_t<std::remove_pointer_t<T>>;
-
-                                auto lea = stringAdd.GetAs<char_type*>();
-
-                                T leaT(lea);
-
-                                if (leaT == string)
-                                {
-                                    add = PE::Address(&scanBytes[i]);
-
-                                    if (++aa > useRefNum)
-                                        break;
-                                }
-                            }
-                            else
-                            {
-                                auto lea = stringAdd.GetAs<T>();
-
-                                if constexpr (bIsWide)
-                                {
-                                    if (wcscmp(string, lea) == 0)
-                                    {
-                                        add = PE::Address(&scanBytes[i]);
-
-                                        if (++aa > useRefNum)
-                                            break;
-                                    }
-                                }
-                                else
-                                {
-                                    if (strcmp(string, lea) == 0)
-                                    {
-                                        add = PE::Address(&scanBytes[i]);
-
-                                        if (++aa > useRefNum)
-                                            break;
                                     }
                                 }
                             }

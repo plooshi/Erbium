@@ -187,6 +187,7 @@
 
 #define DEFINE_FUNC(Name, ...)                                                                                                                                       \
     static inline UFunction* Name##__Ptr = nullptr;                                                                                                                  \
+    static inline bool Name##__Initialized = false;                                                                                                                  \
     /*void Name##_PE(void *Params)                                                                                                                                   \
     {                                                                                                                                                                \
         this->Call<#Name>(Params);                                                                                                                                   \
@@ -195,8 +196,11 @@
     template <typename... Args>                                                                                                                                      \
     __VA_ARGS__ Name(Args... Params) const                                                                                                                           \
     {                                                                                                                                                                \
-        if (!Name##__Ptr)                                                                                                                                            \
+        if (!Name##__Initialized)                                                                                                                                    \
+        {                                                                                                                                                            \
+            Name##__Initialized = true;                                                                                                                              \
             Name##__Ptr = GetFunction(#Name);                                                                                                                        \
+        }                                                                                                                                                            \
         return this->Call<__VA_ARGS__>(Name##__Ptr, Params...);                                                                                                      \
     }                                                                                                                                                                \
                                                                                                                                                                      \

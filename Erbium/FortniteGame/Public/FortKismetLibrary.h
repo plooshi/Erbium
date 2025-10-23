@@ -28,6 +28,7 @@ public:
 	DEFINE_STATIC_FUNC(TossPickupFromContainer, void);
 	DEFINE_STATIC_FUNC(EquipFortAbilitySet, void);
 	DEFINE_STATIC_FUNC(FindGroundLocationAt, FVector);
+	DEFINE_STATIC_FUNC(UnequipFortAbilitySet, void);
     //DEFINE_STATIC_FUNC(K2_GetResourceItemDefinition, UFortItemDefinition*);
 
 	static const UFortItemDefinition* K2_GetResourceItemDefinition(EFortResourceType Type)
