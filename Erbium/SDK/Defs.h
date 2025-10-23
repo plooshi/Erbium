@@ -227,6 +227,7 @@
 
 #define DEFINE_STATIC_FUNC(Name, ...)                                                                                                                                \
     static inline UFunction* Name##__Ptr = nullptr;                                                                                                                  \
+    static inline bool Name##__Initialized = false;                                                                                                                  \
     /*static void Name##_PE(void *Params)                                                                                                                            \
     {                                                                                                                                                                \
         GetDefaultObj()->Call<#Name>(Params);                                                                                                                        \
@@ -236,8 +237,11 @@
     static __VA_ARGS__ Name(Args... Params)                                                                                                                          \
     {                                                                                                                                                                \
         auto DefaultObj = GetDefaultObj();                                                                                                                           \
-        if (!Name##__Ptr)                                                                                                                                            \
+        if (!Name##__Initialized)                                                                                                                                    \
+        {                                                                                                                                                            \
+            Name##__Initialized = true;                                                                                                                              \
             Name##__Ptr = DefaultObj->GetFunction(#Name);                                                                                                            \
+        }                                                                                                                                                            \
         return DefaultObj->Call<__VA_ARGS__>(Name##__Ptr, Params...);                                                                                                \
     }                                                                                                                                                                \
                                                                                                                                                                      \

@@ -325,7 +325,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 
 				for (auto& Viewer : Viewers)
 					if (Actor == Viewer->ViewTarget || Actor == Viewer->InViewer)
-						Priority = -(std::numeric_limits<float>::max)();;
+						Priority = -(std::numeric_limits<float>::max)();
 
 				auto& PriorityList = PriorityLists[Conn];
 				PriorityList.push_back({ ActorInfo.Get(), Channel, Priority });
