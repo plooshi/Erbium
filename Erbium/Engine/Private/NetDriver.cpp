@@ -315,7 +315,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 		if (IsNetReady && !IsNetReady(Conn, false))
 			goto _out;
 
-		static auto ActorName = VersionInfo.FortniteVersion >= 20 ? (FName*)(((__int64(*)())FindGetNamePool())() + 0x141D8) : nullptr;
+		static auto ActorName = UKismetStringLibrary::Conv_StringToName(FString(L"Actor"));
 		if (DestroyedStartupOrDormantActorGUIDsOffset)
 		{
 			static auto& DestroyedStartupOrDormantActors = *(TMap<uint32, FActorDestructionInfo*>*)(__int64(Driver) + DestroyedStartupOrDormantActorsOffset);
@@ -342,7 +342,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 
 					if (SetChannelActorForDestroy)
 					{
-						auto Channel = ((UActorChannel * (*)(UNetConnection*, FName*, uint8_t, int))FindCreateChannel())(Conn, ActorName, 2, -1);
+						auto Channel = ((UActorChannel * (*)(UNetConnection*, FName*, uint8_t, int))FindCreateChannel())(Conn, &ActorName, 2, -1);
 
 						if (Channel)
 							SetChannelActorForDestroy(Channel, DestructionInfo);
@@ -378,7 +378,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 				{
 					if (VersionInfo.FortniteVersion >= 20)
 					{
-						Channel = ((UActorChannel * (*)(UNetConnection*, FName*, uint8_t, int))FindCreateChannel())(Conn, ActorName, 2, -1);
+						Channel = ((UActorChannel * (*)(UNetConnection*, FName*, uint8_t, int))FindCreateChannel())(Conn, &ActorName, 2, -1);
 					}
 					else
 						Channel = ((UActorChannel*(*)(UNetConnection*, int, bool, int32_t))FindCreateChannel())(Conn, 2, true, -1);
