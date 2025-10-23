@@ -148,7 +148,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 	if (ViewerMap.size() == 0)
 		return;
 
-	//static FName ActorName = UKismetStringLibrary::Conv_StringToName(FString(L"Actor"));
+	static FName ActorName = UKismetStringLibrary::Conv_StringToName(FString(L"Actor"));
 
 	auto& NetworkObjectList = GetNetworkObjectList(Driver);
 	auto& ActiveNetworkObjects = NetworkObjectList.ActiveNetworkObjects;
@@ -312,10 +312,9 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 
 		std::sort(PriorityActors.begin(), PriorityActors.end());
 
-		if (IsNetReady && !IsNetReady(Conn, false))
+		if (IsNetReady && VersionInfo.FortniteVersion < 22 && !IsNetReady(Conn, false))
 			goto _out;
 
-		static auto ActorName = UKismetStringLibrary::Conv_StringToName(FString(L"Actor"));
 		if (DestroyedStartupOrDormantActorGUIDsOffset)
 		{
 			static auto& DestroyedStartupOrDormantActors = *(TMap<uint32, FActorDestructionInfo*>*)(__int64(Driver) + DestroyedStartupOrDormantActorsOffset);
@@ -389,12 +388,12 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 
 				if (Channel)
 				{
-					if (IsNetReady && IsNetReady(Conn, false)) // actually uchannel::isnetready
+					if (IsNetReady && (VersionInfo.FortniteVersion >= 22 || IsNetReady(Conn, false))) // actually uchannel::isnetready
 						((int32(*)(UActorChannel*))FindReplicateActor())(Channel);
 					else
 						Actor->ForceNetUpdate();
 
-					if (IsNetReady && !IsNetReady(Conn, false))
+					if (IsNetReady && VersionInfo.FortniteVersion < 22 && !IsNetReady(Conn, false))
 					{
 						break;
 					}
