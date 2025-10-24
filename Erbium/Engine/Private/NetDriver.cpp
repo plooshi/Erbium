@@ -117,7 +117,6 @@ bool IsLevelInitializedForActor(const UNetDriver* NetDriver, const AActor* InAct
 {
 	static bool (*ClientHasInitializedLevelFor)(const UNetConnection*, const AActor*) = decltype(ClientHasInitializedLevelFor)(FindClientHasInitializedLevelFor());
 
-	printf("%llx %d", __int64(ClientHasInitializedLevelFor), ClientHasInitializedLevelFor ? ClientHasInitializedLevelFor(InConnection, InActor) : 67);
 	const bool bCorrectWorld = NetDriver->WorldPackage != nullptr && (!ClientWorldPackageNameOffset || *(FName*)(__int64(InConnection) + ClientWorldPackageNameOffset) == NetDriver->WorldPackage->Name) && (!ClientHasInitializedLevelFor || ClientHasInitializedLevelFor(InConnection, InActor));
 	const bool bIsConnectionPC = (InActor == InConnection->PlayerController);
 	return bCorrectWorld || bIsConnectionPC;
