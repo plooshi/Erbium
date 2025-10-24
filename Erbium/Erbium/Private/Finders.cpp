@@ -683,6 +683,8 @@ uint64 FindApplyCharacterCustomization()
 
         if (VersionInfo.FortniteVersion == 17.50)
             return ApplyCharacterCustomization = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 80 B9 ? ? ? ? ? 4C 8B EA").Get();
+        else if (VersionInfo.FortniteVersion >= 24)
+            return ApplyCharacterCustomization = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 48 89 7C 24 ? 55 41 54 41 55 41 56 41 57 48 8B EC 48 81 EC ? ? ? ? 80 B9").Get();
 
         auto sRef = Memcury::Scanner::FindStringRef(L"AFortPlayerState::ApplyCharacterCustomization - Failed initialization, using default parts. Player Controller: %s PlayerState: %s, HeroId: %s", false, 0, VersionInfo.FortniteVersion >= 17, VersionInfo.FortniteVersion < 20 && VersionInfo.FortniteVersion != 19.01).Get();
 
@@ -956,6 +958,9 @@ uint64_t FindKickPlayer()
 
         if (!fr)
             fr = Memcury::Scanner::FindPattern("48 89 5C ?? ?? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 45 ?? 45 33 E4 48 8B FA 41 8B DC").Get();
+
+        if (!fr)
+            fr = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 33 DB 48 8B FA").Get();
 
         return fr;
     }
@@ -1428,10 +1433,16 @@ uint64 FindSetChannelActor()
         }
         else if (std::floor(VersionInfo.FortniteVersion) == 20)
             return SetChannelActor = Memcury::Scanner::FindPattern("40 55 53 56 57 41 54 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 45 33 E4 48 8D 3D ? ? ? ? 44 89 A5").Get();
-        else if (VersionInfo.FortniteVersion <= 22)
-            return SetChannelActor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 33 FF 4C 8D 35 ? ? ? ? 89 BD").Get();
-        else if (VersionInfo.FortniteVersion >= 23)
-            return SetChannelActor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 45 33 F6").Get();
+        else if (VersionInfo.FortniteVersion >= 21)
+        {
+            SetChannelActor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 33 FF 4C 8D 35 ? ? ? ? 89 BD").Get();
+
+            if (!SetChannelActor)
+                SetChannelActor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 45 33 F6").Get();
+
+            if (!SetChannelActor)
+                SetChannelActor = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 10 48 89 70 18 48 89 78 20 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 45 33 ED 48 8D 35 ? ? ? ? 44 89 AD ? ? ? ? 48 8B D9 48 8B 41 28 45 8B E0 48 8B FA 45 8B").Get();
+        }
     }
 
     return SetChannelActor;
@@ -1499,7 +1510,12 @@ uint64 FindCreateChannel()
         if (VersionInfo.FortniteVersion <= 3.3)
             return CreateChannel = Memcury::Scanner::FindPattern("40 56 57 41 54 41 55 41 57 48 83 EC 60 48 8B 01 41 8B F9 45 0F B6 E0").Get();
         else if (VersionInfo.FortniteVersion >= 20)
-            return CreateChannel = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 44 89 4C 24 ? 55 57 41 54 41 56 41 57 48 8B EC 48 83 EC 50 45 33 E4 48 8D 05 ? ? ? ? 44 38 25").Get();
+        {
+            CreateChannel = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 44 89 4C 24 ? 55 57 41 54 41 56 41 57 48 8B EC 48 83 EC 50 45 33 E4 48 8D 05 ? ? ? ? 44 38 25").Get();
+
+            if (!CreateChannel)
+                CreateChannel = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8B EC 48 83 EC 30 45 33 E4 48 8D 05 ? ? ? ? 44 38 25 ? ? ? ? 41 8B").Get();
+        }
     }
 
     return CreateChannel;
@@ -1964,20 +1980,6 @@ void FindNullsAndRetTrues()
 
         if (RequestExit)
             NullFuncs.push_back(RequestExit);
-    }
-
-    if (VersionInfo.FortniteVersion >= 19.00 && VersionInfo.FortniteVersion <= 24.00)
-    {
-        auto NoFortLocalPlayer = Memcury::Scanner::FindStringRef(L"%s - No FortLocalPlayer").ScanFor({ 0x48, 0x83, 0xEC }, false).Get();
-
-        if (NoFortLocalPlayer)
-            NullFuncs.push_back(NoFortLocalPlayer);
-
-
-        auto NoLocalPlayer = Memcury::Scanner::FindStringRef(L"%s - No LocalPlayer").ScanFor({ 0x48, 0x83, 0xEC }, false).Get();
-
-        if (NoLocalPlayer)
-            NullFuncs.push_back(NoLocalPlayer);
     }
 
 

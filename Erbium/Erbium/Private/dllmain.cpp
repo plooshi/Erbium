@@ -39,6 +39,11 @@ void Main()
     }
 #endif
 
+    if (VersionInfo.EngineVersion >= 5.0)
+    {
+        UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"log LogFortUIDirector None"), nullptr);
+        UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"log LogNet None"), nullptr);
+    }
     if (VersionInfo.EngineVersion >= 5.1)
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"net.AllowEncryption 0"), nullptr);
 
@@ -117,6 +122,7 @@ void Main()
         HookFunc();
 
     MH_EnableHook(MH_ALL_HOOKS);
+    
     Misc::bHookedAll = true;
 }
 

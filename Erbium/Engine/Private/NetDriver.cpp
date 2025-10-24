@@ -117,6 +117,7 @@ bool IsLevelInitializedForActor(const UNetDriver* NetDriver, const AActor* InAct
 {
 	static bool (*ClientHasInitializedLevelFor)(const UNetConnection*, const AActor*) = decltype(ClientHasInitializedLevelFor)(FindClientHasInitializedLevelFor());
 
+	printf("%llx %d", __int64(ClientHasInitializedLevelFor), ClientHasInitializedLevelFor ? ClientHasInitializedLevelFor(InConnection, InActor) : 67);
 	const bool bCorrectWorld = NetDriver->WorldPackage != nullptr && (!ClientWorldPackageNameOffset || *(FName*)(__int64(InConnection) + ClientWorldPackageNameOffset) == NetDriver->WorldPackage->Name) && (!ClientHasInitializedLevelFor || ClientHasInitializedLevelFor(InConnection, InActor));
 	const bool bIsConnectionPC = (InActor == InConnection->PlayerController);
 	return bCorrectWorld || bIsConnectionPC;
@@ -200,10 +201,9 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 			}
 
 			bool bRelevant = IsActorRelevantToConnection(Actor, Viewers);
-			bool bLevelInitializedForActor = IsLevelInitializedForActor(Driver, Actor, Conn);
+			bool bLevelInitializedForActor = VersionInfo.FortniteVersion >= 24 ? true : IsLevelInitializedForActor(Driver, Actor, Conn);
 			if (!Channel && (!bRelevant || !bLevelInitializedForActor))
 				continue;
-
 			static auto CloseActorChannel = (void(*)(UActorChannel*, uint8_t)) FindCloseActorChannel();
 			if (Channel && !bRelevant && (!bLevelInitializedForActor || !(Actor->HasbNetStartup() ? Actor->bNetStartup : true)))
 			{
