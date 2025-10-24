@@ -121,13 +121,6 @@ uint64_t FindGetNetMode()
 
         if (floor(VersionInfo.FortniteVersion) == 18)
             GetNetMode = Memcury::Scanner::FindPattern("48 83 EC 28 48 83 79 ? ? 75 20 48 8B 91 ? ? ? ? 48 85 D2 74 1E 48 8B 02 48 8B CA FF 90").Get();
-        else if (VersionInfo.FortniteVersion >= 23)
-        {
-            GetNetMode = Memcury::Scanner::FindPattern("48 8B 81 ? ? ? ? 48 63 89 ? ? ? ? 4C 8D 04 C8 49 3B C0 74 ? 48 8B 08 48 39 91 ? ? ? ? 75 ? 48 8B C1 C3").Get();
-
-            if (!GetNetMode)
-                GetNetMode = Memcury::Scanner::FindPattern("48 83 EC ? 48 83 79 ? ? 74 ? B8").Get();
-        }
         else {
             auto sRef = Memcury::Scanner::FindStringRef(L"PREPHYSBONES").Get();
 
@@ -143,7 +136,7 @@ uint64_t FindGetNetMode()
             for (int i = 0; i < 400; i++) {
                 auto Ptr = (uint8_t*)(GetNetMode + i);
 
-                if (*Ptr == 0xe8 && *(Ptr - 1) != 0x8b && *(Ptr - 1) != 0xe7) {
+                if (*Ptr == 0xe8 && *(Ptr - 1) != 0x8b && *(Ptr - 1) != 0xe7 && *(Ptr - 1) != 0x24) {
                     GetNetMode = uint64_t(Ptr);
                     break;
                 }
@@ -1755,28 +1748,31 @@ uint32_t FindOnItemInstanceAddedVft()
     {
         bInitialized = true;
 
-        auto sRef = Memcury::Scanner::FindStringRef("AmmoCountPistol").Get();
+        auto inFunc = Memcury::Scanner::FindPattern("41 57 48 83 EC ? 48 8B 01 4C 8B F2 48 8B F1 FF 90").Get();
 
-        uint64_t AmmoDef__OnItemInstanceAdded = 0;
+        if (!inFunc)
+            return 0;
+
+        uint64_t OnItemInstanceAdded = 0;
         for (int i = 0; i < 1000; i++)
         {
-            if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
+            if (*(uint8_t*)(inFunc - i) == 0x48 && *(uint8_t*)(inFunc - i + 1) == 0x8B && *(uint8_t*)(inFunc - i + 2) == 0xC4)
             {
-                AmmoDef__OnItemInstanceAdded = sRef - i;
+                OnItemInstanceAdded = inFunc - i;
                 break;
             }
-            else if (*(uint8_t*)(sRef - i) == 0x40 && *(uint8_t*)(sRef - i + 1) == 0x53)
+            else if (*(uint8_t*)(inFunc - i) == 0x48 && *(uint8_t*)(inFunc - i + 1) == 0x89 && *(uint8_t*)(inFunc - i + 2) == 0x74)
             {
-                AmmoDef__OnItemInstanceAdded = sRef - i;
+                OnItemInstanceAdded = inFunc - i;
                 break;
             }
         }
 
-        auto AmmoDefObj = UFortAmmoItemDefinition::GetDefaultObj();
+        auto ItemDefObj = UFortWorldItem::GetDefaultObj();
 
 
         for (int i = 0; i < 0x100; i++)
-            if (uint64_t(AmmoDefObj->Vft[i]) == AmmoDef__OnItemInstanceAdded)
+            if (uint64_t(ItemDefObj->Vft[i]) == OnItemInstanceAdded)
                 return OnItemInstanceAddedVft = i;
     }
 

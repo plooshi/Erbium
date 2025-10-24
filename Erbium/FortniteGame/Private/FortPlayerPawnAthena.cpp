@@ -237,6 +237,47 @@ void AFortPlayerPawnAthena::MovingEmoteStopped(UObject* Context, FFrame& Stack)
 		Pawn->bMovingEmoteFollowingOnly = false;
 }
 
+class UGA_Athena_MedConsumable_Parent_C : public UObject
+{
+public:
+	UCLASS_COMMON_MEMBERS(UGA_Athena_MedConsumable_Parent_C);
+
+	DEFINE_PROP(PlayerPawn, AFortPlayerPawnAthena*);
+	DEFINE_PROP(HealsShields, bool);
+	DEFINE_PROP(HealsHealth, bool);
+	DEFINE_PROP(HealthHealAmount, float);
+};
+
+void (*Athena_MedConsumable_TriggeredOG)(UObject* Context, FFrame& Stack);
+void Athena_MedConsumable_Triggered(UObject* Context, FFrame& Stack)
+{
+	UGA_Athena_MedConsumable_Parent_C* Consumable = (UGA_Athena_MedConsumable_Parent_C*)Context;
+
+	if (!Consumable || (!Consumable->HealsShields && !Consumable->HealsHealth) || !Consumable->PlayerPawn)
+		return Athena_MedConsumable_TriggeredOG(Context, Stack);
+
+	auto PlayerState = (AFortPlayerStateAthena*)Consumable->PlayerPawn->PlayerState;
+	static auto ShieldCue = UKismetStringLibrary::Conv_StringToName(FString(L"GameplayCue.Shield.PotionConsumed"));
+	static auto HealthCue = UKismetStringLibrary::Conv_StringToName(FString(L"GameplayCue.Athena.Health.HealUsed"));
+
+	auto Handle = PlayerState->AbilitySystemComponent->MakeEffectContext();
+	FGameplayTag Tag{};
+	FName CueName = Consumable->HealsShields ? ShieldCue : HealthCue;
+
+	if (Consumable->HealsHealth && Consumable->HealsShields)
+		if (Consumable->PlayerPawn->GetHealth() + Consumable->HealthHealAmount <= 100) 
+			CueName = HealthCue;
+	Tag.TagName = CueName;
+
+	auto PredictionKey = (FPredictionKey*)malloc(FPredictionKey::Size());
+	__stosb((PBYTE)PredictionKey, 0, FPredictionKey::Size());
+
+	PlayerState->AbilitySystemComponent->NetMulticast_InvokeGameplayCueAdded(Tag, *PredictionKey, Handle);
+	PlayerState->AbilitySystemComponent->NetMulticast_InvokeGameplayCueExecuted(Tag, *PredictionKey, Handle);
+
+	return Athena_MedConsumable_TriggeredOG(Context, Stack);
+}
+
 void AFortPlayerPawnAthena::PostLoadHook()
 {
 	OnRep_ZiplineState = FindOnRep_ZiplineState();
@@ -255,5 +296,5 @@ void AFortPlayerPawnAthena::PostLoadHook()
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerSendZiplineState"), ServerSendZiplineState);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("MovingEmoteStopped"), MovingEmoteStopped);
-
+	Utils::ExecHook((UFunction*)Utils::FindObject<UFunction>(L"/Game/Athena/Items/Consumables/Parents/GA_Athena_MedConsumable_Parent.GA_Athena_MedConsumable_Parent_C.Triggered_4C02BFB04B18D9E79F84848FFE6D2C32"), Athena_MedConsumable_Triggered, Athena_MedConsumable_TriggeredOG);
 }

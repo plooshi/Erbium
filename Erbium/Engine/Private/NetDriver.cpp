@@ -568,7 +568,6 @@ void UNetDriver::PostLoadHook()
 
 		GetActorLocation = (void(*)(AActor*, FFrame&, FVector*))AActor::GetDefaultObj()->GetFunction("K2_GetActorLocation")->GetNativeFunc();
 	}
-	printf("%llx\n", FindIsNetReady());
 
     Utils::Hook(FindTickFlush(), TickFlush, TickFlushOG); 
 

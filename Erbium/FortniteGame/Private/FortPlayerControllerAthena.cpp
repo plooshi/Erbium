@@ -315,6 +315,15 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 
 	if (!PlayerController->bBuildFree && !FConfiguration::bInfiniteMats)
 	{
+		for (int i = 0; i < Item->ItemEntry.StateValues.Num(); i++)
+		{
+			auto& StateValue = Item->ItemEntry.StateValues.Get(i, FFortItemEntryStateValue::Size());
+
+			if (StateValue.StateType != 2)
+				continue;
+
+			StateValue.IntValue = 0;
+		}
 		Item->ItemEntry.Count -= 10;
 		if (Item->ItemEntry.Count <= 0)
 			PlayerController->WorldInventory->Remove(Item->ItemEntry.ItemGuid);
@@ -887,6 +896,16 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 
 		if (item)
 		{
+			for (int i = 0; i < (*item)->ItemEntry.StateValues.Num(); i++)
+			{
+				auto& StateValue = (*item)->ItemEntry.StateValues.Get(i, FFortItemEntryStateValue::Size());
+
+				if (StateValue.StateType != 2)
+					continue;
+
+				StateValue.IntValue = 1;
+			}
+
 			if (((*item)->ItemEntry.Count += PickupEntry->Count) > MaxStack)
 			{
 				auto OriginalCount = (*item)->ItemEntry.Count;
