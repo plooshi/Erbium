@@ -2013,4 +2013,6 @@ void FindNullsAndRetTrues()
             }
         }
     }
+
+    RetTrueFuncs.push_back(Memcury::Scanner::FindPattern("48 83 EC ? 48 8B 51 ? 48 8D 0D ? ? ? ? E8 ? ? ? ? 84 C0 0F 94 C0 48 83 C4 ? C3").Get());
 }
