@@ -229,16 +229,10 @@ uint64_t FindCreateNetDriverWorldContext()
 
         if (VersionInfo.FortniteVersion >= 20)
         {
-            CreateNetDriver = Memcury::Scanner::FindPattern("48 89 5C 24 ? 44 89 44 24 ? 55 56 57 41 56 41 57 48 83 EC ? 48 63 81").Get();
+            auto CreateNetDriver_ = Memcury::Scanner::FindPattern("41 56 41 57 48 83 EC ? 48 63 81 ? ? ? ? 48 8D ? ? ? ? ? 48 8B B9");
 
-            if (!CreateNetDriver)
-                CreateNetDriver = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 44 89 44 24 ? 56 57 41 55 41 56 41 57 48 83 EC ? 48 63 81").Get();
-
-            if (!CreateNetDriver)
-                CreateNetDriver = Memcury::Scanner::FindPattern("48 89 5c 24 ?? 44 89 44 24 ?? 55 56 57 41 56 41 57 48 83 ec ?? 48 63 81 ?? ?? ?? ??").Get();
-
-            if (!CreateNetDriver)
-                CreateNetDriver = Memcury::Scanner::FindPattern("48 89 5c 24 ?? 48 89 6c 24 ?? 4c 89 44 24 ?? 56 57 41 56 48 83 ec ?? 48 63 81 ?? ?? ?? ??").Get();
+            if (CreateNetDriver_.Get())
+                CreateNetDriver = CreateNetDriver_.ScanFor({ 0xC3 }, false).ScanFor({ 0x48 }).Get();
 
             return CreateNetDriver;
         }
@@ -312,7 +306,11 @@ uint64_t FindSetWorld()
 
         SetWorld = VersionInfo.FortniteVersion < 13 ? Memcury::Scanner::FindStringRef(L"AOnlineBeaconHost::InitHost failed").ScanFor({ 0x48, 0x8B, 0xD0, 0xE8 }, false).RelativeOffset(4).Get() : 0;
 
-        if (VersionInfo.FortniteVersion >= 13)
+        if (VersionInfo.FortniteVersion >= 22)
+            SetWorld = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC ? 48 8B FA 48 8B D9 48 8B 91 ? ? ? ? 48 85 D2 75").Get();
+        else if (VersionInfo.FortniteVersion >= 25)
+            SetWorld = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC ? 4C 8D B9 ? ? ? ? 48 8B FA").Get();
+        else if (VersionInfo.FortniteVersion >= 13)
         {
             auto Season = (int)floor(VersionInfo.FortniteVersion);
             uint32 VftIdx = 0;
@@ -346,9 +344,6 @@ uint64_t FindSetWorld()
                 break;
             }
             SetWorld = uintptr_t(DefaultObjImpl("NetDriver")->Vft[VftIdx]);
-
-            if (VersionInfo.FortniteVersion >= 22)
-                SetWorld = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC ? 48 8B FA 48 8B D9 48 8B 91 ? ? ? ? 48 85 D2 75").Get();
         }
     }
 
@@ -552,10 +547,15 @@ uint64 FindGetMaxTickRate()
         bInitialized = true;
 
         if (VersionInfo.EngineVersion >= 5.0)
-            return Memcury::Scanner::FindPattern("40 53 48 83 EC 50 0F 29 74 24 ? 48 8B D9 0F 29 7C 24 ? 0F 28 F9 44 0F 29").Get();
+        {
+            GetMaxTickRate = Memcury::Scanner::FindPattern("40 53 48 83 EC 50 0F 29 74 24 ? 48 8B D9 0F 29 7C 24 ? 0F 28 F9 44 0F 29").Get();
+
+            if (!GetMaxTickRate)
+                GetMaxTickRate = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 68 ? 48 89 70 ? 57 41 55 41 56 48 83 EC ? 0F 29 70 ? 48 8B D9").Get();
+        }
 
         if (VersionInfo.EngineVersion >= 4.27)
-            return Memcury::Scanner::FindPattern("40 53 48 83 EC 60 0F 29 74 24 ? 48 8B D9 0F 29 7C 24 ? 0F 28").Get();
+            return GetMaxTickRate = Memcury::Scanner::FindPattern("40 53 48 83 EC 60 0F 29 74 24 ? 48 8B D9 0F 29 7C 24 ? 0F 28").Get();
 
         auto sRef = Memcury::Scanner::FindStringRef(L"Hitching by request!").Get();
 

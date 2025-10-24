@@ -202,7 +202,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         if (VersionInfo.FortniteVersion >= 16.00)
         {
             void* WorldCtx = ((void * (*)(UEngine*, UWorld*)) FindGetWorldContext())(Engine, World);
-            World->NetDriver = NetDriver = ((UNetDriver * (*)(UEngine*, void*, FName)) FindCreateNetDriverWorldContext())(Engine, WorldCtx, NetDriverName);
+            World->NetDriver = NetDriver = ((UNetDriver * (*)(UEngine*, void*, FName, int)) FindCreateNetDriverWorldContext())(Engine, WorldCtx, NetDriverName, 0);
         }
         else
             NetDriver = ((UNetDriver * (*)(UEngine*, UWorld*, FName)) FindCreateNetDriver())(Engine, World, NetDriverName);
