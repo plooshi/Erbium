@@ -76,6 +76,7 @@ public:
     DefUHookOg(ServerSendZiplineState);
     DefUHookOg(OnCapsuleBeginOverlap_);
     static void MovingEmoteStopped(UObject*, FFrame&);
+    DefUHookOg(Athena_MedConsumable_Triggered);
 
     InitPostLoadHooks;
 };

@@ -259,8 +259,7 @@ public:
 	DEFINE_PROP(HealthHealAmount, float);
 };
 
-void (*Athena_MedConsumable_TriggeredOG)(UObject* Context, FFrame& Stack);
-void Athena_MedConsumable_Triggered(UObject* Context, FFrame& Stack)
+void AFortPlayerPawnAthena::Athena_MedConsumable_Triggered(UObject* Context, FFrame& Stack)
 {
 	UGA_Athena_MedConsumable_Parent_C* Consumable = (UGA_Athena_MedConsumable_Parent_C*)Context;
 

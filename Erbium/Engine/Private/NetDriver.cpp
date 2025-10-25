@@ -200,7 +200,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 			}
 
 			bool bRelevant = IsActorRelevantToConnection(Actor, Viewers);
-			bool bLevelInitializedForActor = VersionInfo.FortniteVersion >= 24 ? true : IsLevelInitializedForActor(Driver, Actor, Conn);
+			bool bLevelInitializedForActor = VersionInfo.FortniteVersion >= 22 ? true : IsLevelInitializedForActor(Driver, Actor, Conn);
 			if (!Channel && (!bRelevant || !bLevelInitializedForActor))
 				continue;
 			static auto CloseActorChannel = (void(*)(UActorChannel*, uint8_t)) FindCloseActorChannel();
