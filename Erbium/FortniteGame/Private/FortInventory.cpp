@@ -211,8 +211,9 @@ FFortItemEntry* AFortInventory::MakeItemEntry(const UFortItemDefinition* ItemDef
         if (Stats)
         {
             ItemEntry->LoadedAmmo = Stats->ClipSize;
+
             if (Weapon->HasbUsesPhantomReserveAmmo() && Weapon->bUsesPhantomReserveAmmo)
-                ItemEntry->PhantomReserveAmmo = Stats->InitialClips * Stats->ClipSize;
+                ItemEntry->PhantomReserveAmmo = (Stats->InitialClips - 1) * Stats->ClipSize;
         }
     }
 
