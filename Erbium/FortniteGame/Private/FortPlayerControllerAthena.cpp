@@ -17,16 +17,12 @@ void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena
 		Loc = PlayerController->LastSpectatorSyncLocation;
 		Rot = PlayerController->LastSpectatorSyncRotation;
 	}
-	else
+	else if (PlayerController->GetViewTarget())
 	{
-		if (auto ViewTarget = PlayerController->GetViewTarget())
-		{
-			Loc = ViewTarget->K2_GetActorLocation();
-			Rot = ViewTarget->K2_GetActorRotation();
-		}
-		else
-			return PlayerController->GetActorEyesViewPoint(&Loc, &Rot);
+		Loc = PlayerController->GetViewTarget()->K2_GetActorLocation();
+		Rot = PlayerController->GetControlRotation();
 	}
+	else return GetPlayerViewPointOG(PlayerController, Loc, Rot);
 }
 
 void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, FFrame& Stack)
