@@ -1101,6 +1101,8 @@ void AFortGameModeAthena::Hook()
     Utils::ExecHook(GetDefaultObj()->GetFunction("ReadyToStartMatch"), ReadyToStartMatch_, ReadyToStartMatch_OG);
 }
 
+TArray<FFortSafeZonePhaseInfo> Phases;
+
 AFortSafeZoneIndicator* SetupSafeZoneIndicator(AFortGameModeAthena* GameMode)
 {
     // thanks heliato
@@ -1115,8 +1117,11 @@ AFortSafeZoneIndicator* SetupSafeZoneIndicator(AFortGameModeAthena* GameMode)
             FFortSafeZoneDefinition& SafeZoneDefinition = GameState->MapInfo->SafeZoneDefinition;
             float SafeZoneCount = SafeZoneDefinition.Count.Evaluate();
 
-            if (SafeZoneIndicator->SafeZonePhases.IsValid())
-                SafeZoneIndicator->SafeZonePhases.Free();
+            auto& Array = SafeZoneIndicator->HasSafeZonePhases() ? SafeZoneIndicator->SafeZonePhases : Phases;
+
+
+            if (Array.IsValid())
+                Array.Free();
 
             const float Time = (float)UGameplayStatics::GetTimeSeconds(GameState);
 
@@ -1151,8 +1156,8 @@ AFortSafeZoneIndicator* SetupSafeZoneIndicator(AFortGameModeAthena* GameMode)
 
             SafeZoneIndicator->OnRep_PhaseCount();
 
-            SafeZoneIndicator->SafeZoneStartShrinkTime = Time + SafeZoneIndicator->SafeZonePhases[0].WaitTime;
-            SafeZoneIndicator->SafeZoneFinishShrinkTime = SafeZoneIndicator->SafeZoneStartShrinkTime + SafeZoneIndicator->SafeZonePhases[0].ShrinkTime;
+            SafeZoneIndicator->SafeZoneStartShrinkTime = Time + Array[0].WaitTime;
+            SafeZoneIndicator->SafeZoneFinishShrinkTime = SafeZoneIndicator->SafeZoneStartShrinkTime + Array[0].ShrinkTime;
 
             SafeZoneIndicator->CurrentPhase = 0;
             SafeZoneIndicator->OnRep_CurrentPhase();
@@ -1170,26 +1175,27 @@ void StartNewSafeZonePhase(AFortGameModeAthena* GameMode, int NewSafeZonePhase)
 {
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
     float TimeSeconds = (float)UGameplayStatics::GetTimeSeconds(GameState);
+    auto& Array = GameMode->SafeZoneIndicator->HasSafeZonePhases() ? GameMode->SafeZoneIndicator->SafeZonePhases : Phases;
 
-    if (GameMode->SafeZoneIndicator->SafeZonePhases.IsValidIndex(NewSafeZonePhase))
+    if (Array.IsValidIndex(NewSafeZonePhase))
     {
-        if (GameMode->SafeZoneIndicator->SafeZonePhases.IsValidIndex(NewSafeZonePhase - 1))
+        if (Array.IsValidIndex(NewSafeZonePhase - 1))
         {
-            auto& PreviousPhaseInfo = GameMode->SafeZoneIndicator->SafeZonePhases.Get(NewSafeZonePhase - 1, FFortSafeZonePhaseInfo::Size());
+            auto& PreviousPhaseInfo = Array.Get(NewSafeZonePhase - 1, FFortSafeZonePhaseInfo::Size());
 
             GameMode->SafeZoneIndicator->PreviousCenter = PreviousPhaseInfo.Center;
             GameMode->SafeZoneIndicator->PreviousRadius = PreviousPhaseInfo.Radius;
         }
 
-        auto& PhaseInfo = GameMode->SafeZoneIndicator->SafeZonePhases.Get(NewSafeZonePhase, FFortSafeZonePhaseInfo::Size());
+        auto& PhaseInfo = Array.Get(NewSafeZonePhase, FFortSafeZonePhaseInfo::Size());
 
         GameMode->SafeZoneIndicator->NextCenter = PhaseInfo.Center;
         GameMode->SafeZoneIndicator->NextRadius = PhaseInfo.Radius;
         GameMode->SafeZoneIndicator->NextMegaStormGridCellThickness = PhaseInfo.MegaStormGridCellThickness;
 
-        if (GameMode->SafeZoneIndicator->SafeZonePhases.IsValidIndex(NewSafeZonePhase + 1))
+        if (Array.IsValidIndex(NewSafeZonePhase + 1))
         {
-            auto& NextPhaseInfo = GameMode->SafeZoneIndicator->SafeZonePhases.Get(NewSafeZonePhase + 1, FFortSafeZonePhaseInfo::Size());
+            auto& NextPhaseInfo = Array.Get(NewSafeZonePhase + 1, FFortSafeZonePhaseInfo::Size());
 
             GameMode->SafeZoneIndicator->FutureReplicator->NextNextCenter = NextPhaseInfo.Center;
             GameMode->SafeZoneIndicator->FutureReplicator->NextNextRadius = NextPhaseInfo.Radius;
@@ -1218,10 +1224,12 @@ void SpawnInitialSafeZone(AFortGameModeAthena* GameMode)
     //return;
     GameMode->bSafeZoneActive = true;
     auto SafeZoneIndicator = SetupSafeZoneIndicator(GameMode);
-    StartNewSafeZonePhase(GameMode, 1);
 
     SafeZoneIndicator->OnSafeZonePhaseChanged.Bind(GameMode, UKismetStringLibrary::Conv_StringToName(FString(L"HandlePostSafeZonePhaseChanged")));
     GameMode->OnSafeZoneIndicatorSpawned.Process(SafeZoneIndicator);
+
+    StartNewSafeZonePhase(GameMode, 1);
+
 
     //return SpawnInitialSafeZoneOG(GameMode);
 }
@@ -1235,7 +1243,25 @@ void UpdateSafeZonesPhase(AFortGameModeAthena* GameMode)
     return UpdateSafeZonesPhaseOG(GameMode);
 }
 
-void Null() {}
+
+void GetPhaseInfo(UObject* Context, FFrame& Stack, bool* Ret)
+{
+    auto& OutSafeZonePhase = Stack.StepCompiledInRef<FFortSafeZonePhaseInfo>();
+    int32 InPhaseToGet;
+    Stack.StepCompiledIn(&InPhaseToGet);
+    Stack.IncrementCode();
+    auto SafeZoneIndicator = (AFortSafeZoneIndicator*)Context;
+    auto& Array = SafeZoneIndicator->HasSafeZonePhases() ? SafeZoneIndicator->SafeZonePhases : Phases;
+
+    if (Array.IsValidIndex(InPhaseToGet))
+    {
+        OutSafeZonePhase = Array[InPhaseToGet];
+
+        *Ret = true;
+        return;
+    }
+    *Ret = false;
+}
 
 void AFortGameModeAthena::PostLoadHook()
 {
@@ -1255,5 +1281,6 @@ void AFortGameModeAthena::PostLoadHook()
     {
         Utils::Hook(FindSpawnInitialSafeZone(), SpawnInitialSafeZone, SpawnInitialSafeZoneOG);
         Utils::Hook(FindUpdateSafeZonesPhase(), UpdateSafeZonesPhase, UpdateSafeZonesPhaseOG);
+        Utils::ExecHook(L"/Script/FortniteGame.FortSafeZoneIndicator.GetPhaseInfo", GetPhaseInfo);
     }
 }

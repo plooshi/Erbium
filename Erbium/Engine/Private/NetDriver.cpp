@@ -200,7 +200,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 			}
 
 			bool bRelevant = IsActorRelevantToConnection(Actor, Viewers);
-			bool bLevelInitializedForActor = VersionInfo.FortniteVersion >= 22 ? true : IsLevelInitializedForActor(Driver, Actor, Conn);
+			bool bLevelInitializedForActor = IsLevelInitializedForActor(Driver, Actor, Conn);
 			if (!Channel && (!bRelevant || !bLevelInitializedForActor))
 				continue;
 			static auto CloseActorChannel = (void(*)(UActorChannel*, uint8_t)) FindCloseActorChannel();
@@ -528,7 +528,9 @@ void UNetDriver::PostLoadHook()
 		ClientWorldPackageNameOffset = 0x17D0;
 	else if (VersionInfo.FortniteVersion >= 22 && VersionInfo.FortniteVersion <= 23.10) 
 		ClientWorldPackageNameOffset = 0x1780;
-	else if (VersionInfo.FortniteVersion >= 20 && VersionInfo.FortniteVersion < 25)
+	else if (VersionInfo.FortniteVersion >= 24)
+		ClientWorldPackageNameOffset = 0x1820;
+	else if (VersionInfo.FortniteVersion >= 20)
 		ClientWorldPackageNameOffset = 0x16b8;
 
 	if (VersionInfo.FortniteVersion >= 23)

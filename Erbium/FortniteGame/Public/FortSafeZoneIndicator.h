@@ -15,6 +15,7 @@ struct FFortSafeZonePhaseInfo
 public:
     USCRIPTSTRUCT_COMMON_MEMBERS(FFortSafeZonePhaseInfo);
 
+    uint8_t Padding[0x60];
     DEFINE_STRUCT_PROP(Radius, float);
     DEFINE_STRUCT_PROP(WaitTime, float);
     DEFINE_STRUCT_PROP(ShrinkTime, float);

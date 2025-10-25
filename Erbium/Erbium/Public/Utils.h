@@ -127,7 +127,7 @@ public:
     template <typename _Ot = void*>
     __forceinline static void ExecHook(const wchar_t* _Name, void* _Detour, _Ot& _Orig = _NpFH)
     {
-        UFunction* _Fn = FindObject<UFunction>(_Name);
+        UFunction* _Fn = (UFunction*)FindObject<UFunction>(_Name);
         ExecHook(_Fn, _Detour, _Orig);
     }
 
