@@ -28,6 +28,19 @@ public:
     UCLASS_COMMON_MEMBERS(UFortItem);
 };
 
+class EFortItemType
+{
+public:
+    UENUM_COMMON_MEMBERS(EFortItemType);
+
+    DEFINE_ENUM_PROP(WeaponHarvest);
+    DEFINE_ENUM_PROP(WorldResource);
+    DEFINE_ENUM_PROP(EditTool);
+    DEFINE_ENUM_PROP(Trap);
+    DEFINE_ENUM_PROP(Ammo);
+    DEFINE_ENUM_PROP(BuildingPiece);
+};
+
 class UFortItemDefinition : public UObject
 {
 public:
@@ -46,6 +59,7 @@ public:
     DEFINE_BITFIELD_PROP(bPersistInInventoryWhenFinalStackEmpty);
     DEFINE_BITFIELD_PROP(bCanBeDropped);
     DEFINE_BITFIELD_PROP(bForceAutoPickup);
+    DEFINE_PROP(ItemType, uint8);
 
     DEFINE_FUNC(CreateTemporaryItemInstanceBP, UFortItem*);
     DEFINE_FUNC(GetWeaponItemDefinition, UFortItemDefinition*);

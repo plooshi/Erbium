@@ -998,7 +998,12 @@ namespace SDK
 
 				if (Name.ComparisonIndex)
 				{
-					if (Name.ToString() == EnumMemberName)
+					auto str = Name.ToString();
+					auto colcolIdx = str.find_last_of("::");
+					
+					auto RealName = colcolIdx == -1 ? str : str.substr(colcolIdx + 1);
+
+					if (RealName == EnumMemberName)
 						return Value;
 				}
 			}

@@ -364,12 +364,12 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
 bool AFortInventory::IsPrimaryQuickbar(const UFortItemDefinition* ItemDefinition)
 {
     return 
-        ItemDefinition->IsA(UFortWeaponMeleeItemDefinition::StaticClass()) || 
-        ItemDefinition->IsA(UFortResourceItemDefinition::StaticClass()) || 
-        ItemDefinition->IsA(UFortAmmoItemDefinition::StaticClass()) || 
-        ItemDefinition->IsA(UFortDecoItemDefinition::StaticClass()) ||
-        ItemDefinition->IsA(UFortBuildingItemDefinition::StaticClass()) || 
-        ItemDefinition->IsA(UFortEditToolItemDefinition::StaticClass()) || 
+        ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest() || 
+        ItemDefinition->ItemType == EFortItemType::GetWorldResource() ||
+        ItemDefinition->ItemType == EFortItemType::GetAmmo() ||
+        ItemDefinition->ItemType == EFortItemType::GetTrap() ||
+        ItemDefinition->ItemType == EFortItemType::GetBuildingPiece() ||
+        ItemDefinition->ItemType == EFortItemType::GetEditTool() ||
         (ItemDefinition->HasbForceIntoOverflow() && ItemDefinition->bForceIntoOverflow)
         ? false : true;
 }
