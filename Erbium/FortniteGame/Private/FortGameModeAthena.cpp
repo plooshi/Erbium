@@ -259,7 +259,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         auto Starts = Utils::GetAll(WarmupStartClass);
         auto StartsNum = Starts.Num();
         Starts.Free();
-        if (!Misc::bHookedAll && StartsNum == 0 || !GameState->MapInfo)
+        if (StartsNum == 0 || !GameState->MapInfo)
         {
             *Ret = false;
             return;
