@@ -224,9 +224,9 @@ namespace SDK
 		}
 
 
-		if (VersionInfo.EngineVersion >= 5.4)
+		if (VersionInfo.EngineVersion >= 5.2)
 			Offsets::StaticFindObject = Memcury::Scanner::FindPattern("48 89 74 24 ? 48 89 7C 24 ? 55 41 54 41 55 41 56 41 57 48 8B EC 48 83 EC ? 4C 8B E9 48 8D 4D").Get();
-		if (VersionInfo.EngineVersion >= 5.1)
+		else if (VersionInfo.EngineVersion >= 5.1)
 		{
 			Offsets::StaticFindObject = Memcury::Scanner::FindPattern("40 55 53 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 33 F6 4C 8B E1 48 83 CB", false).Get();
 
