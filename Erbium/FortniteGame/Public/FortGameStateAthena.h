@@ -47,6 +47,20 @@ public:
 
     DEFINE_PROP(SupplyDropClass, TSubclassOf<UObject>);
 };
+
+struct FFortSafeZoneDefinition
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FFortSafeZoneDefinition);
+
+    DEFINE_STRUCT_PROP(Count, FScalableFloat);
+    DEFINE_STRUCT_PROP(Radius, FScalableFloat);
+    DEFINE_STRUCT_PROP(WaitTime, FScalableFloat);
+    DEFINE_STRUCT_PROP(ShrinkTime, FScalableFloat);
+    DEFINE_STRUCT_PROP(PlayerCapSolo, FScalableFloat);
+    DEFINE_STRUCT_PROP(MegaStormGridCellThickness, FScalableFloat);
+};
+
 class AFortAthenaMapInfo : public AActor
 {
 public:
@@ -55,6 +69,7 @@ public:
     DEFINE_PROP(LlamaClass, UClass*);
     DEFINE_PROP(SupplyDropInfoList, TArray<UFortSupplyDropInfo*>);
     DEFINE_PROP(VendingMachineRarityCount, FScalableFloat);
+    DEFINE_PROP(SafeZoneDefinition, FFortSafeZoneDefinition);
 };
 
 struct FAircraftFlightInfo
@@ -115,6 +130,7 @@ public:
     DEFINE_PROP(AirCraftBehavior, uint8);
     DEFINE_PROP(CachedSafeZoneStartUp, uint8);
     DEFINE_PROP(DefaultBattleBus, const UObject*);
+    DEFINE_PROP(SafeZoneIndicator, AActor*);
 
     DEFINE_FUNC(OnRep_CurrentPlaylistInfo, void);
     DEFINE_FUNC(OnRep_CurrentPlaylistData, void);
@@ -125,4 +141,5 @@ public:
     DEFINE_FUNC(OnRep_WinningPlayerState, void);
     DEFINE_FUNC(OnRep_GamePhase, void);
     DEFINE_FUNC(OnRep_PlayersLeft, void);
+    DEFINE_FUNC(OnRep_SafeZoneIndicator, void);
 };

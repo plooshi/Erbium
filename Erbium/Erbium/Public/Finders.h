@@ -50,6 +50,8 @@ uint64 FindGetPlayerViewPoint();
 uint32 FindOnItemInstanceAddedVft();
 uint64 FindGetNamePool();
 uint64 FindIsNetReady();
+uint64 FindSpawnInitialSafeZone();
+uint64 FindUpdateSafeZonesPhase();
 
 inline std::vector<uint64_t> NullFuncs = {};
 inline std::vector<uint64_t> RetTrueFuncs = {};

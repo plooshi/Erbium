@@ -36,6 +36,14 @@ public:
     DEFINE_PROP(DefaultPawnClass, const UClass*);
     DEFINE_PROP(PlayerControllerClass, const UClass*);
     DEFINE_PROP(PlaylistHotfixOriginalGCFrequency, float);
+    DEFINE_PROP(SafeZoneIndicatorClass, TSubclassOf<AFortSafeZoneIndicator>);
+    DEFINE_PROP(TimeBetweenStormCapDamage, FScalableFloat);
+    DEFINE_PROP(StormCapDamagePerTick, FScalableFloat);
+    DEFINE_PROP(StormCampingIncrementTimeAfterDelay, FScalableFloat);
+    DEFINE_PROP(StormCampingInitialDelayTime, FScalableFloat);
+    DEFINE_PROP(bSafeZoneActive, bool);
+    DEFINE_PROP(bSafeZonePaused, bool);
+    DEFINE_PROP(OnSafeZoneIndicatorSpawned, TMulticastInlineDelegate<void(AFortSafeZoneIndicator*)>);
 
     DEFINE_FUNC(SpawnDefaultPawnAtTransform, AFortPlayerPawnAthena*);
     DEFINE_FUNC(RestartPlayer, void);

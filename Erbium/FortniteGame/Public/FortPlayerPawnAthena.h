@@ -20,6 +20,17 @@ public:
     uint8_t Padding[0x100];
 };
 
+class AFortAscenderZipline : public AActor
+{
+public:
+    UCLASS_COMMON_MEMBERS(AFortAscenderZipline);
+
+    DEFINE_NEWOBJ_PROP(PawnUsingHandle, AActor);
+    DEFINE_PROP(PreviousPawnUsingHandle, TWeakObjectPtr<AActor>);
+
+    DEFINE_FUNC(OnRep_PawnUsingHandle, void);
+};
+
 class AFortPlayerPawnAthena : public AActor
 {
 public:
@@ -57,6 +68,7 @@ public:
     DEFINE_FUNC(OnRep_IsInsideSafeZone, void);
     DEFINE_FUNC(OnRep_PlayerState, void);
     DEFINE_FUNC(ServerSetAttachment, void);
+    DEFINE_FUNC(GetActiveZipline, AFortAscenderZipline*);
 
     DefUHookOg(ServerHandlePickup_);
     DefUHookOg(ServerHandlePickupInfo);

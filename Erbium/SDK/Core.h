@@ -313,6 +313,7 @@ namespace SDK
 		}
 
 		class UFunction* GetFunction(const char* Name) const;
+		class UFunction* GetFunction(FName Name) const;
 
 		void ProcessEvent(class UFunction* Function, void* Params) const
 		{
@@ -461,6 +462,18 @@ namespace SDK
 		for (const UStruct* Clss = Class; Clss; Clss = (const UStruct*)Clss->GetSuper())
 			for (const UField* Prop = Clss->GetChildren(); Prop; Prop = Prop->GetNext())
 				if (Prop->Class->GetCastFlags() & 0x80000 && Prop->GetName().ToSDKString() == s)
+					return (UFunction*)Prop;
+
+		return nullptr;
+		//return (UFunction*)GetProperty(Name, 0x80000);
+	}
+
+
+	__declspec(noinline) inline UFunction* UObject::GetFunction(FName Name) const
+	{
+		for (const UStruct* Clss = Class; Clss; Clss = (const UStruct*)Clss->GetSuper())
+			for (const UField* Prop = Clss->GetChildren(); Prop; Prop = Prop->GetNext())
+				if (Prop->Class->GetCastFlags() & 0x80000 && Prop->GetName() == Name)
 					return (UFunction*)Prop;
 
 		return nullptr;

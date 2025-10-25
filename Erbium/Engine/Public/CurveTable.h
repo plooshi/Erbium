@@ -51,13 +51,13 @@ public:
     FCurveTableRowHandle Curve;
     uint8 _Padding2[0x10];
 
-    inline float Evaluate()
+    inline float Evaluate(float i = 0.f)
     {
         if (!Curve.CurveTable)
             return Value;
 
         float Out;
-        UDataTableFunctionLibrary::EvaluateCurveTableRow(Curve.CurveTable, Curve.RowName, (float)0, nullptr, &Out, FString());
+        UDataTableFunctionLibrary::EvaluateCurveTableRow(Curve.CurveTable, Curve.RowName, i, nullptr, &Out, FString());
         return Out;
     }
 };

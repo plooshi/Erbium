@@ -524,6 +524,7 @@ namespace SDK
 		DEFINE_PROP(NetUpdateFrequency, float);
 		DEFINE_PROP(NetCullDistanceSquared, float);
 		DEFINE_BITFIELD_PROP(bAlwaysRelevant);
+		DEFINE_BITFIELD_PROP(bCanBeDamaged);
 
 		DEFINE_FUNC(AddComponentByClass, UActorComponent*);
 		DEFINE_FUNC(GetComponentByClass, UActorComponent*);
@@ -633,6 +634,12 @@ namespace SDK
 		DEFINE_STRUCT_PROP(NetDriver, UObject*);
 	};
 
+	class AServerStreamingLevelsVisibility : public UObject
+	{
+	public:
+		UCLASS_COMMON_MEMBERS(AServerStreamingLevelsVisibility);
+	};
+
 	class UWorld : public UObject
 	{
 	public:
@@ -644,6 +651,7 @@ namespace SDK
 		DEFINE_PROP(PersistentLevel, UObject*);
 		DEFINE_PROP(NetDriver, UObject*);
 		DEFINE_PROP(LevelCollections, TArray<FLevelCollection>);
+		DEFINE_PROP(ServerStreamingLevelsVisibility, AServerStreamingLevelsVisibility*);
 
 		struct GameplayStatics_BeginDeferredActorSpawnFromClass
 		{
@@ -855,6 +863,52 @@ namespace SDK
 		{
 			if (Code)
 				Code++;
+		}
+	};
+
+	struct FScriptDelegate
+	{
+	public:
+		FWeakObjectPtr Object;
+		FName FunctionName;
+
+		static int32 Size()
+		{
+			return VersionInfo.FortniteVersion >= 20 ? 0xC : 0x10;
+		}
+	};
+
+	template<typename FunctionSignature>
+	class TMulticastInlineDelegate
+	{
+	public:
+		uint8 Padding[0x10];
+	};
+
+	template<typename Ret, typename... Args>
+	class TMulticastInlineDelegate<Ret(Args...)>
+	{
+	public:
+		TArray<FScriptDelegate> InvocationList;
+
+		void Process(Args... args)
+		{
+			for (int i = 0; i < InvocationList.Num(); i++)
+			{
+				auto& ScriptDelegate = InvocationList.Get(i, FScriptDelegate::Size());
+				
+				ScriptDelegate.Object->Call(ScriptDelegate.Object->GetFunction(ScriptDelegate.FunctionName), std::forward<Args>(args)...);
+			}
+		}
+
+		void Bind(UObject* Object, FName FunctionName)
+		{
+			FScriptDelegate NewDelegate;
+
+			NewDelegate.Object = Object;
+			NewDelegate.FunctionName = FunctionName;
+
+			InvocationList.Add(NewDelegate, FScriptDelegate::Size());
 		}
 	};
 }

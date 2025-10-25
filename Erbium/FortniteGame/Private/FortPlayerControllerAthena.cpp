@@ -17,12 +17,16 @@ void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena
 		Loc = PlayerController->LastSpectatorSyncLocation;
 		Rot = PlayerController->LastSpectatorSyncRotation;
 	}
-	else if (PlayerController->GetViewTarget())
+	else
 	{
-		Loc = PlayerController->GetViewTarget()->K2_GetActorLocation();
-		Rot = PlayerController->GetControlRotation();
+		if (auto ViewTarget = PlayerController->GetViewTarget())
+		{
+			Loc = ViewTarget->K2_GetActorLocation();
+			Rot = ViewTarget->K2_GetActorRotation();
+		}
+		else
+			return PlayerController->GetActorEyesViewPoint(&Loc, &Rot);
 	}
-	else return GetPlayerViewPointOG(PlayerController, Loc, Rot);
 }
 
 void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, FFrame& Stack)
@@ -516,12 +520,10 @@ void AFortPlayerControllerAthena::ServerAttemptInventoryDrop(UObject* Context, F
 	if (!ItemP)
 		return;
 	auto Item = *ItemP;
-	if ((Item->ItemEntry.Count - Count) < 0)
-		return;
 
 	Item->ItemEntry.Count -= Count;
 	AFortInventory::SpawnPickup(PlayerController->Pawn->K2_GetActorLocation() + PlayerController->Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), Item->ItemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn, Count);
-	if (Item->ItemEntry.Count == 0)
+	if (Item->ItemEntry.Count <= 0 || Count < 0)
 		PlayerController->WorldInventory->Remove(Guid);
 	else
 		PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
@@ -738,6 +740,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 			static auto SpectatingName = UKismetStringLibrary::Conv_StringToName(FString(L"Spectating"));
 			//PlayerController->StateName = SpectatingName;
 			PlayerController->ClientGotoState(SpectatingName);
+			PlayerController->ClientIgnoreMoveInput(true);
 		}
 
 
@@ -846,18 +849,15 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 	auto MaxStack = (int32)PickupEntry->ItemDefinition->GetMaxStackSize();
 	int ItemCount = 0;
 	
-	if (PickupEntry->ItemDefinition->HasbForceIntoOverflow() && PickupEntry->ItemDefinition->bForceIntoOverflow)
-	{
-		WorldInventory->GiveItem(*PickupEntry, PickupEntry->Count, true);
-		return;
-	}
-	for (int i = 0; i < WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
-	{
-		auto& Item = WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
 
-		if (AFortInventory::IsPrimaryQuickbar(Item.ItemDefinition))
-			ItemCount += Item.ItemDefinition->HasNumberOfSlotsToTake() ? Item.ItemDefinition->NumberOfSlotsToTake : 1;
-	}
+	if (!PickupEntry->ItemDefinition->HasbForceIntoOverflow() || !PickupEntry->ItemDefinition->bForceIntoOverflow)
+		for (int i = 0; i < WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
+		{
+			auto& Item = WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
+
+			if (AFortInventory::IsPrimaryQuickbar(Item.ItemDefinition) && (!Item.ItemDefinition->HasbForceIntoOverflow() || !Item.ItemDefinition->bForceIntoOverflow))
+				ItemCount += Item.ItemDefinition->HasNumberOfSlotsToTake() ? Item.ItemDefinition->NumberOfSlotsToTake : 1;
+		}
 
 	//printf("br: %d\n", ItemCount);
 	auto GiveOrSwap = [&]()
@@ -974,92 +974,120 @@ _help:
 
 		if (command == "startaircraft")
 			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
+		else if (command == "resumesafezone")
+			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startsafezone"), nullptr);
 		else if (command == "pausesafezone")
 			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"pausesafezone"), nullptr);
+		else if (command == "demospeed")
+		{
+			if (args.size() != 2)
+				PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1);
+
+			auto ws = L"demospeed " + UEAllocatedWString(args[1].begin(), args[1].end());
+
+			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(ws.c_str()), nullptr);
+		}
+		else if (command == "god")
+		{
+			PlayerController->Pawn->bCanBeDamaged ^= 1;
+		}
 		else if (command == "spawnbot")
 		{
-			auto Transform = PlayerController->Pawn->GetTransform();
-			Transform.Translation.Z += 500.f;
+			if (args.size() != 2 && args.size() != 3)
+				PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1);
 
-			auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
-			auto GameState = GameMode->GameState;
-			//auto PlayerController = (AFortPlayerControllerAthena*)UWorld::SpawnActor(GameMode->PlayerControllerClass, FVector{});
-			auto Pawn = (AFortPlayerPawnAthena*)UWorld::SpawnActor(GameMode->DefaultPawnClass, Transform);
-			auto PlayerController = (AFortPlayerControllerAthena*)UWorld::SpawnActor(Pawn->AIControllerClass, FVector{});
-			//auto PlayerState = PlayerController->PlayerState;
+			int Count = 1;
 
-			PlayerController->Possess(Pawn);
-
-			auto PlayerState = (AFortPlayerStateAthena*) UWorld::SpawnActor(AFortPlayerStateAthena::StaticClass(), FVector{});
-
-			PlayerState->SetOwner(PlayerController);
-
-			PlayerController->PlayerState = PlayerState;
-			PlayerController->OnRep_PlayerState();
-
-			Pawn->PlayerState = PlayerState;
-			Pawn->OnRep_PlayerState();
-
-			Pawn->SetMaxHealth(100.f);
-			Pawn->SetHealth(100.f);
-
-			PlayerState->TeamIndex = AFortGameModeAthena::PickTeam(GameMode, 0, PlayerController);
-			PlayerState->SquadId = PlayerState->TeamIndex - 3;
-			if (PlayerState->HasbIsABot())
-				PlayerState->bIsABot = true;
-
-
-			if (GameState->HasGameMemberInfoArray())
+			if (args.size() == 3)
 			{
-				auto Member = (FGameMemberInfo*)malloc(FGameMemberInfo::Size());
-				__stosb((PBYTE)Member, 0, FGameMemberInfo::Size());
-
-				Member->MostRecentArrayReplicationKey = -1;
-				Member->ReplicationID = -1;
-				Member->ReplicationKey = -1;
-				Member->TeamIndex = PlayerState->TeamIndex;
-				Member->SquadId = PlayerState->SquadId;
-				Member->MemberUniqueId = PlayerState->UniqueId;
-
-				GameState->GameMemberInfoArray.Members.Add(*Member, FGameMemberInfo::Size());
-				GameState->GameMemberInfoArray.MarkItemDirty(*Member);
-
-				free(Member);
+				Count = std::stoi(args[2].c_str(), nullptr);
 			}
 
-			for (auto& AbilitySet : AFortGameModeAthena::AbilitySets)
-				PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
-
-			/*PlayerController->WorldInventory = (AFortInventory*)UWorld::SpawnActor(AFortInventory::StaticClass(), FVector{});
-			PlayerController->WorldInventory->SetOwner(PlayerController);
-			PlayerController->WorldInventory->InventoryType = 0;*/
-			//PlayerController->bHasInitializedWorldInventory = true;
-
-			GameState->PlayersLeft++;
-			GameState->OnRep_PlayersLeft();
-
-			GameMode->AlivePlayers.Add(PlayerController);
-
-			static auto Commando = Utils::FindObject(L"/Game/Athena/Heroes/HID_001_Athena_Commando_F.HID_001_Athena_Commando_F", nullptr);
-			static auto Commando2 = Utils::FindObject(L"/Game/Athena/Heroes/HID_Commando_Athena_01.HID_Commando_Athena_01", nullptr);
-			PlayerState->HeroType = Commando ? Commando : Commando2;
-
-			if (ApplyCharacterCustomization)
-				((void (*)(AActor*, AFortPlayerPawnAthena*)) ApplyCharacterCustomization)(PlayerState, Pawn);
-
-			/*static auto DefaultPickaxe = Utils::FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
-
-			PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
-
-			static auto SmartItemDefClass = FindClass("FortSmartBuildingItemDefinition");
-
-			for (int i = 0; i < GameMode->StartingItems.Num(); i++)
+			for (int i = 0; i < Count; i++)
 			{
-				auto& StartingItem = GameMode->StartingItems.Get(i, FItemAndCount::Size());
+				auto Transform = PlayerController->Pawn->GetTransform();
+				Transform.Translation.Z += 500.f;
 
-				if (StartingItem.Count && (!SmartItemDefClass || !StartingItem.Item->IsA(SmartItemDefClass)))
-					PlayerController->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
-			}*/
+				auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+				auto GameState = GameMode->GameState;
+				//auto PlayerController = (AFortPlayerControllerAthena*)UWorld::SpawnActor(GameMode->PlayerControllerClass, FVector{});
+				auto Pawn = (AFortPlayerPawnAthena*)UWorld::SpawnActor(GameMode->DefaultPawnClass, Transform);
+				auto PlayerController = (AFortPlayerControllerAthena*)UWorld::SpawnActor(Pawn->AIControllerClass, FVector{});
+				//auto PlayerState = PlayerController->PlayerState;
+
+				PlayerController->Possess(Pawn);
+
+				auto PlayerState = (AFortPlayerStateAthena*)UWorld::SpawnActor(AFortPlayerStateAthena::StaticClass(), FVector{});
+
+				PlayerState->SetOwner(PlayerController);
+
+				PlayerController->PlayerState = PlayerState;
+				PlayerController->OnRep_PlayerState();
+
+				Pawn->PlayerState = PlayerState;
+				Pawn->OnRep_PlayerState();
+
+				Pawn->SetMaxHealth(100.f);
+				Pawn->SetHealth(100.f);
+
+				PlayerState->TeamIndex = AFortGameModeAthena::PickTeam(GameMode, 0, PlayerController);
+				PlayerState->SquadId = PlayerState->TeamIndex - 3;
+				if (PlayerState->HasbIsABot())
+					PlayerState->bIsABot = true;
+
+
+				if (GameState->HasGameMemberInfoArray())
+				{
+					auto Member = (FGameMemberInfo*)malloc(FGameMemberInfo::Size());
+					__stosb((PBYTE)Member, 0, FGameMemberInfo::Size());
+
+					Member->MostRecentArrayReplicationKey = -1;
+					Member->ReplicationID = -1;
+					Member->ReplicationKey = -1;
+					Member->TeamIndex = PlayerState->TeamIndex;
+					Member->SquadId = PlayerState->SquadId;
+					Member->MemberUniqueId = PlayerState->UniqueId;
+
+					GameState->GameMemberInfoArray.Members.Add(*Member, FGameMemberInfo::Size());
+					GameState->GameMemberInfoArray.MarkItemDirty(*Member);
+
+					free(Member);
+				}
+
+				for (auto& AbilitySet : AFortGameModeAthena::AbilitySets)
+					PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
+
+				/*PlayerController->WorldInventory = (AFortInventory*)UWorld::SpawnActor(AFortInventory::StaticClass(), FVector{});
+				PlayerController->WorldInventory->SetOwner(PlayerController);
+				PlayerController->WorldInventory->InventoryType = 0;*/
+				//PlayerController->bHasInitializedWorldInventory = true;
+
+				GameState->PlayersLeft++;
+				GameState->OnRep_PlayersLeft();
+
+				GameMode->AlivePlayers.Add(PlayerController);
+
+				static auto Commando = Utils::FindObject(L"/Game/Athena/Heroes/HID_001_Athena_Commando_F.HID_001_Athena_Commando_F", nullptr);
+				static auto Commando2 = Utils::FindObject(L"/Game/Athena/Heroes/HID_Commando_Athena_01.HID_Commando_Athena_01", nullptr);
+				PlayerState->HeroType = Commando ? Commando : Commando2;
+
+				if (ApplyCharacterCustomization)
+					((void (*)(AActor*, AFortPlayerPawnAthena*)) ApplyCharacterCustomization)(PlayerState, Pawn);
+
+				/*static auto DefaultPickaxe = Utils::FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
+
+				PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
+
+				static auto SmartItemDefClass = FindClass("FortSmartBuildingItemDefinition");
+
+				for (int i = 0; i < GameMode->StartingItems.Num(); i++)
+				{
+					auto& StartingItem = GameMode->StartingItems.Get(i, FItemAndCount::Size());
+
+					if (StartingItem.Count && (!SmartItemDefClass || !StartingItem.Item->IsA(SmartItemDefClass)))
+						PlayerController->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
+				}*/
+			}
 		} 
 		else if (command == "startevent")
 		{
@@ -1205,6 +1233,8 @@ void OnUnEquip(AFortWeapon* Weapon)
 {
 	auto ClearAbility = (void(*)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle&)) ClearAbility_;
 	auto PlayerController = (AFortPlayerControllerAthena*)((AFortPlayerPawnAthena*)Weapon->Instigator)->Controller;
+	if (!PlayerController)
+		return;
 	auto AbilitySystemComponent = PlayerController->PlayerState->AbilitySystemComponent;
 
 	if (Weapon->PrimaryAbilitySpecHandle.Handle != -1)
@@ -1482,7 +1512,7 @@ void AFortPlayerControllerAthena::PostLoadHook()
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerPlayEmoteItem"), ServerPlayEmoteItem);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerPlaySprayItem"), ServerPlayEmoteItem);
 
-	auto ClientOnPawnDiedAddr = FindFunctionCall(L"ClientOnPawnDied", VersionInfo.EngineVersion == 4.16 ? std::vector<uint8_t>{ 0x48, 0x89, 0x54 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
+	auto ClientOnPawnDiedAddr = FindFunctionCall(L"ClientOnPawnDied", VersionInfo.EngineVersion == 4.16 ? std::vector<uint8_t>{ 0x48, 0x89, 0x54 } : (VersionInfo.FortniteVersion >= 24 ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C }));
 	Utils::Hook(ClientOnPawnDiedAddr, ClientOnPawnDied, ClientOnPawnDiedOG);
 
 	if (VersionInfo.FortniteVersion >= 15)

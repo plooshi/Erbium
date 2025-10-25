@@ -10,6 +10,14 @@ public:
 };
 
 
+struct FVector3f
+{
+public:
+    float X;
+    float Y;
+    float Z;
+};
+
 class ABuildingContainer : public AActor
 {
 public:

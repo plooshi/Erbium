@@ -147,6 +147,8 @@ public:
     DEFINE_FUNC(ClientEquipItem, void);
     DEFINE_FUNC(OnRep_PlayerState, void);
     DEFINE_FUNC(ServerChangeName, void);
+    DEFINE_FUNC(ClientIgnoreMoveInput, void);
+    DEFINE_FUNC(GetActorEyesViewPoint, void);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);

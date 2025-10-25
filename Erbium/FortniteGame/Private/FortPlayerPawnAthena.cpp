@@ -167,6 +167,8 @@ void AFortPlayerPawnAthena::ServerSendZiplineState(UObject* Context, FFrame& Sta
 	if (!Pawn)
 		return;
 
+	auto Zipline = Pawn->GetActiveZipline();
+
 	__movsb((PBYTE) &Pawn->ZiplineState, (const PBYTE)&State, FZiplinePawnState::Size());
 
 	((void (*)(AFortPlayerPawnAthena*)) OnRep_ZiplineState)(Pawn);
@@ -177,6 +179,14 @@ void AFortPlayerPawnAthena::ServerSendZiplineState(UObject* Context, FFrame& Sta
 		auto VelocityX = Velocity.X * -0.5f;
 		auto VelocityY = Velocity.Y * -0.5f;
 		Pawn->LaunchCharacterJump(FVector{ VelocityX >= -750 ? min(VelocityX, 750) : -750, VelocityY >= -750 ? min(VelocityY, 750) : -750, 1200 }, false, false, true, true);
+	}
+
+	static auto ZipLineClass = Utils::FindObject<UClass>(L"/Ascender/Gameplay/Ascender/B_Athena_Zipline_Ascender.B_Athena_Zipline_Ascender_C");
+	if (auto Ascender = Zipline->Cast<AFortAscenderZipline>(ZipLineClass))
+	{
+		Ascender->PawnUsingHandle = nullptr;
+		Ascender->PreviousPawnUsingHandle = Pawn;
+		Ascender->OnRep_PawnUsingHandle();
 	}
 }
 
@@ -198,6 +208,7 @@ void AFortPlayerPawnAthena::OnCapsuleBeginOverlap_(UObject* Context, FFrame& Sta
 	Stack.IncrementCode();
 
 	auto Pawn = (AFortPlayerPawnAthena*)Context;
+
 	if (!Pawn || !Pawn->Controller)
 		return callOG(Pawn, Stack.GetCurrentNativeFunction(), OnCapsuleBeginOverlap, OverlappedComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 

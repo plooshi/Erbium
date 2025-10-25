@@ -126,22 +126,23 @@ void AFortInventory::Remove(FGuid Guid)
 {
     auto ItemEntryIdx = Inventory.ReplicatedEntries.SearchIndex([&](FFortItemEntry& entry) { return entry.ItemGuid == Guid; }, FFortItemEntry::Size());
     auto& ItemEntry = Inventory.ReplicatedEntries.Get(ItemEntryIdx, FFortItemEntry::Size());
-    if (ItemEntryIdx != -1)
-        Inventory.ReplicatedEntries.Remove(ItemEntryIdx, FFortItemEntry::Size());
 
     auto ItemInstanceIdx = Inventory.ItemInstances.SearchIndex([&](UFortWorldItem* entry) { return entry->ItemEntry.ItemGuid == Guid; });
     auto ItemInstance = Inventory.ItemInstances.Search([&](UFortWorldItem* entry)
         { return entry->ItemEntry.ItemGuid == Guid; });
 
     auto Instance = ItemInstance ? *ItemInstance : nullptr;
-    if (ItemInstanceIdx != -1)
-        Inventory.ItemInstances.Remove(ItemInstanceIdx);
 
     if (OnItemInstanceAddedVft && Instance && Instance->ItemEntry.ItemDefinition)
     {
         ((bool(*)(const UFortWorldItem*, const IInterface*, uint32_t)) Instance->Vft[OnItemInstanceAddedVft + 1])(Instance, Owner->GetInterface(IFortInventoryOwnerInterface::StaticClass()), Instance->ItemEntry.Count);
         //((bool(*)(const UFortItemDefinition*, const IInterface*, UFortWorldItem*)) Instance->ItemEntry.ItemDefinition->Vft[OnItemInstanceAddedVft + 1])(Instance->ItemEntry.ItemDefinition, Owner->GetInterface(IFortInventoryOwnerInterface::StaticClass()), Instance);
     }
+
+    if (ItemEntryIdx != -1)
+        Inventory.ReplicatedEntries.Remove(ItemEntryIdx, FFortItemEntry::Size());
+    if (ItemInstanceIdx != -1)
+        Inventory.ItemInstances.Remove(ItemInstanceIdx);
 
     if (VersionInfo.FortniteVersion < 3)
     {
@@ -204,7 +205,7 @@ FFortItemEntry* AFortInventory::MakeItemEntry(const UFortItemDefinition* ItemDef
     ItemEntry->GameplayAbilitySpecHandle = FGameplayAbilitySpecHandle(-1);
     ItemEntry->ParentInventory.ObjectIndex = -1;
     ItemEntry->Level = Level;
-    if (auto Weapon = ItemDefinition->Cast<UFortWeaponItemDefinition>())
+    if (auto Weapon = ItemDefinition->IsA<UFortGadgetItemDefinition>() ? (UFortWeaponItemDefinition*)((UFortGadgetItemDefinition*)ItemDefinition)->GetWeaponItemDefinition() : ItemDefinition->Cast<UFortWeaponItemDefinition>())
     {
         auto Stats = GetStats(Weapon);
         if (Stats)
@@ -283,9 +284,18 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
         return nullptr;
 
     auto ContainerLoc = Container->K2_GetActorLocation();
-    auto& SpawnLocation = Container->HasLootSpawnLocation_Athena() ? Container->LootSpawnLocation_Athena : Container->LootSpawnLocation;
+    auto SpawnLocation = Container->HasLootSpawnLocation_Athena() ? Container->LootSpawnLocation_Athena : Container->LootSpawnLocation;
+    if (VersionInfo.FortniteVersion >= 24)
+    {
+        auto& ProperSpawnLoc = *(FVector3f*)(__int64(Container) + Container->LootSpawnLocation_Athena__Offset);
+
+        SpawnLocation.X = ProperSpawnLoc.X;
+        SpawnLocation.Y = ProperSpawnLoc.Y;
+        SpawnLocation.Z = ProperSpawnLoc.Z;
+    }
     auto Loc = ContainerLoc + (Container->GetActorForwardVector() * SpawnLocation.X) + (Container->GetActorRightVector() * SpawnLocation.Y) + (Container->GetActorUpVector() * SpawnLocation.Z);
     AFortPickupAthena* NewPickup = UWorld::SpawnActor<AFortPickupAthena>(Loc, {});
+
     if (!NewPickup)
         return nullptr;
 
@@ -327,7 +337,7 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
     {
         auto FinalLoc = Loc + (Container->GetActorForwardVector() * Container->LootFinalLocation.X) + (Container->GetActorRightVector() * Container->LootFinalLocation.Y) + (Container->GetActorUpVector() * Container->LootFinalLocation.Z);
 
-        NewPickup->TossPickup(FinalLoc, Pawn, -1, true, true, EFortPickupSourceTypeFlag::GetContainer(), EFortPickupSpawnSource::GetChest());
+        NewPickup->TossPickup(Loc, Pawn, -1, true, true, EFortPickupSourceTypeFlag::GetContainer(), EFortPickupSpawnSource::GetChest());
     }
 
     if (VersionInfo.FortniteVersion < 6)

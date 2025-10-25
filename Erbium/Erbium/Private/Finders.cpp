@@ -854,6 +854,9 @@ uint64_t FindFinishedTargetSpline()
 
             if (!FinishedTargetSpline)
                 FinishedTargetSpline = Memcury::Scanner::FindPattern("48 89 5C ?? ?? 48 89 74 ?? ?? 55 57 41 55 41 56 41 57 48 8D AC ?? ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 85 ?? ?? ?? ?? 44 8B 91 ?? ?? ?? ??").Get();
+            
+            if (!FinishedTargetSpline)
+                FinishedTargetSpline = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 55 57 41 56 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 44 8B 81").Get();
         }
     }
 
@@ -1400,8 +1403,13 @@ uint64_t FindSendClientAdjustment()
     {
         bInitialized = true;
 
-        if (VersionInfo.FortniteVersion >= 23.00)
+        if (VersionInfo.FortniteVersion >= 22.00)
+        {
             SendClientAdjustment = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 83 3D ? ? ? ? ? 48 8B D9 75").Get();
+
+            if (!SendClientAdjustment)
+                SendClientAdjustment = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 68 ? 48 89 70 ? 48 89 78 ? 41 56 48 83 EC ? 83 3D ? ? ? ? ? 48 8B F1").Get();
+        }
         else if (VersionInfo.FortniteVersion >= 20.00)
             SendClientAdjustment = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 48 83 EC ? 8B 91 ? ? ? ? 48 8B D9 83 FA").Get();
         else
@@ -1842,6 +1850,69 @@ uint64_t FindIsNetReady()
     }
 
     return IsNetReady;
+}
+
+uint64_t FindSpawnInitialSafeZone()
+{
+    static uint64_t SpawnInitialSafeZone = 0;
+    static bool bInitialized = false;
+
+    if (!bInitialized)
+    {
+        bInitialized = true;
+
+        auto sRef = Memcury::Scanner::FindStringRef(L"FortGameModeAthena::SpawnInitialSafeZone bShouldSpawnSafeZoneIndicator == false, skipping spawning Safe Zone Indicator", false, 0, VersionInfo.FortniteVersion >= 19).Get();
+
+        for (int i = 0; i < 2000; i++)
+        {
+            auto Ptr = (uint8_t*)(sRef - i);
+
+            if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5c)
+            {
+                SpawnInitialSafeZone = uint64_t(Ptr);
+                break;
+            }
+            else if (*Ptr == 0x48 && *(Ptr + 1) == 0x8b && *(Ptr + 2) == 0xc4)
+            {
+                SpawnInitialSafeZone = uint64_t(Ptr);
+                break;
+            }
+        }
+    }
+
+    return SpawnInitialSafeZone;
+}
+
+
+uint64_t FindUpdateSafeZonesPhase()
+{
+    static uint64_t UpdateSafeZonesPhase = 0;
+    static bool bInitialized = false;
+
+    if (!bInitialized)
+    {
+        bInitialized = true;
+
+        auto sRef = Memcury::Scanner::FindStringRef("AFortGameModeAthena::UpdateSafeZonesPhase").Get();
+
+        for (int i = 0; i < 2000; i++)
+        {
+            auto Ptr = (uint8_t*)(sRef - i);
+
+            if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5c)
+            {
+                UpdateSafeZonesPhase = uint64_t(Ptr);
+                break;
+            }
+            else if (*Ptr == 0x48 && *(Ptr + 1) == 0x8b && *(Ptr + 2) == 0xc4)
+            {
+                UpdateSafeZonesPhase = uint64_t(Ptr);
+                break;
+            }
+        }
+    }
+
+    return UpdateSafeZonesPhase;
 }
 
 void FindNullsAndRetTrues()
