@@ -222,7 +222,7 @@ void AFortPlayerPawnAthena::OnCapsuleBeginOverlap_(UObject* Context, FFrame& Sta
 
 	if (Pickup && Pickup->PawnWhoDroppedPickup != Pawn)
 	{
-		if ((!itemEntry && (Pickup->PrimaryPickupItemEntry.ItemDefinition->bForceAutoPickup || !AFortInventory::IsPrimaryQuickbar(Pickup->PrimaryPickupItemEntry.ItemDefinition))) || (itemEntry && itemEntry->Count < MaxStack))
+		if ((!itemEntry && ((Pickup->PrimaryPickupItemEntry.ItemDefinition->HasbForceAutoPickup() && Pickup->PrimaryPickupItemEntry.ItemDefinition->bForceAutoPickup) || !AFortInventory::IsPrimaryQuickbar(Pickup->PrimaryPickupItemEntry.ItemDefinition))) || (itemEntry && itemEntry->Count < MaxStack))
 			Pawn->ServerHandlePickup(Pickup, 0.4f, FVector(), true);
 	}
 
