@@ -57,20 +57,17 @@ void AFortPlayerPawnAthena::ServerHandlePickup_(UObject* Context, FFrame& Stack)
 	if (!Pawn || !Pickup || Pickup->bPickedUp)
 		return;
 
-	Pawn->IncomingPickups.Add(Pickup);
-
 	Pickup->SetLifeSpan(5.f);
 	if (FFortPickupLocationData::HasbPlayPickupSound())
 		Pickup->PickupLocationData.bPlayPickupSound = bPlayPickupSound;
-	Pickup->PickupLocationData.FlyTime = 0.4f;
-	Pickup->PickupLocationData.ItemOwner = Pawn;
-	Pickup->PickupLocationData.PickupGuid = Pickup->PrimaryPickupItemEntry.ItemGuid;
 	Pickup->PickupLocationData.PickupTarget = Pawn;
-	//Pickup->PickupLocationData.StartDirection = (FVector_NetQuantizeNormal)InStartDirection;
+	Pickup->PickupLocationData.StartDirection = InStartDirection;
 	Pickup->OnRep_PickupLocationData();
 
 	Pickup->bPickedUp = true;
 	Pickup->OnRep_bPickedUp();
+
+	Pawn->IncomingPickups.Add(Pickup);
 }
 
 void AFortPlayerPawnAthena::ServerHandlePickupInfo(UObject* Context, FFrame& Stack)
@@ -113,11 +110,9 @@ void AFortPlayerPawnAthena::ServerHandlePickupInfo(UObject* Context, FFrame& Sta
 			{ return entry.ItemGuid == SwapWithItem; }, FFortItemEntry::Size());
 		PlayerController->SwappingItemDefinition = SwapEntry; // proper af
 	}
-	Pawn->IncomingPickups.Add(Pickup);
 
+	Pickup->SetLifeSpan(5.f);
 	Pickup->PickupLocationData.bPlayPickupSound = bPlayPickupSound;
-	Pickup->PickupLocationData.FlyTime = 0.4f;
-	Pickup->PickupLocationData.ItemOwner = Pawn;
 	Pickup->PickupLocationData.PickupGuid = Pickup->PrimaryPickupItemEntry.ItemGuid;
 	Pickup->PickupLocationData.PickupTarget = Pawn;
 	//Pickup->PickupLocationData.StartDirection = Params.Direction.QuantizeNormal();
@@ -125,6 +120,8 @@ void AFortPlayerPawnAthena::ServerHandlePickupInfo(UObject* Context, FFrame& Sta
 
 	Pickup->bPickedUp = true;
 	Pickup->OnRep_bPickedUp();
+
+	Pawn->IncomingPickups.Add(Pickup);
 }
 
 

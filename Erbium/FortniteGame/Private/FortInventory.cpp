@@ -267,6 +267,8 @@ AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entr
     if (NewPickup->bTossedFromContainer)
         NewPickup->OnRep_TossedFromContainer();
 
+    NewPickup->PickupLocationData.FlyTime -= 1.f;
+
     return NewPickup;
 }
 
@@ -324,6 +326,7 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
 
     NewPickup->PawnWhoDroppedPickup = Pawn;
 
+
     //auto bFloorLoot = Container->IsA<ATiered_Athena_FloorLoot_01_C>() || Container->IsA<ATiered_Athena_FloorLoot_Warmup_C>();
     //UFortKismetLibrary::TossPickupFromContainer(UWorld::GetWorld(), Container, NewPickup, 1, 0, Container->LootTossConeHalfAngle_Athena, Container->LootTossDirection_Athena, Container->LootTossSpeed_Athena, false);
     static auto tpfcPtr = UFortKismetLibrary::GetDefaultObj()->GetFunction("TossPickupFromContainer");
@@ -356,6 +359,8 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
 
     NewPickup->bTossedFromContainer = true;
     NewPickup->OnRep_TossedFromContainer();
+
+    NewPickup->PickupLocationData.FlyTime -= 1.f;
 
     return NewPickup;
 }

@@ -73,7 +73,6 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
         {
             //if (VersionInfo.EngineVersion >= 4.27)
             GameState->CurrentPlaylistInfo.BasePlaylist = Playlist;
-            GameState->CurrentPlaylistInfo.OverridePlaylist = Playlist;
             GameState->CurrentPlaylistInfo.PlaylistReplicationKey++;
             GameState->CurrentPlaylistInfo.MarkArrayDirty();
             GameState->OnRep_CurrentPlaylistInfo();
@@ -325,7 +324,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         for (auto& [_, Val] : LootPackageTempArr)
              LootPackageMap[Val->LootPackageID.ComparisonIndex].Add(Val);
 
-        if (VersionInfo.FortniteVersion >= 21)
+        if (VersionInfo.FortniteVersion >= 20)
         {
             AbilitySets.Add(Utils::FindObject<UFortAbilitySet>(L"/TacticalSprintGame/Gameplay/AS_TacticalSprint.AS_TacticalSprint"));
             AbilitySets.Add(Utils::FindObject<UFortAbilitySet>(L"/Ascender/Gameplay/Ascender/AS_Ascender.AS_Ascender"));
@@ -409,8 +408,11 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             }
 
 
-        UFortLootPackage::SpawnFloorLootForContainer(Utils::FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_Warmup.Tiered_Athena_FloorLoot_Warmup_C"));
-        UFortLootPackage::SpawnFloorLootForContainer(Utils::FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_01.Tiered_Athena_FloorLoot_01_C"));
+        if (floor(VersionInfo.FortniteVersion) != 20)
+        {
+            UFortLootPackage::SpawnFloorLootForContainer(Utils::FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_Warmup.Tiered_Athena_FloorLoot_Warmup_C"));
+            UFortLootPackage::SpawnFloorLootForContainer(Utils::FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_01.Tiered_Athena_FloorLoot_01_C"));
+        }
 
         auto ConsumableSpawners = Utils::GetAll<ABGAConsumableSpawner>();
 
@@ -755,7 +757,7 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
         for (auto& AbilitySet : AbilitySets)
             NewPlayer->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
 
-        if (VersionInfo.FortniteVersion == 1.72 || VersionInfo.FortniteVersion == 1.8 || VersionInfo.FortniteVersion == 1.81 || VersionInfo.FortniteVersion == 1.82)
+        if (VersionInfo.FortniteVersion <= 1.82 && VersionInfo.FortniteVersion != 1.1 && VersionInfo.FortniteVersion != 1.11)
         {
             static auto Head = Utils::FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Heads/F_Med_Head1.F_Med_Head1");
             static auto Body = Utils::FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Bodies/F_Med_Soldier_01.F_Med_Soldier_01");
@@ -790,6 +792,12 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
                 NewPlayer->XPComponent->bRegisteredWithQuestManager = true;
                 NewPlayer->XPComponent->OnRep_bRegisteredWithQuestManager();
             }
+        }
+
+        if (floor(VersionInfo.FortniteVersion) == 20)
+        {
+            UFortLootPackage::SpawnFloorLootForContainer(Utils::FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_Warmup.Tiered_Athena_FloorLoot_Warmup_C"));
+            UFortLootPackage::SpawnFloorLootForContainer(Utils::FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_01.Tiered_Athena_FloorLoot_01_C"));
         }
     }
     else
@@ -1145,7 +1153,7 @@ AFortSafeZoneIndicator* SetupSafeZoneIndicator(AFortGameModeAthena* GameMode)
 
                 PhaseInfo->Center = GameMode->SafeZoneLocations.Get((int)i, FVector::Size());
 
-                SafeZoneIndicator->SafeZonePhases.Add(*PhaseInfo, FFortSafeZonePhaseInfo::Size());
+                Array.Add(*PhaseInfo, FFortSafeZonePhaseInfo::Size());
                 free(PhaseInfo);
 
                 SafeZoneIndicator->PhaseCount++;

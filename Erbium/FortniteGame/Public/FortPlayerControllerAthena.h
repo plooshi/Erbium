@@ -126,6 +126,7 @@ public:
     DEFINE_PROP(bHasInitializedWorldInventory, bool);
     DEFINE_PROP(ActiveToyInstances, TArray<AActor*>);
     DEFINE_PROP(AppliedInGameModifierAbilitySetHandles, TMap<FGuid, void*>);
+    DEFINE_BITFIELD_PROP(bTryPickupSwap);
 
     DEFINE_FUNC(GetViewTarget, AActor*);
     DEFINE_FUNC(GetControlRotation, FRotator);

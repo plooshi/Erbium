@@ -191,6 +191,8 @@ public:
     DEFINE_STRUCT_NEWOBJ_PROP(ItemOwner, AFortPlayerPawnAthena);
     DEFINE_STRUCT_PROP(PickupGuid, FGuid);
     DEFINE_STRUCT_NEWOBJ_PROP(PickupTarget, AFortPlayerPawnAthena);
+    DEFINE_STRUCT_PROP(StartDirection, FVector);
+    DEFINE_STRUCT_PROP(LootInitialPosition, FVector);
 };
 
 class AFortPickupAthena : public AActor
