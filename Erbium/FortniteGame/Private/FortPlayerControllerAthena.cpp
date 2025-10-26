@@ -12,22 +12,25 @@
 
 void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena* PlayerController, FVector& Loc, FRotator& Rot)
 {
-	PlayerController->GetActorEyesViewPoint(&Loc, &Rot);
-
-	if (Loc.X == 0 && Loc.Y == 0 && Loc.Z == 0) // ig
+	static auto SFName = UKismetStringLibrary::Conv_StringToName(FString(L"Spectating"));
+	if (PlayerController->StateName == SFName)
 	{
-		static auto SFName = UKismetStringLibrary::Conv_StringToName(FString(L"Spectating"));
-		if (PlayerController->StateName == SFName)
+		Loc = PlayerController->LastSpectatorSyncLocation;
+		Rot = PlayerController->LastSpectatorSyncRotation;
+	}
+	else
+	{
+		auto ViewTarget = PlayerController->GetViewTarget();
+
+		if (ViewTarget)
 		{
-			Loc = PlayerController->LastSpectatorSyncLocation;
-			Rot = PlayerController->LastSpectatorSyncRotation;
-		}
-		else if (PlayerController->GetViewTarget())
-		{
-			Loc = PlayerController->GetViewTarget()->K2_GetActorLocation();
+			Loc = ViewTarget->K2_GetActorLocation();
+			if (auto TargetPawn = ViewTarget->Cast<AFortPlayerPawnAthena>())
+				Loc.Z += TargetPawn->BaseEyeHeight;
 			Rot = PlayerController->GetControlRotation();
 		}
-		else return GetPlayerViewPointOG(PlayerController, Loc, Rot);
+		else
+			PlayerController->GetActorEyesViewPoint(&Loc, &Rot);
 	}
 }
 

@@ -51,6 +51,7 @@ public:
     DEFINE_BITFIELD_PROP(bIsInsideSafeZone);
     DEFINE_PROP(AIControllerClass, TSubclassOf<AActor>);
     DEFINE_PROP(PlayerState, AActor*);
+    DEFINE_PROP(BaseEyeHeight, float);
 
     DEFINE_FUNC(BeginSkydiving, void);
     DEFINE_FUNC(GetHealth, float);
