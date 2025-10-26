@@ -18,14 +18,14 @@ void Events::StartEvent()
 
 		UObject* LoaderObject = nullptr;
 		if (Event.LoaderClass)
-			if (const UClass* LoaderClass = Utils::FindObject<UClass>(Event.LoaderClass))
+			if (const UClass* LoaderClass = FindObject<UClass>(Event.LoaderClass))
 			{
 				auto AllLoaders = Utils::GetAll(LoaderClass);
 				LoaderObject = AllLoaders.Num() > 0 ? AllLoaders[0] : nullptr;
 			}
 
 		if (Event.LoaderFuncPath != nullptr && LoaderObject)
-			if (const UFunction* LoaderFunction = Utils::FindObject<UFunction>(Event.LoaderFuncPath))
+			if (const UFunction* LoaderFunction = FindObject<UFunction>(Event.LoaderFuncPath))
 			{
 				int Param = 1;
 				LoaderObject->ProcessEvent(const_cast<UFunction*>(LoaderFunction), &Param);
@@ -36,7 +36,7 @@ void Events::StartEvent()
 
 		UObject* ScriptingObject = nullptr;
 		if (Event.ScriptingClass)
-			if (const UClass* ScriptingClass = Utils::FindObject<UClass>(Event.ScriptingClass))
+			if (const UClass* ScriptingClass = FindObject<UClass>(Event.ScriptingClass))
 			{
 				auto AllLoaders = Utils::GetAll(ScriptingClass);
 				ScriptingObject = AllLoaders.Num() > 0 ? AllLoaders[0] : nullptr;
@@ -44,7 +44,7 @@ void Events::StartEvent()
 
 		for (auto& EventFunction : Event.EventFunctions)
 		{
-			const UFunction* Function = Utils::FindObject<UFunction>(EventFunction.FunctionPath);
+			const UFunction* Function = FindObject<UFunction>(EventFunction.FunctionPath);
 			if (!Function) 
 			{ 
 				printf("StartEvent: failed to find func: %ls\n", EventFunction.FunctionPath); 
@@ -71,8 +71,8 @@ void Events::StartEvent()
 				std::thread([ScriptingObject] {
 					std::this_thread::sleep_for(std::chrono::minutes(3));
 
-					auto SetUnvaultFn = Utils::FindObject<UFunction>(L"/Game/Athena/Prototype/Blueprints/White/BP_SnowScripting.BP_SnowScripting_C.SetUnvaultItemName");
-					auto PillarsFn = Utils::FindObject<UFunction>(L"/Game/Athena/Prototype/Blueprints/White/BP_SnowScripting.BP_SnowScripting_C.PillarsConcluded");
+					auto SetUnvaultFn = FindObject<UFunction>(L"/Game/Athena/Prototype/Blueprints/White/BP_SnowScripting.BP_SnowScripting_C.SetUnvaultItemName");
+					auto PillarsFn = FindObject<UFunction>(L"/Game/Athena/Prototype/Blueprints/White/BP_SnowScripting.BP_SnowScripting_C.PillarsConcluded");
 					FName Name = UKismetStringLibrary::Conv_StringToName(FString(L"DrumGun"));
 
 					ScriptingObject->ProcessEvent(const_cast<UFunction*>(SetUnvaultFn), &Name);
@@ -95,7 +95,7 @@ void Events::StartEvent()
 
 			if (VersionInfo.FortniteVersion >= 16.00)
 			{
-				auto EventModeActivator = Utils::FindObject<UFortItemDefinition>(L"/EventMode/Items/WID_EventMode_Activator.WID_EventMode_Activator");
+				auto EventModeActivator = FindObject<UFortItemDefinition>(L"/EventMode/Items/WID_EventMode_Activator.WID_EventMode_Activator");
 
 				PlayerController->WorldInventory->GiveItem(EventModeActivator);
 			}

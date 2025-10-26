@@ -66,11 +66,11 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 	TArray<FFortLootPackageData*> LPGroups;
 	if (VersionInfo.EngineVersion == 4.21)
 	{
-		auto Playlist = Utils::FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
+		auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
 
 		auto LootPackages = Playlist ? Playlist->LootPackages.Get() : nullptr;
 		if (!LootPackages)
-			LootPackages = Utils::FindObject<UDataTable>(L"/Game/Items/Datatables/AthenaLootPackages_Client.AthenaLootPackages_Client");
+			LootPackages = FindObject<UDataTable>(L"/Game/Items/Datatables/AthenaLootPackages_Client.AthenaLootPackages_Client");
 
 		for (auto& [_, _Val] : LootPackages->RowMap)
 		{
@@ -185,11 +185,11 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 
 	if (VersionInfo.EngineVersion == 4.21)
 	{
-		auto Playlist = Utils::FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
+		auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
 
 		auto LootTierData = Playlist ? Playlist->LootTierData.Get() : nullptr;
 		if (!LootTierData)
-			LootTierData = Utils::FindObject<UDataTable>(L"/Game/Items/Datatables/AthenaLootTierData_Client.AthenaLootTierData_Client");
+			LootTierData = FindObject<UDataTable>(L"/Game/Items/Datatables/AthenaLootTierData_Client.AthenaLootTierData_Client");
 
 		for (auto& [_, _Val] : LootTierData->RowMap)
 		{

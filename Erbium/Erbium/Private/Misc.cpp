@@ -40,8 +40,8 @@ void Misc::ApplyHomebaseEffectsOnPlayerSetup(
 	unsigned __int8 a7)
 {
 	static auto ItemDefOffset = a5->GetOffset("ItemDefinition");
-	static auto Commando = Utils::FindObject<UObject>(L"/Game/Athena/Heroes/HID_001_Athena_Commando_F.HID_001_Athena_Commando_F");
-	static auto Commando2 = Utils::FindObject<UObject>(L"/Game/Athena/Heroes/HID_Commando_Athena_01.HID_Commando_Athena_01");
+	static auto Commando = FindObject<UObject>(L"/Game/Athena/Heroes/HID_001_Athena_Commando_F.HID_001_Athena_Commando_F");
+	static auto Commando2 = FindObject<UObject>(L"/Game/Athena/Heroes/HID_Commando_Athena_01.HID_Commando_Athena_01");
 	GetFromOffset<const UObject*>(a5, ItemDefOffset) = Commando ? Commando : Commando2;
 
 	return ApplyHomebaseEffectsOnPlayerSetupOG(a1, a2, a3, a4, a5, a6, a7);

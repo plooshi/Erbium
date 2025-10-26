@@ -178,7 +178,7 @@ void AFortPlayerPawnAthena::ServerSendZiplineState(UObject* Context, FFrame& Sta
 		Pawn->LaunchCharacterJump(FVector{ VelocityX >= -750 ? min(VelocityX, 750) : -750, VelocityY >= -750 ? min(VelocityY, 750) : -750, 1200 }, false, false, true, true);
 	}
 
-	static auto ZipLineClass = Utils::FindObject<UClass>(L"/Ascender/Gameplay/Ascender/B_Athena_Zipline_Ascender.B_Athena_Zipline_Ascender_C");
+	static auto ZipLineClass = FindObject<UClass>(L"/Ascender/Gameplay/Ascender/B_Athena_Zipline_Ascender.B_Athena_Zipline_Ascender_C");
 	if (auto Ascender = Zipline->Cast<AFortAscenderZipline>(ZipLineClass))
 	{
 		Ascender->PawnUsingHandle = nullptr;
@@ -305,5 +305,5 @@ void AFortPlayerPawnAthena::PostLoadHook()
 	Utils::ExecHook(GetDefaultObj()->GetFunction("MovingEmoteStopped"), MovingEmoteStopped);
 
 	if (VersionInfo.EngineVersion >= 4.24 && VersionInfo.EngineVersion < 4.27)
-		Utils::ExecHook((UFunction*)Utils::FindObject<UFunction>(L"/Game/Athena/Items/Consumables/Parents/GA_Athena_MedConsumable_Parent.GA_Athena_MedConsumable_Parent_C.Triggered_4C02BFB04B18D9E79F84848FFE6D2C32"), Athena_MedConsumable_Triggered, Athena_MedConsumable_TriggeredOG);
+		Utils::ExecHook((UFunction*)FindObject<UFunction>(L"/Game/Athena/Items/Consumables/Parents/GA_Athena_MedConsumable_Parent.GA_Athena_MedConsumable_Parent_C.Triggered_4C02BFB04B18D9E79F84848FFE6D2C32"), Athena_MedConsumable_Triggered, Athena_MedConsumable_TriggeredOG);
 }

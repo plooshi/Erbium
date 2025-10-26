@@ -23,6 +23,8 @@ void Main()
         AllocConsole();
         FILE* s;
         freopen_s(&s, "CONOUT$", "w", stdout);
+        freopen_s(&s, "CONOUT$", "w+", stderr);
+        freopen_s(&s, "CONIN$", "r", stdin);
     }
 
     printf("Initializing SDK...\n");
@@ -34,6 +36,7 @@ void Main()
     {
         FILE* s;
         freopen_s(&s, "stdout.log", "w", stdout);
+        freopen_s(&s, "stdout.log", "w+", stderr);
 
         CreateThread(0, 0, (LPTHREAD_START_ROUTINE)GUI::Init, 0, 0, 0);
     }

@@ -88,7 +88,7 @@ void UAbilitySystemComponent::InternalServerTryActivateAbility(UAbilitySystemCom
     }
 }
 
-void UAbilitySystemComponent::PostLoadHook()
+void UAbilitySystemComponent::Hook()
 {
     ConstructAbilitySpec = FindConstructAbilitySpec();
     GiveAbility_ = FindGiveAbility();

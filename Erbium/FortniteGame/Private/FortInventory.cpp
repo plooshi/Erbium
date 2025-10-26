@@ -85,10 +85,7 @@ void AFortInventory::SetRequiresUpdate()
 void AFortInventory::Update(FFortItemEntry* Entry)
 {
     if (!Entry)
-    {
-        SetRequiresUpdate();
-        goto _out;
-    }
+        return SetRequiresUpdate();
 
     if (Entry->bIsReplicatedCopy)
     {
@@ -131,6 +128,12 @@ void AFortInventory::Remove(FGuid Guid)
     auto ItemInstance = Inventory.ItemInstances.Search([&](UFortWorldItem* entry)
         { return entry->ItemEntry.ItemGuid == Guid; });
 
+
+    if (ItemEntryIdx != -1)
+        Inventory.ReplicatedEntries.Remove(ItemEntryIdx, FFortItemEntry::Size());
+    if (ItemInstanceIdx != -1)
+        Inventory.ItemInstances.Remove(ItemInstanceIdx);
+
     auto Instance = ItemInstance ? *ItemInstance : nullptr;
 
     if (OnItemInstanceAddedVft && Instance && Instance->ItemEntry.ItemDefinition)
@@ -138,11 +141,6 @@ void AFortInventory::Remove(FGuid Guid)
         ((bool(*)(const UFortWorldItem*, const IInterface*, uint32_t)) Instance->Vft[OnItemInstanceAddedVft + 1])(Instance, Owner->GetInterface(IFortInventoryOwnerInterface::StaticClass()), Instance->ItemEntry.Count);
         //((bool(*)(const UFortItemDefinition*, const IInterface*, UFortWorldItem*)) Instance->ItemEntry.ItemDefinition->Vft[OnItemInstanceAddedVft + 1])(Instance->ItemEntry.ItemDefinition, Owner->GetInterface(IFortInventoryOwnerInterface::StaticClass()), Instance);
     }
-
-    if (ItemEntryIdx != -1)
-        Inventory.ReplicatedEntries.Remove(ItemEntryIdx, FFortItemEntry::Size());
-    if (ItemInstanceIdx != -1)
-        Inventory.ItemInstances.Remove(ItemInstanceIdx);
 
     if (VersionInfo.FortniteVersion < 3)
     {
@@ -414,6 +412,16 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
     if (ItemP)
     {
         auto Item = *ItemP;
+
+        for (int i = 0; i < Item->ItemEntry.StateValues.Num(); i++)
+        {
+            auto& StateValue = Item->ItemEntry.StateValues.Get(i, FFortItemEntryStateValue::Size());
+
+            if (StateValue.StateType != 2)
+                continue;
+
+            StateValue.IntValue = 0;
+        }
 
         Item->ItemEntry.Count -= max(Count, 0);
         if (Count < 0 || Item->ItemEntry.Count <= 0 || bForceRemoval)

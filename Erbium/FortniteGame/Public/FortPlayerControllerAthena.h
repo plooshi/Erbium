@@ -101,6 +101,7 @@ public:
     DEFINE_FUNC(OnRep_bRegisteredWithQuestManager, void);
 };
 
+inline const UCurveTable* GameData = nullptr;
 class AFortPlayerControllerAthena : public AActor
 {
 public:

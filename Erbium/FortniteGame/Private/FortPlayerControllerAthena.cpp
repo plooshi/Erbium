@@ -8,21 +8,27 @@
 #include "../Public/FortLootPackage.h"
 #include "../../Erbium/Public/Events.h"
 #include "../../Erbium/Public/LateGame.h"
+#include "../Public/BuildingItemCollectorActor.h"
 
 void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena* PlayerController, FVector& Loc, FRotator& Rot)
 {
-	static auto SFName = UKismetStringLibrary::Conv_StringToName(FString(L"Spectating"));
-	if (PlayerController->StateName == SFName)
+	PlayerController->GetActorEyesViewPoint(&Loc, &Rot);
+
+	if (Loc.X == 0 && Loc.Y == 0 && Loc.Z == 0) // ig
 	{
-		Loc = PlayerController->LastSpectatorSyncLocation;
-		Rot = PlayerController->LastSpectatorSyncRotation;
+		static auto SFName = UKismetStringLibrary::Conv_StringToName(FString(L"Spectating"));
+		if (PlayerController->StateName == SFName)
+		{
+			Loc = PlayerController->LastSpectatorSyncLocation;
+			Rot = PlayerController->LastSpectatorSyncRotation;
+		}
+		else if (PlayerController->GetViewTarget())
+		{
+			Loc = PlayerController->GetViewTarget()->K2_GetActorLocation();
+			Rot = PlayerController->GetControlRotation();
+		}
+		else return GetPlayerViewPointOG(PlayerController, Loc, Rot);
 	}
-	else if (PlayerController->GetViewTarget())
-	{
-		Loc = PlayerController->GetViewTarget()->K2_GetActorLocation();
-		Rot = PlayerController->GetControlRotation();
-	}
-	else return GetPlayerViewPointOG(PlayerController, Loc, Rot);
 }
 
 void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, FFrame& Stack)
@@ -32,7 +38,41 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 	Stack.IncrementCode();
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
 
-	PlayerController->AcknowledgedPawn = Pawn;
+	static auto FortPCServerAcknowledgePossession = (void(*)(AFortPlayerControllerAthena*, AActor*))DefaultObjImpl("FortPlayerController")->Vft[Stack.GetCurrentNativeFunction()->GetVTableIndex()];
+	FortPCServerAcknowledgePossession(PlayerController, Pawn);
+
+	auto Num = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num();
+
+	if (Num == 0)
+	{
+		static auto SmartItemDefClass = FindClass("FortSmartBuildingItemDefinition");
+		static bool HasCosmeticLoadoutPC = PlayerController->HasCosmeticLoadoutPC();
+		static bool HasCustomizationLoadout = PlayerController->HasCustomizationLoadout();
+
+		if (HasCosmeticLoadoutPC && PlayerController->CosmeticLoadoutPC.Pickaxe)
+			PlayerController->WorldInventory->GiveItem(PlayerController->CosmeticLoadoutPC.Pickaxe->WeaponDefinition);
+		else if (HasCustomizationLoadout && PlayerController->CustomizationLoadout.Pickaxe)
+			PlayerController->WorldInventory->GiveItem(PlayerController->CustomizationLoadout.Pickaxe->WeaponDefinition);
+		else
+		{
+			static auto DefaultPickaxe = FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
+
+			PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
+		}
+
+		auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+		for (int i = 0; i < GameMode->StartingItems.Num(); i++)
+		{
+			auto& StartingItem = GameMode->StartingItems.Get(i, FItemAndCount::Size());
+
+			if (StartingItem.Count && (!SmartItemDefClass || !StartingItem.Item->IsA(SmartItemDefClass)))
+				PlayerController->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
+		}
+
+
+		for (auto& AbilitySet : AFortGameModeAthena::AbilitySets)
+			PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
+	}
 }
 
 void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, FFrame& Stack)
@@ -133,15 +173,15 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryItem_(UObject* Context, 
 		static auto BuildingToolClass = FindClass("FortWeap_BuildingTool");
 		if (Weapon->IsA(BuildingToolClass))
 		{
-			static auto RoofPiece = Utils::FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_RoofS.BuildingItemData_RoofS");
-			static auto FloorPiece = Utils::FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Floor.BuildingItemData_Floor");
-			static auto WallPiece = Utils::FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Wall.BuildingItemData_Wall");
-			static auto StairPiece = Utils::FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Stair_W.BuildingItemData_Stair_W");
+			static auto RoofPiece = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_RoofS.BuildingItemData_RoofS");
+			static auto FloorPiece = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Floor.BuildingItemData_Floor");
+			static auto WallPiece = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Wall.BuildingItemData_Wall");
+			static auto StairPiece = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Stair_W.BuildingItemData_Stair_W");
 
-			static auto RoofMetadata = Utils::FindObject<UObject>(L"/Game/Building/EditModePatterns/Roof/EMP_Roof_RoofC.EMP_Roof_RoofC");
-			static auto StairMetadata = Utils::FindObject<UObject>(L"/Game/Building/EditModePatterns/Stair/EMP_Stair_StairW.EMP_Stair_StairW");
-			static auto WallMetadata = Utils::FindObject<UObject>(L"/Game/Building/EditModePatterns/Wall/EMP_Wall_Solid.EMP_Wall_Solid");
-			static auto FloorMetadata = Utils::FindObject<UObject>(L"/Game/Building/EditModePatterns/Floor/EMP_Floor_Floor.EMP_Floor_Floor");
+			static auto RoofMetadata = FindObject<UObject>(L"/Game/Building/EditModePatterns/Roof/EMP_Roof_RoofC.EMP_Roof_RoofC");
+			static auto StairMetadata = FindObject<UObject>(L"/Game/Building/EditModePatterns/Stair/EMP_Stair_StairW.EMP_Stair_StairW");
+			static auto WallMetadata = FindObject<UObject>(L"/Game/Building/EditModePatterns/Wall/EMP_Wall_Solid.EMP_Wall_Solid");
+			static auto FloorMetadata = FindObject<UObject>(L"/Game/Building/EditModePatterns/Floor/EMP_Floor_Floor.EMP_Floor_Floor");
 
 			static auto DefaultMetadataOffset = Weapon->GetOffset("DefaultMetadata");
 			static auto OnRep_DefaultMetadata = Weapon->GetFunction("OnRep_DefaultMetadata");
@@ -439,6 +479,24 @@ void AFortPlayerControllerAthena::ServerEditBuildingActor(UObject* Context, FFra
 	{
 		NewBuild->bPlayerPlaced = true;
 	}
+
+	if (VersionInfo.EngineVersion >= 4.24)
+	{
+		// serverendeditingbuildingactor cus they made it not call idk why
+		SetEditingPlayer(Building, nullptr);
+
+		auto EditToolEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) {
+			return entry.ItemDefinition->IsA(UFortEditToolItemDefinition::StaticClass());
+			}, FFortItemEntry::Size());
+
+		PlayerController->MyFortPawn->EquipWeaponDefinition((UFortWeaponItemDefinition*)EditToolEntry->ItemDefinition, EditToolEntry->ItemGuid, EditToolEntry->HasTrackerGuid() ? EditToolEntry->TrackerGuid : FGuid(), false);
+
+		if (auto EditTool = PlayerController->MyFortPawn->CurrentWeapon->Cast<AFortWeap_EditingTool>())
+		{
+			EditTool->EditActor = nullptr;
+			EditTool->OnRep_EditActor();
+		}
+	}
 }
 
 void AFortPlayerControllerAthena::ServerEndEditingBuildingActor(UObject* Context, FFrame& Stack)
@@ -555,7 +613,7 @@ void AFortPlayerControllerAthena::ServerPlayEmoteItem(UObject* Context, FFrame& 
 	static auto SprayClass = FindClass("AthenaSprayItemDefinition");
 	if (Asset->IsA(SprayClass)) 
 	{
-		static auto SprayAbilityClass = Utils::FindObject<UClass>(L"/Game/Abilities/Sprays/GAB_Spray_Generic.GAB_Spray_Generic_C");
+		static auto SprayAbilityClass = FindObject<UClass>(L"/Game/Abilities/Sprays/GAB_Spray_Generic.GAB_Spray_Generic_C");
 		AbilityToUse = SprayAbilityClass->GetDefaultObj();
 	}
 	else if (auto ToyAsset = Asset->Cast<UAthenaToyItemDefinition>())
@@ -578,7 +636,7 @@ void AFortPlayerControllerAthena::ServerPlayEmoteItem(UObject* Context, FFrame& 
 		if (HasbMovingEmoteFollowingOnly)
 			PlayerController->MyFortPawn->bMovingEmoteFollowingOnly = DanceAsset->bMoveFollowingOnly;
 
-		static auto EmoteAbilityClass = Utils::FindObject<UClass>(L"/Game/Abilities/Emotes/GAB_Emote_Generic.GAB_Emote_Generic_C");
+		static auto EmoteAbilityClass = FindObject<UClass>(L"/Game/Abilities/Emotes/GAB_Emote_Generic.GAB_Emote_Generic_C");
 		AbilityToUse = EmoteAbilityClass->GetDefaultObj();
 	}
 
@@ -1027,7 +1085,8 @@ _help:
 				Pawn->SetHealth(100.f);
 
 				PlayerState->TeamIndex = AFortGameModeAthena::PickTeam(GameMode, 0, PlayerController);
-				PlayerState->SquadId = PlayerState->TeamIndex - 3;
+				if (PlayerState->HasSquadId())
+					PlayerState->SquadId = PlayerState->TeamIndex - 3;
 				if (PlayerState->HasbIsABot())
 					PlayerState->bIsABot = true;
 
@@ -1063,14 +1122,14 @@ _help:
 
 				GameMode->AlivePlayers.Add(PlayerController);
 
-				static auto Commando = Utils::FindObject(L"/Game/Athena/Heroes/HID_001_Athena_Commando_F.HID_001_Athena_Commando_F", nullptr);
-				static auto Commando2 = Utils::FindObject(L"/Game/Athena/Heroes/HID_Commando_Athena_01.HID_Commando_Athena_01", nullptr);
+				static auto Commando = FindObject(L"/Game/Athena/Heroes/HID_001_Athena_Commando_F.HID_001_Athena_Commando_F", nullptr);
+				static auto Commando2 = FindObject(L"/Game/Athena/Heroes/HID_Commando_Athena_01.HID_Commando_Athena_01", nullptr);
 				PlayerState->HeroType = Commando ? Commando : Commando2;
 
 				if (ApplyCharacterCustomization)
 					((void (*)(AActor*, AFortPlayerPawnAthena*)) ApplyCharacterCustomization)(PlayerState, Pawn);
 
-				/*static auto DefaultPickaxe = Utils::FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
+				/*static auto DefaultPickaxe = FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
 
 				PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
 
@@ -1108,7 +1167,7 @@ _help:
 			if (args.size() != 2 && args.size() != 3)
 				PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1);
 
-			auto ItemDefinition = Utils::FindObject<UFortItemDefinition>(UEAllocatedWString(args[1].begin(), args[1].end()));
+			auto ItemDefinition = FindObject<UFortItemDefinition>(UEAllocatedWString(args[1].begin(), args[1].end()));
 			if (!ItemDefinition)
 				ItemDefinition = TUObjectArray::FindObject<UFortItemDefinition>(args[1].c_str());
 
@@ -1130,7 +1189,7 @@ _help:
 			if (args.size() != 2 && args.size() != 3)
 				PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1);
 
-			auto ItemDefinition = Utils::FindObject<UFortItemDefinition>(UEAllocatedWString(args[1].begin(), args[1].end()));
+			auto ItemDefinition = FindObject<UFortItemDefinition>(UEAllocatedWString(args[1].begin(), args[1].end()));
 			if (!ItemDefinition)
 				ItemDefinition = TUObjectArray::FindObject<UFortItemDefinition>(args[1].c_str());
 
@@ -1153,7 +1212,7 @@ _help:
 			auto Loc = PlayerController->Pawn->K2_GetActorLocation();
 			Loc.Z += 500.f;
 
-			auto Class = Utils::FindObject<UClass>(UEAllocatedWString(args[1].begin(), args[1].end()).c_str());
+			auto Class = FindObject<UClass>(UEAllocatedWString(args[1].begin(), args[1].end()).c_str());
 
 			if (!Class)
 				Class = FindClass(args[1].c_str());
@@ -1197,6 +1256,63 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 
 	if (auto Container = bDidntFind ? ReceivingActor->Cast<ABuildingContainer>() : nullptr)
 		UFortLootPackage::SpawnLootHook(Container);
+	else if (auto CollectorActor = ReceivingActor->Cast<ABuildingItemCollectorActor>())
+	{
+		CollectorActor->ControllingPlayer = PlayerController;
+
+
+		auto Collection = CollectorActor->ItemCollections.Search([&](FCollectorUnitInfo& Coll)
+		{
+			return Coll.InputItem == CollectorActor->ActiveInputItem;
+		}, FCollectorUnitInfo::Size());
+
+		if (!Collection)
+		{
+			CollectorActor->bCurrentInteractionSuccess = false;
+			CollectorActor->ControllingPlayer = nullptr;
+			CollectorActor->Call(CollectorActor->GetFunction("BlueprintOnInteract"), PlayerController->MyFortPawn);
+			return ServerAttemptInteract_OG(Context, Stack);
+		}
+
+		float Cost = Collection->InputCount.Evaluate((float)CollectorActor->StartingGoalLevel);
+		if (Cost > 0)
+		{
+			auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* entry) {
+				return entry->ItemEntry.ItemDefinition == Collection->InputItem;
+				});
+
+			if (!ItemP || (*ItemP)->ItemEntry.Count < (int)Cost)
+			{
+				CollectorActor->bCurrentInteractionSuccess = false;
+				CollectorActor->ControllingPlayer = nullptr;
+				CollectorActor->Call(CollectorActor->GetFunction("BlueprintOnInteract"), PlayerController->MyFortPawn);
+				//CollectorActor->PlayVendFailFX();
+				return ServerAttemptInteract_OG(Context, Stack);
+			}
+
+			auto Item = *ItemP;
+
+			for (int i = 0; i < Item->ItemEntry.StateValues.Num(); i++)
+			{
+				auto& StateValue = Item->ItemEntry.StateValues.Get(i, FFortItemEntryStateValue::Size());
+
+				if (StateValue.StateType != 2)
+					continue;
+
+				StateValue.IntValue = 0;
+			}
+
+			Item->ItemEntry.Count -= (int)Cost;
+			if (Item->ItemEntry.Count <= 0)
+				PlayerController->WorldInventory->Remove(Item->ItemEntry.ItemGuid);
+			else
+				PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
+		}
+
+		CollectorActor->bCurrentInteractionSuccess = true;
+		CollectorActor->Call(CollectorActor->GetFunction("BlueprintOnInteract"), PlayerController->MyFortPawn);
+		//CollectorActor->PlayVendFX();
+	}
 
 	return ServerAttemptInteract_OG(Context, Stack);
 	//return bIsComp ? (void)callOG(((UFortControllerComponent_Interaction*)Context), Stack.GetCurrentNativeFunction(), ServerAttemptInteract, ReceivingActor, InteractComponent, InteractType, OptionalObjectData, InteractionBeingAttempted, RequestID) : callOG(PlayerController, Stack.GetCurrentNativeFunction(), ServerAttemptInteract, ReceivingActor, InteractComponent, InteractType, OptionalObjectData, InteractionBeingAttempted, RequestID);
@@ -1459,8 +1575,8 @@ void AFortPlayerControllerAthena::PostLoadHook()
 
 	Utils::Hook(FindGetPlayerViewPoint(), GetPlayerViewPoint, GetPlayerViewPointOG);
 	// they only stripped it on athena for some reason
-	auto ServerAcknowledgePossessionIdx = GetDefaultObj()->GetFunction("ServerAcknowledgePossession")->GetVTableIndex();
-	Utils::Hook<AFortPlayerControllerAthena>(ServerAcknowledgePossessionIdx, DefaultFortPC->Vft[ServerAcknowledgePossessionIdx]);
+	//auto ServerAcknowledgePossessionIdx = GetDefaultObj()->GetFunction("ServerAcknowledgePossession")->GetVTableIndex();
+	//Utils::Hook<AFortPlayerControllerAthena>(ServerAcknowledgePossessionIdx, DefaultFortPC->Vft[ServerAcknowledgePossessionIdx]);
 
 	if (VersionInfo.FortniteVersion >= 11)
 	{
@@ -1482,7 +1598,7 @@ void AFortPlayerControllerAthena::PostLoadHook()
 			Utils::ExecHook(ServerAttemptAircraftJumpPC, ServerAttemptAircraftJump_);
 	//}
 
-	//Utils::ExecHook(GetDefaultObj()->GetFunction("ServerAcknowledgePossession"), ServerAcknowledgePossession);
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerAcknowledgePossession"), ServerAcknowledgePossession);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerExecuteInventoryItem"), ServerExecuteInventoryItem_);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerExecuteInventoryWeapon"), ServerExecuteInventoryWeapon); // S9 shenanigans
 

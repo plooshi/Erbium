@@ -142,22 +142,6 @@ namespace SDK
 		}
 	};
 
-	template<int32 StringLen>
-	struct ConstexprString
-	{
-		char Chars[StringLen];
-
-		consteval ConstexprString(const char(&Str)[StringLen])
-		{
-			std::copy_n(Str, StringLen, Chars);
-		}
-
-		operator const char* () const
-		{
-			return static_cast<const char*>(Chars);
-		}
-	};
-
 	template <typename _Ot>
 	__forceinline _Ot& GetFromOffset(void* Obj, uint32 Offset) {
 		return *(_Ot*)(__int64(Obj) + Offset);
@@ -227,59 +211,6 @@ namespace SDK
 			return GetFromOffset<uint32>(Prop, Offsets::Offset_Internal);
 		}
 
-		template <ConstexprString Name, typename T = UObject*>
-		T& Get() const
-		{
-			auto Off = GetOffset(Name);
-			if (Off == -1) {
-				printf("Failed to get offset for %s!\n", Name.Chars);
-				while (true);
-			}
-			return GetFromOffset<T>(this, Off);
-		}
-
-		template <ConstexprString Name>
-		bool GetBitfield() const
-		{
-			auto Prop = GetProperty(Name);
-			auto Offset = GetFromOffset<uint32>(Prop, Offsets::Offset_Internal);
-			auto& Field = GetFromOffset<uint8>(this, Offset);
-
-			return Field & Prop->GetFieldMask();
-		}
-
-		template <ConstexprString Name>
-		void SetBitfield(bool Value) const
-		{
-			auto Prop = GetProperty(Name);
-			auto Offset = GetFromOffset<uint32>(Prop, Offsets::Offset_Internal);
-			auto& Field = GetFromOffset<uint8>(this, Offset);
-
-			if (Value) {
-				Field |= Prop->GetFieldMask();
-			}
-			else {
-				Field &= ~Prop->GetFieldMask();
-			}
-		}
-
-		template <ConstexprString Name>
-		bool Has() const
-		{
-			return GetOffset(Name) != -1;
-		}
-
-		template <ConstexprString Name, typename T = UObject*>
-		T* GetPtr() const
-		{
-			auto Off = GetOffset(Name);
-
-			if (Off == -1)
-				return nullptr;
-
-			return GetPtrFromOffset<T>(this, Off);
-		}
-
 		bool IsA(const class UClass* Clss) const
 		{
 			if (!this || !Clss)
@@ -320,16 +251,6 @@ namespace SDK
 			auto& ProcessEventInternal = (void(*&)(const UObject*, class UFunction*, void*)) Offsets::ProcessEvent;
 			ProcessEventInternal(this, Function, Params);
 		}
-
-		template <ConstexprString Name>
-		void Call(void* Params = nullptr) const
-		{
-			auto Function = GetFunction(Name);
-			ProcessEvent(Function, Params);
-		}
-
-		template <ConstexprString Name>
-		void Call(UEAllocatedVector<ParamPair> Params) const;
 
 		template <typename Ret = void, typename... Args>
 		Ret Call(UFunction* Function, Args... args) const;
@@ -483,21 +404,21 @@ namespace SDK
 	class UFunction : public UStruct
 	{
 	public:
-		void*& GetNativeFunc()
+		void*& GetNativeFunc() const
 		{
 			return GetFromOffset<void*>(this, Offsets::ExecFunction);
 		}
 
-		void SetNativeFunc(void* NewFunc)
+		void SetNativeFunc(void* NewFunc) const
 		{
 			GetNativeFunc() = NewFunc;
 		}
 
 		__declspec(property(get = GetNativeFunc, put = SetNativeFunc))
-			void* ExecFunction;
+		void* ExecFunction;
 
 
-		void* GetImpl()
+		void* GetImpl() const
 		{
 			if (!this)
 				return nullptr;
@@ -532,7 +453,7 @@ namespace SDK
 			return Call(obj, Params);
 		}
 
-		uint32 GetVTableIndex()
+		uint32 GetVTableIndex() const
 		{
 			if (!this)
 				return -1;
@@ -590,23 +511,23 @@ namespace SDK
 			uint32 Size;
 		};
 
-		Params GetParams()
+		Params GetParams() const
 		{
 			Params p{};
 
 			if (VersionInfo.EngineVersion >= 4.25)
 				for (const UField* _Pr = GetChildProperties(); _Pr; _Pr = _Pr->FField_GetNext())
-					p.NameOffsetMap.push_back({ /*_Pr->GetName(true).ToSDKString(), */GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags), GetFromOffset<uint32>(_Pr, Offsets::ElementSize) });
+					p.NameOffsetMap.push_back({ GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags), GetFromOffset<uint32>(_Pr, Offsets::ElementSize) });
 			else
 				for (const UField* _Pr = GetChildren(); _Pr; _Pr = _Pr->GetNext())
-					p.NameOffsetMap.push_back({ /*_Pr->GetName(false).ToSDKString(), */GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags), GetFromOffset<uint32>(_Pr, Offsets::ElementSize) });
+					p.NameOffsetMap.push_back({ GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags), GetFromOffset<uint32>(_Pr, Offsets::ElementSize) });
 
 			p.Size = GetPropertiesSize();
 			return p;
 		}
 
 
-		ParamsNamed GetParamsNamed()
+		ParamsNamed GetParamsNamed() const
 		{
 			ParamsNamed p{};
 
@@ -620,57 +541,7 @@ namespace SDK
 			p.Size = GetPropertiesSize();
 			return p;
 		}
-
-		/*void* CreateParams(UEAllocatedVector<ParamPair> InputParams)
-		{
-			auto Params = GetParams();
-			auto Mem = FMemory::Malloc(Params.Size);
-			__stosb((PBYTE) Mem, 0, Params.Size);
-
-			for (auto& InputParam : InputParams)
-			{
-				Param FoundParam;
-				int i = 0;
-				uint32 Size = 0;
-				for (auto& FuncParam : Params.NameOffsetMap)
-				{
-					if (FuncParam.Name == InputParam.ParamName)
-					{
-						FoundParam = FuncParam;
-						Size = i == Params.NameOffsetMap.size() - 1 ? Params.Size - FuncParam.Offset : Params.NameOffsetMap[i + 1].Offset - FuncParam.Offset;
-						break;
-					}
-					i++;
-				}
-
-				if (Size)
-					memcpy((PBYTE)Mem + FoundParam.Offset, InputParam.Value, Size);
-			}
-
-			return Mem;
-		}
-
-		template <typename _Rt>
-		_Rt* GetValueFromParams(void* Params, const char* Name)
-		{
-			auto Params = GetParams();
-
-			for (auto& FuncParam : Params.NameOffsetMap) {
-				if (FuncParam.Name == Name) {
-					return GetPtrFromOffset<_Rt>(Params, FuncParam.Offset);
-				}
-			}
-
-			return nullptr;
-		}*/
 	};
-
-	template <ConstexprString Name>
-	void UObject::Call(UEAllocatedVector<ParamPair> Params) const
-	{
-		//auto Function = GetFunction(Name);
-		//ProcessEvent(Function, Function->CreateParams(Params));
-	}
 
 	template <typename Ret, typename... Args>
 	Ret UObject::Call(UFunction* Function, Args... args) const
@@ -1208,6 +1079,31 @@ namespace SDK
 		auto Object = StaticFindObject(ObjectPath, Class);
 		return Object ? Object : StaticLoadObject(ObjectPath, Class);
 	}
+
+	template <typename _Ot>
+	static const _Ot* FindObject(const wchar_t* ObjectPath, const UClass* Class = _Ot::StaticClass())
+	{
+		return (const _Ot*)FindObject(ObjectPath, Class);
+	}
+
+	template <typename _Ot>
+	static const _Ot* FindObject(UEAllocatedWString ObjectPath, const UClass* Class = _Ot::StaticClass())
+	{
+		return (const _Ot*)FindObject(ObjectPath.c_str(), Class);
+	}
+
+	template <typename _Ot>
+	static const _Ot* FindObject(UEAllocatedString ObjectPath, const UClass* Class = _Ot::StaticClass())
+	{
+		return (const _Ot*)FindObject(std::wstring(ObjectPath.begin(), ObjectPath.end()).c_str(), Class);
+	}
+
+	template <typename _Ot>
+	static const _Ot* FindObject(const char *ObjectPath, const UClass* Class = _Ot::StaticClass())
+	{
+		return FindObject<_Ot>(UEAllocatedString(ObjectPath), Class);
+	}
+
 
 	class FSoftObjectPtr : public TPersistentObjectPtr<FSoftObjectPath>
 	{

@@ -34,9 +34,9 @@ public:
 	static const UFortItemDefinition* K2_GetResourceItemDefinition(EFortResourceType Type)
 	{
 		// exec func doesnt exist on rlly old builds
-		static auto WoodItemData = Utils::FindObject<UFortItemDefinition>(L"/Game/Items/ResourcePickups/WoodItemData.WoodItemData");
-		static auto StoneItemData = Utils::FindObject<UFortItemDefinition>(L"/Game/Items/ResourcePickups/StoneItemData.StoneItemData");
-		static auto MetalItemData = Utils::FindObject<UFortItemDefinition>(L"/Game/Items/ResourcePickups/MetalItemData.MetalItemData");
+		static auto WoodItemData = FindObject<UFortItemDefinition>(L"/Game/Items/ResourcePickups/WoodItemData.WoodItemData");
+		static auto StoneItemData = FindObject<UFortItemDefinition>(L"/Game/Items/ResourcePickups/StoneItemData.StoneItemData");
+		static auto MetalItemData = FindObject<UFortItemDefinition>(L"/Game/Items/ResourcePickups/MetalItemData.MetalItemData");
 
 		if (Type == EFortResourceType::Wood)
 			return WoodItemData;
