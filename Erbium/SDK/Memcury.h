@@ -681,14 +681,15 @@ namespace Memcury
         }
 
         static inline auto HasAVX2 = IsProcessorFeaturePresent(PF_AVX2_INSTRUCTIONS_AVAILABLE);
-        static auto FindPattern(const char* signature, bool bWarnIfNotFound = true) -> Scanner
+        static auto FindPattern(const char* signature, bool bWarnIfNotFound = true, bool bInRData = false) -> Scanner
         {
             PE::Address add{ nullptr };
 
-            const auto sizeOfImage = PE::GetNTHeaders()->OptionalHeader.SizeOfImage;
             auto patternBytes = ASM::pattern2bytes(signature);
 
-            const auto scanBytes = reinterpret_cast<std::uint8_t*>(PE::GetModuleBase());
+            auto scanSect = bInRData ? PE::Section::GetSection(".rdata") : PE::Section::GetSection(".text");
+            const auto scanBytes = (uint8_t*)scanSect.GetSectionStart().Get();
+            const auto sizeOfImage = scanSect.GetSectionSize();
 
             const auto s = patternBytes.size();
             const auto d = patternBytes.data();
