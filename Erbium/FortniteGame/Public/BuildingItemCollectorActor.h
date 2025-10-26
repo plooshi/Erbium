@@ -50,6 +50,7 @@ public:
     DEFINE_PROP(ItemCollections, TArray<FCollectorUnitInfo>);
     DEFINE_PROP(StartingGoalLevel, int32);
     DEFINE_PROP(ActiveInputItem, UFortItemDefinition*);
+    DEFINE_PROP(ClientPausedActiveInputItem, UFortItemDefinition*);
     DEFINE_PROP(LootSpawnLocation, FVector);
     DEFINE_BITFIELD_PROP(bCurrentInteractionSuccess);
     DEFINE_PROP(ControllingPlayer, AFortPlayerControllerAthena*);

@@ -1312,6 +1312,7 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 				PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
 		}
 
+		CollectorActor->ClientPausedActiveInputItem = CollectorActor->ActiveInputItem;
 		CollectorActor->bCurrentInteractionSuccess = true;
 		CollectorActor->Call(CollectorActor->GetFunction("BlueprintOnInteract"), PlayerController->MyFortPawn);
 		//CollectorActor->PlayVendFX();

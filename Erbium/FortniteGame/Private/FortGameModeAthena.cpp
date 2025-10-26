@@ -189,11 +189,13 @@ void VendWobble__FinishedFunc(UObject* Context, FFrame& Stack)
     
 	auto Collection = CollectorActor->ItemCollections.Search([&](FCollectorUnitInfo& Coll)
 	{
-		return Coll.InputItem == CollectorActor->ActiveInputItem;
+		return Coll.InputItem == CollectorActor->ClientPausedActiveInputItem;
 	}, FCollectorUnitInfo::Size());
 
     if (!Collection)
         return VendWobble__FinishedFuncOG(Context, Stack);
+
+    CollectorActor->ClientPausedActiveInputItem = nullptr;
 
     float Cost = Collection->InputCount.Evaluate();
 
@@ -773,32 +775,8 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
 
                         for (auto& LootDrop : LootDrops)
                         {
-                            if (AFortInventory::IsPrimaryQuickbar(LootDrop->ItemDefinition))
-                            {
-                                bool AlreadyInCollections = false;
-
-                                for (int q = 0; q < CollectorActor->ItemCollections.Num(); q++)
-                                {
-                                    auto& Coll = CollectorActor->ItemCollections.Get(q, FCollectorUnitInfo::Size());
-
-                                    if (Coll.OutputItem == LootDrop->ItemDefinition)
-                                    {
-                                        AlreadyInCollections = true;
-                                        break;
-                                    }
-                                }
-
-                                if (AlreadyInCollections)
-                                {
-                                    free(LootDrop);
-                                    i--;
-                                    AttemptsToGetItem++;
-
-                                    continue;
-                                }
-
+                            if (!Collection.OutputItem && AFortInventory::IsPrimaryQuickbar(LootDrop->ItemDefinition))
                                 Collection.OutputItem = LootDrop->ItemDefinition;
-                            }
 
                             Collection.OutputItemEntry.Add(*LootDrop, FFortItemEntry::Size());
                             free(LootDrop);
