@@ -11,16 +11,7 @@ jobs:
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
-          
-      - name: Restore cached build artifacts
-        id: restore-artifacts
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            x64
-            Erbium/x64
-          key: build-artifacts
-
+        
       - name: Compile Erbium
         working-directory: ${{env.GITHUB_WORKSPACE}}
         run: msbuild . /t:Build /p:Configuration=Release
@@ -44,12 +35,3 @@ jobs:
           path: ./x64/Client
           if-no-files-found: warn
           retention-days: 90
-      
-      - name: Save build artifacts
-        id: save-artifacts
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            x64
-            Erbium/x64
-          key: ${{ steps.restore-artifacts.outputs.cache-primary-key }}
