@@ -1424,29 +1424,45 @@ void PickupHeldObject(UObject* Context, FFrame& Stack)
 	Stack.IncrementCode();
 	auto HeldObjectComponent = (UFortHeldObjectComponent*)Context;
 
-	auto ItemDefinition = HeldObjectComponent->EquippedWeaponItemDefinition.Get();
-
 	auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
-
-	auto Item = PlayerController->WorldInventory->GiveItem(ItemDefinition, 1, 99999);
-
-	if (!Item)
-		return;
-
-	auto Weapon = (AFortWeapon*)Pawn->EquipWeaponDefinition(ItemDefinition, Item->ItemEntry.ItemGuid, FFortItemEntry::HasTrackerGuid() ? Item->ItemEntry.TrackerGuid : FGuid(), false);
-
-	if (!Weapon)
-		return;
-	PlayerController->ClientEquipItem(Item->ItemEntry.ItemGuid, true);
-
-	HeldObjectComponent->GrantedWeapon = Weapon;
-	HeldObjectComponent->GrantedWeaponItem = Item;
 
 	HeldObjectComponent->HeldObjectState = 1;
 
-	auto OldPawn = HeldObjectComponent->OwningPawn;
-	HeldObjectComponent->OwningPawn = Pawn;
-	HeldObjectComponent->OnRep_OwningPawn(OldPawn);
+	if (HeldObjectComponent->HasOwningPawn())
+	{
+		auto OldPawn = HeldObjectComponent->OwningPawn;
+		HeldObjectComponent->OwningPawn = Pawn;
+		HeldObjectComponent->OnRep_OwningPawn(OldPawn);
+	}
+	else
+	{
+		// its a weakobjectptr on older builds
+		static auto OwningPawnOff = HeldObjectComponent->GetOffset("OwningPawn", 0x8000000);
+		auto& OwningPawn = *(TWeakObjectPtr<AFortPlayerPawnAthena>*)(__int64(Context) + OwningPawnOff);
+
+		auto OldPawn = OwningPawn.Get();
+		OwningPawn = Pawn;
+		HeldObjectComponent->OnRep_OwningPawn(OldPawn);
+	}
+	
+	if (!HeldObjectComponent->GrantedWeaponItem.Get())
+	{
+		auto ItemDefinition = HeldObjectComponent->EquippedWeaponItemDefinition.Get();
+
+		auto Item = PlayerController->WorldInventory->GiveItem(ItemDefinition, 1, 99999);
+
+		if (!Item)
+			return;
+
+		auto Weapon = (AFortWeapon*)Pawn->EquipWeaponDefinition(ItemDefinition, Item->ItemEntry.ItemGuid, FFortItemEntry::HasTrackerGuid() ? Item->ItemEntry.TrackerGuid : FGuid(), false);
+
+		if (!Weapon)
+			return;
+		PlayerController->ClientEquipItem(Item->ItemEntry.ItemGuid, true);
+
+		HeldObjectComponent->GrantedWeapon = Weapon;
+		HeldObjectComponent->GrantedWeaponItem = Item;
+	}
 }
  
 
@@ -1476,18 +1492,50 @@ void DropHeldObject(UObject* Context, FFrame& Stack)
 
 	auto PlayerController = (AFortPlayerControllerAthena*)HeldObjectComponent->OwningPawn->Controller;
 
-	auto Item = HeldObjectComponent->GrantedWeaponItem.Get();
+	/*auto Item = HeldObjectComponent->GrantedWeaponItem.Get();
 
-	if (!Item)
-		return;
-	printf("GUID: %d %d %d %d, ID: %s\n", Item->ItemEntry.ItemGuid.A, Item->ItemEntry.ItemGuid.B, Item->ItemEntry.ItemGuid.C, Item->ItemEntry.ItemGuid.D, Item->ItemEntry.ItemDefinition->Name.ToString().c_str());
+	if (!Item)HeldObjectComponent->GrantedWeaponItem
+		return;*/
+	//printf("GUID: %d %d %d %d, ID: %s\n", Item->ItemEntry.ItemGuid.A, Item->ItemEntry.ItemGuid.B, Item->ItemEntry.ItemGuid.C, Item->ItemEntry.ItemGuid.D, Item->ItemEntry.ItemDefinition->Name.ToString().c_str());
 
-	PlayerController->WorldInventory->Remove(Item->ItemEntry.ItemGuid);
+	/*PlayerController->WorldInventory->Remove(Item->ItemEntry.ItemGuid);
 
 	HeldObjectComponent->GrantedWeapon = nullptr;
-	HeldObjectComponent->GrantedWeaponItem = nullptr;
+	HeldObjectComponent->GrantedWeaponItem = nullptr;*/
 
 	HeldObjectComponent->HeldObjectState = 4;
+
+
+	if (HeldObjectComponent->HasOwningPawn())
+	{
+		auto OldPawn = HeldObjectComponent->OwningPawn;
+		printf("%p\n", OldPawn->PreviousWeapon);
+		auto PreviousIns = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+			{
+				return entry.ItemGuid == ((AFortWeapon*)OldPawn->PreviousWeapon)->ItemEntryGuid;
+			}, FFortItemEntry::Size());
+
+		if (PreviousIns)
+		{
+			auto Weapon = (AFortWeapon*)OldPawn->EquipWeaponDefinition(PreviousIns->ItemDefinition, PreviousIns->ItemGuid, FFortItemEntry::HasTrackerGuid() ? PreviousIns->TrackerGuid : FGuid(), false);
+
+			PlayerController->ClientEquipItem(Weapon->ItemEntryGuid, true);
+		}
+
+		HeldObjectComponent->OwningPawn = nullptr;
+		HeldObjectComponent->OnRep_OwningPawn(OldPawn);
+	}
+	else
+	{
+		// its a weakobjectptr on older builds
+		static auto OwningPawnOff = HeldObjectComponent->GetOffset("OwningPawn", 0x8000000);
+		auto& OwningPawn = *(TWeakObjectPtr<AFortPlayerPawnAthena>*)(__int64(Context) + OwningPawnOff);
+
+		auto OldPawn = OwningPawn.Get();
+		OwningPawn = nullptr;
+		HeldObjectComponent->OnRep_OwningPawn(OldPawn);
+	}
+
 
 	auto OldPawn = HeldObjectComponent->OwningPawn;
 	HeldObjectComponent->OwningPawn = nullptr;
@@ -1666,9 +1714,9 @@ void AFortPlayerControllerAthena::PostLoadHook()
 	if (DefaultHeldObjComp)
 	{
 		Utils::ExecHook(DefaultHeldObjComp->GetFunction("PickupHeldObject"), PickupHeldObject);
-		//Utils::ExecHook(DefaultHeldObjComp->GetFunction("DropHeldObject"), DropHeldObject);
-		//Utils::ExecHook(DefaultHeldObjComp->GetFunction("PlaceHeldObject"), PlaceHeldObject);
-		//Utils::ExecHook(DefaultHeldObjComp->GetFunction("ThrowHeldObject"), ThrowHeldObject);
+		Utils::ExecHook(DefaultHeldObjComp->GetFunction("DropHeldObject"), DropHeldObject);
+		Utils::ExecHook(DefaultHeldObjComp->GetFunction("PlaceHeldObject"), PlaceHeldObject);
+		Utils::ExecHook(DefaultHeldObjComp->GetFunction("ThrowHeldObject"), ThrowHeldObject);
 	}
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("SpawnToyInstance"), SpawnToyInstance);

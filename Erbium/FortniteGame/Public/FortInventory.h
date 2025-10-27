@@ -248,6 +248,23 @@ public:
     UCLASS_COMMON_MEMBERS(IFortInventoryOwnerInterface);
 };
 
+struct FFortWorldMultiItemInfo
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FFortWorldMultiItemInfo);
+
+    DEFINE_STRUCT_PROP(ItemDefinition, TSoftObjectPtr<UFortItemDefinition>);
+    DEFINE_STRUCT_PROP(RequiredXPForNextLevel, FScalableFloat);
+};
+
+class UFortWorldMultiItemDefinition : public UFortWorldItemDefinition
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortWorldMultiItemDefinition);
+
+    DEFINE_PROP(ItemInfos, TArray<FFortWorldMultiItemInfo>);
+};
+
 class UFortWeaponMeleeItemDefinition : public UFortWeaponItemDefinition
 {
 public:

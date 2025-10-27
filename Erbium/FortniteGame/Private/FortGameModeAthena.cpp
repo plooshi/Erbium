@@ -1235,7 +1235,8 @@ AFortSafeZoneIndicator* SetupSafeZoneIndicator(AFortGameModeAthena* GameMode)
                 if (FFortSafeZonePhaseInfo::HasUsePOIStormCenter())
                     PhaseInfo->UsePOIStormCenter = false;
 
-                PhaseInfo->Center = GameMode->SafeZoneLocations.Get((int)i, FVector::Size());
+                if (GameMode->SafeZoneLocations.GetData() && GameMode->SafeZoneLocations.Num() > i)
+                    PhaseInfo->Center = GameMode->SafeZoneLocations.Get((int)i, FVector::Size());
 
                 Array.Add(*PhaseInfo, FFortSafeZonePhaseInfo::Size());
                 free(PhaseInfo);

@@ -197,13 +197,18 @@ FFortItemEntry* AFortInventory::MakeItemEntry(const UFortItemDefinition* ItemDef
     ItemEntry->ReplicationID = -1;
     ItemEntry->ReplicationKey = -1;
 
-    ItemEntry->ItemDefinition = ItemDefinition;
+    auto ItemDef = ItemDefinition;
+    if (auto MultiWorldItemDef = ItemDef->Cast<UFortWorldMultiItemDefinition>())
+    {
+        ItemDef = MultiWorldItemDef->ItemInfos.Get(rand() % MultiWorldItemDef->ItemInfos.Num(), FFortWorldMultiItemInfo::Size()).ItemDefinition;
+    }
+    ItemEntry->ItemDefinition = ItemDef;
     ItemEntry->Count = Count;
     ItemEntry->Durability = 1.f;
     ItemEntry->GameplayAbilitySpecHandle = FGameplayAbilitySpecHandle(-1);
     ItemEntry->ParentInventory.ObjectIndex = -1;
     ItemEntry->Level = Level;
-    if (auto Weapon = ItemDefinition->IsA<UFortGadgetItemDefinition>() ? (UFortWeaponItemDefinition*)((UFortGadgetItemDefinition*)ItemDefinition)->GetWeaponItemDefinition() : ItemDefinition->Cast<UFortWeaponItemDefinition>())
+    if (auto Weapon = ItemDef->IsA<UFortGadgetItemDefinition>() ? (UFortWeaponItemDefinition*)((UFortGadgetItemDefinition*)ItemDef)->GetWeaponItemDefinition() : ItemDef->Cast<UFortWeaponItemDefinition>())
     {
         auto Stats = GetStats(Weapon);
         if (Stats)
@@ -264,8 +269,6 @@ AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entr
         NewPickup->bTossedFromContainer = SpawnSource == EFortPickupSpawnSource::GetChest() || SpawnSource == EFortPickupSpawnSource::GetAmmoBox();
     if (NewPickup->bTossedFromContainer)
         NewPickup->OnRep_TossedFromContainer();
-
-    NewPickup->PickupLocationData.FlyTime -= 1.f;
 
     return NewPickup;
 }
@@ -357,8 +360,6 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
 
     NewPickup->bTossedFromContainer = true;
     NewPickup->OnRep_TossedFromContainer();
-
-    NewPickup->PickupLocationData.FlyTime -= 1.f;
 
     return NewPickup;
 }
