@@ -32,6 +32,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ErbiumClient
-          path: ./x64/Release/Client
+          path: ./x64/Client
           if-no-files-found: warn
           retention-days: 90
