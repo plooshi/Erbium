@@ -27,7 +27,7 @@ void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena
 			Loc = ViewTarget->K2_GetActorLocation();
 			if (auto TargetPawn = ViewTarget->Cast<AFortPlayerPawnAthena>())
 				Loc.Z += TargetPawn->BaseEyeHeight;
-			Rot = PlayerController->ControlRotation;
+			Rot = PlayerController->GetControlRotation();
 		}
 		else
 			PlayerController->GetActorEyesViewPoint(&Loc, &Rot);

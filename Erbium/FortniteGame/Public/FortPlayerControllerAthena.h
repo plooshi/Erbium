@@ -128,11 +128,10 @@ public:
     DEFINE_PROP(ActiveToyInstances, TArray<AActor*>);
     DEFINE_PROP(AppliedInGameModifierAbilitySetHandles, TMap<FGuid, void*>);
     DEFINE_BITFIELD_PROP(bTryPickupSwap);
-    DEFINE_PROP(ControlRotation, FRotator);
 
     DEFINE_FUNC(GetViewTarget, AActor*);
-    //DEFINE_FUNC(GetControlRotation, FRotator);
-    //DEFINE_FUNC(SetControlRotation, void);
+    DEFINE_FUNC(GetControlRotation, FRotator);
+    DEFINE_FUNC(SetControlRotation, void);
     DEFINE_FUNC(ClientSetRotation, void);
     DEFINE_FUNC(ClientReportDamagedResourceBuilding, void);
     DEFINE_FUNC(PlayWinEffects, void);

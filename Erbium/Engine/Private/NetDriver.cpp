@@ -446,7 +446,8 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 	}
 	else if (GUI::gsStatus == 2 && FConfiguration::bAutoRestart)
 	{
-		if (Driver->ClientConnections.Num() == 0)
+		auto WorldNetDriver = UWorld::GetWorld()->NetDriver;
+		if (Driver == WorldNetDriver && Driver->ClientConnections.Num() == 0)
 			TerminateProcess(GetCurrentProcess(), 0);
 	}
 
@@ -457,27 +458,31 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 void UNetDriver::TickFlush__RepGraph(UNetDriver* Driver, float DeltaSeconds)
 {
 	static auto ServerReplicateActors_ = FindServerReplicateActors();
-	if (Driver->ClientConnections.Num() > 0 && Driver->ReplicationDriver)
-		((void (*)(UObject*, float)) ServerReplicateActors_)(Driver->ReplicationDriver, DeltaSeconds);
-
-
-	if (GUI::gsStatus == 1 && VersionInfo.FortniteVersion >= 11.00)
+	if (Driver->ReplicationDriver)
 	{
-		auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
-		auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
-		auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
-		static auto bSkipAircraft = GameState->CurrentPlaylistInfo.BasePlaylist ? GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft : false;
-		if (!bSkipAircraft && Driver->ClientConnections.Num() > 0 && GameMode->bWorldIsReady && GameState->WarmupCountdownEndTime <= Time)
+		// this is our main netdriver
+		if (Driver->ClientConnections.Num() > 0)
+			((void (*)(UObject*, float)) ServerReplicateActors_)(Driver->ReplicationDriver, DeltaSeconds);
+
+
+		if (GUI::gsStatus == 1 && VersionInfo.FortniteVersion >= 11.00)
 		{
-			GUI::gsStatus = 2;
+			auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
+			auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+			auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
+			static auto bSkipAircraft = GameState->CurrentPlaylistInfo.BasePlaylist ? GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft : false;
+			if (!bSkipAircraft && Driver->ClientConnections.Num() > 0 && GameMode->bWorldIsReady && GameState->WarmupCountdownEndTime <= Time)
+			{
+				GUI::gsStatus = 2;
 
-			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
+				UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
+			}
 		}
-	}
-	else if (GUI::gsStatus == 2 && FConfiguration::bAutoRestart)
-	{
-		if (Driver->ClientConnections.Num() == 0)
-			TerminateProcess(GetCurrentProcess(), 0);
+		else if (GUI::gsStatus == 2 && FConfiguration::bAutoRestart)
+		{
+			if (Driver->ClientConnections.Num() == 0)
+				TerminateProcess(GetCurrentProcess(), 0);
+		}
 	}
 
 	return TickFlushOG(Driver, DeltaSeconds);
