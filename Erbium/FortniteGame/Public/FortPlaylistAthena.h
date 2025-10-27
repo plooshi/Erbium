@@ -38,4 +38,5 @@ public:
     DEFINE_PROP(UIExtensions, TArray<FUIExtension>);
     DEFINE_PROP(GameplayTagContainer, FGameplayTagContainer);
     DEFINE_PROP(bSkipAircraft, bool);
+    DEFINE_PROP(bForceRespawnLocationInsideOfVolume, bool);
 };

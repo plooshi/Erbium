@@ -15,9 +15,6 @@
 void Main()
 {
 #ifndef CLIENT
-    if constexpr (FConfiguration::bCustomCrashReporter)
-        FCrashReporter::Register();
-
     if constexpr (!FConfiguration::bGUI)
     {
         AllocConsole();
@@ -26,6 +23,9 @@ void Main()
         freopen_s(&s, "CONOUT$", "w+", stderr);
         freopen_s(&s, "CONIN$", "r", stdin);
     }
+
+    if constexpr (FConfiguration::bCustomCrashReporter)
+        FCrashReporter::Register();
 
     printf("Initializing SDK...\n");
 #endif
@@ -45,7 +45,6 @@ void Main()
     if (VersionInfo.EngineVersion >= 5.0)
     {
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"log LogFortUIDirector None"), nullptr);
-        UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"log LogNet None"), nullptr);
     }
     if (VersionInfo.EngineVersion >= 5.1)
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"net.AllowEncryption 0"), nullptr);

@@ -53,13 +53,16 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
     {
         if (FConfiguration::bForceRespawns)
         {
-            /*Playlist->bRespawnInAir = true;
+            Playlist->bRespawnInAir = true;
             Playlist->RespawnHeight.Curve.CurveTable = nullptr;
+            Playlist->RespawnHeight.Curve.RowName = FName();
             Playlist->RespawnHeight.Value = 20000;
             Playlist->RespawnTime.Curve.CurveTable = nullptr;
-            Playlist->RespawnTime.Value = 3;*/
+            Playlist->RespawnTime.Curve.RowName = FName();
+            Playlist->RespawnTime.Value = 3;
             Playlist->RespawnType = 1; // InfiniteRespawns
             Playlist->bAllowJoinInProgress = true;
+            Playlist->bForceRespawnLocationInsideOfVolume = true;
         }
         if (Playlist->HasGarbageCollectionFrequency())
             Playlist->GarbageCollectionFrequency = 9999999999999999.f; // easier than hooking collectgarbage
@@ -1151,7 +1154,9 @@ AFortSafeZoneIndicator* SetupSafeZoneIndicator(AFortGameModeAthena* GameMode)
                 PhaseInfo->StormCampingIncrementTimeAfterDelay = GameMode->StormCampingIncrementTimeAfterDelay.Evaluate(i);
                 PhaseInfo->StormCampingInitialDelayTime = GameMode->StormCampingInitialDelayTime.Evaluate(i);
                 PhaseInfo->MegaStormGridCellThickness = (int)SafeZoneDefinition.MegaStormGridCellThickness.Evaluate(i);
-                PhaseInfo->UsePOIStormCenter = false;
+                
+                if (FFortSafeZonePhaseInfo::HasUsePOIStormCenter())
+                    PhaseInfo->UsePOIStormCenter = false;
 
                 PhaseInfo->Center = GameMode->SafeZoneLocations.Get((int)i, FVector::Size());
 

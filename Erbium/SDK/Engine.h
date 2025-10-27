@@ -525,6 +525,7 @@ namespace SDK
 		DEFINE_PROP(NetCullDistanceSquared, float);
 		DEFINE_BITFIELD_PROP(bAlwaysRelevant);
 		DEFINE_BITFIELD_PROP(bCanBeDamaged);
+		DEFINE_BITFIELD_PROP(bNetUseOwnerRelevancy);
 
 		DEFINE_FUNC(AddComponentByClass, UActorComponent*);
 		DEFINE_FUNC(GetComponentByClass, UActorComponent*);

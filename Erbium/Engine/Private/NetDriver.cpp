@@ -91,10 +91,15 @@ UNetConnection* IsActorOwnedByAndRelevantToConnection(const AActor* Actor, TArra
 	return nullptr;
 }
 
+const UClass* WorldPartitionHLODClass = nullptr;
+
 bool IsActorRelevantToConnection(const AActor* Actor, const TArray<FNetViewer*>& ConnectionViewers)
 {
 	auto IsNetRelevantForIdx = FindIsNetRelevantForVft();
 	if (IsNetRelevantForIdx == 0)
+		return true;
+
+	if (WorldPartitionHLODClass && Actor->IsA(WorldPartitionHLODClass))
 		return true;
 
 	bool (*&IsNetRelevantFor)(const AActor*, const AActor*, const AActor*, const FVector&) = decltype(IsNetRelevantFor)(Actor->Vft[IsNetRelevantForIdx]);
@@ -202,7 +207,10 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 			bool bRelevant = IsActorRelevantToConnection(Actor, Viewers);
 			bool bLevelInitializedForActor = IsLevelInitializedForActor(Driver, Actor, Conn);
 			if (!Channel && (!bRelevant || !bLevelInitializedForActor))
+			{
 				continue;
+			}
+
 			static auto CloseActorChannel = (void(*)(UActorChannel*, uint8_t)) FindCloseActorChannel();
 			if (Channel && !bRelevant && (!bLevelInitializedForActor || !(Actor->HasbNetStartup() ? Actor->bNetStartup : true)))
 			{
@@ -500,7 +508,12 @@ void UNetDriver::PostLoadHook()
 		NetworkObjectListOffset = 0x6b8;
 		ReplicationFrameOffset = 0x3d8;
 	}
-	if (VersionInfo.FortniteVersion >= 23 && VersionInfo.FortniteVersion < 25)
+	else if (std::floor(VersionInfo.FortniteVersion) == 22)
+	{
+		NetworkObjectListOffset = 0x708;
+		ReplicationFrameOffset = 0x428;
+	}
+	else if (VersionInfo.FortniteVersion >= 23 && VersionInfo.FortniteVersion < 25)
 	{
 		ReplicationFrameOffset = VersionInfo.FortniteVersion == 24.20 ? 0x438 : 0x440;
 		NetworkObjectListOffset = VersionInfo.FortniteVersion < 24 ? 0x720 : 0x730;
@@ -526,8 +539,10 @@ void UNetDriver::PostLoadHook()
 		ClientWorldPackageNameOffset = 0x1828;
 	else if (VersionInfo.FortniteVersion < 24 && VersionInfo.FortniteVersion > 23.10) 
 		ClientWorldPackageNameOffset = 0x17D0;
-	else if (VersionInfo.FortniteVersion >= 22 && VersionInfo.FortniteVersion <= 23.10) 
+	else if (VersionInfo.FortniteVersion >= 23 && VersionInfo.FortniteVersion <= 23.10) 
 		ClientWorldPackageNameOffset = 0x1780;
+	else if (std::floor(VersionInfo.FortniteVersion) == 22)
+		ClientWorldPackageNameOffset = 0x1730;
 	else if (VersionInfo.FortniteVersion >= 24)
 		ClientWorldPackageNameOffset = 0x1820;
 	else if (VersionInfo.FortniteVersion >= 20)
@@ -565,7 +580,10 @@ void UNetDriver::PostLoadHook()
 		if (VersionInfo.FortniteVersion < 3.4)
 			FindFlushDormancy();
 		else
+		{
 			FindGetNamePool();
+			WorldPartitionHLODClass = FindClass("WorldPartitionHLOD");
+		}
 
 		GetActorLocation = (void(*)(AActor*, FFrame&, FVector*))AActor::GetDefaultObj()->GetFunction("K2_GetActorLocation")->GetNativeFunc();
 	}

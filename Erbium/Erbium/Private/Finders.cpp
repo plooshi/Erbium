@@ -39,7 +39,7 @@ uint64_t FindGIsClient()
                     }
                 }
                 if (!bMatches) continue;
-                if ((Load[0] == 0x44 || Load[0] == 0x40) && *(Ptr + 2) == 0x74) continue;
+                if ((Load[0] == 0x44 || Load[0] == 0x40) && (*(Ptr + 2) == 0x74 || *(Ptr + 2) == 0x30)) continue;
                 if (!correctByte)
                     correctByte = Load[0];
                 else if (Load[0] != correctByte)
@@ -92,7 +92,7 @@ uint64_t FindGIsServer()
                     }
                 }
                 if (!bMatches) continue;
-                if ((Load[0] == 0x44 || Load[0] == 0x40) && *(Ptr + 2) == 0x74) continue;
+                if ((Load[0] == 0x44 || Load[0] == 0x40) && (*(Ptr + 2) == 0x74 || *(Ptr + 2) == 0x30)) continue;
                 if (!correctByte)
                     correctByte = Load[0];
                 else if (Load[0] != correctByte)
@@ -687,6 +687,8 @@ uint64 FindApplyCharacterCustomization()
             return ApplyCharacterCustomization = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 80 B9 ? ? ? ? ? 4C 8B EA").Get();
         else if (VersionInfo.FortniteVersion >= 24)
             return ApplyCharacterCustomization = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 48 89 7C 24 ? 55 41 54 41 55 41 56 41 57 48 8B EC 48 81 EC ? ? ? ? 80 B9").Get();
+        else if (std::floor(VersionInfo.FortniteVersion) == 22)
+            return ApplyCharacterCustomization = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8B EC 48 81 EC ? ? ? ? 80 B9").Get();
 
         auto sRef = Memcury::Scanner::FindStringRef(L"AFortPlayerState::ApplyCharacterCustomization - Failed initialization, using default parts. Player Controller: %s PlayerState: %s, HeroId: %s", false, 0, VersionInfo.FortniteVersion >= 17, VersionInfo.FortniteVersion < 20 && VersionInfo.FortniteVersion != 19.01).Get();
 
@@ -1387,9 +1389,11 @@ uint64_t FindCallPreReplication()
             return CallPreReplication = Memcury::Scanner::FindPattern("48 85 D2 0F 84 ? ? ? ? 56 41 56 48 83 EC 38 4C 8B F2").Get();
         else if (std::floor(VersionInfo.FortniteVersion) == 20)
             return CallPreReplication = Memcury::Scanner::FindPattern("48 85 D2 0F 84 ? ? ? ? 48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC 40 F6 41 58 30 48 8B EA 48 8B D9 40 B6 01").Get();
-        else if (VersionInfo.FortniteVersion <= 22)
+        else if (VersionInfo.FortniteVersion < 22)
             return CallPreReplication = Memcury::Scanner::FindPattern("48 85 D2 0F 84 ? ? ? ? 48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC 40 F6 41 58 30 4C 8B F2").Get();
-        else if (VersionInfo.FortniteVersion >= 23)
+        else if (VersionInfo.FortniteVersion <= 22.30)
+            return CallPreReplication = Memcury::Scanner::FindPattern("48 85 D2 0F 84 ? ? ? ? 48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 4C 89 60 ? 55 41 56 41 57 48 8B EC 48 83 EC ? F6 41 ? ? 4C 8B FA 48 8B").Get();
+        else if (VersionInfo.FortniteVersion >= 22.40)
             return CallPreReplication = Memcury::Scanner::FindPattern("48 85 D2 0F 84 ? ? ? ? 48 89 5C 24 ? 48 89 74 24 ? 48 89 7C 24 ? 55 41 56 41 57 48 8B EC 48 83 EC ? F6 41").Get();
     }
 
@@ -1405,7 +1409,7 @@ uint64_t FindSendClientAdjustment()
     {
         bInitialized = true;
 
-        if (VersionInfo.FortniteVersion >= 22.00)
+        if (VersionInfo.FortniteVersion >= 23.00)
         {
             SendClientAdjustment = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 83 3D ? ? ? ? ? 48 8B D9 75").Get();
 
@@ -1730,6 +1734,9 @@ uint64_t FindEnterAircraft()
 
 uint64_t FindGetPlayerViewPoint()
 {
+    if (std::floor(VersionInfo.FortniteVersion) == 22)
+        return Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 56 41 57 48 8B EC 48 83 EC ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 4D 8B F0 48 8B F2 48 8B D9").Get();
+
     uint64 ftspAddr = 0;
     auto ftspRef = Memcury::Scanner::FindStringRef(L"%s failed to spawn a pawn", true, 0, VersionInfo.FortniteVersion >= 19).Get();
 
@@ -1769,7 +1776,7 @@ uint64_t FindGetPlayerViewPoint()
 }
 
 uint32_t FindOnItemInstanceAddedVft()
-{
+{  
     uint32_t OnItemInstanceAddedVft = 0;
     static bool bInitialized = false;
 
