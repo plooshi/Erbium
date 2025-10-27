@@ -17,6 +17,7 @@
 #include "../../Erbium/Public/GUI.h"
 #include <random>
 #include "../../Erbium/Public/Misc.h"
+#include "../../Erbium/Public/Events.h"
 
 void ShowFoundation(const ABuildingFoundation* Foundation)
 {
@@ -44,6 +45,8 @@ void ShowFoundation(const ABuildingFoundation* Foundation)
 
     Foundation->SetDynamicFoundationEnabled(true);
 }
+
+bool bIsLargeTeamGame = false;
 
 void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameState)
 {
@@ -101,6 +104,8 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
         if (GameState->HasCachedSafeZoneStartUp() && Playlist->HasSafeZoneStartUp())
             GameState->CachedSafeZoneStartUp = Playlist->SafeZoneStartUp;
 
+        bIsLargeTeamGame = Playlist->bIsLargeTeamGame;
+
         if (VersionInfo.FortniteVersion >= 6 && VersionInfo.FortniteVersion < 7)
         {
             if (VersionInfo.FortniteVersion > 6.10)
@@ -130,6 +135,28 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
         else if (VersionInfo.EngineVersion == 4.23) // rest of S10
             ShowFoundation(FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.SLAB_4"));
 
+        if (Playlist->HasGameplayTagContainer())
+        {
+            for (int i = 0; i < Playlist->GameplayTagContainer.GameplayTags.Num(); i++)
+            {
+                auto& PlaylistTag = Playlist->GameplayTagContainer.GameplayTags.Get(i, FGameplayTag::Size());
+
+                if (PlaylistTag.TagName.ToString() == "Athena.Playlist.SpecialEvent")
+                {
+                    if (VersionInfo.FortniteVersion == 12.41)
+                    {
+                        ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.LF_Athena_POI_19x19_2"));
+                        ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.BP_Jerky_Head6_18"));
+                        ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.BP_Jerky_Head5_14"));
+                        ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.BP_Jerky_Head3_8"));
+                        ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.BP_Jerky_Head_2"));
+                        ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.BP_Jerky_Head4_11"));
+                    }
+
+                    break;
+                }
+            }
+        }
 
         auto AdditionalPlaylistLevelsStreamed__Off = GameState->GetOffset("AdditionalPlaylistLevelsStreamed");
         auto AdditionalLevelStruct = FAdditionalLevelStreamed::StaticStruct();
@@ -322,6 +349,58 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         else if (VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.26)
             GameState->OnRep_CurrentPlaylistInfo();
 
+
+        static auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
+        if (Playlist->HasGameplayTagContainer())
+        {
+            for (int i = 0; i < Playlist->GameplayTagContainer.GameplayTags.Num(); i++)
+            {
+                auto& PlaylistTag = Playlist->GameplayTagContainer.GameplayTags.Get(i, FGameplayTag::Size());
+
+                if (PlaylistTag.TagName.ToString() == "Athena.Playlist.SpecialEvent")
+                {
+                    for (auto& Event : Events::EventsArray)
+                    {
+                        if (Event.EventVersion != VersionInfo.FortniteVersion)
+                            continue;
+
+                        if (VersionInfo.FortniteVersion == 12.41)
+                        {
+                            ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.LF_Athena_POI_19x19_2"));
+                            ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.BP_Jerky_Head6_18"));
+                            ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.BP_Jerky_Head5_14"));
+                            ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.BP_Jerky_Head3_8"));
+                            ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.BP_Jerky_Head_2"));
+                            ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.BP_Jerky_Head4_11"));
+                        }
+
+                        UObject* LoaderObject = nullptr;
+                        if (Event.LoaderClass)
+                            if (const UClass* LoaderClass = FindObject<UClass>(Event.LoaderClass))
+                            {
+                                auto AllLoaders = Utils::GetAll(LoaderClass);
+                                LoaderObject = AllLoaders.Num() > 0 ? AllLoaders[0] : nullptr;
+                            }
+
+                        if (Event.LoaderFuncPath != nullptr && LoaderObject)
+                            if (const UFunction* LoaderFunction = FindObject<UFunction>(Event.LoaderFuncPath))
+                            {
+                                int Param = 1;
+                                LoaderObject->ProcessEvent(const_cast<UFunction*>(LoaderFunction), &Param);
+                                printf("[Events] Loaded event level!\n");
+                            }
+                            else
+                                printf("[Events] Failed to load event level!\n");
+
+                        GameMode->SafeZoneLocations.Free();
+                        break;
+                    }
+
+                    break;
+                }
+            }
+        }
+
         if (VersionInfo.FortniteVersion >= 20)
         {
             auto TacticalSprintAbility = FindObject<UFortAbilitySet>(L"/TacticalSprintGame/Gameplay/AS_TacticalSprint.AS_TacticalSprint");
@@ -362,9 +441,6 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             for (auto& [Key, Val] : (TMap<FName, FFortLootPackageData*>) Table->RowMap)
                 TempArr[Key] = Val;
         };
-
-
-        auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
 
         UEAllocatedMap<FName, FFortLootTierData*> LootTierDataTempArr;
         auto LootTierData = Playlist ? Playlist->LootTierData.Get() : nullptr;
@@ -993,11 +1069,21 @@ void AFortGameModeAthena::HandleStartingNewPlayer_(UObject* Context, FFrame& Sta
 uint8_t AFortGameModeAthena::PickTeam(AFortGameModeAthena* GameMode, uint8_t PreferredTeam, AFortPlayerControllerAthena* Controller) {
     uint8_t ret = CurrentTeam;
 
-    auto Playlist = VersionInfo.FortniteVersion >= 4.0 ? GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData : nullptr;
-    if (++PlayersOnCurTeam >= (Playlist ? Playlist->MaxSquadSize : 1))
+    if (bIsLargeTeamGame)
     {
-        CurrentTeam++;
-        PlayersOnCurTeam = 0;
+        if (CurrentTeam == 4)
+            CurrentTeam = 3;
+        else
+            CurrentTeam = 4;
+    }
+    else
+    {
+        auto Playlist = VersionInfo.FortniteVersion >= 4.0 ? GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData : nullptr;
+        if (++PlayersOnCurTeam >= (Playlist ? Playlist->MaxSquadSize : 1))
+        {
+            CurrentTeam++;
+            PlayersOnCurTeam = 0;
+        }
     }
 
     return ret;

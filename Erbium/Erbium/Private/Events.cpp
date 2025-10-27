@@ -13,7 +13,7 @@ void Events::StartEvent()
 
 	for (auto& Event : EventsArray)
 	{
-		if (Event.EventVersion != VersionInfo.FortniteVersion) 
+		if (Event.EventVersion != VersionInfo.FortniteVersion)
 			continue;
 
 		UObject* LoaderObject = nullptr;
@@ -23,16 +23,6 @@ void Events::StartEvent()
 				auto AllLoaders = Utils::GetAll(LoaderClass);
 				LoaderObject = AllLoaders.Num() > 0 ? AllLoaders[0] : nullptr;
 			}
-
-		if (Event.LoaderFuncPath != nullptr && LoaderObject)
-			if (const UFunction* LoaderFunction = FindObject<UFunction>(Event.LoaderFuncPath))
-			{
-				int Param = 1;
-				LoaderObject->ProcessEvent(const_cast<UFunction*>(LoaderFunction), &Param);
-				printf("StartEvent: Ready!\n");
-			}
-			else 
-				printf("StartEvent: failed to prepare event!\n");
 
 		UObject* ScriptingObject = nullptr;
 		if (Event.ScriptingClass)
@@ -45,26 +35,32 @@ void Events::StartEvent()
 		for (auto& EventFunction : Event.EventFunctions)
 		{
 			const UFunction* Function = FindObject<UFunction>(EventFunction.FunctionPath);
-			if (!Function) 
-			{ 
-				printf("StartEvent: failed to find func: %ls\n", EventFunction.FunctionPath); 
-				continue; 
+			if (!Function)
+			{
+				printf("[Events] failed to find func: %ls\n", EventFunction.FunctionPath);
+				continue;
 			}
 
 			UObject* Target = EventFunction.bIsLoaderFunction ? LoaderObject : ScriptingObject;
-			if (wcsstr(EventFunction.FunctionPath, L"OnReady"))
+			if (Target)
 			{
-				struct { UObject* GameState; const UFortPlaylistAthena* Playlist; FGameplayTagContainer PlaylistContextTags; }
-				Params{ GameMode->GameState, Playlist, FGameplayTagContainer() };
-				Target->ProcessEvent(const_cast<UFunction*>(Function), &Params);
+				if (wcsstr(EventFunction.FunctionPath, L"OnReady"))
+				{
+					struct { UObject* GameState; const UFortPlaylistAthena* Playlist; FGameplayTagContainer PlaylistContextTags; }
+					Params{ GameMode->GameState, Playlist, Playlist && Playlist->HasGameplayTagContainer() ? Playlist->GameplayTagContainer : FGameplayTagContainer() };
+					Target->ProcessEvent(const_cast<UFunction*>(Function), &Params);
+				}
+				else if (wcsstr(EventFunction.FunctionPath, L"StartEventAtIndex"))
+				{
+					int StartingIndex = 0;
+					Target->ProcessEvent(const_cast<UFunction*>(Function), &StartingIndex);
+				}
+				else
+				{
+					float fr = 0.f;
+					Target->ProcessEvent(const_cast<UFunction*>(Function), &fr);
+				}
 			}
-			else if (wcsstr(EventFunction.FunctionPath, L"StartEventAtIndex"))
-			{
-				int StartingIndex = 0;
-				Target->Call(const_cast<UFunction*>(Function), StartingIndex);
-			}
-			else 
-				Target->ProcessEvent(const_cast<UFunction*>(Function), nullptr);
 
 			if (VersionInfo.FortniteVersion == 8.51 && ScriptingObject && !EventFunction.bIsLoaderFunction)
 			{
@@ -77,33 +73,33 @@ void Events::StartEvent()
 
 					ScriptingObject->ProcessEvent(const_cast<UFunction*>(SetUnvaultFn), &Name);
 					ScriptingObject->ProcessEvent(const_cast<UFunction*>(PillarsFn), &Name);
-				}).detach();
+					}).detach();
 			}
 		}
 
-		for (auto& UncastedPC : GameMode->AlivePlayers)
+		if (VersionInfo.FortniteVersion >= 16.00)
 		{
-			auto PlayerController = (AFortPlayerControllerAthena*)UncastedPC;
-
-			auto PickaxeInstance = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+			for (auto& UncastedPC : GameMode->AlivePlayers)
 			{
-				return entry.ItemDefinition->Cast<UFortWeaponMeleeItemDefinition>();
-			});
+				auto PlayerController = (AFortPlayerControllerAthena*)UncastedPC;
 
-			if (PickaxeInstance)
-				PlayerController->WorldInventory->Remove(PickaxeInstance->ItemGuid);
+				auto PickaxeInstance = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+					{
+						return entry.ItemDefinition->Cast<UFortWeaponMeleeItemDefinition>();
+					}, FFortItemEntry::Size());
 
-			if (VersionInfo.FortniteVersion >= 16.00)
-			{
+				if (PickaxeInstance)
+					PlayerController->WorldInventory->Remove(PickaxeInstance->ItemGuid);
+
 				auto EventModeActivator = FindObject<UFortItemDefinition>(L"/EventMode/Items/WID_EventMode_Activator.WID_EventMode_Activator");
 
 				PlayerController->WorldInventory->GiveItem(EventModeActivator);
 			}
 		}
 
-		printf("StartEvent: Started!\n");
+		printf("[Events] Started!\n");
 		return;
 	}
 
-	printf("StartEvent: failed to start.\n");
+	printf("[Events] Build does not have an event.\n");
 }

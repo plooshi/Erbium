@@ -106,13 +106,14 @@ public:
 		FEvent
 		{
 			L"/CycloneJerky/Gameplay/BP_Jerky_Loader.BP_Jerky_Loader_C",
-			L"",
+			L"/CycloneJerky/Gameplay/BP_Jerky_Scripting.BP_Jerky_Scripting_C",
 			{
-				FEventFunction{ false, L"/CycloneJerky/Gameplay/BP_Jerky_Loader.BP_Jerky_Loader_C.OnReady_7FE9744D479411040654F5886C078D08" },
+				//FEventFunction{ false, L"/CycloneJerky/Gameplay/BP_Jerky_Scripting.BP_Jerky_Scripting_C.OnReady_093B6E664C060611B28F79B5E7052A39" },
+				//FEventFunction{ true, L"/CycloneJerky/Gameplay/BP_Jerky_Loader.BP_Jerky_Loader_C.OnReady_7FE9744D479411040654F5886C078D08" },
 				FEventFunction{ true, L"/CycloneJerky/Gameplay/BP_Jerky_Loader.BP_Jerky_Loader_C.startevent" }
 			},
 			12.41,
-			L"/CycloneJerky/Gameplay/BP_Jerky_Loader.BP_Jerky_Loader_C.LoadJerkyLevel"
+			nullptr
 		},
 		FEvent
 		{

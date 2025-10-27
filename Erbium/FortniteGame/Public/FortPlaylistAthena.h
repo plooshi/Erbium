@@ -39,4 +39,5 @@ public:
     DEFINE_PROP(GameplayTagContainer, FGameplayTagContainer);
     DEFINE_PROP(bSkipAircraft, bool);
     DEFINE_PROP(bForceRespawnLocationInsideOfVolume, bool);
+    DEFINE_PROP(bIsLargeTeamGame, bool);
 };
