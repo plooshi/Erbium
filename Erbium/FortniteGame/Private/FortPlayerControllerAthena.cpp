@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "../Public/FortPlayerControllerAthena.h"
 #include "../Public/FortGameModeAthena.h"
 #include "../Public/FortWeapon.h"
@@ -10,6 +10,9 @@
 #include "../../Erbium/Public/LateGame.h"
 #include "../Public/BuildingItemCollectorActor.h"
 
+
+//#include "../../Public/FortInventory.h"
+
 void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena* PlayerController, FVector& Loc, FRotator& Rot)
 {
 	static auto SFName = UKismetStringLibrary::Conv_StringToName(FString(L"Spectating"));
@@ -20,6 +23,7 @@ void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena
 	}
 	else
 	{
+<<<<<<< Updated upstream
 		auto ViewTarget = PlayerController->GetViewTarget();
 
 		if (ViewTarget)
@@ -31,6 +35,15 @@ void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena
 		}
 		else
 			PlayerController->GetActorEyesViewPoint(&Loc, &Rot);
+=======
+		if (auto ViewTarget = PlayerController->GetViewTarget())
+		{
+			Loc = ViewTarget->K2_GetActorLocation();
+			Rot = ViewTarget->K2_GetActorRotation();
+		}
+		else
+			return PlayerController->GetActorEyesViewPoint(&Loc, &Rot);
+>>>>>>> Stashed changes
 	}
 }
 
@@ -1015,25 +1028,32 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 	if (args.size() == 0)
 	{
 _help:
-		PlayerController->ClientMessage(FString(LR"(Command List:
-    cheat startaircraft - Starts the battle bus
-    cheat pausesafezone - Pauses the storm
-	cheat giveitem <WID/path> <Count = 1> - Gives you an item
-	cheat startevent - Starts the event for the current version
-	cheat spawnpickup <WID/path> <Count = 1> - Spawns a pickup at your player's location
-	cheat spawnactor <class/path> - Spawns an actor at your location + 5 meters
-    cheat tp <X> <Y> <Z> - Teleports to a location)"), FName(), 1);
+		PlayerController->ClientMessage(FString(LR"(
+| -- Command List: --
+|    cheat god / godmode
+|    cheat pausezone
+|    cheat startzone
+|    cheat startevent
+|    cheat setmaxhealth / instaheal
+|    cheat startbus / startaircraft
+|    cheat time / settimeofday (0-24)
+|    cheat speed (Count = 1)
+|	 cheat giveitem <WID/path> <Count = 1>
+|	 cheat spawnpickup <WID/path> <Count = 1> - Spawns a pickup at your player's location
+|	 cheat spawnactor <class/path> - Spawns an actor at your location + 5 meters
+|    cheat tpto <X> <Y> <Z>
+)"), FName(), 1);
 	}
 	else
 	{
 		auto& command = args[0];
 		std::transform(command.begin(), command.end(), command.begin(), tolower);
 
-		if (command == "startaircraft")
+		if (command == "startaircraft" || command == "startbus")
 			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
-		else if (command == "resumesafezone")
+		else if (command == "resumesafezone" || command == "startzone")
 			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startsafezone"), nullptr);
-		else if (command == "pausesafezone")
+		else if (command == "pausesafezone" || command == "pausezone")
 			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"pausesafezone"), nullptr);
 		else if (command == "demospeed")
 		{
@@ -1044,11 +1064,177 @@ _help:
 
 			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(ws.c_str()), nullptr);
 		}
-		else if (command == "god")
+		else if (command == "god" || command =="godmode")
 		{
 			PlayerController->Pawn->bCanBeDamaged ^= 1;
 		}
-		else if (command == "spawnbot")
+		else if (command == "speed")
+		{
+			float Speed = 1.0f;
+
+			if (args.size() > 1)
+			{
+				try
+				{
+					Speed = std::stof(std::string(args[1]));
+				}
+				catch (...)
+				{
+					PlayerController->ClientMessage(FString(L"Invalid speed value"), FName(), 1);
+					return;
+				}
+			}
+
+			auto Pawn = PlayerController->Pawn;
+			if (!Pawn)
+			{
+				PlayerController->ClientMessage(FString(L"No pawn to set speed"), FName(), 1);
+				return;
+			}
+
+			static auto SetMovementSpeedFn =
+				Utils::FindObject<UFunction>(L"/Script/FortniteGame.FortPawn.SetMovementSpeed")
+				? Utils::FindObject<UFunction>(L"/Script/FortniteGame.FortPawn.SetMovementSpeed")
+				: Utils::FindObject<UFunction>(L"/Script/FortniteGame.FortPawn.SetMovementSpeedMultiplier");
+
+			if (!SetMovementSpeedFn)
+			{
+				PlayerController->ClientMessage(FString(L"Movement Speed function not found"), FName(), 1);
+				return;
+			}
+
+			Pawn->ProcessEvent(const_cast<UFunction*>(SetMovementSpeedFn), &Speed);
+
+			std::wstring Msg = L"Speed set to " + std::to_wstring(Speed);
+			PlayerController->ClientMessage(FString(Msg.c_str()), FName(), 1);
+		}
+		else if (command == "settimeofday" || command == "time")
+		{
+			if (args.size() < 2)
+			{
+				PlayerController->ClientMessage(FString(L"Usage: cheat settimeofday <hour (0-24)>"), FName(), 1);
+				return;
+			}
+
+			float NewTimeOfDay = 0.f;
+			try
+			{
+				NewTimeOfDay = std::stof(std::string(args[1]));
+			}
+			catch (...)
+			{
+				PlayerController->ClientMessage(FString(L"Invalid time value"), FName(), 1);
+				return;
+			}
+
+			static auto SetTimeOfDayFn = Utils::FindObject<UFunction>(L"/Script/FortniteGame.FortKismetLibrary.SetTimeOfDay");
+			if (!SetTimeOfDayFn)
+			{
+				PlayerController->ClientMessage(FString(L"Time Of Day function not found"), FName(), 1);
+				return;
+			}
+
+			struct
+			{
+				UObject* WorldContextObject;
+				float TimeOfDay;
+			} Params{ UWorld::GetWorld(), NewTimeOfDay };
+
+			static auto FortKismetLibrary = Utils::FindObject<UClass>(L"/Script/FortniteGame.FortKismetLibrary");
+			if (FortKismetLibrary)
+				FortKismetLibrary->GetDefaultObj()->ProcessEvent(const_cast<UFunction*>(SetTimeOfDayFn), &Params);
+
+			std::wstring Msg = L"Time of day set to " + std::to_wstring(NewTimeOfDay);
+			PlayerController->ClientMessage(FString(Msg.c_str()), FName(), 1);
+		}
+		else if (command == "sethealth" || command == "sethp")
+		{
+			auto Pawn = PlayerController->MyFortPawn;
+			if (!Pawn)
+			{
+				PlayerController->ClientMessage(FString(L"No pawn"), FName(), 1);
+				return;
+			}
+
+			float Health = 0.f;
+
+			if (args.size() < 2)
+			{
+				//max
+				float MaxGuess = 99999.f;
+				Pawn->SetHealth(MaxGuess);
+
+				//min
+				float MinGuess = -99999.f;
+				Pawn->SetHealth(MinGuess);
+
+				std::wstring Msg = L"Health set to maximum";
+				PlayerController->ClientMessage(FString(Msg.c_str()), FName(), 1);
+				return;
+			}
+
+			try { Health = std::stof(std::string(args[1])); }
+			catch (...)
+			{
+				PlayerController->ClientMessage(FString(L"Invalid health value"), FName(), 1);
+				return;
+			}
+
+			Pawn->SetHealth(Health);
+
+			std::wstring Msg = L"Set health to " + std::to_wstring(static_cast<int>(Health));
+			PlayerController->ClientMessage(FString(Msg.c_str()), FName(), 1);
+		}
+		else if (command == "setmaxhealth" || command == "instaheal")
+		{
+			auto Pawn = PlayerController->MyFortPawn;
+
+			if (!Pawn)
+			{
+				PlayerController->ClientMessage(FString(L"No pawn"), FName(), 1);
+				return;
+			}
+
+			float MaxHealth = 100.f;
+
+			if (args.size() >= 2)
+			{
+				try { MaxHealth = std::stof(std::string(args[1])); }
+				catch (...) {
+					PlayerController->ClientMessage(FString(L"Invalid max health value"), FName(), 1);
+					return;
+				}
+			}
+
+			float CurrentHealth = Pawn->GetHealth();
+
+			Pawn->SetMaxHealth(MaxHealth);
+
+			if (CurrentHealth > MaxHealth)
+				CurrentHealth = MaxHealth;
+
+			Pawn->SetHealth(CurrentHealth);
+
+			std::wstring Msg = L"Set max health to " + std::to_wstring(static_cast<int>(MaxHealth));
+			PlayerController->ClientMessage(FString(Msg.c_str()), FName(), 1);
+        }
+
+		// Go0
+		/*else if (command == "center" || command == "go0")
+		{
+			auto World = UObject::GetWorld(); // use whatever context you already have
+			if (!World) return;
+
+			auto PlayerController = World->GetFirstPlayerController();
+			if (!PlayerController) return;
+
+			auto PlayerChar = PlayerController->GetCharacter();
+			if (!PlayerChar) return;
+
+			PlayerChar->TeleportTo(FVector(1.f, 1.f, 2795.f), { 0.f, 0.f, 0.f });
+        }*/
+
+		else if (command == "spawnbot" || command == "pawn")
 		{
 			if (args.size() != 2 && args.size() != 3)
 				PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1);
@@ -1151,7 +1337,7 @@ _help:
 		{
 			Events::StartEvent();
 		}
-		else if (command == "bugitgo" || command == "tp")
+		else if (command == "bugitgo" || command == "tpto")
 		{
 			if (args.size() != 4)
 				PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1);
@@ -1187,7 +1373,7 @@ _help:
 			free(ItemEntry);
 			//PlayerController->WorldInventory->GiveItem(ItemDefinition, Count);
 		}
-		else if (command == "spawnpickup")
+		else if (command == "spawnpickup" || command == "spawndrop")
 		{
 			if (args.size() != 2 && args.size() != 3)
 				PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1);
@@ -1227,7 +1413,9 @@ _help:
 		}
 		else
 			goto _help;
+
 	}
+
 }
 
 extern bool bDidntFind;

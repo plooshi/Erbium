@@ -376,8 +376,6 @@ bool AFortInventory::IsPrimaryQuickbar(const UFortItemDefinition* ItemDefinition
         (ItemDefinition->HasbForceIntoOverflow() && ItemDefinition->bForceIntoOverflow)
         ? false : true;
 }
-
-
 void AFortInventory::UpdateEntry(FFortItemEntry& Entry)
 {
     if (!this)
