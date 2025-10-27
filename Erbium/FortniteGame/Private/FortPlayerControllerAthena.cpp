@@ -27,7 +27,7 @@ void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena
 			Loc = ViewTarget->K2_GetActorLocation();
 			if (auto TargetPawn = ViewTarget->Cast<AFortPlayerPawnAthena>())
 				Loc.Z += TargetPawn->BaseEyeHeight;
-			Rot = PlayerController->GetControlRotation();
+			Rot = PlayerController->ControlRotation;
 		}
 		else
 			PlayerController->GetActorEyesViewPoint(&Loc, &Rot);
@@ -471,8 +471,8 @@ void AFortPlayerControllerAthena::ServerEditBuildingActor(UObject* Context, FFra
 		return;
 	}
 
-
-	SetEditingPlayer(Building, nullptr);
+	if (VersionInfo.FortniteVersion < 11)
+		SetEditingPlayer(Building, nullptr);
 
 	static auto ReplaceBuildingActor = (ABuildingSMActor * (*)(ABuildingSMActor*, unsigned int, const UClass*, unsigned int, int, bool, AFortPlayerControllerAthena*)) ReplaceBuildingActor_;
 

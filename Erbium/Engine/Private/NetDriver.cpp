@@ -428,14 +428,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 
 void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 {
-    static auto HasReplicationDriver_ = Driver->HasReplicationDriver();
-
-	static auto ServerReplicateActors_ = FindServerReplicateActors();
-    if (ServerReplicateActors_ && (HasReplicationDriver_ ? Driver->ReplicationDriver : nullptr))
-    {
-        ((void (*)(UObject*, float)) ServerReplicateActors_)(Driver->ReplicationDriver, DeltaSeconds);
-    }
-	else if (!HasReplicationDriver_ || !ServerReplicateActors_)
+	if (Driver->ClientConnections.Num() > 0)
 		ServerReplicateActors(Driver, DeltaSeconds);
 
     if (GUI::gsStatus == 1 && VersionInfo.FortniteVersion >= 11.00)
@@ -460,6 +453,35 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
     return TickFlushOG(Driver, DeltaSeconds);
 }
 
+
+void UNetDriver::TickFlush__RepGraph(UNetDriver* Driver, float DeltaSeconds)
+{
+	static auto ServerReplicateActors_ = FindServerReplicateActors();
+	if (Driver->ClientConnections.Num() > 0 && Driver->ReplicationDriver)
+		((void (*)(UObject*, float)) ServerReplicateActors_)(Driver->ReplicationDriver, DeltaSeconds);
+
+
+	if (GUI::gsStatus == 1 && VersionInfo.FortniteVersion >= 11.00)
+	{
+		auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
+		auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+		auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
+		static auto bSkipAircraft = GameState->CurrentPlaylistInfo.BasePlaylist ? GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft : false;
+		if (!bSkipAircraft && Driver->ClientConnections.Num() > 0 && GameMode->bWorldIsReady && GameState->WarmupCountdownEndTime <= Time)
+		{
+			GUI::gsStatus = 2;
+
+			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
+		}
+	}
+	else if (GUI::gsStatus == 2 && FConfiguration::bAutoRestart)
+	{
+		if (Driver->ClientConnections.Num() == 0)
+			TerminateProcess(GetCurrentProcess(), 0);
+	}
+
+	return TickFlushOG(Driver, DeltaSeconds);
+}
 
 void (*SetNetDormancyOG)(AActor* Actor, int NewDormancy);
 void SetNetDormancy(AActor* Actor, int NewDormancy)
@@ -592,9 +614,13 @@ void UNetDriver::PostLoadHook()
 		}
 
 		GetActorLocation = (void(*)(AActor*, FFrame&, FVector*))AActor::GetDefaultObj()->GetFunction("K2_GetActorLocation")->GetNativeFunc();
-	}
 
-    Utils::Hook(FindTickFlush(), TickFlush, TickFlushOG); 
+		Utils::Hook(FindTickFlush(), TickFlush, TickFlushOG);
+	}
+	else
+	{
+		Utils::Hook(FindTickFlush(), TickFlush__RepGraph, TickFlushOG);
+	}
 
 	if (VersionInfo.FortniteVersion < 3.4 && FindFlushDormancy())
 	{

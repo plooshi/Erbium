@@ -179,6 +179,7 @@ public:
     DEFINE_PROP(WorldPackage, UObject*);
 
     DefHookOg(void, TickFlush, UNetDriver*, float);
+    static void TickFlush__RepGraph(UNetDriver*, float);
     DefHookOg(void, NotifyActorDestroyed, UNetDriver*, AActor*, bool);
 
     InitPostLoadHooks;
