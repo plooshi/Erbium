@@ -3,6 +3,7 @@
 #include "../../Erbium/Public/Finders.h"
 #include "../../FortniteGame/Public/FortGameModeAthena.h"
 #include "../../Erbium/Public/GUI.h"
+#include "../../Erbium/Public/Configuration.h"
 
 uint32_t NetworkObjectListOffset = 0;
 uint32_t ReplicationFrameOffset = 0;
@@ -449,7 +450,12 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 
             UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
         }
-    }
+	}
+	else if (GUI::gsStatus == 2 && FConfiguration::bAutoRestart)
+	{
+		if (Driver->ClientConnections.Num() == 0)
+			TerminateProcess(GetCurrentProcess(), 0);
+	}
 
     return TickFlushOG(Driver, DeltaSeconds);
 }
