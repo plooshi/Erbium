@@ -1,0 +1,37 @@
+name: Build Erbium
+
+on: [ "push", "pull_request" ]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup MSBuild
+        uses: microsoft/setup-msbuild@v1.0.2
+
+      - name: Compile Erbium
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: msbuild . /t:Clean,Build /p:Configuration=Release
+
+      - name: Upload Compiled Erbium DLL
+        uses: actions/upload-artifact@v4
+        with:
+          name: Erbium
+          path: ./x64/Release
+          if-no-files-found: warn
+          retention-days: 90
+          
+      - name: Compile ErbiumClient
+        working-directory: ${{env.GITHUB_WORKSPACE}}
+        run: msbuild . /t:Clean,Build /p:Configuration="Z - Client"
+
+      - name: Upload Compiled ErbiumClient DLL
+        uses: actions/upload-artifact@v4
+        with:
+          name: ErbiumClient
+          path: ./x64/Release/Client
+          if-no-files-found: warn
+          retention-days: 90
