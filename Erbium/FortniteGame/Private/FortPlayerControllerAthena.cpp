@@ -335,7 +335,10 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	static auto CantBuild = (__int64 (*)(UWorld*, const UClass*, _Pad_0xC, _Pad_0xC, bool, TArray<ABuildingSMActor*> *, char*))CantBuild_;
 	static auto CantBuildNew = (__int64 (*)(UWorld*, const UClass*, _Pad_0x18, _Pad_0x18, bool, TArray<ABuildingSMActor*> *, char*))CantBuild_;
 	if (VersionInfo.FortniteVersion >= 20.00 ? CantBuildNew(UWorld::GetWorld(), BuildingClass, *(_Pad_0x18*)&BuildLoc, *(_Pad_0x18*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1) : CantBuild(UWorld::GetWorld(), BuildingClass, *(_Pad_0xC*)&BuildLoc, *(_Pad_0xC*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1))
+	{
+		printf("cantbuild?");
 		return;
+	}
 
 	for (auto& RemoveBuilding : RemoveBuildings)
 		RemoveBuilding->K2_DestroyActor();
@@ -344,7 +347,10 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 
 	ABuildingSMActor* Building = UWorld::SpawnActor<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, PlayerController);
 	if (!Building)
+	{
+		printf("building didnt spawn for some reason\n");
 		return;
+	}
 
 	//Building->CurrentBuildingLevel = CreateBuildingData.BuildingClassData.UpgradeLevel;
 	//Building->OnRep_CurrentBuildingLevel();
@@ -471,8 +477,7 @@ void AFortPlayerControllerAthena::ServerEditBuildingActor(UObject* Context, FFra
 		return;
 	}
 
-	if (VersionInfo.FortniteVersion < 11)
-		SetEditingPlayer(Building, nullptr);
+	SetEditingPlayer(Building, nullptr);
 
 	static auto ReplaceBuildingActor = (ABuildingSMActor * (*)(ABuildingSMActor*, unsigned int, const UClass*, unsigned int, int, bool, AFortPlayerControllerAthena*)) ReplaceBuildingActor_;
 
