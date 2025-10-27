@@ -52,4 +52,4 @@ jobs:
           path: |
             x64
             Erbium/x64
-          key: ${{ steps.restore-artifacts.outputs.cache-primary-key }
+          key: ${{ steps.restore-artifacts.outputs.cache-primary-key }}
