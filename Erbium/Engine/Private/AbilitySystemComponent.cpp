@@ -67,7 +67,8 @@ struct _Pad_0x18
 uint64_t InternalTryActivateAbility_ = 0;
 void UAbilitySystemComponent::InternalServerTryActivateAbility(UAbilitySystemComponent* AbilitySystemComponent, FGameplayAbilitySpecHandle Handle, bool InputPressed, FPredictionKey* PredictionKey, void* TriggerEventData)
 {
-    auto Spec = AbilitySystemComponent->ActivatableAbilities.Items.Search([&](FGameplayAbilitySpec& item) {
+    auto Spec = AbilitySystemComponent->ActivatableAbilities.Items.Search([&](FGameplayAbilitySpec& item)
+    {
         return item.Handle.Handle == Handle.Handle;
         }, FGameplayAbilitySpec::Size());
 

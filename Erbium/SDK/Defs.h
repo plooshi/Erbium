@@ -186,6 +186,46 @@
     __declspec(property(get = Get##Name, put = Set##Name))                                                                                                           \
     __VA_ARGS__ Name;
 
+#define DEFINE_STRUCT_BITFIELD_PROP(Name)                                                                                                                            \
+    static inline int32 Name##__Offset = -2;                                                                                                                         \
+    static inline uint8_t Name##__FieldMask = 0;                                                                                                                     \
+    bool Get##Name() const                                                                                                                                           \
+    {                                                                                                                                                                \
+        if (Name##__Offset == -2)                                                                                                                                    \
+        {                                                                                                                                                            \
+            auto Prop = StaticStruct()->GetProperty(#Name, 0x20000);                                                                                                 \
+            Name##__Offset = Prop ? GetFromOffset<uint32>(Prop, Offsets::Offset_Internal) : -1;                                                                      \
+            Name##__FieldMask = Prop ? Prop->GetFieldMask() : 0;                                                                                                     \
+        }                                                                                                                                                            \
+        return (GetFromOffset<uint8_t>(this, Name##__Offset) & Name##__FieldMask) != 0;                                                                              \
+    }                                                                                                                                                                \
+                                                                                                                                                                     \
+    bool Has##Name() const                                                                                                                                           \
+    {                                                                                                                                                                \
+        if (Name##__Offset == -2)                                                                                                                                    \
+        {                                                                                                                                                            \
+            auto Prop = StaticStruct()->GetProperty(#Name, 0x20000);                                                                                                 \
+            Name##__Offset = Prop ? GetFromOffset<uint32>(Prop, Offsets::Offset_Internal) : -1;                                                                      \
+            Name##__FieldMask = Prop ? Prop->GetFieldMask() : 0;                                                                                                     \
+        }                                                                                                                                                            \
+        return Name##__Offset != -1;                                                                                                                                 \
+    }                                                                                                                                                                \
+                                                                                                                                                                     \
+    void Set##Name(bool Value) const                                                                                                                                 \
+    {                                                                                                                                                                \
+        if (Name##__Offset == -2)                                                                                                                                    \
+        {                                                                                                                                                            \
+            auto Prop = StaticStruct()->GetProperty(#Name, 0x20000);                                                                                                 \
+            Name##__Offset = Prop ? GetFromOffset<uint32>(Prop, Offsets::Offset_Internal) : -1;                                                                      \
+            Name##__FieldMask = Prop ? Prop->GetFieldMask() : 0;                                                                                                     \
+        }                                                                                                                                                            \
+        Value ? GetFromOffset<uint8_t>(this, Name##__Offset) |= Name##__FieldMask : GetFromOffset<uint8_t>(this, Name##__Offset) &= ~Name##__FieldMask;              \
+    }                                                                                                                                                                \
+                                                                                                                                                                     \
+    __declspec(property(get = Get##Name, put = Set##Name))                                                                                                           \
+    bool Name;
+
+
 #define DEFINE_ENUM_PROP(Name)                                                                                                                                       \
     static inline __int64 Name##__Value = -2;                                                                                                                        \
     static __int64 Get##Name()                                                                                                                                       \

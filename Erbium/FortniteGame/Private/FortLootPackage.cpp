@@ -83,7 +83,8 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 				continue;
 			if (i != -1 && Val->LootPackageCategory != i)
 				continue;
-			if (WorldLevel >= 0) {
+			if (WorldLevel >= 0)
+			{
 				if (Val->MaxWorldLevel >= 0 && WorldLevel > Val->MaxWorldLevel)
 					continue;
 				if (Val->MinWorldLevel >= 0 && WorldLevel < Val->MinWorldLevel)
@@ -102,7 +103,8 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 
 			if (i != -1 && Val->LootPackageCategory != i)
 				continue;
-			if (WorldLevel >= 0) {
+			if (WorldLevel >= 0)
+			{
 				if (Val->MaxWorldLevel >= 0 && WorldLevel > Val->MaxWorldLevel)
 					continue;
 				if (Val->MinWorldLevel >= 0 && WorldLevel < Val->MinWorldLevel)
@@ -115,7 +117,8 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 	if (LPGroups.Num() == 0)
 		return;
 
-	auto LootPackage = PickWeighted(LPGroups, [](float Total) { return ((float)rand() / 32767.f) * Total; });
+	auto LootPackage = PickWeighted(LPGroups, [](float Total)
+		{ return ((float)rand() / 32767.f) * Total; });
 	if (!LootPackage)
 		return;
 
@@ -142,7 +145,8 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 		{
 			LootDrop->Count += LootPackage->Count;
 
-			if (LootDrop->Count > ItemDefinition->GetMaxStackSize()) {
+			if (LootDrop->Count > ItemDefinition->GetMaxStackSize())
+			{
 				auto OGCount = LootDrop->Count;
 				LootDrop->Count = ItemDefinition->GetMaxStackSize();
 
@@ -158,7 +162,8 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 		{
 			LootDrop->Count += AmmoDef->DropCount;
 
-			if (LootDrop->Count > AmmoDef->GetMaxStackSize()) {
+			if (LootDrop->Count > AmmoDef->GetMaxStackSize())
+	{
 				auto OGCount = LootDrop->Count;
 				LootDrop->Count = AmmoDef->GetMaxStackSize();
 
@@ -209,7 +214,8 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 	}
 
 
-	auto LootTierData = PickWeighted(TierDataGroups, [](float Total) { return ((float)rand() / 32767.f) * Total; });
+	auto LootTierData = PickWeighted(TierDataGroups, [](float Total)
+		{ return ((float)rand() / 32767.f) * Total; });
 	if (!LootTierData)
 		return {};
 
@@ -260,7 +266,8 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 		{
 			AmountOfLootDrops++;
 
-			if (AmountOfLootDrops >= DropCount) {
+			if (AmountOfLootDrops >= DropCount)
+			{
 				//AmountOfLootDrops = AmountOfLootDrops;
 				break;
 			}
@@ -476,7 +483,21 @@ void UFortLootPackage::Hook()
 		Utils::Hook(FindSpawnLoot(), SpawnLootHook);
 		auto PostUpdate_ = Memcury::Scanner::FindStringRef(L"ABuildingSMActor::PostUpdate() Building: %s, AltMeshIdx: %d", false, 0, VersionInfo.FortniteVersion >= 19).ScanFor({ 0x40, 0x53 }, false).Get();
 
-		Utils::Hook(PostUpdate_, PostUpdate);
+		for (int i = 0; i < 1000; i++)
+		{
+			auto Ptr = (uint8_t*)(PostUpdate_ - i);
+
+			if (*Ptr == 0x48 && *(Ptr + 1) == 0x83 && *(Ptr + 2) == 0xEC)
+			{
+				Utils::Hook((uint64_t)Ptr, PostUpdate);
+				break;
+			}
+			else if (*Ptr == 0x40 && *(Ptr + 1) == 0x53)
+			{
+				Utils::Hook((uint64_t)Ptr, PostUpdate);
+				break;
+			}
+		}
 		return;
 	}
 	else

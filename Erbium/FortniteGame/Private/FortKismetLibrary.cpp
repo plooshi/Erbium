@@ -162,7 +162,8 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayerByGuid(UObject* Context, FFrame&
 	auto RemoveCount = max(AmountToRemove, 0);
 	Item->ItemEntry.Count -= RemoveCount;
 
-	if (AmountToRemove < 0 || Item->ItemEntry.Count <= 0 || Item->ItemEntry.ItemDefinition->IsA(UFortGadgetItemDefinition::StaticClass())) {
+	if (AmountToRemove < 0 || Item->ItemEntry.Count <= 0 || Item->ItemEntry.ItemDefinition->IsA(UFortGadgetItemDefinition::StaticClass()))
+	{
 		RemoveCount += Item->ItemEntry.Count;
 		PlayerController->WorldInventory->Remove(Item->ItemEntry.ItemGuid);
 	}
@@ -252,7 +253,7 @@ void UFortKismetLibrary::Hook()
 			{
 				bHasOptionalLootTags = true;
 				break;
-			} 
+			}
 			else if (Param.Name == "WorldContextObject")
 			{
 				bHasWorldContextObject2 = true;

@@ -129,7 +129,8 @@ void AFortPlayerPawnAthena::ServerHandlePickupInfo(UObject* Context, FFrame& Sta
 }
 
 
-bool AFortPlayerPawnAthena::FinishedTargetSpline(void* _Pickup) {
+bool AFortPlayerPawnAthena::FinishedTargetSpline(void* _Pickup)
+{
 	auto Pickup = (AFortPickupAthena*)_Pickup;
 
 	auto Pawn = (AFortPlayerPawnAthena*)Pickup->PickupLocationData.PickupTarget;
@@ -170,7 +171,7 @@ void AFortPlayerPawnAthena::ServerSendZiplineState(UObject* Context, FFrame& Sta
 
 	auto Zipline = Pawn->GetActiveZipline();
 
-	__movsb((PBYTE) &Pawn->ZiplineState, (const PBYTE)&State, FZiplinePawnState::Size());
+	__movsb((PBYTE)&Pawn->ZiplineState, (const PBYTE)&State, FZiplinePawnState::Size());
 
 	((void (*)(AFortPlayerPawnAthena*)) OnRep_ZiplineState)(Pawn);
 
@@ -276,7 +277,7 @@ void AFortPlayerPawnAthena::Athena_MedConsumable_Triggered(UObject* Context, FFr
 	FName CueName = Consumable->HealsShields ? ShieldCue : HealthCue;
 
 	if (Consumable->HealsHealth && Consumable->HealsShields)
-		if (Consumable->PlayerPawn->GetHealth() + Consumable->HealthHealAmount <= 100) 
+		if (Consumable->PlayerPawn->GetHealth() + Consumable->HealthHealAmount <= 100)
 			CueName = HealthCue;
 	Tag.TagName = CueName;
 
@@ -301,7 +302,7 @@ void AFortPlayerPawnAthena::PostLoadHook()
 	{
 		Utils::ExecHook(GetDefaultObj()->GetFunction("ServerHandlePickup"), ServerHandlePickup_);
 	}
-	
+
 	Utils::Hook(FindFinishedTargetSpline(), FinishedTargetSpline, FinishedTargetSplineOG);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("OnCapsuleBeginOverlap"), OnCapsuleBeginOverlap_, OnCapsuleBeginOverlap_OG);
 

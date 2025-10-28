@@ -8,7 +8,8 @@ class Utils {
     static inline void* _NpFH = nullptr;
 public:
     template <class _Ot = void*>
-    static void Hook(uint64_t _Ptr, void* _Detour, _Ot& _Orig = _NpFH) {
+    static void Hook(uint64_t _Ptr, void* _Detour, _Ot& _Orig = _NpFH)
+    {
         MH_CreateHook((LPVOID)_Ptr, _Detour, (LPVOID*)(std::is_same_v<_Ot, void*> ? nullptr : &_Orig));
     }
 
@@ -33,9 +34,11 @@ public:
     template <typename _Ct>
     __forceinline static void HookEvery(uint32_t _Ind, void* _Detour)
     {
-        for (int i = 0; i < TUObjectArray::Num(); i++) {
+        for (int i = 0; i < TUObjectArray::Num(); i++)
+    {
             auto Obj = TUObjectArray::GetObjectByIndex(i);
-            if (Obj && Obj->IsDefaultObject() && Obj->IsA<_Ct>()) {
+            if (Obj && Obj->IsDefaultObject() && Obj->IsA<_Ct>())
+    {
                 _HookVT(Obj->Vft, _Ind, _Detour);
             }
         }

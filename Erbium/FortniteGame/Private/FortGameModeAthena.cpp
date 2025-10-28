@@ -216,11 +216,11 @@ void VendWobble__FinishedFunc(UObject* Context, FFrame& Stack)
 
     if (!PlayerController)
         return VendWobble__FinishedFuncOG(Context, Stack);
-    
-	auto Collection = CollectorActor->ItemCollections.Search([&](FCollectorUnitInfo& Coll)
-	{
-		return Coll.InputItem == CollectorActor->ClientPausedActiveInputItem;
-	}, FCollectorUnitInfo::Size());
+
+    auto Collection = CollectorActor->ItemCollections.Search([&](FCollectorUnitInfo& Coll)
+        {
+            return Coll.InputItem == CollectorActor->ClientPausedActiveInputItem;
+        }, FCollectorUnitInfo::Size());
 
     if (!Collection)
         return VendWobble__FinishedFuncOG(Context, Stack);
@@ -256,12 +256,26 @@ float Sum = 0;
 float Weight;
 float TotalWeight;
 
-void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Ret) 
+
+
+static inline uint64 FindInitHost()
+{
+    auto Addr = Memcury::Scanner::FindStringRef(L"BeaconPort=");
+    return Addr.ScanFor({ 0x48, 0x8B, 0xC4 }, false).Get();
+}
+
+
+static inline uint64 FindPauseBeaconRequests()
+{
+    return Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 48 83 EC 20 33 ED 48 8B F1 84 D2 74 27 80 3D").Get();
+}
+
+void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Ret)
 {
     Stack.IncrementCode();
 
     auto GameMode = Context->Cast<AFortGameModeAthena>();
-    if (!GameMode) 
+    if (!GameMode)
     {
         *Ret = callOGWithRet(((AFortGameModeAthena*)Context), Stack.GetCurrentNativeFunction(), ReadyToStartMatch);
         return;
@@ -283,11 +297,11 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         UNetDriver* NetDriver = nullptr;
         if (VersionInfo.FortniteVersion >= 16.00)
         {
-            void* WorldCtx = ((void * (*)(UEngine*, UWorld*)) FindGetWorldContext())(Engine, World);
+            void* WorldCtx = ((void* (*)(UEngine*, UWorld*)) FindGetWorldContext())(Engine, World);
             World->NetDriver = NetDriver = ((UNetDriver * (*)(UEngine*, void*, FName, int)) FindCreateNetDriverWorldContext())(Engine, WorldCtx, NetDriverName, 0);
         }
         else
-            NetDriver = ((UNetDriver * (*)(UEngine*, UWorld*, FName)) FindCreateNetDriver())(Engine, World, NetDriverName);
+            World->NetDriver = NetDriver = ((UNetDriver * (*)(UEngine*, UWorld*, FName)) FindCreateNetDriver())(Engine, World, NetDriverName);
 
         NetDriver->NetDriverName = NetDriverName;
         NetDriver->World = World;
@@ -306,7 +320,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         auto InitListen = (bool (*)(UNetDriver*, UWorld*, FURL*, bool, FString&)) FindInitListen();
         auto SetWorld = (void (*)(UNetDriver*, UWorld*)) FindSetWorld();
 
-        SetWorld(NetDriver, World);
+        //SetWorld(NetDriver, World);
         FString Err;
         if (InitListen(NetDriver, World, URL, false, Err))
             SetWorld(NetDriver, World);
@@ -327,7 +341,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             if (MeshNetworkSubsystem)
                 *(uint8_t*)(__int64(MeshNetworkSubsystem) + MeshNetworkSubsystem->GetOffset("NodeType")) = 2;
         }
-        
+
         *Ret = false;
         return;
     }
@@ -405,33 +419,35 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         auto AbilitySet = VersionInfo.FortniteVersion >= 8.30 ? FindObject<UFortAbilitySet>(L"/Game/Abilities/Player/Generic/Traits/DefaultPlayer/GAS_AthenaPlayer.GAS_AthenaPlayer") : FindObject<UFortAbilitySet>(L"/Game/Abilities/Player/Generic/Traits/DefaultPlayer/GAS_DefaultPlayer.GAS_DefaultPlayer");
         AbilitySets.Add(AbilitySet);
 
-        auto AddToTierData = [&](const UDataTable* Table, UEAllocatedMap<FName, FFortLootTierData*>& TempArr) {
-            if (!Table)
-                return;
+        auto AddToTierData = [&](const UDataTable* Table, UEAllocatedMap<FName, FFortLootTierData*>& TempArr)
+            {
+                if (!Table)
+                    return;
 
-            Table->AddToRoot();
-            if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
-                for (auto& ParentTable : CompositeTable->ParentTables)
-                    for (auto& [Key, Val] : (TMap<FName, FFortLootTierData*>) ParentTable->RowMap)
-                        TempArr[Key] = Val;
+                Table->AddToRoot();
+                if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
+                    for (auto& ParentTable : CompositeTable->ParentTables)
+                        for (auto& [Key, Val] : (TMap<FName, FFortLootTierData*>) ParentTable->RowMap)
+                            TempArr[Key] = Val;
 
-            for (auto& [Key, Val] : (TMap<FName, FFortLootTierData*>) Table->RowMap)
-                TempArr[Key] = Val;
-        };
+                for (auto& [Key, Val] : (TMap<FName, FFortLootTierData*>) Table->RowMap)
+                    TempArr[Key] = Val;
+            };
 
-        auto AddToPackages = [&](const UDataTable* Table, UEAllocatedMap<FName, FFortLootPackageData*>& TempArr) {
-            if (!Table)
-                return;
+        auto AddToPackages = [&](const UDataTable* Table, UEAllocatedMap<FName, FFortLootPackageData*>& TempArr)
+            {
+                if (!Table)
+                    return;
 
-            Table->AddToRoot();
-            if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
-                for (auto& ParentTable : CompositeTable->ParentTables)
-                    for (auto& [Key, Val] : (TMap<FName, FFortLootPackageData*>) ParentTable->RowMap)
-                        TempArr[Key] = Val;
+                Table->AddToRoot();
+                if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
+                    for (auto& ParentTable : CompositeTable->ParentTables)
+                        for (auto& [Key, Val] : (TMap<FName, FFortLootPackageData*>) ParentTable->RowMap)
+                            TempArr[Key] = Val;
 
-            for (auto& [Key, Val] : (TMap<FName, FFortLootPackageData*>) Table->RowMap)
-                TempArr[Key] = Val;
-        };
+                for (auto& [Key, Val] : (TMap<FName, FFortLootPackageData*>) Table->RowMap)
+                    TempArr[Key] = Val;
+            };
 
         UEAllocatedMap<FName, FFortLootTierData*> LootTierDataTempArr;
         auto LootTierData = Playlist ? Playlist->LootTierData.Get() : nullptr;
@@ -446,13 +462,13 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
         UEAllocatedMap<FName, FFortLootPackageData*> LootPackageTempArr;
         auto LootPackages = Playlist ? Playlist->LootPackages.Get() : nullptr;
-        if (!LootPackages) 
+        if (!LootPackages)
             LootPackages = FindObject<UDataTable>(L"/Game/Items/Datatables/AthenaLootPackages_Client.AthenaLootPackages_Client");
         if (LootPackages)
             AddToPackages(LootPackages, LootPackageTempArr);
 
         for (auto& [_, Val] : LootPackageTempArr)
-             LootPackageMap[Val->LootPackageID.ComparisonIndex].Add(Val);
+            LootPackageMap[Val->LootPackageID.ComparisonIndex].Add(Val);
 
         auto GameFeatureDataClass = FindClass("FortGameFeatureData");
         if (GameFeatureDataClass)
@@ -542,7 +558,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
         for (auto& Spawner : ConsumableSpawners)
             UFortLootPackage::SpawnConsumableActor(Spawner);
-        
+
         if (VersionInfo.EngineVersion >= 4.27)
         {
             GameState->DefaultParachuteDeployTraceForGroundDistance = 10000;
@@ -575,7 +591,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                             Key.Value = 0.f;
                     }
 
-                    auto NewKey = (FSimpleCurveKey*) malloc(FSimpleCurveKey::Size());
+                    auto NewKey = (FSimpleCurveKey*)malloc(FSimpleCurveKey::Size());
                     NewKey->Time = 1.f;
                     NewKey->Value = 0.01f;
                     Row->Keys.AddAt(*NewKey, 1, FSimpleCurveKey::Size());
@@ -662,7 +678,8 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
             UDataTableFunctionLibrary::EvaluateCurveTableRow(GameState->MapInfo->VendingMachineRarityCount.Curve.CurveTable, GameState->MapInfo->VendingMachineRarityCount.Curve.RowName, 0.f, nullptr, &Weight, FString());
 
-            TotalWeight = std::accumulate(WeightMap.begin(), WeightMap.end(), 0.0f, [&](float acc, const std::pair<int, float>& p) { return acc + p.second; });
+            TotalWeight = std::accumulate(WeightMap.begin(), WeightMap.end(), 0.0f, [&](float acc, const std::pair<int, float>& p)
+                { return acc + p.second; });
         }
 
         GameMode->DefaultPawnClass = FindObject<UClass>(L"/Game/Athena/PlayerPawn_Athena.PlayerPawn_Athena_C");
@@ -674,18 +691,22 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
             if (sRef)
             {
-                for (int i = 0; i < 1000; i++) {
+                for (int i = 0; i < 1000; i++)
+                {
                     auto Ptr = (uint8_t*)(sRef - i);
 
-                    if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C) {
+                    if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
+                    {
                         CollectGarbage = uint64_t(Ptr);
                         break;
                     }
-                    else if (*Ptr == 0x40 && *(Ptr + 1) == 0x55) {
+                    else if (*Ptr == 0x40 && *(Ptr + 1) == 0x55)
+                    {
                         CollectGarbage = uint64_t(Ptr);
                         break;
                     }
-                    else if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4) {
+                    else if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4)
+                    {
                         CollectGarbage = uint64_t(Ptr);
                         break;
                     }
@@ -718,7 +739,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 auto SpawnDefaultPawnForIdx = 0;
 uint64_t ApplyCharacterCustomization;
 
-void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor** Ret) 
+void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor** Ret)
 {
     AFortPlayerControllerAthena* NewPlayer;
     AActor* StartSpot;
@@ -745,7 +766,7 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
             static auto Body = FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Bodies/F_Med_Soldier_01.F_Med_Soldier_01");
             static auto Backpack = FindObject<UObject>(L"/Game/Characters/CharacterParts/Backpacks/NoBackpack.NoBackpack");
             static auto CharacterPartsOffset = NewPlayer->PlayerState->GetOffset("CharacterParts");
-            auto& CharacterParts = GetFromOffset<const UObject*[0x6]>(NewPlayer->PlayerState, CharacterPartsOffset);
+            auto& CharacterParts = GetFromOffset<const UObject * [0x6]>(NewPlayer->PlayerState, CharacterPartsOffset);
 
             CharacterParts[0] = Head;
             CharacterParts[1] = Body;
@@ -983,7 +1004,7 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
             GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = TimeSeconds + HoldDuration;
             GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
         }
-    } 
+    }
 
     HandlePostSafeZonePhaseChangedOG(GameMode, NewSafeZonePhase_Inp);
 
@@ -1012,7 +1033,8 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
 }
 
 
-void AFortGameModeAthena::HandleStartingNewPlayer_(UObject* Context, FFrame& Stack) {
+void AFortGameModeAthena::HandleStartingNewPlayer_(UObject* Context, FFrame& Stack)
+{
     AFortPlayerControllerAthena* NewPlayer;
     Stack.StepCompiledIn(&NewPlayer);
     Stack.IncrementCode();
@@ -1057,7 +1079,8 @@ void AFortGameModeAthena::HandleStartingNewPlayer_(UObject* Context, FFrame& Sta
 }
 
 
-uint8_t AFortGameModeAthena::PickTeam(AFortGameModeAthena* GameMode, uint8_t PreferredTeam, AFortPlayerControllerAthena* Controller) {
+uint8_t AFortGameModeAthena::PickTeam(AFortGameModeAthena* GameMode, uint8_t PreferredTeam, AFortPlayerControllerAthena* Controller)
+{
     uint8_t ret = CurrentTeam;
 
     if (bIsLargeTeamGame)
@@ -1107,7 +1130,7 @@ bool AFortGameModeAthena::StartAircraftPhase(AFortGameModeAthena* GameMode, char
         }
         FVector Loc = GameMode->SafeZoneLocations.Get(3, FVector::Size());
         Loc.Z = 17500.f;
-        
+
         if (Aircraft->HasFlightInfo())
         {
             Aircraft->FlightInfo.FlightSpeed = 0.f;
@@ -1231,7 +1254,7 @@ AFortSafeZoneIndicator* SetupSafeZoneIndicator(AFortGameModeAthena* GameMode)
                 PhaseInfo->StormCampingIncrementTimeAfterDelay = GameMode->StormCampingIncrementTimeAfterDelay.Evaluate(i);
                 PhaseInfo->StormCampingInitialDelayTime = GameMode->StormCampingInitialDelayTime.Evaluate(i);
                 PhaseInfo->MegaStormGridCellThickness = (int)SafeZoneDefinition.MegaStormGridCellThickness.Evaluate(i);
-                
+
                 if (FFortSafeZonePhaseInfo::HasUsePOIStormCenter())
                     PhaseInfo->UsePOIStormCenter = false;
 

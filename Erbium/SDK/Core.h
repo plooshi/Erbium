@@ -143,17 +143,20 @@ namespace SDK
 	};
 
 	template <typename _Ot>
-	__forceinline _Ot& GetFromOffset(void* Obj, uint32 Offset) {
+	__forceinline _Ot& GetFromOffset(void* Obj, uint32 Offset)
+	{
 		return *(_Ot*)(__int64(Obj) + Offset);
 	}
 
 	template <typename _Ot>
-	__forceinline _Ot& GetFromOffset(const void* Obj, uint32 Offset) {
+	__forceinline _Ot& GetFromOffset(const void* Obj, uint32 Offset)
+	{
 		return *(_Ot*)(__int64(Obj) + Offset);
 	}
 
 	template <typename _Ot>
-	__forceinline _Ot* GetPtrFromOffset(const void* Obj, uint32 Offset) {
+	__forceinline _Ot* GetPtrFromOffset(const void* Obj, uint32 Offset)
+	{
 		return (_Ot*)(__int64(Obj) + Offset);
 	}
 
@@ -224,7 +227,8 @@ namespace SDK
 				return BaseChain.IsChildOfUsingStructArray(BaseChainOther);
 			}
 
-			for (auto _Clss = Class; _Clss; _Clss = GetFromOffset<UClass*>(_Clss, 0x30)) {
+			for (auto _Clss = Class; _Clss; _Clss = GetFromOffset<UClass*>(_Clss, 0x30))
+			{
 				if (_Clss == Clss) return true;
 			}
 
@@ -415,7 +419,7 @@ namespace SDK
 		}
 
 		__declspec(property(get = GetNativeFunc, put = SetNativeFunc))
-		void* ExecFunction;
+			void* ExecFunction;
 
 
 		void* GetImpl() const
@@ -424,7 +428,7 @@ namespace SDK
 				return nullptr;
 
 			auto setnzAddr = Memcury::Scanner(GetNativeFunc()).ScanFor({ 0x0F, 0x95 }).Get();
-			
+
 			for (int i = 0; i < 0x200; i++)
 			{
 				auto Ptr = (uint8_t*)(setnzAddr + i);
@@ -740,7 +744,8 @@ namespace SDK
 
 		static const UObject* FindObject(const char* Name, uint64 TypeFlags = 0, const UClass* TargetClass = nullptr)
 		{
-			for (int i = 0; i < Num(); i++) {
+			for (int i = 0; i < Num(); i++)
+			{
 				const UObject* Obj = GetObjectByIndex(i);
 				if (Obj && Obj->Class && (TypeFlags == 0 || Obj->Class->GetCastFlags() & TypeFlags) && (!TargetClass || Obj->IsA(TargetClass)) && Obj->Name.ToString() == Name)
 					return Obj;
@@ -763,7 +768,8 @@ namespace SDK
 		static const UObject* FindFirstObject(const char* Name)
 		{
 			UClass* TargetClass = (UClass*)FindObject(Name, 0x20);
-			for (int i = 0; i < Num(); i++) {
+			for (int i = 0; i < Num(); i++)
+			{
 				const UObject* Obj = GetObjectByIndex(i);
 				if (Obj && !Obj->IsDefaultObject() && Obj->IsA(TargetClass))
 					return Obj;
@@ -783,13 +789,16 @@ namespace SDK
 		}
 	}
 
-	inline const UClass* FindClass(const char* Name) {
+	inline const UClass* FindClass(const char* Name)
+	{
 		return (UClass*)TUObjectArray::FindObject(Name, 0x20);
 	}
 
-	inline const UObject* DefaultObjImpl(const char* Name) {
+	inline const UObject* DefaultObjImpl(const char* Name)
+	{
 		auto TargetClass = FindClass(Name);
-		for (int i = 0; i < TUObjectArray::Num(); i++) {
+		for (int i = 0; i < TUObjectArray::Num(); i++)
+		{
 			const UObject* Obj = TUObjectArray::GetObjectByIndex(i);
 			if (Obj && Obj->IsDefaultObject() && Obj->Class == TargetClass)
 				return Obj;
@@ -797,8 +806,10 @@ namespace SDK
 		return nullptr;
 	}
 
-	inline const UObject* DefaultObjImpl(const UClass* TargetClass, const char* Name) {
-		for (int i = 0; i < TUObjectArray::Num(); i++) {
+	inline const UObject* DefaultObjImpl(const UClass* TargetClass, const char* Name)
+	{
+		for (int i = 0; i < TUObjectArray::Num(); i++)
+		{
 			const UObject* Obj = TUObjectArray::GetObjectByIndex(i);
 			if (Obj && Obj->IsDefaultObject() && Obj->Class == TargetClass)
 				return Obj;
@@ -871,7 +882,7 @@ namespace SDK
 				{
 					auto str = Name.ToString();
 					auto colcolIdx = str.find_last_of("::");
-					
+
 					auto RealName = colcolIdx == -1 ? str : str.substr(colcolIdx + 1);
 
 					if (RealName == EnumMemberName)
@@ -883,11 +894,13 @@ namespace SDK
 		}
 	};
 
-	inline const UStruct* FindStruct(const char* Name) {
+	inline const UStruct* FindStruct(const char* Name)
+	{
 		return (UStruct*)TUObjectArray::FindObject(Name, 0x10);
 	}
 
-	inline const UEnum* FindEnum(const char* Name) {
+	inline const UEnum* FindEnum(const char* Name)
+	{
 		return (UEnum*)TUObjectArray::FindObject(Name, 0x4);
 	}
 
@@ -923,7 +936,8 @@ namespace SDK
 	}
 
 	template <typename T = UObject*, typename _St>
-	inline T& StructGet(_St* StructInstance, const char* StructName, const char* Name) {
+	inline T& StructGet(_St* StructInstance, const char* StructName, const char* Name)
+	{
 		auto Struct = TUObjectArray::FindObject<UStruct>(StructName, 0x10);
 
 		auto Off = GetFromOffset<uint32>(Struct->GetProperty(Name), Offsets::Offset_Internal);
@@ -931,7 +945,8 @@ namespace SDK
 	}
 
 	template <typename _St>
-	inline bool StructHas(_St* StructInstance, const char* StructName, const char* Name) {
+	inline bool StructHas(_St* StructInstance, const char* StructName, const char* Name)
+	{
 		auto Struct = TUObjectArray::FindObject<UStruct>(StructName, 0x10);
 
 		return Struct->GetProperty(Name) != nullptr;
@@ -963,7 +978,7 @@ namespace SDK
 				ObjectSerialNumber = Item->SerialNumber;
 
 			}
-			else 
+			else
 			{
 				ObjectIndex = -1;
 				ObjectSerialNumber = 0;
@@ -1026,12 +1041,12 @@ namespace SDK
 
 		UEType* Get() const
 		{
-			return (UEType*) FWeakObjectPtr::Get();
+			return (UEType*)FWeakObjectPtr::Get();
 		}
 
 		UEType* operator->() const
 		{
-			return (UEType*) FWeakObjectPtr::Get();
+			return (UEType*)FWeakObjectPtr::Get();
 		}
 	};
 
@@ -1099,7 +1114,7 @@ namespace SDK
 	}
 
 	template <typename _Ot>
-	static const _Ot* FindObject(const char *ObjectPath, const UClass* Class = _Ot::StaticClass())
+	static const _Ot* FindObject(const char* ObjectPath, const UClass* Class = _Ot::StaticClass())
 	{
 		return FindObject<_Ot>(UEAllocatedString(ObjectPath), Class);
 	}
@@ -1163,7 +1178,9 @@ namespace SDK
 	class TSoftObjectPtr : public FSoftObjectPtr
 	{
 	public:
-		TSoftObjectPtr() {}
+		TSoftObjectPtr()
+		{
+		}
 
 		TSoftObjectPtr(UEType* Obj)
 		{
@@ -1190,7 +1207,9 @@ namespace SDK
 	class TSoftClassPtr : public FSoftObjectPtr
 	{
 	public:
-		TSoftClassPtr() {}
+		TSoftClassPtr()
+		{
+		}
 
 		TSoftClassPtr(UClass* Obj)
 		{

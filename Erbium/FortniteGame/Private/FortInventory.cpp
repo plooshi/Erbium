@@ -110,7 +110,7 @@ void AFortInventory::Update(FFortItemEntry* Entry)
             break;
         }
     }
-    _out:
+_out:
     Entry->bIsDirty = true;
     /*bRequiresLocalUpdate = true;
     HandleInventoryLocalUpdate();
@@ -121,10 +121,12 @@ void AFortInventory::Update(FFortItemEntry* Entry)
 
 void AFortInventory::Remove(FGuid Guid)
 {
-    auto ItemEntryIdx = Inventory.ReplicatedEntries.SearchIndex([&](FFortItemEntry& entry) { return entry.ItemGuid == Guid; }, FFortItemEntry::Size());
+    auto ItemEntryIdx = Inventory.ReplicatedEntries.SearchIndex([&](FFortItemEntry& entry)
+        { return entry.ItemGuid == Guid; }, FFortItemEntry::Size());
     auto& ItemEntry = Inventory.ReplicatedEntries.Get(ItemEntryIdx, FFortItemEntry::Size());
 
-    auto ItemInstanceIdx = Inventory.ItemInstances.SearchIndex([&](UFortWorldItem* entry) { return entry->ItemEntry.ItemGuid == Guid; });
+    auto ItemInstanceIdx = Inventory.ItemInstances.SearchIndex([&](UFortWorldItem* entry)
+        { return entry->ItemEntry.ItemGuid == Guid; });
     auto ItemInstance = Inventory.ItemInstances.Search([&](UFortWorldItem* entry)
         { return entry->ItemEntry.ItemGuid == Guid; });
 
@@ -180,8 +182,9 @@ FFortRangedWeaponStats* AFortInventory::GetStats(UFortWeaponItemDefinition* Def)
     if (!Def || !Def->WeaponStatHandle.DataTable)
         return nullptr;
 
-    auto Val = Def->WeaponStatHandle.DataTable->RowMap.Search([Def](FName& Key, uint8_t* Value) {
-        return Def->WeaponStatHandle.RowName == Key && Value;
+    auto Val = Def->WeaponStatHandle.DataTable->RowMap.Search([Def](FName& Key, uint8_t* Value)
+        {
+            return Def->WeaponStatHandle.RowName == Key && Value;
         });
 
     return Val ? *(FFortRangedWeaponStats**)Val : nullptr;
@@ -367,8 +370,8 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
 
 bool AFortInventory::IsPrimaryQuickbar(const UFortItemDefinition* ItemDefinition)
 {
-    return 
-        ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest() || 
+    return
+        ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest() ||
         ItemDefinition->ItemType == EFortItemType::GetWorldResource() ||
         ItemDefinition->ItemType == EFortItemType::GetAmmo() ||
         ItemDefinition->ItemType == EFortItemType::GetTrap() ||
@@ -390,11 +393,11 @@ void AFortInventory::UpdateEntry(FFortItemEntry& Entry)
     if (ent)
         *ent = Entry;*/
 
-    /*auto ent2 = Inventory.ItemInstances.Search([&](UFortWorldItem* item)
-        { return item->ItemEntry.ItemGuid == Entry.ItemGuid; });
-    if (ent2)
-        (*ent2)->ItemEntry = Entry;*/
-    //__movsb((PBYTE)&(*ent)->ItemEntry, (const PBYTE)&Entry, FFortItemEntry::Size());
+        /*auto ent2 = Inventory.ItemInstances.Search([&](UFortWorldItem* item)
+            { return item->ItemEntry.ItemGuid == Entry.ItemGuid; });
+        if (ent2)
+            (*ent2)->ItemEntry = Entry;*/
+            //__movsb((PBYTE)&(*ent)->ItemEntry, (const PBYTE)&Entry, FFortItemEntry::Size());
 
     Update(&Entry);
 }

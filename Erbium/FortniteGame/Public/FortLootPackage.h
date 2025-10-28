@@ -48,8 +48,10 @@ inline std::map<int32, TArray<FFortLootTierData*>> TierDataMap;
 inline std::map<int32, TArray<FFortLootPackageData*>> LootPackageMap;
 
 template <typename T>
-static T* PickWeighted(TArray<T*>& Map, float (*RandFunc)(float), bool bCheckZero = true) {
-    float TotalWeight = std::accumulate(Map.begin(), Map.end(), 0.0f, [&](float acc, T*& p) { return acc + p->Weight; });
+static T* PickWeighted(TArray<T*>& Map, float (*RandFunc)(float), bool bCheckZero = true)
+    {
+    float TotalWeight = std::accumulate(Map.begin(), Map.end(), 0.0f, [&](float acc, T*& p)
+    { return acc + p->Weight; });
     float RandomNumber = RandFunc(TotalWeight);
 
     for (auto& Element : Map)

@@ -43,7 +43,8 @@ public:
 				}
 
 			if (!Found) 
-				for (auto& Tag2 : ParentTags) {
+				for (auto& Tag2 : ParentTags)
+    {
 					if (Tag2.TagName == Tag.TagName) 
 					{
 						Found = true;

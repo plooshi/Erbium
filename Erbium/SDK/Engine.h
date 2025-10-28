@@ -18,11 +18,13 @@ namespace SDK
 		int32 ArrayReplicationKey;
 		char GuidReferencesMap[0x50];
 
-		int32& GetCachedItems() {
+		int32& GetCachedItems()
+		{
 			return GetFromOffset<int32>(this, VersionInfo.FortniteVersion >= 8.30 ? 0xf8 : 0xa8);
 		}
 
-		int32& GetCachedItemsToConsiderForWriting() {
+		int32& GetCachedItemsToConsiderForWriting()
+		{
 			return GetFromOffset<int32>(this, VersionInfo.FortniteVersion >= 8.30 ? 0xfc : 0xac);
 		}
 
@@ -288,7 +290,8 @@ namespace SDK
 			return *this;
 		}
 
-		operator FQuat() {
+		operator FQuat()
+		{
 			double halfOfARadian = 0.008726646259971648;
 			double sinPitch = sin(Pitch * halfOfARadian),
 				sinYaw = sin(Yaw * halfOfARadian),
@@ -491,7 +494,8 @@ namespace SDK
 			class FName ReturnValue;
 		};
 
-		/*static FName Conv_StringToName(FString Str) {
+		/*static FName Conv_StringToName(FString Str)
+	{
 			KismetStringLibrary_Conv_StringToName Params{ Str };
 			Conv_StringToName(&Params);
 			return Params.ReturnValue;
@@ -563,7 +567,7 @@ namespace SDK
 				GetTimeSeconds__Ptr = GetDefaultObj()->GetFunction("GetTimeSeconds");
 
 			static auto RetSize = 0;
-			
+
 			if (RetSize == 0)
 			{
 				auto Params = GetTimeSeconds__Ptr->GetParams();
@@ -618,7 +622,8 @@ namespace SDK
 		DEFINE_PROP(ConsoleClass, SDK::UClass*);
 		DEFINE_PROP(GameViewport, UGameViewportClient*);
 
-		static UEngine* GetEngine() {
+		static UEngine* GetEngine()
+		{
 			static UEngine* _storage = nullptr;
 			if (!_storage)
 				_storage = (UEngine*)TUObjectArray::FindFirstObject("FortEngine");
@@ -897,7 +902,7 @@ namespace SDK
 			for (int i = 0; i < InvocationList.Num(); i++)
 			{
 				auto& ScriptDelegate = InvocationList.Get(i, FScriptDelegate::Size());
-				
+
 				ScriptDelegate.Object->Call(ScriptDelegate.Object->GetFunction(ScriptDelegate.FunctionName), std::forward<Args>(args)...);
 			}
 		}

@@ -11,13 +11,16 @@ void FreezeOtherThreads()
     auto currentThr = GetThreadId(thrHandle);
     auto currentPrc = GetProcessIdOfThread(thrHandle);
     HANDLE h = CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
-    if (h != INVALID_HANDLE_VALUE) {
+    if (h != INVALID_HANDLE_VALUE)
+    {
         THREADENTRY32 te;
         te.dwSize = sizeof(te);
-        if (Thread32First(h, &te)) {
+        if (Thread32First(h, &te))
+    {
             do {
                 if (te.dwSize >= FIELD_OFFSET(THREADENTRY32, th32OwnerProcessID) +
-                    sizeof(te.th32OwnerProcessID)) {
+                    sizeof(te.th32OwnerProcessID))
+    {
                     if (te.th32ThreadID != currentThr && te.th32OwnerProcessID == currentPrc)
                     {
                         auto thr = OpenThread(THREAD_ALL_ACCESS, false, te.th32ThreadID);
