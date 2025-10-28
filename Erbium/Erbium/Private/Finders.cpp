@@ -336,7 +336,7 @@ uint64_t FindSetWorld()
             SetWorld = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC ? 48 8B FA 48 8B D9 48 8B 91 ? ? ? ? 48 85 D2 75").Get();
         else if (VersionInfo.FortniteVersion >= 25)
             SetWorld = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC ? 4C 8D B9 ? ? ? ? 48 8B FA").Get();
-       else if (VersionInfo.FortniteVersion == 19.40 || VersionInfo.FortniteVersion == 19.30)
+       else if (std::floor(VersionInfo.FortniteVersion) == 19)
             SetWorld = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC ? 48 8B FA 48 8B D9 48 8B 91 ? ? ? ? 48 85 D2 75").Get();
         else if (VersionInfo.FortniteVersion >= 13)
         {
