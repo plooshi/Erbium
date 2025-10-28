@@ -320,7 +320,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         auto InitListen = (bool (*)(UNetDriver*, UWorld*, FURL*, bool, FString&)) FindInitListen();
         auto SetWorld = (void (*)(UNetDriver*, UWorld*)) FindSetWorld();
 
-        //SetWorld(NetDriver, World);
+        SetWorld(NetDriver, World);
         FString Err;
         if (InitListen(NetDriver, World, URL, false, Err))
             SetWorld(NetDriver, World);
