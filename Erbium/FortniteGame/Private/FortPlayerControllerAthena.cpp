@@ -13,6 +13,9 @@
 
 //#include "../../Public/FortInventory.h"
 
+
+//#include "../../Public/FortInventory.h"
+
 void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena* PlayerController, FVector& Loc, FRotator& Rot)
 {
 	static auto SFName = UKismetStringLibrary::Conv_StringToName(FString(L"Spectating"));
@@ -23,6 +26,7 @@ void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena
 	}
 	else
 	{
+<<<<<<< Updated upstream
 <<<<<<< Updated upstream
 		auto ViewTarget = PlayerController->GetViewTarget();
 
@@ -36,6 +40,8 @@ void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena
 		else
 			PlayerController->GetActorEyesViewPoint(&Loc, &Rot);
 =======
+=======
+>>>>>>> Stashed changes
 		if (auto ViewTarget = PlayerController->GetViewTarget())
 		{
 			Loc = ViewTarget->K2_GetActorLocation();
@@ -43,6 +49,9 @@ void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena
 		}
 		else
 			return PlayerController->GetActorEyesViewPoint(&Loc, &Rot);
+<<<<<<< Updated upstream
+>>>>>>> Stashed changes
+=======
 >>>>>>> Stashed changes
 	}
 }
