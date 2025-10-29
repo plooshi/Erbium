@@ -328,7 +328,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         auto InitListen = (bool (*)(UNetDriver*, UWorld*, FURL*, bool, FString&)) FindInitListen();
         auto SetWorld = (void (*)(UNetDriver*, UWorld*)) FindSetWorld();
 
-        //SetWorld(NetDriver, World);
+        SetWorld(NetDriver, World);
         FString Err;
         if (InitListen(NetDriver, World, URL, false, Err))
             SetWorld(NetDriver, World);
@@ -478,7 +478,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         for (auto& [_, Val] : LootPackageTempArr)
             LootPackageMap[Val->LootPackageID.ComparisonIndex].Add(Val);
 
-        if (VersionInfo.FortniteVersion < 25)
+        if (VersionInfo.FortniteVersion < 25 || VersionInfo.FortniteVersion >= 28)
         {
             auto GameFeatureDataClass = FindClass("FortGameFeatureData");
             if (GameFeatureDataClass)
@@ -1088,6 +1088,12 @@ void AFortGameModeAthena::HandleStartingNewPlayer_(UObject* Context, FFrame& Sta
 
     if (NewPlayer->HasbBuildFree())
         NewPlayer->bBuildFree = FConfiguration::bInfiniteMats;
+
+    if (!NewPlayer->WorldInventory)
+    {
+        NewPlayer->WorldInventory = UWorld::SpawnActor<AFortInventory>(NewPlayer->WorldInventoryClass, FVector{});
+        NewPlayer->WorldInventory->SetOwner(NewPlayer);
+    }
 
     return callOG(GameMode, Stack.GetCurrentNativeFunction(), HandleStartingNewPlayer, NewPlayer);
 }

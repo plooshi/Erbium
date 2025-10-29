@@ -24,7 +24,7 @@ FGameplayAbilitySpecHandle UAbilitySystemComponent::GiveAbility(const UObject* A
         Spec->Level = 1;
         Spec->InputID = -1;
         Spec->Handle.Handle = rand();
-        if (VersionInfo.FortniteVersion <= 23) Spec->SourceObject = SourceObject;
+        Spec->SourceObject = SourceObject;
     }
 
     FGameplayAbilitySpecHandle OutHandle;

@@ -238,8 +238,13 @@ void Misc::Hook()
 	Utils::Hook(FindSendRequestNow(), SendRequestNow, SendRequestNowOG);
 	Utils::Hook(FindGetMaxTickRate(), GetMaxTickRate);
 	if (VersionInfo.FortniteVersion >= 17)
-		Utils::Hook(Memcury::Scanner::FindPattern("48 89 5C 24 10 48 89 6C 24 20 56 57 41 54 41 56 41 57 48 81 EC ? ? ? ? 65 48 8B 04 25 ? ? ? ? 4C 8B F9").Get(), CheckCheckpointHeartBeat);
+	{
+		auto pattern = Memcury::Scanner::FindPattern("48 89 5C 24 10 48 89 6C 24 20 56 57 41 54 41 56 41 57 48 81 EC ? ? ? ? 65 48 8B 04 25 ? ? ? ? 4C 8B F9").Get();
 
+		if (!pattern)
+			pattern = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 65 48 8B 04 25 ? ? ? ? 4C 8B E9").Get();
+		Utils::Hook(pattern, CheckCheckpointHeartBeat);
+	}
 	if (VersionInfo.EngineVersion < 4.20)
 	{
 		auto ApplyHomebaseEffectsOnPlayerSetupAddr = Memcury::Scanner::FindPattern("40 55 53 57 41 54 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 00 4C 8B").Get();

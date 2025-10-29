@@ -199,7 +199,9 @@ namespace SDK
 		if (!Offsets::Step)
 			Offsets::Step = Memcury::Scanner::FindPattern("48 8B 41 ? 4C 8B DA 44 0F B6 08").Get();
 
-		if (VersionInfo.EngineVersion >= 5.2)
+		if (VersionInfo.EngineVersion >= 5.4)
+			Offsets::StepExplicitProperty = Memcury::Scanner::FindPattern("41 8B 40 ? 4D 8B C8 48 0F BA E0").Get();
+		else if (VersionInfo.EngineVersion >= 5.2)
 			Offsets::StepExplicitProperty = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 68 ? 48 89 70 ? 48 89 78 ? 41 54 41 56 41 57 48 83 EC ? 41 8B 40 ? 49 8B D8 48 8B F2").Get();
 		else if (VersionInfo.FortniteVersion >= 20.00)
 			Offsets::StepExplicitProperty = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 41 8B 40 ? 49 8B D8 48 8B F2").Get();

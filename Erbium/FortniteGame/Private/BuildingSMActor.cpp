@@ -10,7 +10,7 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 {
 	auto GameState = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState);
 
-	if (!InstigatedBy || !Actor->IsA<ABuildingSMActor>() || Actor->bPlayerPlaced || Actor->GetHealth() == 1 || !Actor->bAllowResourceDrop)
+	if (!InstigatedBy || !Actor->IsA<ABuildingSMActor>() || Actor->bPlayerPlaced || Actor->GetHealth() == 1 || (Actor->HasbAllowResourceDrop() && !Actor->bAllowResourceDrop))
 		return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
 	if (!DamageCauser || !DamageCauser->IsA<AFortWeapon>() || !((AFortWeapon*)DamageCauser)->WeaponData->IsA(UFortWeaponMeleeItemDefinition::StaticClass()))
 		return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
@@ -20,17 +20,25 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 		return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
 	auto MaxMat = Resource->GetMaxStackSize();
 
-	FCurveTableRowHandle& BuildingResourceAmountOverride = Actor->BuildingResourceAmountOverride;
 	int ResCount = 0;
-
-	if (Actor->BuildingResourceAmountOverride.CurveTable && Actor->BuildingResourceAmountOverride.RowName.ComparisonIndex > 0)
+	if (Actor->HasBuildingResourceAmountOverride())
 	{
-		float Out;
-		UDataTableFunctionLibrary::EvaluateCurveTableRow(Actor->BuildingResourceAmountOverride.CurveTable, Actor->BuildingResourceAmountOverride.RowName, 0.f, nullptr, &Out, FString());
+		FCurveTableRowHandle& BuildingResourceAmountOverride = Actor->BuildingResourceAmountOverride;
 
-		float RC = Out / (Actor->GetMaxHealth() / Damage);
+		if (Actor->BuildingResourceAmountOverride.CurveTable && Actor->BuildingResourceAmountOverride.RowName.ComparisonIndex > 0)
+		{
+			float Out;
+			UDataTableFunctionLibrary::EvaluateCurveTableRow(Actor->BuildingResourceAmountOverride.CurveTable, Actor->BuildingResourceAmountOverride.RowName, 0.f, nullptr, &Out, FString());
 
-		ResCount = (int)round(RC);
+			float RC = Out / (Actor->GetMaxHealth() / Damage);
+
+			ResCount = (int)round(RC);
+		}
+	}
+	else
+	{
+		auto Rand = 11.f + (float)rand() / (32767.f / 22.f);
+		ResCount = (int)round(Rand / (Actor->GetMaxHealth() / Damage));
 	}
 
 	if (ResCount > 0)
