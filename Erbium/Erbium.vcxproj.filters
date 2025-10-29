@@ -207,6 +207,9 @@
     <ClInclude Include="FortniteGame\Public\FortAthenaMutator.h">
       <Filter>FortniteGame\Public</Filter>
     </ClInclude>
+    <ClInclude Include="FortniteGame\Public\BattleRoyaleGamePhaseLogic.h">
+      <Filter>FortniteGame\Public</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Erbium\Private\dllmain.cpp">
@@ -288,6 +291,9 @@
       <Filter>Erbium\Plugins\CrashReporter\Private</Filter>
     </ClCompile>
     <ClCompile Include="FortniteGame\Private\FortAthenaMutator.cpp">
+      <Filter>FortniteGame\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="FortniteGame\Private\BattleRoyaleGamePhaseLogic.cpp">
       <Filter>FortniteGame\Private</Filter>
     </ClCompile>
   </ItemGroup>

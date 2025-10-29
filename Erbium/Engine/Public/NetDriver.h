@@ -177,9 +177,11 @@ public:
     DEFINE_PROP(ReplicationDriver, UObject*);
     DEFINE_PROP(ClientConnections, TArray<UNetConnection*>);
     DEFINE_PROP(WorldPackage, UObject*);
+    DEFINE_PROP(NetServerMaxTickRate, int32);
 
     DefHookOg(void, TickFlush, UNetDriver*, float);
     static void TickFlush__RepGraph(UNetDriver*, float);
+    static void TickFlush__Iris(UNetDriver*, float);
     DefHookOg(void, NotifyActorDestroyed, UNetDriver*, AActor*, bool);
 
     InitPostLoadHooks;

@@ -48,6 +48,12 @@ void Main()
     }
     if (VersionInfo.EngineVersion >= 5.1)
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"net.AllowEncryption 0"), nullptr);
+    if (VersionInfo.EngineVersion >= 5.3 && FConfiguration::bEnableIris)
+    {
+        auto IrisBool = Memcury::Scanner::FindPattern("83 3D ? ? ? ? ? 44 89 65").RelativeOffset(3).Get();
+        *(uint32_t*)IrisBool = true;
+        //UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"net.Iris.UseIrisReplication 1"), nullptr);
+    }
 
 #ifdef CLIENT
     Misc::InitClient();

@@ -219,7 +219,6 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 				continue;
 			}
 
-
 			auto PriorityConn = Conn;
 			bool bDoCullCheck = true;
 
@@ -297,6 +296,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 				for (auto& Viewer : Viewers)
 					if (Actor == Viewer->ViewTarget || Actor == Viewer->InViewer)
 						Priority = -(std::numeric_limits<float>::max)();
+
 
 				auto& PriorityList = PriorityLists[Conn];
 				PriorityList.push_back({ ActorInfo.Get(), Channel, Priority });
@@ -384,9 +384,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 				if (!Channel)
 				{
 					if (VersionInfo.FortniteVersion >= 20)
-					{
 						Channel = ((UActorChannel * (*)(UNetConnection*, FName*, uint8_t, int))FindCreateChannel())(Conn, &ActorName, 2, -1);
-					}
 					else
 						Channel = ((UActorChannel*(*)(UNetConnection*, int, bool, int32_t))FindCreateChannel())(Conn, 2, true, -1);
 
@@ -396,7 +394,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 
 				if (Channel)
 				{
-					if (IsNetReady && (VersionInfo.FortniteVersion >= 22 || IsNetReady(Conn, false))) // actually uchannel::isnetready
+					if (VersionInfo.FortniteVersion >= 22 || (IsNetReady && IsNetReady(Conn, false))) // actually uchannel::isnetready
 						((int32(*)(UActorChannel*))FindReplicateActor())(Channel);
 					else
 						Actor->ForceNetUpdate();
@@ -437,7 +435,7 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 		auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
 		auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
 		static auto bSkipAircraft = GameState->CurrentPlaylistInfo.BasePlaylist ? GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft : false;
-        if (!bSkipAircraft && Driver->ClientConnections.Num() > 0 && GameMode->bWorldIsReady && GameState->WarmupCountdownEndTime <= Time)
+        if (!bSkipAircraft && GameState->HasWarmupCountdownEndTime() && Driver->ClientConnections.Num() > 0 && GameMode->bWorldIsReady && GameState->WarmupCountdownEndTime <= Time)
         {
 			GUI::gsStatus = 2;
 
@@ -483,6 +481,74 @@ void UNetDriver::TickFlush__RepGraph(UNetDriver* Driver, float DeltaSeconds)
 			if (Driver->ClientConnections.Num() == 0)
 				TerminateProcess(GetCurrentProcess(), 0);
 		}
+	}
+
+	return TickFlushOG(Driver, DeltaSeconds);
+}
+
+
+enum class EReplicationSystemSendPass : unsigned
+{
+	Invalid,
+	PostTickDispatch,
+	TickFlush,
+};
+
+struct FSendUpdateParams
+{
+	EReplicationSystemSendPass SendPass = EReplicationSystemSendPass::TickFlush;
+	float DeltaSeconds = 0.f;
+};
+
+void SendClientMoveAdjustments(UNetDriver* Driver)
+{
+	static auto SendClientAdjustment = (void(*)(AFortPlayerControllerAthena*)) FindSendClientAdjustment();
+	if (SendClientAdjustment)
+	{
+		for (UNetConnection* Connection : Driver->ClientConnections)
+		{
+			if (Connection == nullptr || Connection->ViewTarget == nullptr)
+				continue;
+
+			if (AFortPlayerControllerAthena* PC = Connection->PlayerController)
+				SendClientAdjustment(PC);
+
+			for (UNetConnection* ChildConnection : Connection->Children)
+			{
+				if (ChildConnection == nullptr)
+					continue;
+
+				if (AFortPlayerControllerAthena* PC = ChildConnection->PlayerController)
+					SendClientAdjustment(PC);
+			}
+		}
+	}
+}
+
+void UNetDriver::TickFlush__Iris(UNetDriver* Driver, float DeltaSeconds)
+{
+	if (Driver->ClientConnections.Num() > 0)
+	{
+		auto ReplicationSystem = *(UObject**)(__int64(&Driver->ReplicationDriver) + 8);
+
+		if (ReplicationSystem)
+		{
+			static void(*UpdateIrisReplicationViews)(UNetDriver*) = decltype(UpdateIrisReplicationViews)(FindUpdateIrisReplicationViews());
+			static void(*PreSendUpdate)(UObject*, FSendUpdateParams&) = decltype(PreSendUpdate)(FindPreSendUpdate());
+
+			UpdateIrisReplicationViews(Driver);
+			SendClientMoveAdjustments(Driver);
+			FSendUpdateParams Params;
+			Params.DeltaSeconds = DeltaSeconds;
+			PreSendUpdate(ReplicationSystem, Params);
+		}
+	}
+
+	if (GUI::gsStatus == 2 && FConfiguration::bAutoRestart)
+	{
+		auto WorldNetDriver = UWorld::GetWorld()->NetDriver;
+		if (Driver == WorldNetDriver && Driver->ClientConnections.Num() == 0)
+			TerminateProcess(GetCurrentProcess(), 0);
 	}
 
 	return TickFlushOG(Driver, DeltaSeconds);
@@ -551,6 +617,16 @@ void UNetDriver::PostLoadHook()
 		ReplicationFrameOffset = VersionInfo.FortniteVersion == 24.20 ? 0x438 : 0x440;
 		NetworkObjectListOffset = VersionInfo.FortniteVersion < 24 ? 0x720 : 0x730;
 	}
+	else if (VersionInfo.FortniteVersion >= 25 && VersionInfo.FortniteVersion < 27)
+	{
+		NetworkObjectListOffset = 0x750;
+		ReplicationFrameOffset = 0x458;
+	}
+	else if (VersionInfo.FortniteVersion >= 27)
+	{
+		NetworkObjectListOffset = 0x760;
+		ReplicationFrameOffset = 0x468;
+	}
 
 	if (VersionInfo.FortniteVersion <= 1.72 && VersionInfo.FortniteVersion != 1.1 && VersionInfo.FortniteVersion != 1.11)
 		ClientWorldPackageNameOffset = 0x336A8;
@@ -581,7 +657,13 @@ void UNetDriver::PostLoadHook()
 	else if (VersionInfo.FortniteVersion >= 20)
 		ClientWorldPackageNameOffset = 0x16b8;
 
-	if (VersionInfo.FortniteVersion >= 23)
+	if (VersionInfo.FortniteVersion >= 25)
+	{
+		DestroyedStartupOrDormantActorsOffset = VersionInfo.FortniteVersion >= 27 ? 0x328 : 0x318;
+		DestroyedStartupOrDormantActorGUIDsOffset = 0x14b0;
+		ClientVisibleLevelNamesOffset = DestroyedStartupOrDormantActorGUIDsOffset + (VersionInfo.FortniteVersion < 24 ? 0x190 : 0x1e0);
+	}
+	else if (VersionInfo.FortniteVersion >= 23)
 	{
 		DestroyedStartupOrDormantActorsOffset = VersionInfo.FortniteVersion >= 24 ? 0x2f8 : 0x300;
 		DestroyedStartupOrDormantActorGUIDsOffset = 0x14b0;
@@ -596,6 +678,14 @@ void UNetDriver::PostLoadHook()
 
 	if (!FindServerReplicateActors())
 	{
+		if (VersionInfo.EngineVersion >= 5.3 && FConfiguration::bEnableIris)
+		{
+			FindSendClientAdjustment();
+			FindUpdateIrisReplicationViews();
+			FindPreSendUpdate();
+			Utils::Hook(FindTickFlush(), TickFlush__Iris, TickFlushOG);
+			return;
+		}
 		// cache
 		FindCreateChannel();
 		FindSetChannelActor();

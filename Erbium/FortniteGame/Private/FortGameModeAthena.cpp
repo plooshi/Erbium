@@ -299,9 +299,17 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         {
             void* WorldCtx = ((void* (*)(UEngine*, UWorld*)) FindGetWorldContext())(Engine, World);
             World->NetDriver = NetDriver = ((UNetDriver * (*)(UEngine*, void*, FName, int)) FindCreateNetDriverWorldContext())(Engine, WorldCtx, NetDriverName, 0);
+
+            if (VersionInfo.FortniteVersion >= 20.00)
+                NetDriver->NetServerMaxTickRate = 30;
         }
         else
             World->NetDriver = NetDriver = ((UNetDriver * (*)(UEngine*, UWorld*, FName)) FindCreateNetDriver())(Engine, World, NetDriverName);
+
+        if (VersionInfo.EngineVersion >= 5.3 && FConfiguration::bEnableIris)
+        {
+            *(bool*)(__int64(&NetDriver->ReplicationDriver) + 0x11) = true;
+        }
 
         NetDriver->NetDriverName = NetDriverName;
         NetDriver->World = World;
@@ -470,82 +478,85 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         for (auto& [_, Val] : LootPackageTempArr)
             LootPackageMap[Val->LootPackageID.ComparisonIndex].Add(Val);
 
-        auto GameFeatureDataClass = FindClass("FortGameFeatureData");
-        if (GameFeatureDataClass)
-            for (int i = 0; i < TUObjectArray::Num(); i++)
-            {
-                auto Object = TUObjectArray::GetObjectByIndex(i);
-
-                if (!Object || !Object->Class || Object->IsDefaultObject())
-                    continue;
-
-                if (Object->IsA(GameFeatureDataClass))
+        if (VersionInfo.FortniteVersion <= 24)
+        {
+            auto GameFeatureDataClass = FindClass("FortGameFeatureData");
+            if (GameFeatureDataClass)
+                for (int i = 0; i < TUObjectArray::Num(); i++)
                 {
-                    static auto DefaultLootTableDataOffset = Object->GetOffset("DefaultLootTableData");
-                    static auto PlaylistOverrideLootTableDataOffset = Object->GetOffset("PlaylistOverrideLootTableData");
+                    auto Object = TUObjectArray::GetObjectByIndex(i);
 
-                    auto& LootTableData = GetFromOffset<FFortGameFeatureLootTableData>(Object, DefaultLootTableDataOffset);
-                    auto& PlaylistOverrideLootTableData = GetFromOffset<TMap<FGameplayTag, FFortGameFeatureLootTableData>>(Object, PlaylistOverrideLootTableDataOffset);
-                    auto& PlaylistOverrideLootTableDataLWC = GetFromOffset<TMap<int32, FFortGameFeatureLootTableData>>(Object, PlaylistOverrideLootTableDataOffset);
-                    auto LTDFeatureData = LootTableData.LootTierData.Get();
-                    auto LootPackageData = LootTableData.LootPackageData.Get();
+                    if (!Object || !Object->Class || Object->IsDefaultObject())
+                        continue;
 
-                    if (LTDFeatureData)
+                    if (Object->IsA(GameFeatureDataClass))
                     {
-                        UEAllocatedMap<FName, FFortLootTierData*> LTDTempData;
+                        static auto DefaultLootTableDataOffset = Object->GetOffset("DefaultLootTableData");
+                        static auto PlaylistOverrideLootTableDataOffset = Object->GetOffset("PlaylistOverrideLootTableData");
 
-                        AddToTierData(LTDFeatureData, LTDTempData);
+                        auto& LootTableData = GetFromOffset<FFortGameFeatureLootTableData>(Object, DefaultLootTableDataOffset);
+                        auto& PlaylistOverrideLootTableData = GetFromOffset<TMap<FGameplayTag, FFortGameFeatureLootTableData>>(Object, PlaylistOverrideLootTableDataOffset);
+                        auto& PlaylistOverrideLootTableDataLWC = GetFromOffset<TMap<int32, FFortGameFeatureLootTableData>>(Object, PlaylistOverrideLootTableDataOffset);
+                        auto LTDFeatureData = LootTableData.LootTierData.Get();
+                        auto LootPackageData = LootTableData.LootPackageData.Get();
 
-                        if (Playlist)
+                        if (LTDFeatureData)
                         {
-                            if (VersionInfo.FortniteVersion < 20.00)
+                            UEAllocatedMap<FName, FFortLootTierData*> LTDTempData;
+
+                            AddToTierData(LTDFeatureData, LTDTempData);
+
+                            if (Playlist)
                             {
-                                for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
-                                    for (auto& Override : PlaylistOverrideLootTableData)
-                                        if (Tag.TagName == Override.First.TagName)
-                                            AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);
+                                if (VersionInfo.FortniteVersion < 20.00)
+                                {
+                                    for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
+                                        for (auto& Override : PlaylistOverrideLootTableData)
+                                            if (Tag.TagName == Override.First.TagName)
+                                                AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);
+                                }
+                                else
+                                    for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
+                                        for (auto& Override : PlaylistOverrideLootTableDataLWC)
+                                            if (Tag.TagName.ComparisonIndex == Override.First)
+                                                AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);
                             }
-                            else
-                                for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
-                                    for (auto& Override : PlaylistOverrideLootTableDataLWC)
-                                        if (Tag.TagName.ComparisonIndex == Override.First)
-                                            AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);
+
+                            //for (auto& [_, Val] : LTDTempData)
+                            //    TierDataAllGroups.Add(Val);
+
+                            for (auto& [_, Val] : LTDTempData)
+                                TierDataMap[Val->TierGroup.ComparisonIndex].Add(Val);
                         }
 
-                        //for (auto& [_, Val] : LTDTempData)
-                        //    TierDataAllGroups.Add(Val);
-
-                        for (auto& [_, Val] : LTDTempData)
-                            TierDataMap[Val->TierGroup.ComparisonIndex].Add(Val);
-                    }
-
-                    if (LootPackageData)
-                    {
-                        UEAllocatedMap<FName, FFortLootPackageData*> LPTempData;
-
-                        AddToPackages(LootPackageData, LPTempData);
-
-                        if (Playlist)
+                        if (LootPackageData)
                         {
-                            if (VersionInfo.FortniteVersion < 20.00)
-                            {
-                                for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
-                                    for (auto& Override : PlaylistOverrideLootTableData)
-                                        if (Tag.TagName == Override.First.TagName)
-                                            AddToPackages(Override.Second.LootPackageData.Get(), LPTempData);
-                            }
-                            else
-                                for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
-                                    for (auto& Override : PlaylistOverrideLootTableDataLWC)
-                                        if (Tag.TagName.ComparisonIndex == Override.First)
-                                            AddToPackages(Override.Second.LootPackageData.Get(), LPTempData);
-                        }
+                            UEAllocatedMap<FName, FFortLootPackageData*> LPTempData;
 
-                        for (auto& [_, Val] : LPTempData)
-                            LootPackageMap[Val->LootPackageID.ComparisonIndex].Add(Val);
+                            AddToPackages(LootPackageData, LPTempData);
+
+                            if (Playlist)
+                            {
+                                if (VersionInfo.FortniteVersion < 20.00)
+                                {
+                                    for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
+                                        for (auto& Override : PlaylistOverrideLootTableData)
+                                            if (Tag.TagName == Override.First.TagName)
+                                                AddToPackages(Override.Second.LootPackageData.Get(), LPTempData);
+                                }
+                                else
+                                    for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
+                                        for (auto& Override : PlaylistOverrideLootTableDataLWC)
+                                            if (Tag.TagName.ComparisonIndex == Override.First)
+                                                AddToPackages(Override.Second.LootPackageData.Get(), LPTempData);
+                            }
+
+                            for (auto& [_, Val] : LPTempData)
+                                LootPackageMap[Val->LootPackageID.ComparisonIndex].Add(Val);
+                        }
                     }
                 }
-            }
+        }
 
 
         if (floor(VersionInfo.FortniteVersion) != 20)
@@ -728,10 +739,13 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
         auto WarmupDuration = 60.f;
 
-        GameState->WarmupCountdownStartTime = Time;
-        GameState->WarmupCountdownEndTime = Time + WarmupDuration;
-        GameMode->WarmupCountdownDuration = WarmupDuration;
-        GameMode->WarmupEarlyCountdownDuration = WarmupDuration;
+        if (GameState->HasWarmupCountdownEndTime()) // gamephaselogic builds
+        {
+            GameState->WarmupCountdownStartTime = Time;
+            GameState->WarmupCountdownEndTime = Time + WarmupDuration;
+            GameMode->WarmupCountdownDuration = WarmupDuration;
+            GameMode->WarmupEarlyCountdownDuration = WarmupDuration;
+        }
     }
     return;
 }
@@ -1064,7 +1078,7 @@ void AFortGameModeAthena::HandleStartingNewPlayer_(UObject* Context, FFrame& Sta
         Member->ReplicationKey = -1;
         Member->TeamIndex = PlayerState->TeamIndex;
         Member->SquadId = PlayerState->SquadId;
-        Member->MemberUniqueId = PlayerState->UniqueId;
+        Member->MemberUniqueId = PlayerState->HasUniqueID() ? PlayerState->UniqueID : PlayerState->UniqueId;
 
         GameState->GameMemberInfoArray.Members.Add(*Member, FGameMemberInfo::Size());
         GameState->GameMemberInfoArray.MarkItemDirty(*Member);

@@ -253,8 +253,30 @@ uint64_t FindCreateNetDriverWorldContext()
             if (!CreateNetDriver_.Get())
                 CreateNetDriver_ = Memcury::Scanner::FindPattern("41 56 41 57 48 8B EC 48 83 EC ? 48 63 81 ? ? ? ? 48 8D ? ? ? ? ? 48 8B B1");
 
+            if (!CreateNetDriver_.Get())
+                CreateNetDriver_ = Memcury::Scanner::FindPattern("41 56 41 57 48 8B EC 48 83 EC ? 48 63 81 ? ? ? ? 48 8D ? ? ? ? ? 4C 8B B1");
+
+            auto StartOfFuncBefore = CreateNetDriver_.Get();
             if (CreateNetDriver_.Get())
-                CreateNetDriver = CreateNetDriver_.ScanFor({ 0xC3 }, false).ScanFor({ 0x48 }).Get();
+            {
+                for (int i = 0; i < 2048; i++)
+                {
+                    auto Ptr = (uint8_t*)(StartOfFuncBefore - i);
+
+                    if (*Ptr == 0xC3)
+                    {
+                        StartOfFuncBefore = uint64_t(Ptr);
+                        break;
+                    }
+                    else if (*Ptr == 0xE9)
+                    {
+                        StartOfFuncBefore = uint64_t(Ptr);
+                        break;
+                    }
+                }
+
+                CreateNetDriver = Memcury::Scanner(StartOfFuncBefore).ScanFor({0x48}).Get();
+            }
 
             return CreateNetDriver;
         }
@@ -332,11 +354,14 @@ uint64_t FindSetWorld()
 
         SetWorld = VersionInfo.FortniteVersion < 13 ? Memcury::Scanner::FindStringRef(L"AOnlineBeaconHost::InitHost failed").ScanFor({ 0x48, 0x8B, 0xD0, 0xE8 }, false).RelativeOffset(4).Get() : 0;
 
-        if (VersionInfo.FortniteVersion >= 22)
-            SetWorld = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC ? 48 8B FA 48 8B D9 48 8B 91 ? ? ? ? 48 85 D2 75").Get();
-        else if (VersionInfo.FortniteVersion >= 25)
+        if (VersionInfo.FortniteVersion >= 25)
+        {
             SetWorld = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC ? 4C 8D B9 ? ? ? ? 48 8B FA").Get();
-       else if (std::floor(VersionInfo.FortniteVersion) == 19)
+
+            if (!SetWorld)
+                SetWorld = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 4C 89 70 ? 41 57 48 83 EC ? 48 8B FA 4C 8D B1 ? ? ? ? 48 8B 91").Get();
+        }
+        else if (VersionInfo.FortniteVersion >= 22 || std::floor(VersionInfo.FortniteVersion) == 19)
             SetWorld = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC ? 48 8B FA 48 8B D9 48 8B 91 ? ? ? ? 48 85 D2 75").Get();
         else if (VersionInfo.FortniteVersion >= 13)
         {
@@ -629,6 +654,8 @@ uint64_t FindGiveAbility()
             return GiveAbility = Memcury::Scanner::FindPattern("48 89 5C 24 ? 56 57 41 56 48 83 EC 20 83 B9").Get();
         else if (VersionInfo.EngineVersion == 4.21)
             return GiveAbility = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 7C 24 ? 41 56 48 83 EC 20 83 B9 ? ? ? ? ? 49 8B E8 4C 8B F2").Get();
+        else if (VersionInfo.EngineVersion >= 5.2)
+            return GiveAbility = Memcury::Scanner::FindPattern("40 55 53 56 57 41 54 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 49 8B 40 ? 45 33 E4").Get();
         else if (VersionInfo.EngineVersion >= 5.0)
         {
             GiveAbility = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 56 57 41 56 48 83 EC 20 8B 81 ? ? ? ? 49 8B E8 4C").Get();
@@ -698,6 +725,9 @@ uint64_t FindInternalTryActivateAbility()
 
             else if (*(uint8_t*)(sRef - i) == 0x4C && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x4C)
                 return InternalTryActivateAbility = sRef - i;
+            
+            else if (VersionInfo.FortniteVersion >= 25 && *(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x5C)
+                return InternalTryActivateAbility = sRef - i;
         }
     }
 
@@ -717,7 +747,14 @@ uint64 FindApplyCharacterCustomization()
         if (VersionInfo.FortniteVersion == 17.50)
             return ApplyCharacterCustomization = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 80 B9 ? ? ? ? ? 4C 8B EA").Get();
         else if (VersionInfo.FortniteVersion >= 24)
-            return ApplyCharacterCustomization = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 48 89 7C 24 ? 55 41 54 41 55 41 56 41 57 48 8B EC 48 81 EC ? ? ? ? 80 B9").Get();
+        {
+            ApplyCharacterCustomization = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 80 B9 ? ? ? ? ? 48 8B F1").Get();
+
+            if (!ApplyCharacterCustomization)
+                ApplyCharacterCustomization = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 48 89 7C 24 ? 55 41 54 41 55 41 56 41 57 48 8B EC 48 81 EC ? ? ? ? 80 B9").Get();
+
+            return ApplyCharacterCustomization;
+        }
         else if (std::floor(VersionInfo.FortniteVersion) == 22)
             return ApplyCharacterCustomization = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8B EC 48 81 EC ? ? ? ? 80 B9").Get();
 
@@ -809,7 +846,7 @@ uint64 FindSpawnLoot()
         if (!sRef)
             return 0;
 
-        for (int i = 0; i < 500; i++)
+        for (int i = 0; i < 0x1000; i++)
         {
             if (*(uint8_t*)(sRef - i) == 0x40 && (*(uint8_t*)(sRef - i + 1) == 0x53 || *(uint8_t*)(sRef - i + 1) == 0x55))
                 return SpawnLoot = sRef - i;
@@ -1341,6 +1378,9 @@ uint64 FindStartAircraftPhase()
         {
             auto sRef = Memcury::Scanner::FindStringRef(L"STAT_StartAircraftPhase").Get();
 
+            if (!sRef)
+                return 0;
+
             for (int i = 0; i < 1000; i++)
                 if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
                     return StartAircraftPhase = sRef - i;
@@ -1442,7 +1482,11 @@ uint64_t FindSendClientAdjustment()
     {
         bInitialized = true;
 
-        if (VersionInfo.FortniteVersion >= 23.00)
+        if (VersionInfo.FortniteVersion >= 25.00)
+        {
+            SendClientAdjustment = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 48 8B D9 E8 ? ? ? ? 80 B8 ? ? ? ? ? 75 ? 8B 93").Get();
+        }
+        else if (VersionInfo.FortniteVersion >= 23.00)
         {
             SendClientAdjustment = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 83 3D ? ? ? ? ? 48 8B D9 75").Get();
 
@@ -1489,6 +1533,9 @@ uint64 FindSetChannelActor()
 
             if (!SetChannelActor)
                 SetChannelActor = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 10 48 89 70 18 48 89 78 20 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 45 33 ED 48 8D 35 ? ? ? ? 44 89 AD ? ? ? ? 48 8B D9 48 8B 41 28 45 8B E0 48 8B FA 45 8B").Get();
+
+            if (!SetChannelActor)
+                SetChannelActor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 55 57 41 54 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 45 33 FF").Get();
         }
     }
 
@@ -1558,10 +1605,18 @@ uint64 FindCreateChannel()
             return CreateChannel = Memcury::Scanner::FindPattern("40 56 57 41 54 41 55 41 57 48 83 EC 60 48 8B 01 41 8B F9 45 0F B6 E0").Get();
         else if (VersionInfo.FortniteVersion >= 20)
         {
-            CreateChannel = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 44 89 4C 24 ? 55 57 41 54 41 56 41 57 48 8B EC 48 83 EC 50 45 33 E4 48 8D 05 ? ? ? ? 44 38 25").Get();
+            auto sRef = Memcury::Scanner::FindStringRef(L"STAT_NetConnection_CreateChannelByName").Get();
 
-            if (!CreateChannel)
-                CreateChannel = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8B EC 48 83 EC 30 45 33 E4 48 8D 05 ? ? ? ? 44 38 25 ? ? ? ? 41 8B").Get();
+            if (!sRef)
+                return CreateChannel = 0;
+
+            for (int i = 0; i < 2000; i++)
+            {
+                if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x5c)
+                    return CreateChannel = sRef - i;
+                else if (*(uint8_t*)(sRef - i) == 0x40 && *(uint8_t*)(sRef - i + 1) == 0x55)
+                    return CreateChannel = sRef - i;
+            }
         }
     }
 
@@ -1905,6 +1960,9 @@ uint64_t FindSpawnInitialSafeZone()
 
         auto sRef = Memcury::Scanner::FindStringRef(L"FortGameModeAthena::SpawnInitialSafeZone bShouldSpawnSafeZoneIndicator == false, skipping spawning Safe Zone Indicator", false, 0, VersionInfo.FortniteVersion >= 19).Get();
 
+        if (!sRef)
+            return 0;
+
         for (int i = 0; i < 2000; i++)
         {
             auto Ptr = (uint8_t*)(sRef - i);
@@ -1937,6 +1995,9 @@ uint64_t FindUpdateSafeZonesPhase()
 
         auto sRef = Memcury::Scanner::FindStringRef("AFortGameModeAthena::UpdateSafeZonesPhase").Get();
 
+        if (!sRef)
+            return 0;
+
         for (int i = 0; i < 2000; i++)
         {
             auto Ptr = (uint8_t*)(sRef - i);
@@ -1955,6 +2016,65 @@ uint64_t FindUpdateSafeZonesPhase()
     }
 
     return UpdateSafeZonesPhase;
+}
+
+uint64 FindUpdateIrisReplicationViews()
+{
+    static uint64_t UpdateIrisReplicationViews = 0;
+    static bool bInitialized = false;
+
+    if (!bInitialized)
+    {
+        bInitialized = true;
+
+        UpdateIrisReplicationViews = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 4C 8B F1 E8 ? ? ? ? BB").Get();
+    }
+
+    return UpdateIrisReplicationViews;
+}
+
+uint64 FindPreSendUpdate()
+{
+    static uint64_t PreSendUpdate = 0;
+    static bool bInitialized = false;
+
+    if (!bInitialized)
+    {
+        bInitialized = true;
+
+        PreSendUpdate = Memcury::Scanner::FindPattern("4C 8B DC 49 89 4B ? 55").Get();
+    }
+
+    return PreSendUpdate;
+}
+
+uint64_t FindHandleMatchHasStarted()
+{
+    static uint64_t HandleMatchHasStarted = 0;
+    static bool bInitialized = false;
+
+    if (!bInitialized)
+    {
+        bInitialized = true;
+
+        auto sRef = Memcury::Scanner::FindStringRef(L"AFortGameModeAthena::HandleMatchHasStarted: NumPlayers: %i", false, 0, VersionInfo.FortniteVersion >= 19).Get();
+
+        if (!sRef)
+            return 0;
+
+        for (int i = 0; i < 2000; i++)
+        {
+            auto Ptr = (uint8_t*)(sRef - i);
+
+            if (*Ptr == 0x48 && *(Ptr + 1) == 0x8b && *(Ptr + 2) == 0xc4)
+            {
+                HandleMatchHasStarted = uint64_t(Ptr);
+                break;
+            }
+        }
+    }
+
+    return HandleMatchHasStarted;
 }
 
 void FindNullsAndRetTrues()
@@ -2042,6 +2162,10 @@ void FindNullsAndRetTrues()
 
         NullFuncs.push_back(pattern);
     }
+    else if (VersionInfo.EngineVersion >= 5.2)
+    {
+        NullFuncs.push_back(Memcury::Scanner::FindPattern("48 89 5C ?? ?? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC ? ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 8B F2 4C 8B F1 E8").Get());
+    }
     else if (VersionInfo.EngineVersion == 4.27)
     {
         auto pattern = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 48 89 7C 24 ? 55 41 54 41 55 41 56 41 57 48 8B EC 48 83 EC 70 4C 8B FA 4C").Get();
@@ -2119,6 +2243,8 @@ void FindNullsAndRetTrues()
             RequestExit = Memcury::Scanner::FindPattern("40 53 48 83 EC ? 41 B9 ? ? ? ? 0F B6 D9").Get();
         if (!RequestExit)
             RequestExit = Memcury::Scanner::FindPattern("40 53 48 83 EC ? 80 3D ? ? ? ? ? 0F B6 D9").Get();
+        if (!RequestExit)
+            RequestExit = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 33 DB 0F B6 F9").Get();
 
         if (RequestExit)
             NullFuncs.push_back(RequestExit);

@@ -4,6 +4,7 @@
 #include <algorithm>
 #include "../Public/Configuration.h"
 #include "../../FortniteGame/Public/FortPlayerControllerAthena.h"
+#include "../../Engine/Public/NetDriver.h"
 
 int Misc::GetNetMode() 
 {
@@ -21,7 +22,7 @@ void* Misc::SendRequestNow(void* Arg1, void* MCPData, int)
 
 
 float Misc::GetMaxTickRate(UEngine* Engine, float DeltaTime, bool bAllowFrameRateSmoothing)
-    {
+{
 	// improper, DS is supposed to do hitching differently
 	return std::clamp(1.f / DeltaTime, 1.f, FConfiguration::MaxTickRate);
 }
@@ -184,9 +185,57 @@ void Misc::InitClient()
 	CreateThread(0, 0, (LPTHREAD_START_ROUTINE)ClientThread, 0, 0, 0);
 }
 
+class UIpNetDriver : public UNetDriver
+{
+public:
+	UCLASS_COMMON_MEMBERS(UIpNetDriver);
+};
+
+void PatchAllNetModes()
+{
+	Memcury::PE::Address add{ nullptr };
+
+	const auto sizeOfImage = Memcury::PE::GetNTHeaders()->OptionalHeader.SizeOfImage;
+	auto patternBytes = Memcury::ASM::pattern2bytes("48 8B 01 FF 90 ? ? ? ? 84 C0 0F 85 ? ? ? ? B8 03 00 00 00");
+	const auto scanBytes = reinterpret_cast<std::uint8_t*>(Memcury::PE::GetModuleBase());
+
+	const auto s = patternBytes.size();
+	const auto d = patternBytes.data();
+
+	for (auto i = 0ul; i < sizeOfImage - s; ++i)
+	{
+		bool found = true;
+		for (auto j = 0ul; j < s; ++j)
+		{
+			if (scanBytes[i + j] != d[j] && d[j] != -1)
+			{
+				found = false;
+				break;
+			}
+		}
+
+		if (found)
+		{
+			Utils::Patch<uint32>(__int64(scanBytes + i) + 0x12, 1);
+		}
+	}
+}
+
+bool RetFalse()
+{
+	return false;
+}
+
 void Misc::Hook()
 {
+	Utils::Hook<UIpNetDriver>(uint32_t(0x7A), GetNetMode);
 	Utils::Hook(FindGetNetMode(), GetNetMode);
+	if (VersionInfo.FortniteVersion >= 25 && VersionInfo.FortniteVersion < 28)
+	{
+		Utils::Hook(__int64(UKismetSystemLibrary::GetDefaultObj()->GetFunction("IsDedicatedServer")->GetImpl()), GetNetMode);
+		Utils::Hook(__int64(UKismetSystemLibrary::GetDefaultObj()->GetFunction("IsServer")->GetImpl()), GetNetMode);
+		PatchAllNetModes();
+	}
 	Utils::Hook(FindSendRequestNow(), SendRequestNow, SendRequestNowOG);
 	Utils::Hook(FindGetMaxTickRate(), GetMaxTickRate);
 	if (VersionInfo.FortniteVersion >= 17)
@@ -197,5 +246,9 @@ void Misc::Hook()
 		auto ApplyHomebaseEffectsOnPlayerSetupAddr = Memcury::Scanner::FindPattern("40 55 53 57 41 54 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 00 4C 8B").Get();
 
 		Utils::Hook(ApplyHomebaseEffectsOnPlayerSetupAddr, ApplyHomebaseEffectsOnPlayerSetup, ApplyHomebaseEffectsOnPlayerSetupOG);
+	}
+	if (VersionInfo.FortniteVersion >= 26 && VersionInfo.FortniteVersion < 28)
+	{
+		Utils::Hook(Memcury::Scanner::FindPattern("48 89 5C ? ? 57 48 83 EC ? 48 8B D1 48 85 C9 74 ?").Get(), RetFalse);
 	}
 }

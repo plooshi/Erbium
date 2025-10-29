@@ -199,7 +199,9 @@ namespace SDK
 		if (!Offsets::Step)
 			Offsets::Step = Memcury::Scanner::FindPattern("48 8B 41 ? 4C 8B DA 44 0F B6 08").Get();
 
-		if (VersionInfo.FortniteVersion >= 20.00)
+		if (VersionInfo.EngineVersion >= 5.2)
+			Offsets::StepExplicitProperty = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 68 ? 48 89 70 ? 48 89 78 ? 41 54 41 56 41 57 48 83 EC ? 41 8B 40 ? 49 8B D8 48 8B F2").Get();
+		else if (VersionInfo.FortniteVersion >= 20.00)
 			Offsets::StepExplicitProperty = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 41 8B 40 ? 49 8B D8 48 8B F2").Get();
 		else
 			Offsets::StepExplicitProperty = Memcury::Scanner::FindPattern("41 8B 40 ? 4D 8B C8").Get();
@@ -293,6 +295,10 @@ namespace SDK
 		if (!sRef)
 		{
 			auto sRef2 = Memcury::Scanner::FindStringRef(L"Calling StaticLoadObject during PostLoad may result in hitches during streaming.");
+
+			if (!sRef2.Get())
+				sRef2 = Memcury::Scanner::FindStringRef(L"Calling StaticLoadObject(\"%s\", \"%s\", \"%s\") during PostLoad of %s is illegal and will crash in a cooked runtime", 0, false, VersionInfo.FortniteVersion >= 19);
+
 			Offsets::StaticLoadObject = sRef2.ScanFor({ 0x40, 0x55 }, false).Get();
 		}
 		else
@@ -317,7 +323,7 @@ namespace SDK
 		Offsets::ElementSize = Offsets::Offset_Internal - 0x10;
 		Offsets::PropertiesSize = VersionInfo.EngineVersion >= 4.25 ? 0x58 : (VersionInfo.EngineVersion >= 4.22 ? 0x50 : 0x40);
 		Offsets::Super = VersionInfo.EngineVersion >= 4.22 ? 0x40 : 0x30;
-		Offsets::FieldMask = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x7b : 0x73;
+		Offsets::FieldMask = VersionInfo.EngineVersion >= 5.2 ? 0x6b : (VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x7b : 0x73);
 		Offsets::Children = VersionInfo.EngineVersion >= 4.22 ? 0x48 : 0x38;
 		Offsets::FField_Next = VersionInfo.EngineVersion >= 5.2 ? 0x18 : 0x20;
 		Offsets::FField_Name = VersionInfo.EngineVersion >= 5.2 ? 0x20 : 0x28;

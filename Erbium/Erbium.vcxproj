@@ -227,6 +227,7 @@
     <ClInclude Include="Erbium\Public\MinHook.h" />
     <ClInclude Include="Erbium\Public\Misc.h" />
     <ClInclude Include="Erbium\Public\Utils.h" />
+    <ClInclude Include="FortniteGame\Public\BattleRoyaleGamePhaseLogic.h" />
     <ClInclude Include="FortniteGame\Public\BuildingContainer.h" />
     <ClInclude Include="FortniteGame\Public\BuildingFoundation.h" />
     <ClInclude Include="FortniteGame\Public\BuildingItemCollectorActor.h" />
@@ -276,6 +277,7 @@
     <ClCompile Include="Erbium\Private\GUI.cpp" />
     <ClCompile Include="Erbium\Private\LateGame.cpp" />
     <ClCompile Include="Erbium\Private\Misc.cpp" />
+    <ClCompile Include="FortniteGame\Private\BattleRoyaleGamePhaseLogic.cpp" />
     <ClCompile Include="FortniteGame\Private\BuildingFoundation.cpp" />
     <ClCompile Include="FortniteGame\Private\BuildingSMActor.cpp" />
     <ClCompile Include="FortniteGame\Private\FortAthenaMutator.cpp" />

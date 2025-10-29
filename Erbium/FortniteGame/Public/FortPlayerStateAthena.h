@@ -49,6 +49,7 @@ public:
     DEFINE_PROP(SquadId, uint8);
     DEFINE_PROP(TeamIndex, uint8);
     DEFINE_PROP(UniqueId, FUniqueNetIdRepl);
+    DEFINE_PROP(UniqueID, FUniqueNetIdRepl);
     DEFINE_PROP(PawnDeathLocation, FVector);
     DEFINE_PROP(DeathInfo, FDeathInfo);
     DEFINE_PROP(Kills, int32);
