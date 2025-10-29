@@ -250,15 +250,9 @@ void UFortKismetLibrary::Hook()
 		for (auto& Param : PickLootDropsFn->GetParamsNamed().NameOffsetMap)
 		{
 			if (Param.Name == "OptionalLootTags")
-			{
 				bHasOptionalLootTags = true;
-				break;
-			}
 			else if (Param.Name == "WorldContextObject")
-			{
 				bHasWorldContextObject2 = true;
-				break;
-			}
 		}
 	Utils::ExecHook(PickLootDropsFn, PickLootDrops);
 }

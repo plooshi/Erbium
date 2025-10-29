@@ -334,7 +334,7 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 			return;
 	}
 
-	TArray<ABuildingSMActor*> RemoveBuildings;
+	/*TArray<ABuildingSMActor*> RemoveBuildings;
 	char _Unk_OutVar1;
 	static auto CantBuild = (__int64 (*)(UWorld*, const UClass*, _Pad_0xC, _Pad_0xC, bool, TArray<ABuildingSMActor*> *, char*))CantBuild_;
 	static auto CantBuildNew = (__int64 (*)(UWorld*, const UClass*, _Pad_0x18, _Pad_0x18, bool, TArray<ABuildingSMActor*> *, char*))CantBuild_;
@@ -342,7 +342,29 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	{
 		printf("cantbuild?");
 		return;
+	}*/
+	static auto FuncPtr = GameState->StructuralSupportSystem->GetFunction("CanAddBuildingActorClassToGrid");
+
+	TArray<ABuildingSMActor*> RemoveBuildings;
+	if (FuncPtr)
+	{
+		if (GameState->StructuralSupportSystem->Call<uint8_t>(FuncPtr, UWorld::GetWorld(), BuildingClass, BuildLoc, BuildRot, bMirrored, &RemoveBuildings, nullptr, false))
+		{
+			printf("cantbuild?");
+			return;
+		}
 	}
+	else
+	{
+		char _Unk_OutVar1;
+		static auto CantBuild = (__int64 (*)(UWorld*, const UClass*, _Pad_0xC, _Pad_0xC, bool, TArray<ABuildingSMActor*> *, char*))CantBuild_;
+		static auto CantBuildNew = (__int64 (*)(UWorld*, const UClass*, _Pad_0x18, _Pad_0x18, bool, TArray<ABuildingSMActor*> *, char*))CantBuild_;
+		if (VersionInfo.FortniteVersion >= 20.00 ? CantBuildNew(UWorld::GetWorld(), BuildingClass, *(_Pad_0x18*)&BuildLoc, *(_Pad_0x18*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1) : CantBuild(UWorld::GetWorld(), BuildingClass, *(_Pad_0xC*)&BuildLoc, *(_Pad_0xC*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1))
+		{
+			printf("cantbuild?");
+			return;
+		}
+	}	
 
 	for (auto& RemoveBuilding : RemoveBuildings)
 		RemoveBuilding->K2_DestroyActor();

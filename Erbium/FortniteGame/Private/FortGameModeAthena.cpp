@@ -478,7 +478,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         for (auto& [_, Val] : LootPackageTempArr)
             LootPackageMap[Val->LootPackageID.ComparisonIndex].Add(Val);
 
-        if (VersionInfo.FortniteVersion < 25 || VersionInfo.FortniteVersion >= 28)
+        if (VersionInfo.FortniteVersion < 25)
         {
             auto GameFeatureDataClass = FindClass("FortGameFeatureData");
             if (GameFeatureDataClass)

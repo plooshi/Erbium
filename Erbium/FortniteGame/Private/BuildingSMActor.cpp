@@ -25,10 +25,10 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 	{
 		FCurveTableRowHandle& BuildingResourceAmountOverride = Actor->BuildingResourceAmountOverride;
 
-		if (Actor->BuildingResourceAmountOverride.CurveTable && Actor->BuildingResourceAmountOverride.RowName.ComparisonIndex > 0)
+		if (BuildingResourceAmountOverride.CurveTable && BuildingResourceAmountOverride.RowName.ComparisonIndex > 0)
 		{
 			float Out;
-			UDataTableFunctionLibrary::EvaluateCurveTableRow(Actor->BuildingResourceAmountOverride.CurveTable, Actor->BuildingResourceAmountOverride.RowName, 0.f, nullptr, &Out, FString());
+			UDataTableFunctionLibrary::EvaluateCurveTableRow(BuildingResourceAmountOverride.CurveTable, BuildingResourceAmountOverride.RowName, 0.f, nullptr, &Out, FString());
 
 			float RC = Out / (Actor->GetMaxHealth() / Damage);
 
@@ -37,8 +37,18 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 	}
 	else
 	{
-		auto Rand = 11.f + (float)rand() / (32767.f / 22.f);
-		ResCount = (int)round(Rand / (Actor->GetMaxHealth() / Damage));
+		auto ClassData = Actor->GetClassData();
+		FCurveTableRowHandle& BuildingResourceAmountOverride = ClassData->BuildingResourceAmountOverride;
+
+		if (BuildingResourceAmountOverride.CurveTable && BuildingResourceAmountOverride.RowName.ComparisonIndex > 0)
+		{
+			float Out;
+			UDataTableFunctionLibrary::EvaluateCurveTableRow(BuildingResourceAmountOverride.CurveTable, BuildingResourceAmountOverride.RowName, 0.f, nullptr, &Out, FString());
+
+			float RC = Out / (Actor->GetMaxHealth() / Damage);
+
+			ResCount = (int)round(RC);
+		}
 	}
 
 	if (ResCount > 0)
@@ -94,6 +104,9 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 
 void ABuildingSMActor::PostLoadHook()
 {
+	if (VersionInfo.FortniteVersion >= 28)
+		GetSparseClassData_ = Memcury::Scanner::FindPattern("48 83 EC ? 48 8B 81 ? ? ? ? 45 33 C0 4C 8B C9").Get();
+
 	auto OnDamageServerAddr = FindFunctionCall(L"OnDamageServer", VersionInfo.EngineVersion == 4.16 ? std::vector<uint8_t>{ 0x4C, 0x89, 0x4C } : VersionInfo.EngineVersion == 4.19 || VersionInfo.EngineVersion >= 4.27 ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x40, 0x55 });
 
 	Utils::Hook(OnDamageServerAddr, OnDamageServer, OnDamageServerOG);

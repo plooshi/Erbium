@@ -22,6 +22,16 @@ public:
     TArray<void*>                                 MeshSets;                                          // 0x0008(0x0010)(Edit, BlueprintVisible, ZeroConstructor, DisableEditOnInstance, NativeAccessSpecifierPublic)
 };
 
+inline uint64_t GetSparseClassData_ = 0;
+
+struct FBuildingSMActorClassData
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FBuildingSMActorClassData);
+
+    DEFINE_STRUCT_PROP(BuildingResourceAmountOverride, FCurveTableRowHandle);
+};
+
 class ABuildingSMActor : public AActor
 {
 public:
@@ -37,6 +47,14 @@ public:
     DEFINE_PROP(CurrentBuildingLevel, int32);
     DEFINE_BITFIELD_PROP(bAllowResourceDrop);
     DEFINE_PROP(AlternateMeshes, TArray<FTierMeshSets>);
+
+    FBuildingSMActorClassData* GetClassData()
+    {
+        FBuildingSMActorClassData* (*GetSparseClassDataOG)(UObject *, uint8) = decltype(GetSparseClassDataOG)(GetSparseClassData_);
+
+        return GetSparseClassDataOG(Class, 1);
+    }
+
 
     DEFINE_FUNC(GetHealth, float);
     DEFINE_FUNC(GetMaxHealth, float);

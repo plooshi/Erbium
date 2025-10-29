@@ -235,6 +235,8 @@ void Misc::Hook()
 		Utils::Hook(__int64(UKismetSystemLibrary::GetDefaultObj()->GetFunction("IsServer")->GetImpl()), GetNetMode);
 		PatchAllNetModes();
 	}
+	else if (VersionInfo.FortniteVersion >= 28)
+		Utils::Hook(Memcury::Scanner::FindPattern("48 83 EC ? 48 8B 01 FF 90 ? ? ? ? 84 C0 0F 85").Get(), GetNetMode);
 	Utils::Hook(FindSendRequestNow(), SendRequestNow, SendRequestNowOG);
 	Utils::Hook(FindGetMaxTickRate(), GetMaxTickRate);
 	if (VersionInfo.FortniteVersion >= 17)

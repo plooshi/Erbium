@@ -131,6 +131,7 @@ public:
     DEFINE_PROP(CachedSafeZoneStartUp, uint8);
     DEFINE_PROP(DefaultBattleBus, const UObject*);
     DEFINE_PROP(SafeZoneIndicator, AActor*);
+    DEFINE_PROP(StructuralSupportSystem, UObject*);
 
     DEFINE_FUNC(OnRep_CurrentPlaylistInfo, void);
     DEFINE_FUNC(OnRep_CurrentPlaylistData, void);
