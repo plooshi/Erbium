@@ -11,8 +11,8 @@ struct FConfiguration
     static inline auto bInfiniteAmmo = false;
     static inline auto bForceRespawns = false;
     static inline auto bAutoRestart = false;
-    static inline constexpr auto bEnableIris = true;
+    static inline constexpr auto bEnableIris = true; 
     static inline constexpr auto bCreative = false;
-    static inline constexpr auto bGUI = false;
+    static inline constexpr auto bGUI = true;
     static inline constexpr auto bCustomCrashReporter = true;
 };
