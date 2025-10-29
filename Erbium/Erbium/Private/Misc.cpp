@@ -228,7 +228,6 @@ bool RetFalse()
 
 void Misc::Hook()
 {
-	Utils::Hook<UIpNetDriver>(uint32_t(0x7A), GetNetMode);
 	Utils::Hook(FindGetNetMode(), GetNetMode);
 	if (VersionInfo.FortniteVersion >= 25 && VersionInfo.FortniteVersion < 28)
 	{

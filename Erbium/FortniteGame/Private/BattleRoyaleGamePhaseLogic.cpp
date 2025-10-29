@@ -32,5 +32,8 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::HandleMatchHasStarted(A
 
 void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Hook()
 {
+	if (!GetDefaultObj())
+		return;
+
 	Utils::Hook(FindHandleMatchHasStarted(), HandleMatchHasStarted, HandleMatchHasStartedOG);
 }

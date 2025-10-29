@@ -268,7 +268,7 @@ uint64_t FindCreateNetDriverWorldContext()
                         StartOfFuncBefore = uint64_t(Ptr);
                         break;
                     }
-                    else if (*Ptr == 0xE9)
+                    else if (VersionInfo.FortniteVersion >= 25 && *Ptr == 0xE9)
                     {
                         StartOfFuncBefore = uint64_t(Ptr);
                         break;

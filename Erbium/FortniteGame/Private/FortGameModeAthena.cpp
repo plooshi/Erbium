@@ -299,12 +299,12 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         {
             void* WorldCtx = ((void* (*)(UEngine*, UWorld*)) FindGetWorldContext())(Engine, World);
             World->NetDriver = NetDriver = ((UNetDriver * (*)(UEngine*, void*, FName, int)) FindCreateNetDriverWorldContext())(Engine, WorldCtx, NetDriverName, 0);
-
-            if (VersionInfo.FortniteVersion >= 20.00)
-                NetDriver->NetServerMaxTickRate = 30;
         }
         else
             World->NetDriver = NetDriver = ((UNetDriver * (*)(UEngine*, UWorld*, FName)) FindCreateNetDriver())(Engine, World, NetDriverName);
+
+        NetDriver->NetDriverName = NetDriverName;
+        NetDriver->World = World;
 
         if (VersionInfo.EngineVersion >= 5.3 && FConfiguration::bEnableIris)
         {
@@ -328,7 +328,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         auto InitListen = (bool (*)(UNetDriver*, UWorld*, FURL*, bool, FString&)) FindInitListen();
         auto SetWorld = (void (*)(UNetDriver*, UWorld*)) FindSetWorld();
 
-        SetWorld(NetDriver, World);
+        //SetWorld(NetDriver, World);
         FString Err;
         if (InitListen(NetDriver, World, URL, false, Err))
             SetWorld(NetDriver, World);
@@ -478,7 +478,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         for (auto& [_, Val] : LootPackageTempArr)
             LootPackageMap[Val->LootPackageID.ComparisonIndex].Add(Val);
 
-        if (VersionInfo.FortniteVersion <= 24)
+        if (VersionInfo.FortniteVersion < 25)
         {
             auto GameFeatureDataClass = FindClass("FortGameFeatureData");
             if (GameFeatureDataClass)
