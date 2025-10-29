@@ -172,7 +172,7 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryItem_(UObject* Context, 
 	}
 
 	auto Weapon = PlayerController->MyFortPawn->EquipWeaponDefinition(ItemDefinition, ItemGuid, entry->HasTrackerGuid() ? entry->TrackerGuid : FGuid(), false);
-	if (VersionInfo.EngineVersion < 4.20)
+	if (VersionInfo.FortniteVersion <= 2.5)
 	{
 		static auto BuildingToolClass = FindClass("FortWeap_BuildingTool");
 		if (Weapon->IsA(BuildingToolClass))

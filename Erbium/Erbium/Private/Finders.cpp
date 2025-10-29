@@ -256,6 +256,9 @@ uint64_t FindCreateNetDriverWorldContext()
             if (!CreateNetDriver_.Get())
                 CreateNetDriver_ = Memcury::Scanner::FindPattern("41 56 41 57 48 8B EC 48 83 EC ? 48 63 81 ? ? ? ? 48 8D ? ? ? ? ? 4C 8B B1");
 
+            if (!CreateNetDriver_.Get())
+                CreateNetDriver_ = Memcury::Scanner::FindPattern("41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 63 81 ? ? ? ? 4C 8D 3D");
+
             auto StartOfFuncBefore = CreateNetDriver_.Get();
             if (CreateNetDriver_.Get())
             {
@@ -1485,6 +1488,9 @@ uint64_t FindSendClientAdjustment()
         if (VersionInfo.FortniteVersion >= 25.00)
         {
             SendClientAdjustment = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 48 8B D9 E8 ? ? ? ? 80 B8 ? ? ? ? ? 75 ? 8B 93").Get();
+            
+            if (!SendClientAdjustment)
+                SendClientAdjustment = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 83 3D ? ? ? ? ? 48 8B D9 75").Get();
         }
         else if (VersionInfo.FortniteVersion >= 23.00)
         {
