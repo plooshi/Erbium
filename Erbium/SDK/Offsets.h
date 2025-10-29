@@ -228,7 +228,6 @@ namespace SDK
 			}
 		}
 
-
 		if (VersionInfo.EngineVersion >= 5.2)
 			Offsets::StaticFindObject = Memcury::Scanner::FindPattern("48 89 74 24 ? 48 89 7C 24 ? 55 41 54 41 55 41 56 41 57 48 8B EC 48 83 EC ? 4C 8B E9 48 8D 4D").Get();
 		else if (VersionInfo.EngineVersion >= 5.1)
@@ -292,30 +291,35 @@ namespace SDK
 			}
 		}
 
-		auto sRef = Memcury::Scanner::FindStringRef(L"STAT_LoadObject", false).Get();
-
-		if (!sRef)
-		{
-			auto sRef2 = Memcury::Scanner::FindStringRef(L"Calling StaticLoadObject during PostLoad may result in hitches during streaming.");
-
-			if (!sRef2.Get())
-				sRef2 = Memcury::Scanner::FindStringRef(L"Calling StaticLoadObject(\"%s\", \"%s\", \"%s\") during PostLoad of %s is illegal and will crash in a cooked runtime", 0, false, VersionInfo.FortniteVersion >= 19);
-
-			Offsets::StaticLoadObject = sRef2.ScanFor({ 0x40, 0x55 }, false).Get();
-		}
+		if (VersionInfo.EngineVersion >= 5.4)
+			Offsets::StaticLoadObject = Memcury::Scanner::FindPattern("40 55 53 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 8B 85 ? ? ? ? 33 FF 8B 35").Get();
 		else
 		{
-			for (int i = 0; i < 400; i++)
+			auto sRef = Memcury::Scanner::FindStringRef(L"STAT_LoadObject", false).Get();
+
+			if (!sRef)
 			{
-				if (*(uint8_t*)(sRef - i) == 0x4C && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x4C)
+				auto sRef2 = Memcury::Scanner::FindStringRef(L"Calling StaticLoadObject during PostLoad may result in hitches during streaming.");
+
+				if (!sRef2.Get())
+					sRef2 = Memcury::Scanner::FindStringRef(L"Calling StaticLoadObject(\"%s\", \"%s\", \"%s\") during PostLoad of %s is illegal and will crash in a cooked runtime", 0, false, VersionInfo.FortniteVersion >= 19);
+
+				Offsets::StaticLoadObject = sRef2.ScanFor({ 0x40, 0x55 }, false).Get();
+			}
+			else
+			{
+				for (int i = 0; i < 400; i++)
 				{
-					Offsets::StaticLoadObject = sRef - i;
-					break;
-				}
-				else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
-				{
-					Offsets::StaticLoadObject = sRef - i;
-					break;
+					if (*(uint8_t*)(sRef - i) == 0x4C && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x4C)
+					{
+						Offsets::StaticLoadObject = sRef - i;
+						break;
+					}
+					else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
+					{
+						Offsets::StaticLoadObject = sRef - i;
+						break;
+					}
 				}
 			}
 		}
