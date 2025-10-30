@@ -4,6 +4,7 @@
 #include "../../FortniteGame/Public/FortGameModeAthena.h"
 #include "../../Erbium/Public/GUI.h"
 #include "../../Erbium/Public/Configuration.h"
+#include "../../FortniteGame/Public/BattleRoyaleGamePhaseLogic.h"
 
 uint32_t NetworkObjectListOffset = 0;
 uint32_t ReplicationFrameOffset = 0;
@@ -13,6 +14,23 @@ uint32_t DestroyedStartupOrDormantActorGUIDsOffset = 0;
 uint32_t ClientVisibleLevelNamesOffset = 0;
 
 std::unordered_map<UNetConnection*, TArray<FNetViewer*>> ViewerMap;
+
+
+const ULevel* GetLevel(const AActor* Actor)
+{
+	auto Outer = Actor->Outer;
+
+	while (Outer)
+	{
+		if (Outer->Class == ULevel::StaticClass())
+			return (ULevel*)Outer;
+		else
+			Outer = Outer->Outer;
+	}
+
+	return nullptr;
+}
+
 
 void BuildViewerMap(UNetDriver* Driver)
 {
@@ -121,9 +139,11 @@ bool IsActorRelevantToConnection(const AActor* Actor, const TArray<FNetViewer*>&
 
 bool IsLevelInitializedForActor(const UNetDriver* NetDriver, const AActor* InActor, UNetConnection* InConnection)
 {
-	static bool (*ClientHasInitializedLevelFor)(const UNetConnection*, const AActor*) = decltype(ClientHasInitializedLevelFor)(FindClientHasInitializedLevelFor());
+	static bool (*ClientHasInitializedLevelFor)(const UNetConnection*, const UObject*) = decltype(ClientHasInitializedLevelFor)(FindClientHasInitializedLevelFor());
 
-	const bool bCorrectWorld = NetDriver->WorldPackage != nullptr && (!ClientWorldPackageNameOffset || *(FName*)(__int64(InConnection) + ClientWorldPackageNameOffset) == NetDriver->WorldPackage->Name) && (!ClientHasInitializedLevelFor || ClientHasInitializedLevelFor(InConnection, InActor));
+	const bool bCorrectWorld = NetDriver->WorldPackage != nullptr && 
+		(!ClientWorldPackageNameOffset || *(FName*)(__int64(InConnection) + ClientWorldPackageNameOffset) == NetDriver->WorldPackage->Name) && 
+		(!ClientHasInitializedLevelFor || ClientHasInitializedLevelFor(InConnection, InActor));
 	const bool bIsConnectionPC = (InActor == InConnection->PlayerController);
 	return bCorrectWorld || bIsConnectionPC;
 }
@@ -449,6 +469,12 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 			TerminateProcess(GetCurrentProcess(), 0);
 	}
 
+	if (VersionInfo.FortniteVersion >= 25.20)
+	{
+		auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
+		GamePhaseLogic->Tick();
+	}
+
     return TickFlushOG(Driver, DeltaSeconds);
 }
 
@@ -551,6 +577,9 @@ void UNetDriver::TickFlush__Iris(UNetDriver* Driver, float DeltaSeconds)
 			TerminateProcess(GetCurrentProcess(), 0);
 	}
 
+	auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
+	GamePhaseLogic->Tick();
+
 	return TickFlushOG(Driver, DeltaSeconds);
 }
 
@@ -652,6 +681,8 @@ void UNetDriver::PostLoadHook()
 		ClientWorldPackageNameOffset = 0x1780;
 	else if (std::floor(VersionInfo.FortniteVersion) == 22)
 		ClientWorldPackageNameOffset = 0x1730;
+	else if (VersionInfo.FortniteVersion >= 27)
+		ClientWorldPackageNameOffset = 0x1828;
 	else if (VersionInfo.FortniteVersion >= 24)
 		ClientWorldPackageNameOffset = 0x1820;
 	else if (VersionInfo.FortniteVersion >= 20)
@@ -660,7 +691,7 @@ void UNetDriver::PostLoadHook()
 	if (VersionInfo.FortniteVersion >= 25)
 	{
 		DestroyedStartupOrDormantActorsOffset = VersionInfo.FortniteVersion >= 27 ? 0x328 : 0x318;
-		DestroyedStartupOrDormantActorGUIDsOffset = 0x14b0;
+		DestroyedStartupOrDormantActorGUIDsOffset = VersionInfo.FortniteVersion >= 27 ? 0x14b8 : 0x14b0;
 		ClientVisibleLevelNamesOffset = DestroyedStartupOrDormantActorGUIDsOffset + (VersionInfo.FortniteVersion < 24 ? 0x190 : 0x1e0);
 	}
 	else if (VersionInfo.FortniteVersion >= 23)

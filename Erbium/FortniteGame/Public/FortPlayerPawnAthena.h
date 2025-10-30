@@ -55,6 +55,7 @@ public:
     DEFINE_PROP(BaseEyeHeight, float);
     DEFINE_PROP(OnHeldObjectPickedUp, TMulticastInlineDelegate<void(AActor*)>);
     DEFINE_PROP(OnHeldObjectDropped, TMulticastInlineDelegate<void(AActor*)>);
+    DEFINE_PROP(OnEnteredAircraft, TMulticastInlineDelegate<void()>)
 
     DEFINE_FUNC(BeginSkydiving, void);
     DEFINE_FUNC(GetHealth, float);

@@ -321,7 +321,7 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 
 	UFortWorldItem* Item = nullptr;
 	if (!PlayerController->bBuildFree && !FConfiguration::bInfiniteMats)
-	{
+	{	
 		auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* entry)
 			{ return entry->ItemEntry.ItemDefinition == Resource; });
 
@@ -371,7 +371,16 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	RemoveBuildings.Free();
 
 
-	ABuildingSMActor* Building = UWorld::SpawnActor<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, PlayerController);
+	static auto K2_SpawnBuildingActor = ABuildingSMActor::GetDefaultObj()->GetFunction("K2_SpawnBuildingActor");
+
+	ABuildingSMActor* Building = nullptr;
+	if (K2_SpawnBuildingActor)
+	{
+		FTransform SpawnTransform(BuildLoc, BuildRot);
+		Building = ABuildingSMActor::K2_SpawnBuildingActor(PlayerController, BuildingClass, SpawnTransform, PlayerController, nullptr, false, false);
+	}
+	else
+		Building = UWorld::SpawnActor<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, PlayerController);
 	if (!Building)
 	{
 		printf("building didnt spawn for some reason\n");
@@ -387,7 +396,7 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 
 	Building->InitializeKismetSpawnedBuildingActor(Building, PlayerController, true, nullptr);
 
-
+		
 	if (!PlayerController->bBuildFree && !FConfiguration::bInfiniteMats)
 	{
 		for (int i = 0; i < Item->ItemEntry.StateValues.Num(); i++)
@@ -487,6 +496,8 @@ void AFortPlayerControllerAthena::ServerBeginEditingBuildingActor(UObject* Conte
 
 
 uint64_t ReplaceBuildingActor_ = 0;
+uint64_t InitializeBuildingActor_ = 0;
+uint64_t PostInitializeSpawnedBuildingActor_ = 0;
 void AFortPlayerControllerAthena::ServerEditBuildingActor(UObject* Context, FFrame& Stack)
 {
 	ABuildingSMActor* Building;
@@ -509,8 +520,38 @@ void AFortPlayerControllerAthena::ServerEditBuildingActor(UObject* Context, FFra
 
 	static auto ReplaceBuildingActor = (ABuildingSMActor * (*)(ABuildingSMActor*, unsigned int, const UClass*, unsigned int, int, bool, AFortPlayerControllerAthena*)) ReplaceBuildingActor_;
 
-	ABuildingSMActor* NewBuild = ReplaceBuildingActor(Building, 1, NewClass.Get(), Building->CurrentBuildingLevel, RotationIterations, bMirrored, PlayerController);
+	ABuildingSMActor* NewBuild;
+	
+	//if (VersionInfo.FortniteVersion < 28)
+	NewBuild = ReplaceBuildingActor(Building, 1, NewClass.Get(), Building->CurrentBuildingLevel, RotationIterations, bMirrored, PlayerController);
+	/*else
+	{
+		// reimpl of replacebuildingactor
+		NewBuild = ABuildingSMActor::K2_SpawnBuildingActor(PlayerController, NewClass, Building->GetTransform(), nullptr, nullptr, true, false);
 
+		NewBuild->CurrentBuildingLevel = Building->CurrentBuildingLevel;
+		NewBuild->SetMirrored(bMirrored);
+		NewBuild->SetTeam(Building->TeamIndex);
+		auto InitializeBuildingActor = (void(*)(ABuildingSMActor*,
+			uint8 Reason,
+			int16 InOwnerPersistentID,
+			ABuildingSMActor * BuildingOwner,
+			const ABuildingSMActor * ReplacedBuilding,
+			bool bForcePlayBuildUpAnim)) InitializeBuildingActor_;
+		InitializeBuildingActor(NewBuild, 2, ((AFortPlayerStateAthena*)PlayerController->PlayerState)->WorldPlayerId, nullptr, Building, true);
+		NewBuild->BuildingReplacementType = 1;
+
+		Building->ReplacementDestructionReason = 1;
+		Building->OnReplacementDestruction.Process(1, NewBuild);
+		Building->bAutoReleaseCurieContainerOnDestroyed = false;
+
+		auto PostInitializeSpawnedBuildingActor = (void(*)(ABuildingSMActor*, uint8_t Reason)) PostInitializeSpawnedBuildingActor_;
+		PostInitializeSpawnedBuildingActor(NewBuild, 2);
+		UWorld::FinishSpawnActor(NewBuild, Building->K2_GetActorLocation(), Building->K2_GetActorRotation());
+		Building->SilentDie(true);
+	}*/
+	
+	printf("Build: %p, NewBuild: %p, NewCl: %s, NetRole: %d, fr: %d\n", Building, NewBuild, NewClass.Get()->Name.ToString().c_str(), Building->Role, Building->bPersistToWorld);
 	if (NewBuild)
 	{
 		NewBuild->bPlayerPlaced = true;
@@ -1669,7 +1710,11 @@ void AFortPlayerControllerAthena::EnterAircraft(UObject* Object, AActor* Aircraf
 
 void AFortPlayerControllerAthena::PostLoadHook()
 {
-
+	if (VersionInfo.FortniteVersion >= 28)
+	{
+		InitializeBuildingActor_ = FindInitializeBuildingActor();
+		PostInitializeSpawnedBuildingActor_ = FindPostInitializeSpawnedBuildingActor();
+	}
 	CantBuild_ = FindCantBuild();
 	ReplaceBuildingActor_ = FindReplaceBuildingActor(); // pre-cache building offsets
 	RemoveFromAlivePlayers_ = FindRemoveFromAlivePlayers();
@@ -1729,7 +1774,7 @@ void AFortPlayerControllerAthena::PostLoadHook()
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerPlayEmoteItem"), ServerPlayEmoteItem);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerPlaySprayItem"), ServerPlayEmoteItem);
 
-	auto ClientOnPawnDiedAddr = FindFunctionCall(L"ClientOnPawnDied", VersionInfo.EngineVersion == 4.16 ? std::vector<uint8_t>{ 0x48, 0x89, 0x54 } : (VersionInfo.FortniteVersion >= 24 ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C }));
+	auto ClientOnPawnDiedAddr = FindFunctionCall(L"ClientOnPawnDied", VersionInfo.EngineVersion == 4.16 ? std::vector<uint8_t>{ 0x48, 0x89, 0x54 } : (VersionInfo.FortniteVersion >= 24 && VersionInfo.FortniteVersion < 25 ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C }));
 	Utils::Hook(ClientOnPawnDiedAddr, ClientOnPawnDied, ClientOnPawnDiedOG);
 
 	if (VersionInfo.FortniteVersion >= 15)

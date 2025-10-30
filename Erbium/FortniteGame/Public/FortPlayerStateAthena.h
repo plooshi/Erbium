@@ -61,6 +61,7 @@ public:
     DEFINE_PROP(CharacterParts, const UObject**);
     DEFINE_PROP(HeroType, const UObject*);
     DEFINE_PROP(bIsABot, bool);
+    DEFINE_PROP(WorldPlayerId, int16);
 
     DEFINE_FUNC(OnRep_SquadId, void);
     DEFINE_FUNC(OnRep_DeathInfo, void);

@@ -646,6 +646,14 @@ namespace SDK
 		UCLASS_COMMON_MEMBERS(AServerStreamingLevelsVisibility);
 	};
 
+	class ULevel : public UObject
+	{
+	public:
+		UCLASS_COMMON_MEMBERS(ULevel);
+
+		DEFINE_PROP(OwningWorld, UObject*);
+	};
+
 	class UWorld : public UObject
 	{
 	public:
@@ -654,7 +662,7 @@ namespace SDK
 		DEFINE_PROP(OwningGameInstance, UGameInstance*);
 		DEFINE_PROP(AuthorityGameMode, AActor*);
 		DEFINE_PROP(GameState, AActor*);
-		DEFINE_PROP(PersistentLevel, UObject*);
+		DEFINE_PROP(PersistentLevel, ULevel*);
 		DEFINE_PROP(NetDriver, UObject*);
 		DEFINE_PROP(LevelCollections, TArray<FLevelCollection>);
 		DEFINE_PROP(ServerStreamingLevelsVisibility, AServerStreamingLevelsVisibility*);
@@ -727,6 +735,22 @@ namespace SDK
 		{
 			return (T*)SpawnActor(T::StaticClass(), Transform, Owner);
 		}
+
+		template <typename T = AActor>
+		static T* SpawnActorUnfinished(UClass* Class, FVector Loc, FRotator Rot = {}, AActor* Owner = nullptr)
+		{
+			FTransform Transform(Loc, Rot);
+
+			return (T*)UGameplayStatics::BeginDeferredActorSpawnFromClass(UWorld::GetWorld(), Class, Transform, 2, Owner);
+		}
+
+		template <typename T = AActor>
+		static T* FinishSpawnActor(AActor* Actor, FVector Loc, FRotator Rot)
+		{
+			FTransform Transform(Loc, Rot);
+
+			return (T*)UGameplayStatics::FinishSpawningActor(Actor, Transform);
+		};
 
 		static UWorld* GetWorld()
 		{

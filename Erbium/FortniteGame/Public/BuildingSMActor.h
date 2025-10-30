@@ -47,8 +47,13 @@ public:
     DEFINE_PROP(CurrentBuildingLevel, int32);
     DEFINE_BITFIELD_PROP(bAllowResourceDrop);
     DEFINE_PROP(AlternateMeshes, TArray<FTierMeshSets>);
+    DEFINE_BITFIELD_PROP(bPersistToWorld);
+    DEFINE_BITFIELD_PROP(bAutoReleaseCurieContainerOnDestroyed);
+    DEFINE_PROP(BuildingReplacementType, uint8_t);
+    DEFINE_PROP(ReplacementDestructionReason, uint8_t);
+    DEFINE_PROP(OnReplacementDestruction, TMulticastInlineDelegate<void(uint8_t, ABuildingSMActor*)>);
 
-    FBuildingSMActorClassData* GetClassData()
+    FBuildingSMActorClassData* GetClassData() const
     {
         FBuildingSMActorClassData* (*GetSparseClassDataOG)(UObject *, uint8) = decltype(GetSparseClassDataOG)(GetSparseClassData_);
 
@@ -62,6 +67,8 @@ public:
     DEFINE_FUNC(InitializeKismetSpawnedBuildingActor, void);
     DEFINE_FUNC(GetHealthPercent, float);
     DEFINE_FUNC(RepairBuilding, void);
+    DEFINE_FUNC(SilentDie, void);
+    DEFINE_STATIC_FUNC(K2_SpawnBuildingActor, ABuildingSMActor*);
     
     DefHookOg(void, OnDamageServer, ABuildingSMActor*, float, FGameplayTagContainer, FVector, __int64, AFortPlayerControllerAthena*, AActor*, __int64);
 

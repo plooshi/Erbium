@@ -18,6 +18,7 @@
 #include <random>
 #include "../../Erbium/Public/Misc.h"
 #include "../../Erbium/Public/Events.h"
+#include "../Public/BattleRoyaleGamePhaseLogic.h"
 
 void ShowFoundation(const ABuildingFoundation* Foundation)
 {
@@ -371,6 +372,12 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         else if (VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.26)
             GameState->OnRep_CurrentPlaylistInfo();
 
+        if (VersionInfo.FortniteVersion >= 25.20)
+        {
+            auto InitializeFlightPath = (void(*)(AFortAthenaMapInfo*, AFortGameStateAthena*, UFortGameStateComponent_BattleRoyaleGamePhaseLogic*, bool, double, float, float)) FindInitializeFlightPath();
+            if (InitializeFlightPath)
+                InitializeFlightPath(GameState->MapInfo, GameState, UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(GameState), false, 0.f, 0.f, 360.f);
+        }
 
         static auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
 
@@ -1093,6 +1100,11 @@ void AFortGameModeAthena::HandleStartingNewPlayer_(UObject* Context, FFrame& Sta
     {
         NewPlayer->WorldInventory = UWorld::SpawnActor<AFortInventory>(NewPlayer->WorldInventoryClass, FVector{});
         NewPlayer->WorldInventory->SetOwner(NewPlayer);
+
+        NewPlayer->bEnableBroadcastRemoteClientInfo = true;
+
+        NewPlayer->BroadcastRemoteClientInfo->bActive = true;
+        NewPlayer->BroadcastRemoteClientInfo->OnRep_bActive();
     }
 
     return callOG(GameMode, Stack.GetCurrentNativeFunction(), HandleStartingNewPlayer, NewPlayer);
@@ -1405,15 +1417,21 @@ void AFortGameModeAthena::PostLoadHook()
 
     Utils::ExecHook(spdf, SpawnDefaultPawnFor);
     Utils::ExecHook(GetDefaultObj()->GetFunction("HandleStartingNewPlayer"), HandleStartingNewPlayer_, HandleStartingNewPlayer_OG);
-    Utils::Hook(FindHandlePostSafeZonePhaseChanged(), HandlePostSafeZonePhaseChanged, HandlePostSafeZonePhaseChangedOG);
     Utils::Hook(FindPickTeam(), PickTeam, PickTeamOG);
-    Utils::Hook(FindStartAircraftPhase(), StartAircraftPhase, StartAircraftPhaseOG);
+    if (VersionInfo.FortniteVersion < 25.20)
+    {
+        Utils::Hook(FindStartAircraftPhase(), StartAircraftPhase, StartAircraftPhaseOG);
+        Utils::Hook(FindHandlePostSafeZonePhaseChanged(), HandlePostSafeZonePhaseChanged, HandlePostSafeZonePhaseChangedOG);
+    }
     Utils::ExecHook(GetDefaultObj()->GetFunction("OnAircraftExitedDropZone"), OnAircraftExitedDropZone_, OnAircraftExitedDropZone_OG);
 
     if (VersionInfo.FortniteVersion >= 21.50)
     {
-        Utils::Hook(FindSpawnInitialSafeZone(), SpawnInitialSafeZone, SpawnInitialSafeZoneOG);
-        Utils::Hook(FindUpdateSafeZonesPhase(), UpdateSafeZonesPhase, UpdateSafeZonesPhaseOG);
+        if (VersionInfo.FortniteVersion < 25.20)
+        {
+            Utils::Hook(FindSpawnInitialSafeZone(), SpawnInitialSafeZone, SpawnInitialSafeZoneOG);
+            Utils::Hook(FindUpdateSafeZonesPhase(), UpdateSafeZonesPhase, UpdateSafeZonesPhaseOG);
+        }
         Utils::ExecHook(L"/Script/FortniteGame.FortSafeZoneIndicator.GetPhaseInfo", GetPhaseInfo);
     }
 }

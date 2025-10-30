@@ -55,6 +55,10 @@ uint64 FindUpdateSafeZonesPhase();
 uint64 FindUpdateIrisReplicationViews();
 uint64 FindPreSendUpdate();
 uint64 FindHandleMatchHasStarted();
+uint64 FindInitializeBuildingActor();
+uint64 FindPostInitializeSpawnedBuildingActor();
+uint64 FindInitializeFlightPath();
+uint64 FindReset();
 
 inline std::vector<uint64_t> NullFuncs = {};
 inline std::vector<uint64_t> RetTrueFuncs = {};

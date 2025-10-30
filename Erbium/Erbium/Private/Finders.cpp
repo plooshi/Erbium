@@ -1,8 +1,7 @@
 #pragma once
 #include "pch.h"
 #include "../../FortniteGame/Public/FortPlayerControllerAthena.h"
-
-// credit to milxnor for a lot of these
+#include "../../FortniteGame/Public/BuildingSMActor.h"
 
 uint64_t FindGIsClient()
 {
@@ -760,6 +759,9 @@ uint64 FindApplyCharacterCustomization()
 
             if (!ApplyCharacterCustomization)
                 ApplyCharacterCustomization = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 48 89 7C 24 ? 55 41 54 41 55 41 56 41 57 48 8B EC 48 81 EC ? ? ? ? 80 B9").Get();
+
+            if (!ApplyCharacterCustomization)
+                ApplyCharacterCustomization = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 80 B9 ? ? ? ? ? 48 8B C2").Get();
 
             return ApplyCharacterCustomization;
         }
@@ -1542,6 +1544,8 @@ uint64 FindSetChannelActor()
         }
         else if (std::floor(VersionInfo.FortniteVersion) == 20)
             return SetChannelActor = Memcury::Scanner::FindPattern("40 55 53 56 57 41 54 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 45 33 E4 48 8D 3D ? ? ? ? 44 89 A5").Get();
+        else if (VersionInfo.FortniteVersion >= 28)
+            return SetChannelActor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 55 57 41 54 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 45 33 FF 48 8D 35").Get();
         else if (VersionInfo.FortniteVersion >= 21)
         {
             SetChannelActor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 33 FF 4C 8D 35 ? ? ? ? 89 BD").Get();
@@ -1728,6 +1732,9 @@ uint64 FindClientHasInitializedLevelFor()
 
         if (!ClientHasInitializedLevelFor)
             ClientHasInitializedLevelFor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC 20 48 8B DA 48 8B F9 E8 ? ? ? ? 48 8B D0 48 8B CB E8 ? ? ? ? 48 8B C8").Get();
+
+        if (!ClientHasInitializedLevelFor)
+            ClientHasInitializedLevelFor = Memcury::Scanner::FindPattern("40 53 48 83 EC ? 48 8B D9 48 8B CA E8 ? ? ? ? 48 8B C8 E8 ? ? ? ? 4C 8D 9B").Get();
     }
 
     return ClientHasInitializedLevelFor;
@@ -1847,7 +1854,9 @@ uint64_t FindGetPlayerViewPoint()
 {
     if (std::floor(VersionInfo.FortniteVersion) == 22)
         return Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 56 41 57 48 8B EC 48 83 EC ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 4D 8B F0 48 8B F2 48 8B D9").Get();
-
+    else if (VersionInfo.FortniteVersion >= 25)
+        return Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 0F 29 70 ? 0F 29 78 ? 44 0F 29 40 ? 44 0F 29 48 ? 44 0F 29 90 ? ? ? ? 44 0F 29 98 ? ? ? ? 44 0F 29 ?? ? ? ? ? 44 0F 29 B0 ? ? ? ? 44 0F 29 B8 ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 49 8B F0").Get();
+    
     uint64 ftspAddr = 0;
     auto ftspRef = Memcury::Scanner::FindStringRef(L"%s failed to spawn a pawn", true, 0, VersionInfo.FortniteVersion >= 19).Get();
 
@@ -2109,6 +2118,87 @@ uint64_t FindHandleMatchHasStarted()
     return HandleMatchHasStarted;
 }
 
+uint64_t FindInitializeBuildingActor()
+{
+    static uint64_t InitializeBuildingActor = 0;
+    static bool bInitialized = false;
+
+    if (!bInitialized)
+    {
+        bInitialized = true;
+
+        auto sRef = Memcury::Scanner::FindStringRef(L"STAT_Fort_BuildingSMActorInitializeBuildingActor", false);
+
+        if (!sRef.Get())
+            return 0;
+
+        return InitializeBuildingActor = sRef.ScanFor(std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 }, false, 0, 1, 1000).Get();
+    }
+
+    return InitializeBuildingActor;
+}
+
+uint64_t FindPostInitializeSpawnedBuildingActor()
+{
+    static uint64_t PostInitializeSpawnedBuildingActor = 0;
+    static bool bInitialized = false;
+
+    if (!bInitialized)
+    {
+        bInitialized = true;
+
+        auto PCVft = ABuildingSMActor::GetDefaultObj()->Vft;
+        int ibaIdx = 0;
+        auto InitializeBuildingActor = FindInitializeBuildingActor();
+
+        for (int i = 0; i < 2000; i++)
+        {
+            if (PCVft[i] == (void*)InitializeBuildingActor)
+            {
+                ibaIdx = i;
+                break;
+            }
+        }
+
+        if (ibaIdx == 0)
+            return 0;
+
+        return PostInitializeSpawnedBuildingActor = __int64(PCVft[ibaIdx + 1]);
+    }
+
+    return PostInitializeSpawnedBuildingActor;
+}
+
+uint64 FindInitializeFlightPath()
+{
+    static uint64_t InitializeFlightPath = 0;
+    static bool bInitialized = false;
+
+    if (!bInitialized)
+    {
+        bInitialized = true;
+
+        InitializeFlightPath = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 48 81 EC ? ? ? ? 48 8B E9 41 8A D9").Get();
+    }
+
+    return InitializeFlightPath;
+}
+
+uint64 FindReset()
+{
+    static uint64_t Reset = 0;
+    static bool bInitialized = false;
+
+    if (!bInitialized)
+    {
+        bInitialized = true;
+
+        Reset = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC ? 48 8B 91 ? ? ? ? 48 8B F9 48 85 D2 74 ? 48 8B 01").Get();
+    }
+
+    return Reset;
+}
+
 void FindNullsAndRetTrues()
 {
     if (VersionInfo.EngineVersion == 4.16)
@@ -2317,7 +2407,7 @@ void FindNullsAndRetTrues()
         {
             auto sRef = Memcury::Scanner::FindStringRef(L"CanActivateAbility %s failed, blueprint refused", true, 0, VersionInfo.EngineVersion >= 5.0).Get();
 
-            for (int i = 0; i < 1000; i++)
+            for (int i = 0; i < 0x2000; i++)
             {
                 auto Ptr = (uint8_t*)(sRef - i);
 
@@ -2331,6 +2421,27 @@ void FindNullsAndRetTrues()
                     RetTrueFuncs.push_back(uint64_t(Ptr));
                     break;
                 }
+            }
+        }
+    }
+
+    auto sRef = Memcury::Scanner::FindStringRef(L"AFortPlayerControllerAthena::HasStreamingLevelsCompletedLoadingUnLoading(): %s still not visible", false, 0, VersionInfo.FortniteVersion >= 19).Get();
+
+    if (sRef)
+    {
+        for (int i = 0; i < 1000; i++)
+        {
+            auto Ptr = (uint8_t*)(sRef - i);
+
+            if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
+            {
+                RetTrueFuncs.push_back(uint64_t(Ptr));
+                break;
+            }
+            else if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4)
+            {
+                RetTrueFuncs.push_back(uint64_t(Ptr));
+                break;
             }
         }
     }

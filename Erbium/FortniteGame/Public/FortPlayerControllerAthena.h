@@ -50,6 +50,7 @@ public:
     UCLASS_COMMON_MEMBERS(UFortControllerComponent_Aircraft);
 
     DEFINE_FUNC(ServerAttemptAircraftJump, void);
+    DEFINE_FUNC(KickFromAircraft, void);
 };
 
 struct FQuickBarSlot
@@ -101,6 +102,17 @@ public:
     DEFINE_FUNC(OnRep_bRegisteredWithQuestManager, void);
 };
 
+class AFortBroadcastRemoteClientInfo : public AActor
+{
+public:
+    UCLASS_COMMON_MEMBERS(AFortBroadcastRemoteClientInfo);
+
+    DEFINE_PROP(RemoteBuildableClass, TSubclassOf<AActor>);
+    DEFINE_PROP(bActive, bool);
+
+    DEFINE_FUNC(OnRep_bActive, void);
+};
+
 inline const UCurveTable* GameData = nullptr;
 class AFortPlayerControllerAthena : public AActor
 {
@@ -127,7 +139,9 @@ public:
     DEFINE_PROP(bHasInitializedWorldInventory, bool);
     DEFINE_PROP(ActiveToyInstances, TArray<AActor*>);
     DEFINE_PROP(AppliedInGameModifierAbilitySetHandles, TMap<FGuid, void*>);
+    DEFINE_PROP(BroadcastRemoteClientInfo, AFortBroadcastRemoteClientInfo*);
     DEFINE_BITFIELD_PROP(bTryPickupSwap);
+    DEFINE_PROP(bEnableBroadcastRemoteClientInfo, bool);
 
     DEFINE_FUNC(GetViewTarget, AActor*);
     DEFINE_FUNC(GetControlRotation, FRotator);
@@ -151,6 +165,7 @@ public:
     DEFINE_FUNC(ServerChangeName, void);
     DEFINE_FUNC(ClientIgnoreMoveInput, void);
     DEFINE_FUNC(GetActorEyesViewPoint, void);
+    DEFINE_FUNC(ClientActivateSlot, void);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);

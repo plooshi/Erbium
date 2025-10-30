@@ -37,7 +37,7 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 	}
 	else
 	{
-		auto ClassData = Actor->GetClassData();
+		/*auto ClassData = Actor->GetClassData();
 		FCurveTableRowHandle& BuildingResourceAmountOverride = ClassData->BuildingResourceAmountOverride;
 
 		if (BuildingResourceAmountOverride.CurveTable && BuildingResourceAmountOverride.RowName.ComparisonIndex > 0)
@@ -48,7 +48,13 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 			float RC = Out / (Actor->GetMaxHealth() / Damage);
 
 			ResCount = (int)round(RC);
-		}
+		}*/
+
+
+		auto Out = 11.f + (float)rand() / (32767.f / 22.f);
+		float RC = Out / (Actor->GetMaxHealth() / Damage);
+
+		ResCount = (int)round(RC);
 	}
 
 	if (ResCount > 0)
@@ -105,7 +111,9 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 void ABuildingSMActor::PostLoadHook()
 {
 	if (VersionInfo.FortniteVersion >= 28)
+	{
 		GetSparseClassData_ = Memcury::Scanner::FindPattern("48 83 EC ? 48 8B 81 ? ? ? ? 45 33 C0 4C 8B C9").Get();
+	}
 
 	auto OnDamageServerAddr = FindFunctionCall(L"OnDamageServer", VersionInfo.EngineVersion == 4.16 ? std::vector<uint8_t>{ 0x4C, 0x89, 0x4C } : VersionInfo.EngineVersion == 4.19 || VersionInfo.EngineVersion >= 4.27 ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x40, 0x55 });
 

@@ -61,21 +61,11 @@ public:
     DEFINE_STRUCT_PROP(MegaStormGridCellThickness, FScalableFloat);
 };
 
-class AFortAthenaMapInfo : public AActor
-{
-public:
-    UCLASS_COMMON_MEMBERS(AFortAthenaMapInfo);
-
-    DEFINE_PROP(LlamaClass, UClass*);
-    DEFINE_PROP(SupplyDropInfoList, TArray<UFortSupplyDropInfo*>);
-    DEFINE_PROP(VendingMachineRarityCount, FScalableFloat);
-    DEFINE_PROP(SafeZoneDefinition, FFortSafeZoneDefinition);
-};
-
 struct FAircraftFlightInfo
 {
 public:
     USCRIPTSTRUCT_COMMON_MEMBERS(FAircraftFlightInfo);
+    uint8_t Padding[0x50];
 
     DEFINE_STRUCT_PROP(FlightSpeed, float);
     DEFINE_STRUCT_PROP(FlightStartLocation, FVector);
@@ -99,7 +89,28 @@ public:
     DEFINE_PROP(TimeTillDropEnd, float);
     DEFINE_PROP(DefaultBusSkin, const UObject*);
     DEFINE_PROP(SpawnedCosmeticActor, const UObject*);
+    DEFINE_PROP(FlightElapsedTime, float);
+    DEFINE_PROP(DropStartTime, float);
+    DEFINE_PROP(DropEndTime, float);
+    DEFINE_PROP(ReplicatedFlightTimestamp, float);
+
+    DEFINE_STATIC_FUNC(SpawnAircraft, AFortAthenaAircraft*);
 };
+
+
+class AFortAthenaMapInfo : public AActor
+{
+public:
+    UCLASS_COMMON_MEMBERS(AFortAthenaMapInfo);
+
+    DEFINE_PROP(LlamaClass, UClass*);
+    DEFINE_PROP(SupplyDropInfoList, TArray<UFortSupplyDropInfo*>);
+    DEFINE_PROP(VendingMachineRarityCount, FScalableFloat);
+    DEFINE_PROP(SafeZoneDefinition, FFortSafeZoneDefinition);
+    DEFINE_PROP(AircraftClass, TSubclassOf<AFortAthenaAircraft>);
+    DEFINE_PROP(FlightInfos, TArray<FAircraftFlightInfo>);
+};
+
 
 class AFortGameStateAthena : public AActor
 {

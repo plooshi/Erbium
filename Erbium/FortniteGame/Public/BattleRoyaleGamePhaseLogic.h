@@ -36,14 +36,37 @@ class UFortGameStateComponent_BattleRoyaleGamePhaseLogic : public UActorComponen
 public:
     UCLASS_COMMON_MEMBERS(UFortGameStateComponent_BattleRoyaleGamePhaseLogic);
 
+	DEFINE_PROP(WarmupCountdownStartTime, float);
+	DEFINE_PROP(WarmupCountdownEndTime, float);
+	DEFINE_PROP(WarmupCountdownDuration, float);
+	DEFINE_PROP(WarmupEarlyCountdownDuration, float);
+	DEFINE_PROP(Aircrafts_GameState, TArray<TWeakObjectPtr<AFortAthenaAircraft>>);
+	DEFINE_PROP(Aircrafts_GameMode, TArray<TWeakObjectPtr<AFortAthenaAircraft>>);
+	DEFINE_PROP(bAircraftIsLocked, bool);
+	DEFINE_PROP(SafeZonesStartTime, float);
+	DEFINE_PROP(SafeZoneIndicator, AFortSafeZoneIndicator*);
+	DEFINE_PROP(SafeZoneIndicatorClass, TSubclassOf<AFortSafeZoneIndicator>);
+	DEFINE_PROP(TimeBetweenStormCapDamage, FScalableFloat);
+	DEFINE_PROP(StormCapDamagePerTick, FScalableFloat);
+	DEFINE_PROP(StormCampingIncrementTimeAfterDelay, FScalableFloat);
+	DEFINE_PROP(StormCampingInitialDelayTime, FScalableFloat);
+	DEFINE_PROP(bSafeZoneActive, bool);
+	DEFINE_PROP(bSafeZonePaused, bool);
+
 	DEFINE_FUNC(OnRep_GamePhase, void);
 	DEFINE_FUNC(HandleGamePhaseStepChanged, void);
+	DEFINE_FUNC(SetAircrafts, void);
+	DEFINE_FUNC(OnRep_Aircrafts, void);
+	DEFINE_FUNC(OnRep_SafeZoneIndicator, void);
 
     DEFINE_STATIC_FUNC(Get, UFortGameStateComponent_BattleRoyaleGamePhaseLogic*);
 
 	void SetGamePhase(EAthenaGamePhase GamePhase);
 	void SetGamePhaseStep(EAthenaGamePhaseStep GamePhaseStep);
 	DefHookOg(void, HandleMatchHasStarted, AFortGameModeAthena*);
+	void Tick();
+	AFortSafeZoneIndicator* SetupSafeZoneIndicator();
+	void StartNewSafeZonePhase(int NewSafeZonePhase);
 
     InitHooks;
 };
