@@ -156,13 +156,20 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartNewSafeZonePhase(i
 		SafeZoneIndicator->CurrentDamageInfo = PhaseInfo.DamageInfo;
 		SafeZoneIndicator->OnRep_CurrentDamageInfo();
 
+		auto OldPhase = SafeZoneIndicator->CurrentPhase;
 		SafeZoneIndicator->CurrentPhase = NewSafeZonePhase;
 		SafeZoneIndicator->OnRep_CurrentPhase();
 
 		SafeZoneIndicator->OnSafeZonePhaseChanged.Process();
 
+		auto& SafeZoneState = *(uint8_t*)(__int64(&SafeZoneIndicator->FutureReplicator) - 0x4);
+		SafeZoneState = 2;
+		bool bInitial = OldPhase <= 0;
+
+		SafeZoneIndicator->OnSafeZoneStateChange(2, bInitial);
+		SafeZoneIndicator->SafezoneStateChangedDelegate.Process(SafeZoneIndicator, 2);
+
 		SetGamePhaseStep(EAthenaGamePhaseStep::StormHolding);
-		SafeZoneIndicator->ForceNetUpdate();
 	}
 }
 

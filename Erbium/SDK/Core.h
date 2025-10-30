@@ -682,6 +682,8 @@ namespace SDK
 
 	class TUObjectArrayChunked
 	{
+	public:
+		static inline auto NumElementsPerChunk = 0x10000;
 	private:
 		FUObjectItem** Objects;
 		FUObjectItem* PreAllocatedObjects;
@@ -706,8 +708,8 @@ namespace SDK
 			if (Index < 0 || Index > NumElements)
 				return nullptr;
 
-			const int32 ChunkIndex = Index / 0x10000;
-			const int32 ChunkOffset = Index % 0x10000;
+			const int32 ChunkIndex = Index / NumElementsPerChunk;
+			const int32 ChunkOffset = Index % NumElementsPerChunk;
 
 			return Objects[ChunkIndex] + ChunkOffset;
 		}
@@ -1254,5 +1256,10 @@ namespace SDK
 			return nullptr;
 
 		return ((const IInterface * (*)(const UObject*, const UClass*)) Offsets::GetInterfaceAddress)(this, Class);
+	}
+
+	inline void UpdateNumElemsPerChunk()
+	{
+		TUObjectArrayChunked::NumElementsPerChunk = 0x10400;
 	}
 }

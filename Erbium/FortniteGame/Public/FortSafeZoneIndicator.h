@@ -60,9 +60,11 @@ public:
     DEFINE_PROP(CurrentDamageInfo, FFortSafeZoneDamageInfo);
     DEFINE_PROP(OnSafeZonePhaseChanged, TMulticastInlineDelegate<void()>);
     DEFINE_PROP(FutureReplicator, AFortSafeZoneIndicatorFuture*);
+    DEFINE_PROP(SafezoneStateChangedDelegate, TMulticastInlineDelegate<void(AFortSafeZoneIndicator*, uint8_t)>);
 
     DEFINE_FUNC(GetSafeZoneCenter, FVector);
     DEFINE_FUNC(OnRep_CurrentPhase, void);
     DEFINE_FUNC(OnRep_PhaseCount, void);
     DEFINE_FUNC(OnRep_CurrentDamageInfo, void);
+    DEFINE_FUNC(OnSafeZoneStateChange, void);
 };

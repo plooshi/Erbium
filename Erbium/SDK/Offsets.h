@@ -43,6 +43,8 @@ namespace SDK
 		inline uint32_t ExecFunction = 0;
 	}
 
+	extern void UpdateNumElemsPerChunk();
+
 	inline void Init()
 	{
 		FStringNoOps OutVar;
@@ -185,7 +187,12 @@ namespace SDK
 		Offsets::ProcessEvent = addr;
 
 		if (VersionInfo.EngineVersion >= 4.21)
+		{
+			if (VersionInfo.FortniteVersion <= 6.01)
+				UpdateNumElemsPerChunk();
+
 			Offsets::GObjectsChunked = Memcury::Scanner::FindPattern(VersionInfo.FortniteVersion <= 6.02 ? "48 8B 05 ? ? ? ? 48 8B 0C C8 48 8D 04 D1" : "48 8B 05 ? ? ? ? 48 8B 0C C8 48 8B 04 D1").RelativeOffset(3).Get();
+		}
 		else
 		{
 			auto Addr = Memcury::Scanner::FindPattern("48 8B 05 ? ? ? ? 48 8D 14 C8 EB 03 49 8B D6 8B 42 08 C1 E8 1D A8 01 0F 85 ? ? ? ? F7 86 ? ? ? ? ? ? ? ?", false);
