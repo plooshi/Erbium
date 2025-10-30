@@ -991,6 +991,9 @@ namespace SDK
 	public:
 		const UObject* Get() const
 		{
+			if (!this)
+				return nullptr;
+
 			if (ObjectIndex < 0 || ObjectSerialNumber == 0)
 				return nullptr;
 
