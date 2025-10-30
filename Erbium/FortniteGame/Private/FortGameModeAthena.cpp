@@ -361,7 +361,16 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         auto Starts = Utils::GetAll(WarmupStartClass);
         auto StartsNum = Starts.Num();
         Starts.Free();
-        if (StartsNum == 0)
+
+        static int bHasMapInfo = -1;
+
+        if (bHasMapInfo == -1)
+        {
+            auto MapInfos = Utils::GetAll<AFortAthenaMapInfo>(); // can be in another level!
+
+            bHasMapInfo = MapInfos.Num() > 0;
+        }
+        if (StartsNum == 0 || (!bHasMapInfo || !GameState->MapInfo))
         {
             *Ret = false;
             return;
