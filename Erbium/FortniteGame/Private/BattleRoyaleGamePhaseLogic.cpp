@@ -142,8 +142,11 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartNewSafeZonePhase(i
 		{
 			auto& NextPhaseInfo = Array.Get(NewSafeZonePhase + 1, FFortSafeZonePhaseInfo::Size());
 
-			SafeZoneIndicator->FutureReplicator->NextNextCenter = NextPhaseInfo.Center;
-			SafeZoneIndicator->FutureReplicator->NextNextRadius = NextPhaseInfo.Radius;
+			if (SafeZoneIndicator->FutureReplicator)
+			{
+				SafeZoneIndicator->FutureReplicator->NextNextCenter = NextPhaseInfo.Center;
+				SafeZoneIndicator->FutureReplicator->NextNextRadius = NextPhaseInfo.Radius;
+			}
 
 			SafeZoneIndicator->NextNextCenter = NextPhaseInfo.Center;
 			SafeZoneIndicator->NextNextRadius = NextPhaseInfo.Radius;
