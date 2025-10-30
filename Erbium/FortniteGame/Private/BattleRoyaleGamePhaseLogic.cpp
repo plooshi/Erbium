@@ -199,54 +199,57 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 
 			auto Aircraft = Aircrafts_GameState[0].Get();
 
-			auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
-			auto& FlightInfo = GameState->MapInfo->FlightInfos[0];
-
-			Aircraft->FlightElapsedTime = 0;
-			Aircraft->DropStartTime = (float)Time + FlightInfo.TimeTillDropStart;
-			Aircraft->DropEndTime = (float)Time + FlightInfo.TimeTillDropEnd;
-			Aircraft->FlightStartTime = (float)Time;
-			Aircraft->FlightEndTime = (float)Time + FlightInfo.TimeTillFlightEnd;
-			Aircraft->ReplicatedFlightTimestamp = (float)Time;
-			bAircraftIsLocked = true;
-
-			for (auto& Player__Uncasted : ((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers)
+			if (Aircraft)
 			{
-				auto Player = (AFortPlayerControllerAthena*)Player__Uncasted;
-				auto Pawn = (AFortPlayerPawnAthena*)Player->Pawn;
+				auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
+				auto& FlightInfo = GameState->MapInfo->FlightInfos[0];
 
-				if (Pawn)
+				Aircraft->FlightElapsedTime = 0;
+				Aircraft->DropStartTime = (float)Time + FlightInfo.TimeTillDropStart;
+				Aircraft->DropEndTime = (float)Time + FlightInfo.TimeTillDropEnd;
+				Aircraft->FlightStartTime = (float)Time;
+				Aircraft->FlightEndTime = (float)Time + FlightInfo.TimeTillFlightEnd;
+				Aircraft->ReplicatedFlightTimestamp = (float)Time;
+				bAircraftIsLocked = true;
+
+				for (auto& Player__Uncasted : ((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers)
 				{
-					if (Pawn->Role == 3)
+					auto Player = (AFortPlayerControllerAthena*)Player__Uncasted;
+					auto Pawn = (AFortPlayerPawnAthena*)Player->Pawn;
+
+					if (Pawn)
 					{
-						if (Pawn->bIsInAnyStorm)
+						if (Pawn->Role == 3)
 						{
-							Pawn->bIsInAnyStorm = false;
-							Pawn->OnRep_IsInAnyStorm();
+							if (Pawn->bIsInAnyStorm)
+							{
+								Pawn->bIsInAnyStorm = false;
+								Pawn->OnRep_IsInAnyStorm();
+							}
 						}
+						Pawn->bIsInsideSafeZone = true;
+						Pawn->OnRep_IsInsideSafeZone();
+						Pawn->OnEnteredAircraft.Process();
 					}
-					Pawn->bIsInsideSafeZone = true;
-					Pawn->OnRep_IsInsideSafeZone();
-					Pawn->OnEnteredAircraft.Process();
+
+					Player->ClientActivateSlot(0, 0, 0.f, true, true);
+					if (Pawn)
+						Pawn->K2_DestroyActor();
+					auto Reset = (void (*)(AFortPlayerControllerAthena*)) FindReset();
+					Reset(Player);
+					Player->ClientGotoState(UKismetStringLibrary::Conv_StringToName(FString(L"Spectating")));
 				}
 
-				Player->ClientActivateSlot(0, 0, 0.f, true, true);
-				if (Pawn)
-					Pawn->K2_DestroyActor();
-				auto Reset = (void (*)(AFortPlayerControllerAthena*)) FindReset();
-				Reset(Player);
-				Player->ClientGotoState(UKismetStringLibrary::Conv_StringToName(FString(L"Spectating")));
+				SetGamePhase(EAthenaGamePhase::Aircraft);
+				SetGamePhaseStep(EAthenaGamePhaseStep::BusLocked);
 			}
-
-			SetGamePhase(EAthenaGamePhase::Aircraft);
-			SetGamePhaseStep(EAthenaGamePhaseStep::BusLocked);
 		}
 	}
 
 	static bool busUnlocked = false;
 	if (startedBus && !busUnlocked)
 	{
-		if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && Aircrafts_GameState[0]->DropStartTime < Time)
+		if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && Aircrafts_GameState[0].Get() && Aircrafts_GameState[0]->DropStartTime < Time)
 		{
 			busUnlocked = true;
 
@@ -258,7 +261,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 	static bool startedForming = false;
 	if (startedBus && !startedForming)
 	{
-		if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && Aircrafts_GameState[0]->DropEndTime != -1 && Aircrafts_GameState[0]->DropEndTime < Time)
+		if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && Aircrafts_GameState[0].Get() && Aircrafts_GameState[0]->DropEndTime != -1 && Aircrafts_GameState[0]->DropEndTime < Time)
 		{
 			startedForming = true;
 			auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
@@ -290,7 +293,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 	static bool finishedFlight = false;
 	if (busUnlocked && !finishedFlight)
 	{
-		if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && Aircrafts_GameState[0]->FlightEndTime != -1 && Aircrafts_GameState[0]->FlightEndTime < Time)
+		if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && Aircrafts_GameState[0].Get() && Aircrafts_GameState[0]->FlightEndTime != -1 && Aircrafts_GameState[0]->FlightEndTime < Time)
 		{
 			finishedFlight = true;
 			auto Aircraft = Aircrafts_GameState[0].Get();
