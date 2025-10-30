@@ -142,6 +142,7 @@ public:
     DEFINE_PROP(BroadcastRemoteClientInfo, AFortBroadcastRemoteClientInfo*);
     DEFINE_BITFIELD_PROP(bTryPickupSwap);
     DEFINE_PROP(bEnableBroadcastRemoteClientInfo, bool);
+    DEFINE_BITFIELD_PROP(bReadyToStartMatch);
 
     DEFINE_FUNC(GetViewTarget, AActor*);
     DEFINE_FUNC(GetControlRotation, FRotator);

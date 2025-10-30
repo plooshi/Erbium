@@ -60,7 +60,8 @@ public:
     DEFINE_PROP(SeasonLevelUIDisplay, int32);
     DEFINE_PROP(CharacterParts, const UObject**);
     DEFINE_PROP(HeroType, const UObject*);
-    DEFINE_PROP(bIsABot, bool);
+    DEFINE_BITFIELD_PROP(bIsABot);
+    DEFINE_BITFIELD_PROP(bIsSpectator);
     DEFINE_PROP(WorldPlayerId, int16);
 
     DEFINE_FUNC(OnRep_SquadId, void);

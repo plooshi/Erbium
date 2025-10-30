@@ -361,7 +361,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         auto Starts = Utils::GetAll(WarmupStartClass);
         auto StartsNum = Starts.Num();
         Starts.Free();
-        if (StartsNum == 0 || !GameState->MapInfo)
+        if (StartsNum == 0)
         {
             *Ret = false;
             return;
@@ -674,12 +674,12 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             }
         }
 
-        if (SupplyDropClass)
+        if (SupplyDropClass && GameState->MapInfo)
             for (auto& Info : GameState->MapInfo->SupplyDropInfoList)
                 Info->SupplyDropClass = SupplyDropClass;
 
 
-        if (VersionInfo.FortniteVersion >= 3.4)
+        if (VersionInfo.FortniteVersion >= 3.4 && GameState->MapInfo)
         {
             GameData = Playlist ? Playlist->GameData : nullptr;
             if (!GameData)
@@ -740,7 +740,26 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         GameMode->bWorldIsReady = true;
     }
 
-    *Ret = VersionInfo.EngineVersion < 4.24 ? callOGWithRet(GameMode, Stack.GetCurrentNativeFunction(), ReadyToStartMatch) : GameMode->AlivePlayers.Num() >= GameMode->WarmupRequiredPlayerCount;
+    if (VersionInfo.EngineVersion >= 4.24)
+    {
+        int ReadyPlayers = 0;
+        auto PlayerList = Utils::GetAll<AFortPlayerControllerAthena>();
+
+        for (auto& PlayerController : PlayerList)
+        {
+            auto PlayerState = PlayerController->PlayerState;
+
+            if (!PlayerState->bIsSpectator && PlayerController->bReadyToStartMatch)
+                ReadyPlayers++;
+        }
+
+        PlayerList.Free();
+
+        *Ret = GameState->bPlaylistDataIsLoaded && ReadyPlayers >= GameMode->WarmupRequiredPlayerCount;
+    }
+    else
+        *Ret = callOGWithRet(GameMode, Stack.GetCurrentNativeFunction(), ReadyToStartMatch);
+
     if (VersionInfo.FortniteVersion >= 11.00 && !*Ret)
     {
         auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
@@ -1100,11 +1119,6 @@ void AFortGameModeAthena::HandleStartingNewPlayer_(UObject* Context, FFrame& Sta
     {
         NewPlayer->WorldInventory = UWorld::SpawnActor<AFortInventory>(NewPlayer->WorldInventoryClass, FVector{});
         NewPlayer->WorldInventory->SetOwner(NewPlayer);
-
-        NewPlayer->bEnableBroadcastRemoteClientInfo = true;
-
-        NewPlayer->BroadcastRemoteClientInfo->bActive = true;
-        NewPlayer->BroadcastRemoteClientInfo->OnRep_bActive();
     }
 
     return callOG(GameMode, Stack.GetCurrentNativeFunction(), HandleStartingNewPlayer, NewPlayer);
