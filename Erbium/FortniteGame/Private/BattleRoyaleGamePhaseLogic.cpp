@@ -1,15 +1,22 @@
 #include "pch.h"
 #include "../Public/BattleRoyaleGamePhaseLogic.h"
 
-
+uint64_t SetGamePhase_ = 0;
 void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::SetGamePhase(EAthenaGamePhase GamePhase)
 {
-	static auto GamePhaseOffset = this->GetOffset("GamePhase");
-	auto& _GamePhase = *(EAthenaGamePhase*)(__int64(this) + GamePhaseOffset);
+	auto SetGamePhaseInternal = (void(*)(UFortGameStateComponent_BattleRoyaleGamePhaseLogic*, EAthenaGamePhase)) SetGamePhase_;
 
-	auto OldGamePhase = _GamePhase;
-	_GamePhase = GamePhase;
-	OnRep_GamePhase(OldGamePhase);
+	if (SetGamePhaseInternal)
+		return SetGamePhaseInternal(this, GamePhase);
+	else
+	{
+		static auto GamePhaseOffset = this->GetOffset("GamePhase");
+		auto& _GamePhase = *(EAthenaGamePhase*)(__int64(this) + GamePhaseOffset);
+
+		auto OldGamePhase = _GamePhase;
+		_GamePhase = GamePhase;
+		OnRep_GamePhase(OldGamePhase);
+	}
 }
 
 void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::SetGamePhaseStep(EAthenaGamePhaseStep GamePhaseStep)
@@ -33,16 +40,6 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::HandleMatchHasStarted(A
 	GamePhaseLogic->WarmupCountdownEndTime = Time + WarmupDuration;
 	GamePhaseLogic->WarmupCountdownDuration = 10.f;
 	GamePhaseLogic->WarmupEarlyCountdownDuration = WarmupDuration - 10.f;
-	auto GameState = (AFortGameStateAthena*)GameMode->GameState;
-
-	if (GameState->MapInfo->FlightInfos.Num() > 0)
-	{
-		TArray<AFortAthenaAircraft*> Aircrafts;
-		auto& FlightInfo = GameState->MapInfo->FlightInfos[0];
-		Aircrafts.Add(AFortAthenaAircraft::SpawnAircraft(UWorld::GetWorld(), GameState->MapInfo->AircraftClass, FlightInfo));
-		GamePhaseLogic->SetAircrafts(Aircrafts);
-		GamePhaseLogic->OnRep_Aircrafts();
-	}
 
 	GamePhaseLogic->SetGamePhase(EAthenaGamePhase::Warmup);
 	GamePhaseLogic->SetGamePhaseStep(EAthenaGamePhaseStep::Warmup);
@@ -185,7 +182,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 	static bool gettingReady = false;
 	if (!gettingReady)
 	{
-		if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && WarmupEarlyCountdownDuration < Time)
+		if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && WarmupEarlyCountdownDuration != -1 && WarmupEarlyCountdownDuration < Time)
 		{
 			gettingReady = true;
 
@@ -196,52 +193,63 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 	static bool startedBus = false;
 	if (gettingReady && !startedBus)
 	{
-		if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && WarmupCountdownEndTime < Time)
+		if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && WarmupCountdownEndTime != -1 && WarmupCountdownEndTime < Time)
 		{
 			startedBus = true;
 
 			auto Aircraft = Aircrafts_GameState[0].Get();
 
-			if (Aircraft)
+			//if (Aircraft)
 			{
 				auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
-				auto& FlightInfo = GameState->MapInfo->FlightInfos[0];
 
-				Aircraft->FlightElapsedTime = 0;
-				Aircraft->DropStartTime = (float)Time + FlightInfo.TimeTillDropStart;
-				Aircraft->DropEndTime = (float)Time + FlightInfo.TimeTillDropEnd;
-				Aircraft->FlightStartTime = (float)Time;
-				Aircraft->FlightEndTime = (float)Time + FlightInfo.TimeTillFlightEnd;
-				Aircraft->ReplicatedFlightTimestamp = (float)Time;
-				bAircraftIsLocked = true;
-
-				for (auto& Player__Uncasted : ((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers)
+				if (GameState->MapInfo->FlightInfos.Num() > 0)
 				{
-					auto Player = (AFortPlayerControllerAthena*)Player__Uncasted;
-					auto Pawn = (AFortPlayerPawnAthena*)Player->Pawn;
+					TArray<AFortAthenaAircraft*> Aircrafts;
+					auto& FlightInfo = GameState->MapInfo->FlightInfos[0];
+					auto Aircraft = AFortAthenaAircraft::SpawnAircraft(UWorld::GetWorld(), GameState->MapInfo->AircraftClass, FlightInfo);
 
-					if (Pawn)
+					Aircraft->FlightElapsedTime = 0;
+					Aircraft->DropStartTime = (float)Time + FlightInfo.TimeTillDropStart;
+					Aircraft->DropEndTime = (float)Time + FlightInfo.TimeTillDropEnd;
+					Aircraft->FlightStartTime = (float)Time;
+					Aircraft->FlightEndTime = (float)Time + FlightInfo.TimeTillFlightEnd;
+					Aircraft->ReplicatedFlightTimestamp = (float)Time;
+					bAircraftIsLocked = true;
+
+					for (auto& Player__Uncasted : ((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers)
 					{
-						if (Pawn->Role == 3)
+						auto Player = (AFortPlayerControllerAthena*)Player__Uncasted;
+						auto Pawn = (AFortPlayerPawnAthena*)Player->Pawn;
+
+						if (Pawn)
 						{
-							if (Pawn->bIsInAnyStorm)
+							if (Pawn->Role == 3)
 							{
-								Pawn->bIsInAnyStorm = false;
-								Pawn->OnRep_IsInAnyStorm();
+								if (Pawn->bIsInAnyStorm)
+								{
+									Pawn->bIsInAnyStorm = false;
+									Pawn->OnRep_IsInAnyStorm();
+								}
 							}
+							Pawn->bIsInsideSafeZone = true;
+							Pawn->OnRep_IsInsideSafeZone();
+							Pawn->OnEnteredAircraft.Process();
 						}
-						Pawn->bIsInsideSafeZone = true;
-						Pawn->OnRep_IsInsideSafeZone();
-						Pawn->OnEnteredAircraft.Process();
+
+						Player->ClientActivateSlot(0, 0, 0.f, true, true);
+						if (Pawn)
+							Pawn->K2_DestroyActor();
+						auto Reset = (void (*)(AFortPlayerControllerAthena*)) FindReset();
+						Reset(Player);
+						Player->ClientGotoState(UKismetStringLibrary::Conv_StringToName(FString(L"Spectating")));
 					}
 
-					Player->ClientActivateSlot(0, 0, 0.f, true, true);
-					if (Pawn)
-						Pawn->K2_DestroyActor();
-					auto Reset = (void (*)(AFortPlayerControllerAthena*)) FindReset();
-					Reset(Player);
-					Player->ClientGotoState(UKismetStringLibrary::Conv_StringToName(FString(L"Spectating")));
+					Aircrafts.Add(Aircraft);
+					SetAircrafts(Aircrafts);
+					OnRep_Aircrafts();
 				}
+
 
 				SetGamePhase(EAthenaGamePhase::Aircraft);
 				SetGamePhaseStep(EAthenaGamePhaseStep::BusLocked);
@@ -338,7 +346,9 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Hook()
 {
 	if (!GetDefaultObj())
 		return;
+
 	Reset_ = FindReset();
+	SetGamePhase_ = FindSetGamePhase();
 
 	Utils::Hook(FindHandleMatchHasStarted(), HandleMatchHasStarted, HandleMatchHasStartedOG);
 }

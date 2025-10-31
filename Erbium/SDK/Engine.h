@@ -534,6 +534,7 @@ namespace SDK
 		DEFINE_FUNC(AddComponentByClass, UActorComponent*);
 		DEFINE_FUNC(GetComponentByClass, UActorComponent*);
 		DEFINE_FUNC(SetNetDormancy, void);
+		DEFINE_FUNC(FlushNetDormancy, void);
 		DEFINE_FUNC(ForceNetUpdate, void);
 		DEFINE_FUNC(K2_GetActorLocation, FVector);
 		DEFINE_FUNC(K2_GetActorRotation, FRotator);

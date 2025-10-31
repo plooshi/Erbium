@@ -2207,6 +2207,65 @@ uint64 FindReset()
     return Reset;
 }
 
+uint64_t FindNotifyGameMemberAdded()
+{
+    static uint64_t NotifyGameMemberAdded = 0;
+    static bool bInitialized = false;
+
+    if (!bInitialized)
+    {
+        bInitialized = true;
+
+        if (VersionInfo.EngineVersion >= 5.1)
+        {
+            NotifyGameMemberAdded = Memcury::Scanner::FindPattern("40 55 53 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 88 54 24").Get();
+
+            if (!NotifyGameMemberAdded)
+                NotifyGameMemberAdded = Memcury::Scanner::FindPattern("40 55 53 56 57 41 54 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 88 54 24").Get();
+
+            if (!NotifyGameMemberAdded)
+                NotifyGameMemberAdded = Memcury::Scanner::FindPattern("40 55 53 56 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 88 54 24").Get();
+
+            return NotifyGameMemberAdded;
+        }
+
+        auto sRef = Memcury::Scanner::FindStringRef(L"%s: Adding Player state with UniqueId: %s, in team: %d, and in squad: %d", false, 0, VersionInfo.FortniteVersion >= 19).Get();
+
+        if (!sRef)
+            return 0;
+
+
+        for (int i = 0; i < 2000; i++)
+        {
+            auto Ptr = (uint8_t*)(sRef - i);
+
+            if (*Ptr == 0x40 && *(Ptr + 1) == 0x55)
+            {
+                NotifyGameMemberAdded = uint64_t(Ptr);
+                break;
+            }
+        }
+    }
+
+    return NotifyGameMemberAdded;
+}
+
+
+uint64 FindSetGamePhase()
+{
+    static uint64_t SetGamePhase = 0;
+    static bool bInitialized = false;
+
+    if (!bInitialized)
+    {
+        bInitialized = true;
+
+        SetGamePhase = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 8B 81 ? ? ? ? 4C 8B E9 44 0F B6 E2").Get();
+    }
+
+    return SetGamePhase;
+}
+
 void FindNullsAndRetTrues()
 {
     if (VersionInfo.EngineVersion == 4.16)

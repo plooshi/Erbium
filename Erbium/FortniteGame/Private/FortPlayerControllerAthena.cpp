@@ -399,20 +399,39 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 		
 	if (!PlayerController->bBuildFree && !FConfiguration::bInfiniteMats)
 	{
-		for (int i = 0; i < Item->ItemEntry.StateValues.Num(); i++)
+		auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+			{ return entry.ItemDefinition == Resource; }, FFortItemEntry::Size());
+
+		for (int i = 0; i < itemEntry->StateValues.Num(); i++)
 		{
-			auto& StateValue = Item->ItemEntry.StateValues.Get(i, FFortItemEntryStateValue::Size());
+			auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
 
 			if (StateValue.StateType != 2)
 				continue;
 
 			StateValue.IntValue = 0;
 		}
-		Item->ItemEntry.Count -= 10;
-		if (Item->ItemEntry.Count <= 0)
-			PlayerController->WorldInventory->Remove(Item->ItemEntry.ItemGuid);
+
+		itemEntry->Count -= 10;
+		if (itemEntry->Count <= 0)
+			PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
 		else
-			PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
+		{
+			Item->ItemEntry = *itemEntry;
+			Item->ItemEntry.bIsReplicatedCopy = false;
+
+			for (int i = 0; i < Item->ItemEntry.StateValues.Num(); i++)
+			{
+				auto& StateValue = Item->ItemEntry.StateValues.Get(i, FFortItemEntryStateValue::Size());
+
+				if (StateValue.StateType != 2)
+					continue;
+
+				StateValue.IntValue = 0;
+			}
+
+			PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+		}
 	}
 
 	Building->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
@@ -875,6 +894,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 			//PlayerController->StateName = SpectatingName;
 			PlayerController->ClientGotoState(SpectatingName);
 			PlayerController->ClientIgnoreMoveInput(true);
+			PlayerController->ClientIgnoreLookInput(true);
 		}
 
 
@@ -1027,28 +1047,57 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 	{
 		auto item = WorldInventory->Inventory.ItemInstances.Search([PickupEntry, MaxStack](UFortWorldItem* entry)
 			{ return entry->ItemEntry.ItemDefinition == PickupEntry->ItemDefinition && entry->ItemEntry.Count < MaxStack; });
+		auto itemEntry = WorldInventory->Inventory.ReplicatedEntries.Search([PickupEntry, MaxStack](FFortItemEntry& entry)
+			{ return entry.ItemDefinition == PickupEntry->ItemDefinition && entry.Count < MaxStack; }, FFortItemEntry::Size());
 
 		if (item)
 		{
+			bool bFound = false;
+			for (int i = 0; i < itemEntry->StateValues.Num(); i++)
+			{
+				auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
+
+				if (StateValue.StateType != 2)
+					continue;
+
+				bFound = true;
+				StateValue.IntValue = 0;
+				break;
+			}
+
+			if ((itemEntry->Count += PickupEntry->Count) > MaxStack)
+			{
+				auto OriginalCount = itemEntry->Count;
+				itemEntry->Count = MaxStack;
+
+				GiveOrSwapStack(OriginalCount);
+			}
+
+			(*item)->ItemEntry = *itemEntry;
+			(*item)->ItemEntry.bIsReplicatedCopy = false;
+
+			// full proper
 			for (int i = 0; i < (*item)->ItemEntry.StateValues.Num(); i++)
 			{
 				auto& StateValue = (*item)->ItemEntry.StateValues.Get(i, FFortItemEntryStateValue::Size());
 
 				if (StateValue.StateType != 2)
 					continue;
-
+				
 				StateValue.IntValue = 1;
+				break;
 			}
-
-			if (((*item)->ItemEntry.Count += PickupEntry->Count) > MaxStack)
+			if (!bFound)
 			{
-				auto OriginalCount = (*item)->ItemEntry.Count;
-				(*item)->ItemEntry.Count = MaxStack;
-
-				GiveOrSwapStack(OriginalCount);
+				auto Value = (FFortItemEntryStateValue*) malloc(FFortItemEntryStateValue::Size());
+				Value->IntValue = true;
+				Value->StateType = 2;
+				itemEntry->StateValues.Add(*Value, FFortItemEntryStateValue::Size());
+				(*item)->ItemEntry.StateValues.Add(*Value, FFortItemEntryStateValue::Size());
+				free(Value);
 			}
 
-			WorldInventory->UpdateEntry((*item)->ItemEntry);
+			WorldInventory->UpdateEntry(*itemEntry);
 		}
 		else
 		{
@@ -1371,11 +1420,15 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 				return ServerAttemptInteract_OG(Context, Stack);
 			}
 
+			auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+				{
+					return entry.ItemDefinition == Collection->InputItem;
+				}, FFortItemEntry::Size());
 			auto Item = *ItemP;
 
-			for (int i = 0; i < Item->ItemEntry.StateValues.Num(); i++)
+			for (int i = 0; i < itemEntry->StateValues.Num(); i++)
 			{
-				auto& StateValue = Item->ItemEntry.StateValues.Get(i, FFortItemEntryStateValue::Size());
+				auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
 
 				if (StateValue.StateType != 2)
 					continue;
@@ -1383,11 +1436,26 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 				StateValue.IntValue = 0;
 			}
 
-			Item->ItemEntry.Count -= (int)Cost;
-			if (Item->ItemEntry.Count <= 0)
-				PlayerController->WorldInventory->Remove(Item->ItemEntry.ItemGuid);
+			itemEntry->Count -= (int)Cost;
+			if (itemEntry->Count <= 0)
+				PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
 			else
-				PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
+			{
+				Item->ItemEntry = *itemEntry;
+				Item->ItemEntry.bIsReplicatedCopy = false;
+
+				for (int i = 0; i < Item->ItemEntry.StateValues.Num(); i++)
+				{
+					auto& StateValue = Item->ItemEntry.StateValues.Get(i, FFortItemEntryStateValue::Size());
+
+					if (StateValue.StateType != 2)
+						continue;
+
+					StateValue.IntValue = 0;
+				}
+
+				PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+			}
 		}
 
 		CollectorActor->ClientPausedActiveInputItem = CollectorActor->ActiveInputItem;
@@ -1453,8 +1521,9 @@ void OnUnEquip(AFortWeapon* Weapon)
 	}
 	if (Weapon->EquippedAbilityHandles.Num())
 	{
-		for (auto& Handle : Weapon->EquippedAbilityHandles)
+		for (int i = 0; i < Weapon->EquippedAbilityHandles.Num(); i++)
 		{
+			auto& Handle = Weapon->EquippedAbilityHandles.Get(i, FGameplayAbilitySpecHandle::Size());
 			if (Handle.Handle != -1)
 			{
 				ClearAbility(AbilitySystemComponent, Handle);
@@ -1464,8 +1533,12 @@ void OnUnEquip(AFortWeapon* Weapon)
 	}
 	if (Weapon->EquippedAbilitySetHandles.Num())
 	{
-		for (auto& Handle : Weapon->EquippedAbilitySetHandles)
+		for (int i = 0; i < Weapon->EquippedAbilitySetHandles.Num(); i++)
+		{
+			auto& Handle = Weapon->EquippedAbilitySetHandles.Get(i, FFortAbilitySetHandle::Size());
+
 			UFortKismetLibrary::UnequipFortAbilitySet(Handle);
+		}
 
 		PlayerController->AppliedInGameModifierAbilitySetHandles.Reset();
 		Weapon->EquippedAbilitySetHandles.Free();
@@ -1485,9 +1558,11 @@ public:
 	DEFINE_PROP(PreviousOwningPawn, TWeakObjectPtr<AFortPlayerPawnAthena>);
 	DEFINE_PROP(GrantedWeaponItem, TWeakObjectPtr<UFortWorldItem>);
 	DEFINE_PROP(GrantedWeapon, TWeakObjectPtr<AFortWeapon>);
+	DEFINE_PROP(OnHeldObjectOwningPawnChanged, TMulticastInlineDelegate<void()>);
 
 	DEFINE_FUNC(OnRep_OwningPawn, void);
 };
+
 
 void PickupHeldObject(UObject* Context, FFrame& Stack)
 {

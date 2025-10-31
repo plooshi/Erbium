@@ -143,6 +143,7 @@ public:
     DEFINE_BITFIELD_PROP(bTryPickupSwap);
     DEFINE_PROP(bEnableBroadcastRemoteClientInfo, bool);
     DEFINE_BITFIELD_PROP(bReadyToStartMatch);
+    DEFINE_BITFIELD_PROP(bHoldingObject);
 
     DEFINE_FUNC(GetViewTarget, AActor*);
     DEFINE_FUNC(GetControlRotation, FRotator);
@@ -165,6 +166,7 @@ public:
     DEFINE_FUNC(OnRep_PlayerState, void);
     DEFINE_FUNC(ServerChangeName, void);
     DEFINE_FUNC(ClientIgnoreMoveInput, void);
+    DEFINE_FUNC(ClientIgnoreLookInput, void);
     DEFINE_FUNC(GetActorEyesViewPoint, void);
     DEFINE_FUNC(ClientActivateSlot, void);
 

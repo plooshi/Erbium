@@ -59,6 +59,8 @@ uint64 FindInitializeBuildingActor();
 uint64 FindPostInitializeSpawnedBuildingActor();
 uint64 FindInitializeFlightPath();
 uint64 FindReset();
+uint64 FindNotifyGameMemberAdded();
+uint64 FindSetGamePhase();
 
 inline std::vector<uint64_t> NullFuncs = {};
 inline std::vector<uint64_t> RetTrueFuncs = {};

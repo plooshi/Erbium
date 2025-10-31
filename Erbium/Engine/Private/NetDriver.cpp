@@ -446,6 +446,12 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 
 void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 {
+	if (VersionInfo.FortniteVersion >= 25.20)
+	{
+		auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
+		GamePhaseLogic->Tick();
+	}
+
 	if (Driver->ClientConnections.Num() > 0)
 		ServerReplicateActors(Driver, DeltaSeconds);
 
@@ -467,12 +473,6 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 		auto WorldNetDriver = UWorld::GetWorld()->NetDriver;
 		if (Driver == WorldNetDriver && Driver->ClientConnections.Num() == 0)
 			TerminateProcess(GetCurrentProcess(), 0);
-	}
-
-	if (VersionInfo.FortniteVersion >= 25.20)
-	{
-		auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
-		GamePhaseLogic->Tick();
 	}
 
     return TickFlushOG(Driver, DeltaSeconds);
@@ -553,6 +553,9 @@ void SendClientMoveAdjustments(UNetDriver* Driver)
 
 void UNetDriver::TickFlush__Iris(UNetDriver* Driver, float DeltaSeconds)
 {
+	auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
+	GamePhaseLogic->Tick();
+
 	if (Driver->ClientConnections.Num() > 0)
 	{
 		auto ReplicationSystem = *(UObject**)(__int64(&Driver->ReplicationDriver) + 8);
@@ -576,9 +579,6 @@ void UNetDriver::TickFlush__Iris(UNetDriver* Driver, float DeltaSeconds)
 		if (Driver == WorldNetDriver && Driver->ClientConnections.Num() == 0)
 			TerminateProcess(GetCurrentProcess(), 0);
 	}
-
-	auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
-	GamePhaseLogic->Tick();
 
 	return TickFlushOG(Driver, DeltaSeconds);
 }

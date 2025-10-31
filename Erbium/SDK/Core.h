@@ -1149,16 +1149,17 @@ namespace SDK
 				}
 				else if (TopLevelAssetPathStruct)
 				{
-					auto PackageName = *(FName*)(__int64(this) + offsetof(TPersistentObjectPtr, ObjectID));
-					auto AssetName = *(FName*)(__int64(this) + offsetof(TPersistentObjectPtr, ObjectID) + 0x4);
+					auto PackageName = *(FName*)(__int64(this) + 0x8);
+					auto AssetName = *(FName*)(__int64(this) + 0xC);
+					auto SubPathString = *(FString*)(__int64(this) + 0x10);
 
 					if (PackageName.ComparisonIndex > 0)
 					{
 						auto FullPath = PackageName.ToWString();
 						if (AssetName.ComparisonIndex > 0)
 							FullPath += L"." + AssetName.ToWString();
-						if (ObjectID.SubPathString.Num() > 0)
-							FullPath += L":" + ObjectID.SubPathString.ToWString();
+						if (SubPathString.Num() > 0)
+							FullPath += L":" + SubPathString.ToWString();
 
 						WeakPtr = Ret = FindObject(FullPath.c_str(), Class);
 					}

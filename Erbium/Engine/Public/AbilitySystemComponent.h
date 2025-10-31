@@ -4,6 +4,8 @@
 struct FGameplayAbilitySpecHandle
 {
 public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FGameplayAbilitySpecHandle);
+
     int Handle;
 };
 

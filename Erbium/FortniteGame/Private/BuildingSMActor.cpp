@@ -63,6 +63,10 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 			{
 				return entry->ItemEntry.ItemDefinition == Resource;
 			});
+		auto itemEntry = InstigatedBy->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+		{
+			return entry.ItemDefinition == Resource;
+		}, FFortItemEntry::Size());
 
 		if (ItemP)
 		{
@@ -79,14 +83,27 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 			}
 
 
-			Item->ItemEntry.Count += ResCount;
-			if (Item->ItemEntry.Count > MaxMat)
+			itemEntry->Count += ResCount;
+			if (itemEntry->Count > MaxMat)
 			{
 				AFortInventory::SpawnPickup(InstigatedBy->Pawn->K2_GetActorLocation(), Item->ItemEntry.ItemDefinition, Item->ItemEntry.Count - MaxMat, 0, EFortPickupSourceTypeFlag::GetTossed(), EFortPickupSpawnSource::GetUnset(), InstigatedBy->MyFortPawn);
 				Item->ItemEntry.Count = MaxMat;
 			}
 
-			InstigatedBy->WorldInventory->UpdateEntry(Item->ItemEntry);
+			Item->ItemEntry = *itemEntry;
+			Item->ItemEntry.bIsReplicatedCopy = false;
+
+			for (int i = 0; i < Item->ItemEntry.StateValues.Num(); i++)
+			{
+				auto& StateValue = Item->ItemEntry.StateValues.Get(i, FFortItemEntryStateValue::Size());
+
+				if (StateValue.StateType != 2)
+					continue;
+
+				StateValue.IntValue = 0;
+			}
+
+			InstigatedBy->WorldInventory->UpdateEntry(*itemEntry);
 		}
 		else
 		{

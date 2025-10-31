@@ -6,8 +6,12 @@
 
 struct FFortGameFeatureLootTableData
 {
-    TSoftObjectPtr<UDataTable> LootTierData;
-    TSoftObjectPtr<UDataTable> LootPackageData;
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FFortGameFeatureLootTableData);
+    uint8_t Padding[0x50];
+    
+    DEFINE_STRUCT_PROP(LootTierData, TSoftObjectPtr<UDataTable>);
+    DEFINE_STRUCT_PROP(LootPackageData, TSoftObjectPtr<UDataTable>);
 };
 
 struct FFortLootPackageData

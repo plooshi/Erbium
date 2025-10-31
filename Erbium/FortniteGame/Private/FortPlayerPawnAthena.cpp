@@ -62,7 +62,7 @@ void AFortPlayerPawnAthena::ServerHandlePickup_(UObject* Context, FFrame& Stack)
 		Pickup->PickupLocationData.bPlayPickupSound = bPlayPickupSound;
 	Pickup->PickupLocationData.PickupTarget = Pawn;
 	Pickup->PickupLocationData.StartDirection = InStartDirection;
-	Pickup->PickupLocationData.FlyTime -= 1.f;
+	Pickup->PickupLocationData.FlyTime /= Pawn->PickupSpeedMultiplier;
 	Pickup->OnRep_PickupLocationData();
 
 	Pickup->bPickedUp = true;
@@ -117,7 +117,7 @@ void AFortPlayerPawnAthena::ServerHandlePickupInfo(UObject* Context, FFrame& Sta
 	Pickup->PickupLocationData.bPlayPickupSound = bPlayPickupSound;
 	Pickup->PickupLocationData.PickupGuid = Pickup->PrimaryPickupItemEntry.ItemGuid;
 	Pickup->PickupLocationData.PickupTarget = Pawn;
-	Pickup->PickupLocationData.FlyTime -= 1.f;
+	Pickup->PickupLocationData.FlyTime /= Pawn->PickupSpeedMultiplier;
 	//Pickup->PickupLocationData.StartDirection = Params.Direction.QuantizeNormal();
 	Pickup->OnRep_PickupLocationData();
 

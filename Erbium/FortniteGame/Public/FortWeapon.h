@@ -6,10 +6,13 @@
 struct FFortAbilitySetHandle final
 {
 public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FFortAbilitySetHandle);
+
     TWeakObjectPtr<UAbilitySystemComponent> TargetAbilitySystemComponent;
     TArray<FGameplayAbilitySpecHandle> GrantedAbilityHandles;
     TArray<FActiveGameplayEffectHandle> AppliedEffectHandles;
     TArray<FGuid> ItemGuidsForAdditionalItems;
+    uint8_t Padding[0x30]; // incase
 };
 
 class AFortWeapon : public AActor
