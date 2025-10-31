@@ -70,8 +70,7 @@
     {                                                                                                                                                                \
         __movsb((PBYTE)this, (const PBYTE)&_Rhs, Size());                                                                                                            \
         return *this;                                                                                                                                                \
-    }                                                                                                                                                                \
-    static inline constexpr auto _StructName = #__Class + 1;
+    }
 
 #define UENUM_COMMON_MEMBERS(__Class)                                                                                                                                \
 	static const SDK::UEnum* StaticEnum()                                                                                                                            \

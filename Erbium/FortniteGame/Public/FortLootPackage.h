@@ -14,6 +14,46 @@ public:
     DEFINE_STRUCT_PROP(LootPackageData, TSoftObjectPtr<UDataTable>);
 };
 
+struct FFortGameFeatureLootTableData_UE52
+{
+public: 
+	static const SDK::UStruct* StaticStruct() 
+	{                                         
+		static const SDK::UStruct* _storage = nullptr;
+        static bool bInitialized = false;     
+                                              
+		if (!bInitialized)                    
+        {                                     
+            bInitialized = true;              
+	        _storage = SDK::FindStruct("FortGameFeatureLootTableData");
+        }                                     
+                                              
+		return _storage;                      
+	}                                         
+                                              
+	static const int32 Size()                 
+	{                                         
+		static int32 _size = -1;              
+                                              
+		if (_size == -1)                      
+            _size = StaticStruct()->GetPropertiesSize();  
+                                              
+		return _size;                         
+	}                                         
+                                              
+    FFortGameFeatureLootTableData_UE52& operator=(FFortGameFeatureLootTableData_UE52& _Rhs)
+    {                                         
+        __movsb((PBYTE)this, (const PBYTE)&_Rhs, Size()); 
+        return *this;                         
+    }
+
+    uint8_t Padding[0x40];
+
+    DEFINE_STRUCT_PROP(LootTierData, TSoftObjectPtr<UDataTable>);
+    DEFINE_STRUCT_PROP(LootPackageData, TSoftObjectPtr<UDataTable>);
+};
+
+
 struct FFortLootPackageData
 {
 public:

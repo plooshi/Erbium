@@ -534,6 +534,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                     auto& LootTableData = GetFromOffset<FFortGameFeatureLootTableData>(Object, DefaultLootTableDataOffset);
                     auto& PlaylistOverrideLootTableData = GetFromOffset<TMap<FGameplayTag, FFortGameFeatureLootTableData>>(Object, PlaylistOverrideLootTableDataOffset);
                     auto& PlaylistOverrideLootTableDataLWC = GetFromOffset<TMap<int32, FFortGameFeatureLootTableData>>(Object, PlaylistOverrideLootTableDataOffset);
+                    auto& PlaylistOverrideLootTableDataUE52 = GetFromOffset<TMap<int32, FFortGameFeatureLootTableData_UE52>>(Object, PlaylistOverrideLootTableDataOffset);
                     auto LTDFeatureData = LootTableData.LootTierData.Get();
                     auto LootPackageData = LootTableData.LootPackageData.Get();
 
@@ -545,7 +546,14 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
                         if (Playlist)
                         {
-                            if (VersionInfo.FortniteVersion < 20.00)
+                            if (VersionInfo.EngineVersion >= 5.2)
+                            {
+                                /*for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
+                                    for (auto& Override : PlaylistOverrideLootTableDataUE52)
+                                        if (Tag.TagName.ComparisonIndex == Override.First)
+                                            AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);*/
+                            }
+                            else if (VersionInfo.FortniteVersion < 20.00)
                             {
                                 for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
                                     for (auto& Override : PlaylistOverrideLootTableData)
@@ -574,7 +582,14 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
                         if (Playlist)
                         {
-                            if (VersionInfo.FortniteVersion < 20.00)
+                            if (VersionInfo.EngineVersion >= 5.2)
+                            {
+                                /*for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
+                                    for (auto& Override : PlaylistOverrideLootTableDataUE52)
+                                        if (Tag.TagName.ComparisonIndex == Override.First)
+                                            AddToPackages(Override.Second.LootPackageData.Get(), LPTempData);*/
+                            }
+                            else if (VersionInfo.FortniteVersion < 20.00)
                             {
                                 for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
                                     for (auto& Override : PlaylistOverrideLootTableData)

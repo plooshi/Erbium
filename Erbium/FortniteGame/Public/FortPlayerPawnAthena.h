@@ -58,6 +58,7 @@ public:
     DEFINE_PROP(OnEnteredAircraft, TMulticastInlineDelegate<void()>);
     DEFINE_PROP(PickupSpeedMultiplier, float);
     DEFINE_PROP(HeldObject, TWeakObjectPtr<AActor>);
+    DEFINE_PROP(RepActiveMovementModeExtension, void*);
 
     DEFINE_FUNC(BeginSkydiving, void);
     DEFINE_FUNC(GetHealth, float);
