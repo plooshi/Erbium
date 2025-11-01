@@ -1123,6 +1123,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 			if (!bFound)
 			{
 				auto Value = (FFortItemEntryStateValue*)malloc(FFortItemEntryStateValue::Size());
+				__stosb((PBYTE)Value, 0, FFortItemEntryStateValue::Size());
 				Value->IntValue = true;
 				Value->StateType = 2;
 				itemEntry->StateValues.Add(*Value, FFortItemEntryStateValue::Size());
