@@ -981,6 +981,12 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 			KillerPlayerController->ClientNotifyWon(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause);
 			KillerPlayerController->ClientNotifyTeamWon(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause);
 
+			if (KillerPlayerState != PlayerState && VersionInfo.FortniteVersion >= 19)
+			{
+				auto Crown = FindObject<UFortItemDefinition>(L"/VictoryCrownsGameplay/Items/AGID_VictoryCrown.AGID_VictoryCrown");
+				KillerPlayerController->WorldInventory->GiveItem(Crown, 1);
+			}
+
 			GameState->WinningTeam = KillerPlayerState->TeamIndex;
 			GameState->OnRep_WinningTeam();
 			if (GameState->HasWinningPlayerState())
