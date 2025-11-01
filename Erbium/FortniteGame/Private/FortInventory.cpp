@@ -433,13 +433,13 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
         }*/
 
 
-        itemEntry->Count -= max(Count, 0);
-        if (Count < 0 || itemEntry->Count <= 0 || bForceRemoval)
+        Item->ItemEntry.Count -= max(Count, 0);
+        if (Count < 0 || Item->ItemEntry.Count <= 0 || bForceRemoval)
         {
-            if (itemEntry->ItemDefinition->HasbPersistInInventoryWhenFinalStackEmpty() && itemEntry->ItemDefinition->bPersistInInventoryWhenFinalStackEmpty && Count > 0)
+            if (Item->ItemEntry.ItemDefinition->HasbPersistInInventoryWhenFinalStackEmpty() && Item->ItemEntry.ItemDefinition->bPersistInInventoryWhenFinalStackEmpty && Count > 0)
             {
                 auto OtherStack = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& item)
-                    { return item.ItemDefinition == itemEntry->ItemDefinition && item.ItemGuid != ItemGuid; }, FFortItemEntry::Size());
+                    { return item.ItemDefinition == Item->ItemEntry.ItemDefinition && item.ItemGuid != ItemGuid; }, FFortItemEntry::Size());
 
                 if (!OtherStack)
                 {
@@ -454,8 +454,7 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
                         break;
                     }*/
 
-                    Item->ItemEntry.Count = itemEntry->Count;
-                    PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+                    PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
                 }
                 else
                     PlayerController->WorldInventory->Remove(ItemGuid);
@@ -476,8 +475,7 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
                 break;
             }*/
 
-            Item->ItemEntry.Count = itemEntry->Count;
-            PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+            PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
         }
 
         return true;

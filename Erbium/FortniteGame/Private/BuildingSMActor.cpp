@@ -83,8 +83,8 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 			}*/
 
 
-			itemEntry->Count += ResCount;
-			if (itemEntry->Count > MaxMat)
+			Item->ItemEntry.Count += ResCount;
+			if (Item->ItemEntry.Count > MaxMat)
 			{
 				AFortInventory::SpawnPickup(InstigatedBy->Pawn->K2_GetActorLocation(), Item->ItemEntry.ItemDefinition, Item->ItemEntry.Count - MaxMat, 0, EFortPickupSourceTypeFlag::GetTossed(), EFortPickupSpawnSource::GetUnset(), InstigatedBy->MyFortPawn);
 				Item->ItemEntry.Count = MaxMat;
@@ -102,8 +102,8 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 			}*/
 
 
-			Item->ItemEntry.Count = itemEntry->Count;
-			InstigatedBy->WorldInventory->UpdateEntry(*itemEntry);
+			//Item->ItemEntry.Count = itemEntry->Count;
+			InstigatedBy->WorldInventory->UpdateEntry(Item->ItemEntry);
 		}
 		else
 		{

@@ -444,9 +444,9 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 			StateValue.IntValue = 0;
 		}*/
 
-		itemEntry->Count -= 10;
-		if (itemEntry->Count <= 0)
-			PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
+		Item->ItemEntry.Count -= 10;
+		if (Item->ItemEntry.Count <= 0)
+			PlayerController->WorldInventory->Remove(Item->ItemEntry.ItemGuid);
 		else
 		{
 			/*for (int i = 0; i < itemEntry->StateValues.Num(); i++)
@@ -461,8 +461,7 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 			}*/
 
 
-			Item->ItemEntry.Count = itemEntry->Count;
-			PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+			PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
 		}
 	}
 
@@ -1099,10 +1098,10 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 				break;
 			}*/
 
-			if ((itemEntry->Count += PickupEntry->Count) > MaxStack)
+			if (((*item)->ItemEntry.Count += PickupEntry->Count) > MaxStack)
 			{
-				auto OriginalCount = itemEntry->Count;
-				itemEntry->Count = MaxStack;
+				auto OriginalCount = (*item)->ItemEntry.Count;
+				(*item)->ItemEntry.Count = MaxStack;
 
 				GiveOrSwapStack(OriginalCount);
 			}
@@ -1131,8 +1130,8 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 
 
 
-			(*item)->ItemEntry.Count = itemEntry->Count;
-			WorldInventory->UpdateEntry(*itemEntry);
+			//(*item)->ItemEntry.Count = itemEntry->Count;
+			WorldInventory->UpdateEntry((*item)->ItemEntry);
 		}
 		else
 		{
@@ -1526,7 +1525,7 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 				}, FFortItemEntry::Size());
 			auto Item = *ItemP;
 
-			for (int i = 0; i < itemEntry->StateValues.Num(); i++)
+			/*for (int i = 0; i < itemEntry->StateValues.Num(); i++)
 			{
 				auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
 
@@ -1534,11 +1533,11 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 					continue;
 
 				StateValue.IntValue = 0;
-			}
+			}*/
 
-			itemEntry->Count -= (int)Cost;
-			if (itemEntry->Count <= 0)
-				PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
+			Item->ItemEntry.Count -= (int)Cost;
+			if (Item->ItemEntry.Count <= 0)
+				PlayerController->WorldInventory->Remove(Item->ItemEntry.ItemGuid);
 			else
 			{
 				/*for (int i = 0; i < itemEntry->StateValues.Num(); i++)
@@ -1552,9 +1551,7 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 					break;
 				}*/
 
-
-				Item->ItemEntry.Count = itemEntry->Count;
-				PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+				PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
 			}
 		}
 
