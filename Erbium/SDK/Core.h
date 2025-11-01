@@ -20,6 +20,35 @@ namespace SDK
 		int32 ComparisonIndex;
 		int32 Number;
 
+		FName(int32 InComparisonIndex = 0, int32 InNumber = 0)
+			: ComparisonIndex(InComparisonIndex)
+		{
+			if (VersionInfo.FortniteVersion < 20.00)
+				Number = InNumber;
+		}
+
+		FName(const wchar_t* String)
+		{
+			auto& FName__Ctor = (void(*&)(FName*, const wchar_t*, int)) Offsets::FNameConstructor;
+
+			FName__Ctor(this, String, 1);
+		}
+
+		FName(UEAllocatedWString String)
+		{
+			auto& FName__Ctor = (void(*&)(FName*, const wchar_t*, int)) Offsets::FNameConstructor;
+
+			FName__Ctor(this, String.c_str(), 1);
+		}
+
+		FName(FString String)
+		{
+			auto& FName__Ctor = (void(*&)(FName*, const wchar_t*, int)) Offsets::FNameConstructor;
+
+			FName__Ctor(this, String.CStr(), 1);
+		}
+
+
 		bool IsValid() const
 		{
 			return ComparisonIndex > 0;
@@ -343,6 +372,8 @@ namespace SDK
 	__declspec(noinline) inline const UField* UStruct::GetProperty(const char* Name, uint64_t CastFlags) const
 	{
 		UEAllocatedString s = Name;
+		UEAllocatedWString ws(s.begin(), s.end());
+		auto PropName = FName(ws);
 
 		for (const UStruct* Clss = this; Clss; Clss = (const UStruct*)Clss->GetSuper())
 		{
@@ -358,7 +389,8 @@ namespace SDK
 						if ((FieldFlags & CastFlags) == 0)
 							continue;
 					}
-					if (Prop->FField_GetName().ToSDKString() == s)
+
+					if (Prop->FField_GetName() == PropName)
 						return Prop;
 				}
 			}
@@ -366,7 +398,7 @@ namespace SDK
 			{
 				for (const UField* Prop = Clss->GetChildren(); Prop; Prop = Prop->GetNext())
 				{
-					if ((CastFlags == 0 || Prop->Class->GetCastFlags() & CastFlags) && Prop->GetName().ToSDKString() == s)
+					if ((CastFlags == 0 || Prop->Class->GetCastFlags() & CastFlags) && Prop->GetName() == PropName)
 						return Prop;
 				}
 			}
@@ -383,10 +415,12 @@ namespace SDK
 	__declspec(noinline) inline UFunction* UObject::GetFunction(const char* Name) const
 	{
 		UEAllocatedString s = Name;
+		UEAllocatedWString ws(s.begin(), s.end());
+		auto PropName = FName(ws);
 
 		for (const UStruct* Clss = Class; Clss; Clss = (const UStruct*)Clss->GetSuper())
 			for (const UField* Prop = Clss->GetChildren(); Prop; Prop = Prop->GetNext())
-				if (Prop->Class->GetCastFlags() & 0x80000 && Prop->GetName().ToSDKString() == s)
+				if (Prop->Class->GetCastFlags() & 0x80000 && Prop->GetName() == PropName)
 					return (UFunction*)Prop;
 
 		return nullptr;
@@ -715,7 +749,8 @@ namespace SDK
 		}
 	};
 
-	class TUObjectArray {
+	class TUObjectArray 
+	{
 	public:
 		static const int32 Num()
 		{
@@ -746,10 +781,14 @@ namespace SDK
 
 		static const UObject* FindObject(const char* Name, uint64 TypeFlags = 0, const UClass* TargetClass = nullptr)
 		{
+			UEAllocatedString s = Name;
+			UEAllocatedWString ws(s.begin(), s.end());
+			auto ObjName = FName(ws);
+
 			for (int i = 0; i < Num(); i++)
 			{
 				const UObject* Obj = GetObjectByIndex(i);
-				if (Obj && Obj->Class && (TypeFlags == 0 || Obj->Class->GetCastFlags() & TypeFlags) && (!TargetClass || Obj->IsA(TargetClass)) && Obj->Name.ToString() == Name)
+				if (Obj && Obj->Class && (TypeFlags == 0 || Obj->Class->GetCastFlags() & TypeFlags) && Obj->Name == ObjName && (!TargetClass || Obj->IsA(TargetClass)))
 					return Obj;
 			}
 			return nullptr;
@@ -802,6 +841,7 @@ namespace SDK
 		for (int i = 0; i < TUObjectArray::Num(); i++)
 		{
 			const UObject* Obj = TUObjectArray::GetObjectByIndex(i);
+
 			if (Obj && Obj->IsDefaultObject() && Obj->Class == TargetClass)
 				return Obj;
 		}
@@ -813,6 +853,7 @@ namespace SDK
 		for (int i = 0; i < TUObjectArray::Num(); i++)
 		{
 			const UObject* Obj = TUObjectArray::GetObjectByIndex(i);
+
 			if (Obj && Obj->IsDefaultObject() && Obj->Class == TargetClass)
 				return Obj;
 		}
@@ -861,6 +902,7 @@ namespace SDK
 				}
 			}
 		}
+
 		return *(UObject**)(__int64(this) + Offset);
 	}
 
@@ -935,23 +977,6 @@ namespace SDK
 			_storage = SDK::FindClass("Object");
 
 		return _storage;
-	}
-
-	template <typename T = UObject*, typename _St>
-	inline T& StructGet(_St* StructInstance, const char* StructName, const char* Name)
-	{
-		auto Struct = TUObjectArray::FindObject<UStruct>(StructName, 0x10);
-
-		auto Off = GetFromOffset<uint32>(Struct->GetProperty(Name), Offsets::Offset_Internal);
-		return GetFromOffset<T>(StructInstance, Off);
-	}
-
-	template <typename _St>
-	inline bool StructHas(_St* StructInstance, const char* StructName, const char* Name)
-	{
-		auto Struct = TUObjectArray::FindObject<UStruct>(StructName, 0x10);
-
-		return Struct->GetProperty(Name) != nullptr;
 	}
 
 	inline int StartingSerial = 676767676; // scuffed
@@ -1139,7 +1164,6 @@ namespace SDK
 			{
 				const UObject* Ret = nullptr;
 
-				static auto TopLevelAssetPathStruct = FindStruct("TopLevelAssetPath");
 				if (VersionInfo.EngineVersion <= 4.16)
 				{
 					auto AssetLongPathname = *(FString*)(__int64(this) + offsetof(FSoftObjectPtr, ObjectID));
@@ -1147,7 +1171,7 @@ namespace SDK
 					if (AssetLongPathname.Num() > 0)
 						WeakPtr = Ret = FindObject(AssetLongPathname.CStr(), Class);
 				}
-				else if (TopLevelAssetPathStruct)
+				else if (VersionInfo.EngineVersion >= 5.1)
 				{
 					auto PackageName = *(FName*)(__int64(this) + 0x8);
 					auto AssetName = *(FName*)(__int64(this) + 0xC);

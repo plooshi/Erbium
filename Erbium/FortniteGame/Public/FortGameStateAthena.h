@@ -98,6 +98,15 @@ public:
 };
 
 
+struct FBoxSphereBounds final
+{
+public:
+    struct FVector                                Origin;                                            // 0x0000(0x0018)(Edit, BlueprintVisible, ZeroConstructor, SaveGame, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+    struct FVector                                BoxExtent;                                         // 0x0018(0x0018)(Edit, BlueprintVisible, ZeroConstructor, SaveGame, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+    double                                        SphereRadius;                                      // 0x0030(0x0008)(Edit, BlueprintVisible, ZeroConstructor, SaveGame, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+};
+
+
 class AFortAthenaMapInfo : public AActor
 {
 public:
@@ -109,6 +118,9 @@ public:
     DEFINE_PROP(SafeZoneDefinition, FFortSafeZoneDefinition);
     DEFINE_PROP(AircraftClass, TSubclassOf<AFortAthenaAircraft>);
     DEFINE_PROP(FlightInfos, TArray<FAircraftFlightInfo>);
+    DEFINE_PROP(CachedPlayableBoundsForClients, FBoxSphereBounds);
+
+    DEFINE_FUNC(GetMapCenter, FVector);
 };
 
 

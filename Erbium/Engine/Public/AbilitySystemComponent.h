@@ -65,17 +65,54 @@ public:
     uint8 Pad_5[0x3];
 };
 
+class UGameplayEffect : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UGameplayEffect);
+};
+
+
+struct FGameplayEffectSpec
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FGameplayEffectSpec);
+
+    DEFINE_STRUCT_PROP(Def, UGameplayEffect*);
+};
+
+
+struct FActiveGameplayEffect
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FActiveGameplayEffect);
+
+    DEFINE_STRUCT_PROP(Spec, FGameplayEffectSpec);
+};
+
+
+struct FActiveGameplayEffectsContainer
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FActiveGameplayEffectsContainer);
+
+    DEFINE_STRUCT_PROP(GameplayEffects_Internal, TArray<FActiveGameplayEffect>);
+};
+
 class UAbilitySystemComponent : public UActorComponent
 {
 public:
     UCLASS_COMMON_MEMBERS(UAbilitySystemComponent);
 
     DEFINE_PROP(ActivatableAbilities, FGameplayAbilitySpecContainer);
+    DEFINE_PROP(ActiveGameplayEffects, FActiveGameplayEffectsContainer);
 
     DEFINE_FUNC(ClientActivateAbilityFailed, void);
     DEFINE_FUNC(NetMulticast_InvokeGameplayCueAdded, void);
     DEFINE_FUNC(NetMulticast_InvokeGameplayCueExecuted, void);
     DEFINE_FUNC(MakeEffectContext, FGameplayEffectContextHandle);
+    DEFINE_FUNC(BP_ApplyGameplayEffectToSelf, FActiveGameplayEffectHandle);
+    DEFINE_FUNC(UpdateActiveGameplayEffectSetByCallerMagnitude, void);
+    DEFINE_FUNC(SetActiveGameplayEffectLevel, void);
 
     FGameplayAbilitySpecHandle GiveAbility(const UObject* Ability, UObject* SourceObject = nullptr);
     void GiveAbilitySet(const UFortAbilitySet* Set);

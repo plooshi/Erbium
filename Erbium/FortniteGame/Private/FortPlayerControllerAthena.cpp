@@ -103,7 +103,39 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 		{
 			PlayerController->MyFortPawn->BeginSkydiving(true);
 			PlayerController->MyFortPawn->SetHealth(100.f);
+			
+			static auto Effect = FindObject<UClass>(L"/Game/Athena/SafeZone/GE_OutsideSafeZoneDamage.GE_OutsideSafeZoneDamage_C");
 
+			bool Found = false;
+			auto AbilitySystemComponent = PlayerController->PlayerState->AbilitySystemComponent;
+
+			for (int i = 0; i < AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Num(); i++)
+			{
+				auto& ActiveEffect = AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Get(i, FActiveGameplayEffect::Size());
+
+				if (ActiveEffect.Spec.Def)
+					if (ActiveEffect.Spec.Def->IsA(Effect))
+					{
+						Found = true;
+						break;
+					}
+			}
+
+			if (!Found)
+			{
+				auto EffectHandle = FGameplayEffectContextHandle();
+				auto SpecHandle = AbilitySystemComponent->BP_ApplyGameplayEffectToSelf(Effect, 0, EffectHandle);
+
+				AbilitySystemComponent->SetActiveGameplayEffectLevel(SpecHandle, 0);
+
+				AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(SpecHandle,
+					FGameplayTag(UKismetStringLibrary::Conv_StringToName(FString(L"SetByCaller.StormCampingDamage"))), 1);
+			}
+
+			PlayerController->MyFortPawn->bIsInAnyStorm = false;
+			PlayerController->MyFortPawn->OnRep_IsInAnyStorm();
+			PlayerController->MyFortPawn->bIsInsideSafeZone = true;
+			PlayerController->MyFortPawn->OnRep_IsInsideSafeZone();
 
 			if (FConfiguration::bLateGame)
 			{
@@ -402,7 +434,7 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 		auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
 			{ return entry.ItemDefinition == Resource; }, FFortItemEntry::Size());
 
-		for (int i = 0; i < itemEntry->StateValues.Num(); i++)
+		/*for (int i = 0; i < itemEntry->StateValues.Num(); i++)
 		{
 			auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
 
@@ -410,26 +442,27 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 				continue;
 
 			StateValue.IntValue = 0;
-		}
+		}*/
 
 		itemEntry->Count -= 10;
 		if (itemEntry->Count <= 0)
 			PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
 		else
 		{
-			Item->ItemEntry = *itemEntry;
-			Item->ItemEntry.bIsReplicatedCopy = false;
-
-			for (int i = 0; i < Item->ItemEntry.StateValues.Num(); i++)
+			for (int i = 0; i < itemEntry->StateValues.Num(); i++)
 			{
-				auto& StateValue = Item->ItemEntry.StateValues.Get(i, FFortItemEntryStateValue::Size());
+				auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
 
 				if (StateValue.StateType != 2)
 					continue;
 
 				StateValue.IntValue = 0;
+				break;
 			}
 
+
+			Item->ItemEntry = *itemEntry;
+			Item->ItemEntry.bIsReplicatedCopy = false;
 			PlayerController->WorldInventory->UpdateEntry(*itemEntry);
 		}
 	}
@@ -537,12 +570,16 @@ void AFortPlayerControllerAthena::ServerEditBuildingActor(UObject* Context, FFra
 
 	SetEditingPlayer(Building, nullptr);
 
-	static auto ReplaceBuildingActor = (ABuildingSMActor * (*)(ABuildingSMActor*, unsigned int, const UClass*, unsigned int, int, bool, AFortPlayerControllerAthena*)) ReplaceBuildingActor_;
+	static auto ReplaceBuildingActor = (ABuildingSMActor * (*)(ABuildingSMActor*, unsigned int, TSubclassOf<AActor>, unsigned int, int, bool, AFortPlayerControllerAthena*)) ReplaceBuildingActor_;
+	static auto ReplaceBuildingActor__New = (ABuildingSMActor * (*)(ABuildingSMActor*, unsigned int, TSubclassOf<AActor>&, unsigned int, int, bool, AFortPlayerControllerAthena*)) ReplaceBuildingActor_;
 
 	ABuildingSMActor* NewBuild;
 	
-	//if (VersionInfo.FortniteVersion < 28)
-	NewBuild = ReplaceBuildingActor(Building, 1, NewClass.Get(), Building->CurrentBuildingLevel, RotationIterations, bMirrored, PlayerController);
+	if (VersionInfo.FortniteVersion < 27)
+		NewBuild = ReplaceBuildingActor(Building, 1, NewClass, Building->CurrentBuildingLevel, RotationIterations, bMirrored, PlayerController);
+	else
+		NewBuild = ReplaceBuildingActor__New(Building, 1, NewClass, Building->CurrentBuildingLevel, RotationIterations, bMirrored, PlayerController);
+
 	/*else
 	{
 		// reimpl of replacebuildingactor
@@ -570,7 +607,6 @@ void AFortPlayerControllerAthena::ServerEditBuildingActor(UObject* Context, FFra
 		Building->SilentDie(true);
 	}*/
 	
-	printf("Build: %p, NewBuild: %p, NewCl: %s, NetRole: %d, fr: %d\n", Building, NewBuild, NewClass.Get()->Name.ToString().c_str(), Building->Role, Building->bPersistToWorld);
 	if (NewBuild)
 	{
 		NewBuild->bPlayerPlaced = true;
@@ -890,11 +926,10 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 
 		if (VersionInfo.FortniteVersion >= 15)
 		{
-			static auto SpectatingName = UKismetStringLibrary::Conv_StringToName(FString(L"Spectating"));
+			//static auto SpectatingName = UKismetStringLibrary::Conv_StringToName(FString(L"Spectating"));
 			//PlayerController->StateName = SpectatingName;
-			PlayerController->ClientGotoState(SpectatingName);
-			PlayerController->ClientIgnoreMoveInput(true);
-			PlayerController->ClientIgnoreLookInput(true);
+			//PlayerController->ClientGotoState(SpectatingName);
+			PlayerController->Pawn->CharacterMovement->ProcessEvent(PlayerController->Pawn->CharacterMovement->GetFunction("DisableMovement"), nullptr);
 		}
 
 
@@ -1053,7 +1088,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 		if (item)
 		{
 			bool bFound = false;
-			for (int i = 0; i < itemEntry->StateValues.Num(); i++)
+			/*for (int i = 0; i < itemEntry->StateValues.Num(); i++)
 			{
 				auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
 
@@ -1063,7 +1098,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 				bFound = true;
 				StateValue.IntValue = 0;
 				break;
-			}
+			}*/
 
 			if ((itemEntry->Count += PickupEntry->Count) > MaxStack)
 			{
@@ -1073,13 +1108,10 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 				GiveOrSwapStack(OriginalCount);
 			}
 
-			(*item)->ItemEntry = *itemEntry;
-			(*item)->ItemEntry.bIsReplicatedCopy = false;
-
 			// full proper
-			for (int i = 0; i < (*item)->ItemEntry.StateValues.Num(); i++)
+			for (int i = 0; i < itemEntry->StateValues.Num(); i++)
 			{
-				auto& StateValue = (*item)->ItemEntry.StateValues.Get(i, FFortItemEntryStateValue::Size());
+				auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
 
 				if (StateValue.StateType != 2)
 					continue;
@@ -1087,16 +1119,20 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 				StateValue.IntValue = 1;
 				break;
 			}
+
 			if (!bFound)
 			{
-				auto Value = (FFortItemEntryStateValue*) malloc(FFortItemEntryStateValue::Size());
+				auto Value = (FFortItemEntryStateValue*)malloc(FFortItemEntryStateValue::Size());
 				Value->IntValue = true;
 				Value->StateType = 2;
 				itemEntry->StateValues.Add(*Value, FFortItemEntryStateValue::Size());
-				(*item)->ItemEntry.StateValues.Add(*Value, FFortItemEntryStateValue::Size());
 				free(Value);
 			}
 
+
+
+			(*item)->ItemEntry = *itemEntry;
+			(*item)->ItemEntry.bIsReplicatedCopy = false;
 			WorldInventory->UpdateEntry(*itemEntry);
 		}
 		else
@@ -1117,6 +1153,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 }
 
 extern uint64_t ApplyCharacterCustomization;
+extern uint64_t NotifyGameMemberAdded_;
 void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 {
 	FString Msg;
@@ -1164,7 +1201,10 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 		else if (command == "demospeed")
 		{
 			if (args.size() != 2)
+			{
 				PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1);
+				return;
+			}
 
 			auto ws = L"demospeed " + UEAllocatedWString(args[1].begin(), args[1].end());
 
@@ -1174,14 +1214,59 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 		{
 			PlayerController->Pawn->bCanBeDamaged ^= 1;
 		}
+		else if (command == "speed")
+		{
+			float Speed = 1.0f;
+
+			if (args.size() > 1)
+			{
+				try { Speed = std::stof(std::string(args[1])); }
+				catch (...)
+				{
+					PlayerController->ClientMessage(FString(L"Invalid speed value"), FName(), 1);
+					return;
+				}
+			}
+
+			auto Pawn = PlayerController->Pawn;
+			if (!Pawn)
+				PlayerController->ClientMessage(FString(L"No pawn to set speed"), FName(), 1);
+
+			static auto SetMovementSpeedFn = Pawn->GetFunction("SetMovementSpeed");
+			if (!SetMovementSpeedFn)
+				SetMovementSpeedFn = Pawn->GetFunction("SetMovementSpeedMultiplier");
+
+			if (!SetMovementSpeedFn)
+				return;
+
+			Pawn->ProcessEvent(SetMovementSpeedFn, &Speed);
+		}
+		else if (command == "timeofday" || command == "time" || command == "t")
+		{
+			if (args.size() < 2)
+			{
+				PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1);
+				return;
+
+			}
+
+			float NewTOD = 0.f;
+			try { NewTOD = std::stof(std::string(args[1])); }
+			catch (...) {}
+
+			UFortKismetLibrary::SetTimeOfDay(UWorld::GetWorld(), NewTOD);
+		}
 		else if (command == "spawnbot")
 		{
-			if (args.size() != 2 && args.size() != 3)
+			if (args.size() < 2)
+			{
 				PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1);
+				return;
+			}
 
 			int Count = 1;
 
-			if (args.size() == 3)
+			if (args.size() >= 3)
 			{
 				Count = std::stoi(args[2].c_str(), nullptr);
 			}
@@ -1235,6 +1320,10 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 					GameState->GameMemberInfoArray.Members.Add(*Member, FGameMemberInfo::Size());
 					GameState->GameMemberInfoArray.MarkItemDirty(*Member);
 
+					auto NotifyGameMemberAdded = (void(*)(AFortGameStateAthena*, uint8_t, uint8_t, FUniqueNetIdRepl*)) NotifyGameMemberAdded_;
+					if (NotifyGameMemberAdded)
+						NotifyGameMemberAdded(GameState, Member->SquadId, Member->TeamIndex, &Member->MemberUniqueId);
+
 					free(Member);
 				}
 
@@ -1280,7 +1369,10 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 		else if (command == "bugitgo" || command == "tp")
 		{
 			if (args.size() != 4)
+			{
 				PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1);
+				return;
+			}
 
 			double X = 0., Y = 0., Z = 0.;
 
@@ -1294,7 +1386,10 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 		else if (command == "giveitem")
 		{
 			if (args.size() != 2 && args.size() != 3)
+			{
 				PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1);
+				return;
+			}
 
 			auto ItemDefinition = FindObject<UFortItemDefinition>(UEAllocatedWString(args[1].begin(), args[1].end()));
 			if (!ItemDefinition)
@@ -1316,7 +1411,10 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 		else if (command == "spawnpickup")
 		{
 			if (args.size() != 2 && args.size() != 3)
+			{
 				PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1);
+				return;
+			}
 
 			auto ItemDefinition = FindObject<UFortItemDefinition>(UEAllocatedWString(args[1].begin(), args[1].end()));
 			if (!ItemDefinition)
@@ -1336,7 +1434,10 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 		else if (command == "spawnactor" || command == "summon")
 		{
 			if (args.size() != 2)
+			{
 				PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1);
+				return;
+			}
 
 			auto Loc = PlayerController->Pawn->K2_GetActorLocation();
 			Loc.Z += 500.f;
@@ -1441,19 +1542,20 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 				PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
 			else
 			{
-				Item->ItemEntry = *itemEntry;
-				Item->ItemEntry.bIsReplicatedCopy = false;
-
-				for (int i = 0; i < Item->ItemEntry.StateValues.Num(); i++)
+				for (int i = 0; i < itemEntry->StateValues.Num(); i++)
 				{
-					auto& StateValue = Item->ItemEntry.StateValues.Get(i, FFortItemEntryStateValue::Size());
+					auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
 
 					if (StateValue.StateType != 2)
 						continue;
 
 					StateValue.IntValue = 0;
+					break;
 				}
 
+
+				Item->ItemEntry = *itemEntry;
+				Item->ItemEntry.bIsReplicatedCopy = false;
 				PlayerController->WorldInventory->UpdateEntry(*itemEntry);
 			}
 		}
@@ -1529,7 +1631,7 @@ void OnUnEquip(AFortWeapon* Weapon)
 				ClearAbility(AbilitySystemComponent, Handle);
 			}
 		}
-		Weapon->EquippedAbilityHandles.Free();
+		Weapon->EquippedAbilityHandles.ResetNum();
 	}
 	if (Weapon->EquippedAbilitySetHandles.Num())
 	{
@@ -1541,7 +1643,7 @@ void OnUnEquip(AFortWeapon* Weapon)
 		}
 
 		PlayerController->AppliedInGameModifierAbilitySetHandles.Reset();
-		Weapon->EquippedAbilitySetHandles.Free();
+		Weapon->EquippedAbilitySetHandles.ResetNum();
 	}
 
 	return OnUnEquipOG(Weapon);
@@ -1564,6 +1666,59 @@ public:
 };
 
 
+void SetHeldObject(AFortPlayerPawnAthena* Pawn, AActor* HeldObject)
+{
+	auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
+
+	Pawn->HeldObject = HeldObject;
+	PlayerController->bHoldingObject = HeldObject != nullptr;
+}
+
+void SetupOwningPawn(UFortHeldObjectComponent* HeldObjectComponent, AFortPlayerPawnAthena* Pawn)
+{
+	auto HeldObject = (AActor*)HeldObjectComponent->GetOwner();
+
+	if (!HeldObject)
+		return;
+
+	HeldObject->FlushNetDormancy();
+
+	if (Pawn)
+		HeldObjectComponent->HeldObjectState = 1;
+
+	AFortPlayerPawnAthena* PreviousPawn = nullptr;
+	if (HeldObjectComponent->HasOwningPawn())
+	{
+		auto OldPawn = HeldObjectComponent->OwningPawn;
+		HeldObjectComponent->PreviousOwningPawn = !Pawn ? HeldObjectComponent->OwningPawn : nullptr;
+		HeldObjectComponent->OwningPawn = Pawn;
+		//HeldObjectComponent->OnRep_OwningPawn(OldPawn);
+		PreviousPawn = OldPawn;
+	}
+	else
+	{
+		// its a weakobjectptr on older builds
+		static auto OwningPawnOff = HeldObjectComponent->GetOffset("OwningPawn", 0x8000000);
+		auto& OwningPawn = *(TWeakObjectPtr<AFortPlayerPawnAthena>*)(__int64(HeldObjectComponent) + OwningPawnOff);
+
+		HeldObjectComponent->PreviousOwningPawn = !Pawn ? OwningPawn.Get() : nullptr;
+		auto OldPawn = OwningPawn.Get();
+		OwningPawn = Pawn;
+		//HeldObjectComponent->OnRep_OwningPawn(OldPawn);
+		PreviousPawn = OldPawn;
+	}
+
+	if (Pawn)
+		SetHeldObject(Pawn, HeldObject);
+
+	HeldObject->ForceNetUpdate();
+	HeldObjectComponent->OnHeldObjectOwningPawnChanged.Process();
+	if (Pawn)
+		Pawn->OnHeldObjectPickedUp.Process(HeldObject);
+	else
+		PreviousPawn->OnHeldObjectDropped.Process(HeldObject);
+}
+
 void PickupHeldObject(UObject* Context, FFrame& Stack)
 {
 	AFortPlayerPawnAthena* Pawn;
@@ -1574,6 +1729,7 @@ void PickupHeldObject(UObject* Context, FFrame& Stack)
 
 	auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
 
+	SetupOwningPawn(HeldObjectComponent, Pawn);
 
 	if (!HeldObjectComponent->GrantedWeaponItem.Get())
 	{
@@ -1593,26 +1749,6 @@ void PickupHeldObject(UObject* Context, FFrame& Stack)
 		HeldObjectComponent->GrantedWeapon = Weapon;
 		HeldObjectComponent->GrantedWeaponItem = Item;
 	}
-
-	HeldObjectComponent->HeldObjectState = 1;
-
-	if (HeldObjectComponent->HasOwningPawn())
-	{
-		auto OldPawn = HeldObjectComponent->OwningPawn;
-		HeldObjectComponent->OwningPawn = Pawn;
-		HeldObjectComponent->OnRep_OwningPawn(OldPawn);
-	}
-	else
-	{
-		// its a weakobjectptr on older builds
-		static auto OwningPawnOff = HeldObjectComponent->GetOffset("OwningPawn", 0x8000000);
-		auto& OwningPawn = *(TWeakObjectPtr<AFortPlayerPawnAthena>*)(__int64(Context) + OwningPawnOff);
-
-		auto OldPawn = OwningPawn.Get();
-		OwningPawn = Pawn;
-		HeldObjectComponent->OnRep_OwningPawn(OldPawn);
-	}
-	Pawn->OnHeldObjectPickedUp.Process((AActor*)HeldObjectComponent->GetOwner());
 }
 
 
@@ -1638,6 +1774,9 @@ void DropHeldObject(UObject* Context, FFrame& Stack)
 	Stack.IncrementCode();
 	printf("DropHeldObject\n");
 	auto HeldObjectComponent = (UFortHeldObjectComponent*)Context;
+
+	if (!HeldObjectComponent->OwningPawn)
+		return;
 
 
 	auto PlayerController = (AFortPlayerControllerAthena*)HeldObjectComponent->OwningPawn->Controller;
@@ -1671,10 +1810,6 @@ void DropHeldObject(UObject* Context, FFrame& Stack)
 
 			PlayerController->ClientEquipItem(Weapon->ItemEntryGuid, true);
 		}
-
-		HeldObjectComponent->OwningPawn = nullptr;
-		HeldObjectComponent->OnRep_OwningPawn(OldPawn);
-		OldPawn->OnHeldObjectDropped.Process((AActor*)HeldObjectComponent->GetOwner());
 	}
 	else
 	{
@@ -1693,18 +1828,11 @@ void DropHeldObject(UObject* Context, FFrame& Stack)
 
 			PlayerController->ClientEquipItem(Weapon->ItemEntryGuid, true);
 		}
-
-		auto OldPawn = OwningPawn.Get();
-		OwningPawn = nullptr;
-		HeldObjectComponent->OnRep_OwningPawn(OldPawn);
-		OldPawn->OnHeldObjectDropped.Process((AActor*)HeldObjectComponent->GetOwner());
 	}
 
-
-	auto OldPawn = HeldObjectComponent->OwningPawn;
-	HeldObjectComponent->OwningPawn = nullptr;
-	HeldObjectComponent->OnRep_OwningPawn(OldPawn);
+	SetupOwningPawn(HeldObjectComponent, nullptr);
 }
+
 
 void AFortPlayerControllerAthena::SpawnToyInstance(UObject* Context, FFrame& Stack, AActor** Ret)
 {

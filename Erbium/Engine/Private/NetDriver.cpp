@@ -750,6 +750,9 @@ void UNetDriver::PostLoadHook()
 
 	if (VersionInfo.FortniteVersion < 3.4 && FindFlushDormancy())
 	{
+		printf("%llx\n", FindFlushDormancy() - ImageBase);
+		printf("%llx\n", __int64(AActor::GetDefaultObj()->GetFunction("FlushNetDormancy")->GetImpl()) - ImageBase);
+		printf("%llx\n", __int64(AActor::GetDefaultObj()->GetFunction("SetNetDormancy")->GetImpl()) - ImageBase);
 		Utils::Hook(__int64(AActor::GetDefaultObj()->GetFunction("FlushNetDormancy")->GetImpl()), FlushNetDormancy, FlushNetDormancyOG);
 		Utils::Hook(__int64(AActor::GetDefaultObj()->GetFunction("SetNetDormancy")->GetImpl()), SetNetDormancy, SetNetDormancyOG);
 	}

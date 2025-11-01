@@ -17,6 +17,8 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
     Item->ItemEntry.LoadedAmmo = LoadedAmmo;
     if (Item->ItemEntry.HasPhantomReserveAmmo())
         Item->ItemEntry.PhantomReserveAmmo = PhantomReserveAmmo;
+    if (Item->ItemEntry.HasStateValues()) // dk
+        Item->ItemEntry.StateValues = StateValues;
 
     /*if (Item->ItemEntry.ItemGuid.A == 0 && Item->ItemEntry.ItemGuid.B == 0 && Item->ItemEntry.ItemGuid.C == 0 && Item->ItemEntry.ItemGuid.D == 0)
     {
@@ -29,8 +31,6 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
 
     auto& repEntry = this->Inventory.ReplicatedEntries.Add(Item->ItemEntry, FFortItemEntry::Size());
     repEntry.bIsReplicatedCopy = true;
-    if (repEntry.HasStateValues()) // dk
-        repEntry.StateValues = StateValues;
     this->Inventory.ItemInstances.Add(Item);
 
     auto OnItemInstanceAddedVft = FindOnItemInstanceAddedVft();
@@ -422,7 +422,7 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
 
         auto Item = *ItemP;
 
-        for (int i = 0; i < itemEntry->StateValues.Num(); i++)
+        /*for (int i = 0; i < itemEntry->StateValues.Num(); i++)
         {
             auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
 
@@ -430,7 +430,7 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
                 continue;
 
             StateValue.IntValue = 0;
-        }
+        }*/
 
 
         itemEntry->Count -= max(Count, 0);
@@ -443,19 +443,20 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
 
                 if (!OtherStack)
                 {
-                    Item->ItemEntry = *itemEntry;
-                    Item->ItemEntry.bIsReplicatedCopy = false;
-
-                    for (int i = 0; i < Item->ItemEntry.StateValues.Num(); i++)
+                    for (int i = 0; i < itemEntry->StateValues.Num(); i++)
                     {
-                        auto& StateValue = Item->ItemEntry.StateValues.Get(i, FFortItemEntryStateValue::Size());
+                        auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
 
                         if (StateValue.StateType != 2)
                             continue;
 
                         StateValue.IntValue = 0;
+                        break;
                     }
 
+
+                    Item->ItemEntry = *itemEntry;
+                    Item->ItemEntry.bIsReplicatedCopy = false;
                     PlayerController->WorldInventory->UpdateEntry(*itemEntry);
                 }
                 else
@@ -466,19 +467,20 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
         }
         else
         {
-            Item->ItemEntry = *itemEntry;
-            Item->ItemEntry.bIsReplicatedCopy = false;
-
-            for (int i = 0; i < Item->ItemEntry.StateValues.Num(); i++)
+            for (int i = 0; i < itemEntry->StateValues.Num(); i++)
             {
-                auto& StateValue = Item->ItemEntry.StateValues.Get(i, FFortItemEntryStateValue::Size());
+                auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
 
                 if (StateValue.StateType != 2)
                     continue;
 
                 StateValue.IntValue = 0;
+                break;
             }
 
+
+            Item->ItemEntry = *itemEntry;
+            Item->ItemEntry.bIsReplicatedCopy = false;
             PlayerController->WorldInventory->UpdateEntry(*itemEntry);
         }
 

@@ -58,6 +58,7 @@ public:
 	DEFINE_FUNC(SetAircrafts, void);
 	DEFINE_FUNC(OnRep_Aircrafts, void);
 	DEFINE_FUNC(OnRep_SafeZoneIndicator, void);
+	DEFINE_FUNC(IsInCurrentSafeZone, bool);
 
     DEFINE_STATIC_FUNC(Get, UFortGameStateComponent_BattleRoyaleGamePhaseLogic*);
 
@@ -67,6 +68,7 @@ public:
 	void Tick();
 	AFortSafeZoneIndicator* SetupSafeZoneIndicator();
 	void StartNewSafeZonePhase(int NewSafeZonePhase);
+	static void GenerateStormCircles(AFortAthenaMapInfo* MapInfo);
 
     InitHooks;
 };

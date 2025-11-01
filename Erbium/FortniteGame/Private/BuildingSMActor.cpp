@@ -72,7 +72,7 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 		{
 			auto Item = *ItemP;
 
-			for (int i = 0; i < Item->ItemEntry.StateValues.Num(); i++)
+			/*for (int i = 0; i < Item->ItemEntry.StateValues.Num(); i++)
 			{
 				auto& StateValue = Item->ItemEntry.StateValues.Get(i, FFortItemEntryStateValue::Size());
 
@@ -80,7 +80,7 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 					continue;
 
 				StateValue.IntValue = 0;
-			}
+			}*/
 
 
 			itemEntry->Count += ResCount;
@@ -90,19 +90,20 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 				Item->ItemEntry.Count = MaxMat;
 			}
 
-			Item->ItemEntry = *itemEntry;
-			Item->ItemEntry.bIsReplicatedCopy = false;
-
-			for (int i = 0; i < Item->ItemEntry.StateValues.Num(); i++)
+			for (int i = 0; i < itemEntry->StateValues.Num(); i++)
 			{
-				auto& StateValue = Item->ItemEntry.StateValues.Get(i, FFortItemEntryStateValue::Size());
+				auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
 
 				if (StateValue.StateType != 2)
 					continue;
 
 				StateValue.IntValue = 0;
+				break;
 			}
 
+
+			Item->ItemEntry = *itemEntry;
+			Item->ItemEntry.bIsReplicatedCopy = false;
 			InstigatedBy->WorldInventory->UpdateEntry(*itemEntry);
 		}
 		else

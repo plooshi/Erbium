@@ -30,6 +30,7 @@ namespace SDK
 		inline uint64_t GetInterfaceAddress = 0;
 		inline uint64_t StaticFindObject = 0;
 		inline uint64_t StaticLoadObject = 0;
+		inline uint64_t FNameConstructor = 0;
 
 		inline uint32_t Offset_Internal = 0;
 		inline uint32_t ElementSize = 0;
@@ -290,7 +291,7 @@ namespace SDK
 			{
 				auto Ptr = (uint8_t*)(sRef - i);
 
-				if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5c)
+				if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
 				{
 					Offsets::StaticFindObject = uint64_t(Ptr);
 					break;
@@ -351,5 +352,22 @@ namespace SDK
 			Offsets::ExecFunction = 0xF0;
 		else
 			Offsets::ExecFunction = 0xD8;
+
+
+		auto StringRef = Memcury::Scanner::FindStringRef(L"ClientIgnoreLookInput", true).Get();
+
+		if (StringRef)
+		{
+			for (int i = 0; i < 1000; i++)
+			{
+				auto Ptr = (uint8_t*)(StringRef + i);
+
+				if (*Ptr == 0x48 && *(Ptr + 1) == 0x8D && (*(Ptr + 7) == 0xE9 || *(Ptr + 7) == 0xE8))
+				{
+					Offsets::FNameConstructor = Memcury::Scanner(Ptr + 7).RelativeOffset(1).Get();
+					break;
+				}
+			}
+		}
 	}
 }

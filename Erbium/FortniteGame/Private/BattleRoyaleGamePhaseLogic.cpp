@@ -45,6 +45,208 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::HandleMatchHasStarted(A
 	GamePhaseLogic->SetGamePhaseStep(EAthenaGamePhaseStep::Warmup);
 }
 
+constexpr float KINDA_SMALL_NUMBER = 1.e-4f;
+
+// thanks mariki
+struct FStormCircle
+{
+	FVector Center;
+	float Radius;
+};
+
+std::vector<FStormCircle> StormCircles;
+
+struct FVector2D
+{
+public:
+	double X;
+	double Y;
+};
+
+inline FVector2D GetSafeNormal(FVector2D v)
+{
+	double sizeSq = v.X * v.X + v.Y * v.Y;
+	if (sizeSq > KINDA_SMALL_NUMBER)
+	{
+		double inv = 1. / sqrt(sizeSq);
+		return FVector2D(v.X * inv, v.Y * inv);
+	}
+	return FVector2D(0.f, 0.f);
+}
+
+inline FVector GetSafeNormal(FVector v)
+{
+	double sizeSq = v.X * v.X + v.Y * v.Y + v.Z * v.Z;
+	if (sizeSq > KINDA_SMALL_NUMBER)
+	{
+		double inv = 1. / sqrt(sizeSq);
+		return FVector(v.X * inv, v.Y * inv, v.Z * inv);
+	}
+	return FVector(0.f, 0.f, 0.f);
+}
+
+inline bool IsNearlyZero(FVector2D v)
+{
+	return (v.X * v.X + v.Y * v.Y) < KINDA_SMALL_NUMBER * KINDA_SMALL_NUMBER;
+}
+
+FVector ClampToPlayableBounds(const FVector& Candidate, float Radius, const FBoxSphereBounds& Bounds)
+{
+	FVector Clamped = Candidate;
+
+	Clamped.X = std::clamp(Clamped.X, Bounds.Origin.X - Bounds.BoxExtent.X + Radius, Bounds.Origin.X + Bounds.BoxExtent.X - Radius);
+	Clamped.Y = std::clamp(Clamped.Y, Bounds.Origin.Y - Bounds.BoxExtent.Y + Radius, Bounds.Origin.Y + Bounds.BoxExtent.Y - Radius);
+
+	return Clamped;
+}
+
+#define INV_PI			(0.31830988618f)
+#define HALF_PI			(1.57079632679f)
+#define PI 					(3.1415926535897932f)
+
+float RadiansToDegrees(float Radians)
+{
+	return Radians * (180.0f / PI);
+}
+inline void SinCos(float* ScalarSin, float* ScalarCos, float  Value)
+{
+	// Map Value to y in [-pi,pi], x = 2*pi*quotient + remainder.
+	float quotient = (INV_PI * 0.5f) * Value;
+	if (Value >= 0.0f)
+	{
+		quotient = (float)((int)(quotient + 0.5f));
+	}
+	else
+	{
+		quotient = (float)((int)(quotient - 0.5f));
+	}
+	float y = Value - (2.0f * PI) * quotient;
+
+	// Map y to [-pi/2,pi/2] with sin(y) = sin(Value).
+	float sign;
+	if (y > HALF_PI)
+	{
+		y = PI - y;
+		sign = -1.0f;
+	}
+	else if (y < -HALF_PI)
+	{
+		y = -PI - y;
+		sign = -1.0f;
+	}
+	else
+	{
+		sign = +1.0f;
+	}
+
+	float y2 = y * y;
+
+	// 11-degree minimax approximation
+	*ScalarSin = (((((-2.3889859e-08f * y2 + 2.7525562e-06f) * y2 - 0.00019840874f) * y2 + 0.0083333310f) * y2 - 0.16666667f) * y2 + 1.0f) * y;
+
+	// 10-degree minimax approximation
+	float p = ((((-2.6051615e-07f * y2 + 2.4760495e-05f) * y2 - 0.0013888378f) * y2 + 0.041666638f) * y2 - 0.5f) * y2 + 1.0f;
+	*ScalarCos = sign * p;
+}
+
+void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::GenerateStormCircles(AFortAthenaMapInfo* MapInfo)
+{
+	StormCircles.clear();
+
+	auto FRandSeeded = [&]() { return (float) rand() / 32767.f; };
+
+	float Radii[13] = { 150000, 120000, 95000, 70000, 55000, 32500, 20000, 10000, 5000, 2500, 1650, 1090, 0 };
+
+	FVector FirstCenter = MapInfo->GetMapCenter();
+	StormCircles.push_back(FStormCircle{ FirstCenter, Radii[0] });
+
+	float DirAngle = FRandSeeded() * 2.f * PI;
+	float DirSin, DirCos;
+	SinCos(&DirSin, &DirCos, DirAngle);
+	FVector2D Dir(DirCos, DirSin);
+	/*for (int i = 1; i < 5; ++i)
+	{
+		FVector PrevCenter = StormCircles[i - 1].Center;
+		float rPrev = StormCircles[i - 1].Radius;
+		float rNew = Radii[i];
+
+		double baseAngle = atan2(Dir.Y, Dir.X);
+		float delta = (FRandSeeded() - 0.5f) * (PI / 36.f);
+		double angle = baseAngle + delta;
+
+		FVector2D MoveDir(cos(angle), sin(angle));
+		MoveDir = GetSafeNormal(MoveDir);
+
+		float f_i = 0.4f + FRandSeeded() * 0.5f;
+		float Offset = f_i * (rPrev - rNew);
+
+		FVector NewCenter = PrevCenter + FVector(MoveDir.X, MoveDir.Y, 0.f) * Offset;
+
+		StormCircles.push_back({ NewCenter, rNew });
+		Dir = MoveDir;
+	}*/
+
+	/*for (int i = 5; i < 8; ++i)
+	{
+		FVector PrevCenter = StormCircles[i - 1].Center;
+		float rPrev = StormCircles[i - 1].Radius;
+		float rNew = Radii[i];
+
+		float angle = FRandSeeded() * 2.f * PI;
+		float s, c; SinCos(&s, &c, angle);
+		FVector2D RandDir(c, s);
+		RandDir = GetSafeNormal(RandDir);
+
+		float d = sqrt(rPrev * rPrev - rNew * rNew);;
+		FVector NewCenter = PrevCenter + FVector(RandDir.X, RandDir.Y, 0.f) * d;
+
+		NewCenter = ClampToPlayableBounds(NewCenter, rNew, MapInfo->CachedPlayableBoundsForClients);
+
+		StormCircles.push_back(FStormCircle{ NewCenter, rNew });
+	}*/
+
+	//FVector RefCenter = StormCircles[6].Center;
+	//float RefRadius = StormCircles[6].Radius;
+
+	//for (int i = 8; i < 13; ++i)
+	for (int i = 1; i < 7; ++i)
+	{
+		FVector RefCenter = StormCircles[i - 1].Center;
+		float RefRadius = StormCircles[i - 1].Radius;
+		float angle = FRandSeeded() * 2.f * PI;
+		float s, c; SinCos(&s, &c, angle);
+		float Dist = FRandSeeded() * RefRadius * 0.4f;
+		FVector2D RandDir(c, s);
+		RandDir = GetSafeNormal(RandDir);
+
+		FVector NewCenter = RefCenter + FVector(RandDir.X, RandDir.Y, 0.f) * Dist;
+
+		NewCenter = ClampToPlayableBounds(NewCenter, Radii[i], MapInfo->CachedPlayableBoundsForClients);
+
+		StormCircles.push_back(FStormCircle{ NewCenter, Radii[i] });
+	}
+
+	for (int i = 7; i < 13; ++i)
+	{
+		FVector PrevCenter = StormCircles[i - 1].Center;
+		float rPrev = StormCircles[i - 1].Radius;
+		float rNew = Radii[i];
+
+		float angle = FRandSeeded() * 2.f * PI;
+		float s, c; SinCos(&s, &c, angle);
+		FVector2D RandDir(c, s);
+		RandDir = GetSafeNormal(RandDir);
+
+		float d = sqrt(rPrev * rPrev - rNew * rNew);;
+		FVector NewCenter = PrevCenter + FVector(RandDir.X, RandDir.Y, 0.f) * d;
+
+		NewCenter = ClampToPlayableBounds(NewCenter, rNew, MapInfo->CachedPlayableBoundsForClients);
+
+		StormCircles.push_back(FStormCircle{ NewCenter, rNew });
+	}
+}
+// end
+
 AFortSafeZoneIndicator* UFortGameStateComponent_BattleRoyaleGamePhaseLogic::SetupSafeZoneIndicator()
 {
 	// thanks heliato
@@ -60,7 +262,6 @@ AFortSafeZoneIndicator* UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Setu
 			float SafeZoneCount = SafeZoneDefinition.Count.Evaluate();
 
 			auto& Array = SafeZoneIndicator->SafeZonePhases;
-
 
 			if (Array.IsValid())
 				Array.Free();
@@ -90,7 +291,7 @@ AFortSafeZoneIndicator* UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Setu
 				if (FFortSafeZonePhaseInfo::HasUsePOIStormCenter())
 					PhaseInfo->UsePOIStormCenter = false;
 
-				PhaseInfo->Center = FVector{};
+				PhaseInfo->Center = StormCircles[(int)i].Center;
 
 				Array.Add(*PhaseInfo, FFortSafeZonePhaseInfo::Size());
 				free(PhaseInfo);
@@ -187,6 +388,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 			gettingReady = true;
 
 			SetGamePhaseStep(EAthenaGamePhaseStep::GetReady);
+			return;
 		}
 	}
 
@@ -253,6 +455,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 
 				SetGamePhase(EAthenaGamePhase::Aircraft);
 				SetGamePhaseStep(EAthenaGamePhaseStep::BusLocked);
+				return;
 			}
 		}
 	}
@@ -266,6 +469,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 
 			bAircraftIsLocked = false;
 			SetGamePhaseStep(EAthenaGamePhaseStep::BusFlying);
+			return;
 		}
 	}
 
@@ -298,6 +502,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 
 			SetGamePhase(EAthenaGamePhase::SafeZones);
 			SetGamePhaseStep(EAthenaGamePhaseStep::StormForming);
+			return;
 		}
 	}
 
@@ -312,6 +517,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 			Aircraft->K2_DestroyActor();
 			Aircrafts_GameState.Clear();
 			Aircrafts_GameMode.Clear();
+			return;
 		}
 	}
 
@@ -323,12 +529,14 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 			formedZone = true;
 			auto SafeZoneIndicator = SetupSafeZoneIndicator();
 			StartNewSafeZonePhase(1);
+			return;
 		}
 	}
 
 	static bool bUpdatedPhase = false;
 	if (formedZone)
 	{
+		bool bStartedNewPhase = false;
 		if (!bUpdatedPhase && SafeZoneIndicator->SafeZoneStartShrinkTime < Time)
 		{
 			bUpdatedPhase = true;
@@ -336,8 +544,50 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 		}
 		else if (SafeZoneIndicator->SafeZoneFinishShrinkTime < Time)
 		{
+			bStartedNewPhase = true;
 			StartNewSafeZonePhase(SafeZoneIndicator->CurrentPhase + 1);
 			bUpdatedPhase = false;
+		}
+
+		auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+		static auto ZoneEffect = FindObject<UClass>(L"/Game/Athena/SafeZone/GE_OutsideSafeZoneDamage.GE_OutsideSafeZoneDamage_C");
+
+		for (auto& UncastedPlayer : GameMode->AlivePlayers)
+		{
+			auto Player = (AFortPlayerControllerAthena*)UncastedPlayer;
+			if (auto Pawn = Player->MyFortPawn) 
+			{
+				bool bInZone = IsInCurrentSafeZone(Player->MyFortPawn->K2_GetActorLocation(), true);
+				
+				if (Pawn->bIsInsideSafeZone != bInZone || Pawn->bIsInAnyStorm != !bInZone)
+				{
+					//printf("Pawn %s new storm status: %s\n", Pawn->Name.ToString().c_str(), bInZone ? "true" : "false");
+					Pawn->bIsInAnyStorm = !bInZone;
+					Pawn->OnRep_IsInAnyStorm();
+					Pawn->bIsInsideSafeZone = bInZone;
+					Pawn->OnRep_IsInsideSafeZone();
+
+					auto AbilitySystemComponent = Player->PlayerState->AbilitySystemComponent;
+					for (int i = 0; i < AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Num(); i++)
+					{
+						auto& Effect = AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Get(i, FActiveGameplayEffect::Size());
+
+						//printf("%s %s\n", Effect.Spec.Def->Name.ToString().c_str(), Effect.Spec.Def->Class->Name.ToString().c_str());
+						if (Effect.Spec.Def->Class == ZoneEffect)
+						{
+							auto Handle = *(FActiveGameplayEffectHandle*)(__int64(&Effect) + 0xc);
+
+
+							AbilitySystemComponent->SetActiveGameplayEffectLevel(Handle, SafeZoneIndicator->CurrentPhase);
+
+							AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(Handle, FGameplayTag(UKismetStringLibrary::Conv_StringToName(FString(L"SetByCaller.StormCampingDamage"))), 1);
+							//printf("found\n");
+							break;
+						}
+					}
+				}
+
+			}
 		}
 	}
 }
