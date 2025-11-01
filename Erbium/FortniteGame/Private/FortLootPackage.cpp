@@ -491,6 +491,11 @@ void UFortLootPackage::Hook()
 
 			if (*Ptr == 0x48 && *(Ptr + 1) == 0x83 && *(Ptr + 2) == 0xEC)
 			{
+				if (*(Ptr - 2) == 0x40 && *(Ptr - 1) == 0x53)
+				{
+					Ptr -= 2;
+				}
+
 				Utils::Hook((uint64_t)Ptr, PostUpdate);
 				break;
 			}
