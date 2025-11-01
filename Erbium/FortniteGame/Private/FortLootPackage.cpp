@@ -453,7 +453,9 @@ void UFortLootPackage::SpawnConsumableActor(ABGAConsumableSpawner* Spawner)
 	auto GroundLoc = UFortKismetLibrary::FindGroundLocationAt(UWorld::GetWorld(), nullptr, Spawner->K2_GetActorLocation(), -1000.f, 2500.f, UKismetStringLibrary::Conv_StringToName(FString(L"FortDynamicMeshPhysics")));
 	auto SpawnTransform = FTransform(GroundLoc, Spawner->K2_GetActorRotation());
 
-	UWorld::SpawnActor(ItemDefinition->ConsumableClass, SpawnTransform);
+	auto Class = ItemDefinition->ConsumableClass.Get();
+	if (Class)
+		UWorld::SpawnActor(Class, SpawnTransform);
 
 	for (auto& LootDrop : LootDrops)
 		free(LootDrop);
