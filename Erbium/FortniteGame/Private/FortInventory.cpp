@@ -443,7 +443,7 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
 
                 if (!OtherStack)
                 {
-                    for (int i = 0; i < itemEntry->StateValues.Num(); i++)
+                    /*for (int i = 0; i < itemEntry->StateValues.Num(); i++)
                     {
                         auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
 
@@ -452,11 +452,9 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
 
                         StateValue.IntValue = 0;
                         break;
-                    }
+                    }*/
 
-
-                    Item->ItemEntry = *itemEntry;
-                    Item->ItemEntry.bIsReplicatedCopy = false;
+                    Item->ItemEntry.Count = itemEntry->Count;
                     PlayerController->WorldInventory->UpdateEntry(*itemEntry);
                 }
                 else
@@ -467,7 +465,7 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
         }
         else
         {
-            for (int i = 0; i < itemEntry->StateValues.Num(); i++)
+            /*for (int i = 0; i < itemEntry->StateValues.Num(); i++)
             {
                 auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
 
@@ -476,11 +474,9 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
 
                 StateValue.IntValue = 0;
                 break;
-            }
+            }*/
 
-
-            Item->ItemEntry = *itemEntry;
-            Item->ItemEntry.bIsReplicatedCopy = false;
+            Item->ItemEntry.Count = itemEntry->Count;
             PlayerController->WorldInventory->UpdateEntry(*itemEntry);
         }
 

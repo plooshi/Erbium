@@ -449,7 +449,7 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 			PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
 		else
 		{
-			for (int i = 0; i < itemEntry->StateValues.Num(); i++)
+			/*for (int i = 0; i < itemEntry->StateValues.Num(); i++)
 			{
 				auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
 
@@ -458,11 +458,10 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 
 				StateValue.IntValue = 0;
 				break;
-			}
+			}*/
 
 
-			Item->ItemEntry = *itemEntry;
-			Item->ItemEntry.bIsReplicatedCopy = false;
+			Item->ItemEntry.Count = itemEntry->Count;
 			PlayerController->WorldInventory->UpdateEntry(*itemEntry);
 		}
 	}
@@ -1132,8 +1131,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 
 
 
-			(*item)->ItemEntry = *itemEntry;
-			(*item)->ItemEntry.bIsReplicatedCopy = false;
+			(*item)->ItemEntry.Count = itemEntry->Count;
 			WorldInventory->UpdateEntry(*itemEntry);
 		}
 		else
@@ -1543,7 +1541,7 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 				PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
 			else
 			{
-				for (int i = 0; i < itemEntry->StateValues.Num(); i++)
+				/*for (int i = 0; i < itemEntry->StateValues.Num(); i++)
 				{
 					auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
 
@@ -1552,11 +1550,10 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 
 					StateValue.IntValue = 0;
 					break;
-				}
+				}*/
 
 
-				Item->ItemEntry = *itemEntry;
-				Item->ItemEntry.bIsReplicatedCopy = false;
+				Item->ItemEntry.Count = itemEntry->Count;
 				PlayerController->WorldInventory->UpdateEntry(*itemEntry);
 			}
 		}
