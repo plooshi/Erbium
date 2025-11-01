@@ -1108,7 +1108,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 			}
 
 			// full proper
-			for (int i = 0; i < itemEntry->StateValues.Num(); i++)
+			/*for (int i = 0; i < itemEntry->StateValues.Num(); i++)
 			{
 				auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
 
@@ -1127,7 +1127,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 				Value->StateType = 2;
 				itemEntry->StateValues.Add(*Value, FFortItemEntryStateValue::Size());
 				free(Value);
-			}
+			}*/
 
 
 
