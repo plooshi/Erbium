@@ -17,8 +17,8 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
     Item->ItemEntry.LoadedAmmo = LoadedAmmo;
     if (Item->ItemEntry.HasPhantomReserveAmmo())
         Item->ItemEntry.PhantomReserveAmmo = PhantomReserveAmmo;
-    if (Item->ItemEntry.HasStateValues()) // dk
-        Item->ItemEntry.StateValues = StateValues;
+    //if (Item->ItemEntry.HasStateValues()) // dk
+    //    Item->ItemEntry.StateValues = StateValues;
 
     /*if (Item->ItemEntry.ItemGuid.A == 0 && Item->ItemEntry.ItemGuid.B == 0 && Item->ItemEntry.ItemGuid.C == 0 && Item->ItemEntry.ItemGuid.D == 0)
     {
