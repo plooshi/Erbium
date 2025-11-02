@@ -33,6 +33,7 @@ int GetLevel(const FDataTableCategoryHandle& CategoryHandle)
 
 	int Level = 0;
 	FFortLootLevelData* LootLevelData = nullptr;
+	
 	for (auto& LootLevelDataPair : (TMap<FName, FFortLootLevelData*>)CategoryHandle.DataTable->RowMap)
 	{
 		if ((FFortLootLevelData::HasCategory() ? LootLevelDataPair.Value()->Category : LootLevelDataPair.Value()->category) != CategoryHandle.RowContents || LootLevelDataPair.Value()->LootLevel > GameState->WorldLevel || LootLevelDataPair.Value()->LootLevel <= Level)
