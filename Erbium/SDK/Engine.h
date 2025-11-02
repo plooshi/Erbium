@@ -665,6 +665,7 @@ namespace SDK
 		DEFINE_PROP(GameState, AActor*);
 		DEFINE_PROP(PersistentLevel, ULevel*);
 		DEFINE_PROP(NetDriver, UObject*);
+		DEFINE_PROP(DemoNetDriver, UObject*);
 		DEFINE_PROP(LevelCollections, TArray<FLevelCollection>);
 		DEFINE_PROP(ServerStreamingLevelsVisibility, AServerStreamingLevelsVisibility*);
 

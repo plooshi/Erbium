@@ -1171,7 +1171,7 @@ namespace SDK
 					if (AssetLongPathname.Num() > 0)
 						WeakPtr = Ret = FindObject(AssetLongPathname.CStr(), Class);
 				}
-				else if (VersionInfo.EngineVersion >= 5.1)
+				else if (VersionInfo.FortniteVersion >= 23)
 				{
 					auto PackageName = *(FName*)(__int64(this) + (VersionInfo.EngineVersion < 5.2 ? 0xC : 0x8));
 					auto AssetName = *(FName*)(__int64(this) + (VersionInfo.EngineVersion < 5.2 ? 0x10 : 0xC));

@@ -196,27 +196,83 @@ void PatchAllNetModes()
 	Memcury::PE::Address add{ nullptr };
 
 	const auto sizeOfImage = Memcury::PE::GetNTHeaders()->OptionalHeader.SizeOfImage;
-	auto patternBytes = Memcury::ASM::pattern2bytes("48 8B 01 FF 90 ? ? ? ? 84 C0 0F 85 ? ? ? ? B8 03 00 00 00");
 	const auto scanBytes = reinterpret_cast<std::uint8_t*>(Memcury::PE::GetModuleBase());
+	auto AttemptDeriveFromURL = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 4C 8B C1").GetAs<void*>();
 
-	const auto s = patternBytes.size();
-	const auto d = patternBytes.data();
-
-	for (auto i = 0ul; i < sizeOfImage - s; ++i)
+	for (auto i = 0ul; i < sizeOfImage - 5; ++i)
 	{
-		bool found = true;
-		for (auto j = 0ul; j < s; ++j)
+		if (scanBytes[i] == 0xE8)
 		{
-			if (scanBytes[i + j] != d[j] && d[j] != -1)
+			if (Memcury::PE::Address(&scanBytes[i]).RelativeOffset(1).GetAs<void*>() == AttemptDeriveFromURL)
 			{
-				found = false;
-				break;
-			}
-		}
+				add = Memcury::PE::Address(&scanBytes[i]);
 
-		if (found)
-		{
-			Utils::Patch<uint32>(__int64(scanBytes + i) + 0x12, 1);
+				// scan for the read of World->NetDriver
+
+				for (auto j = 0; j > -2048; j--)
+				{
+					bool found = true;
+
+					if ((scanBytes[i + j] & 0xF8) == 0x48 && ((scanBytes[i + j + 1] & 0xFC) == 0x80 || (scanBytes[i + j + 1] & 0xF8) == 0x38) && scanBytes[i + j + 3] == 0x38)
+					{
+						// now, scan for if (NetDriver) return NM_Client;
+
+						bool found = false;
+						for (auto k = 0; k < 0x100; k++)
+						{
+							if (scanBytes[i + j + k] == 0x75)
+							{
+								auto Scuffness = __int64(&scanBytes[i + j + k + 5]);
+
+								if (*(uint32_t*)Scuffness != 0xF0 && scanBytes[i + j + k + 4] != 0xC && scanBytes[i + j + k + 5] != 0xB && scanBytes[i + j + k + 4] != 0x09)
+									continue;
+
+								Utils::Patch<uint16_t>(__int64(&scanBytes[i + j + k]), 0x9090);
+								found = true;
+								break;
+							}
+							else if (scanBytes[i + j + k] == 0x74)	
+							{
+								auto Scuffness = __int64(&scanBytes[i + j + k]);
+								Scuffness = (Scuffness + 2) + *(int8_t*)(Scuffness + 1);
+
+								if (*(uint32_t*)(Scuffness + 3) != 0xF0 && *(uint8_t*)(Scuffness + 3) != 0x09)
+									continue;
+
+								Utils::Patch<uint8_t>(__int64(&scanBytes[i + j + k]), 0xeb);
+								found = true;
+								break;
+							}
+							else if (scanBytes[i + j + k] == 0x0F  && scanBytes[i + j + k + 1] == 0x85)
+							{
+								auto Scuffness = __int64(&scanBytes[i + j + k + 9]);
+
+								if (*(uint32_t*)Scuffness != 0xF0 && scanBytes[i + j + k + 8] != 0x09)
+									continue;
+
+								Utils::Patch<uint32_t>(__int64(&scanBytes[i + j + k]), 0x90909090);
+								Utils::Patch<uint16_t>(__int64(&scanBytes[i + j + k + 4]), 0x9090);
+								found = true;
+								break;
+							}
+							else if (scanBytes[i + j + k] == 0x0F && scanBytes[i + j + k + 1] == 0x84)
+							{
+								auto Scuffness = __int64(&scanBytes[i + j + k]);
+								Scuffness = (Scuffness + 6) + *(int32_t*)(Scuffness + 2);
+
+								if (*(uint32_t*)(Scuffness + 3) != 0xF0 && *(uint8_t*)(Scuffness + 3) != 0x09)
+									continue;
+
+								Utils::Patch<uint16_t>(__int64(&scanBytes[i + j + k]), 0xe990);
+								found = true;
+								break;
+							}
+						}
+						if (found)
+							break;
+					}
+				}
+			}
 		}
 	}
 }
@@ -231,8 +287,7 @@ void Misc::Hook()
 	Utils::Hook(FindGetNetMode(), GetNetMode);
 	if (VersionInfo.FortniteVersion >= 25 && VersionInfo.FortniteVersion < 28)
 	{
-		Utils::Hook(__int64(UKismetSystemLibrary::GetDefaultObj()->GetFunction("IsDedicatedServer")->GetImpl()), GetNetMode);
-		Utils::Hook(__int64(UKismetSystemLibrary::GetDefaultObj()->GetFunction("IsServer")->GetImpl()), GetNetMode);
+		Utils::Hook(Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 4C 8B C1").Get(), GetNetMode);
 		PatchAllNetModes();
 	}
 	else if (VersionInfo.FortniteVersion >= 28)
