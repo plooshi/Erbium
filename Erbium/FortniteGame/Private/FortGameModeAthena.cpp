@@ -550,13 +550,13 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                         {
                             if (VersionInfo.EngineVersion >= 5.2)
                             {
-                                for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
+                                /*for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
                                     for (auto& Override : PlaylistOverrideLootTableDataUE52)
                                         if (Tag.TagName.ComparisonIndex == Override.First)
                                         {
                                             DataTable = Override.Second.LootTierData.Get();
                                             break;
-                                        }
+                                        }*/
                             }
                             else if (VersionInfo.FortniteVersion < 20.00)
                             {
