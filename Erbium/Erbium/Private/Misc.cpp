@@ -224,7 +224,7 @@ void PatchAllNetModes()
 							{
 								auto Scuffness = __int64(&scanBytes[i + j + k + 5]);
 
-								if (*(uint32_t*)Scuffness != 0xF0 && scanBytes[i + j + k + 4] != 0xC && scanBytes[i + j + k + 5] != 0xB && scanBytes[i + j + k + 4] != 0x09)
+								if (*(uint32_t*)Scuffness != 0xF0 && (scanBytes[i + j + k + 4] != 0xC || scanBytes[i + j + k + 5] != 0xB) && scanBytes[i + j + k + 4] != 0x09)
 									continue;
 
 								Utils::Patch<uint16_t>(__int64(&scanBytes[i + j + k]), 0x9090);
@@ -236,7 +236,7 @@ void PatchAllNetModes()
 								auto Scuffness = __int64(&scanBytes[i + j + k]);
 								Scuffness = (Scuffness + 2) + *(int8_t*)(Scuffness + 1);
 
-								if (*(uint32_t*)(Scuffness + 3) != 0xF0 && *(uint8_t*)(Scuffness + 3) != 0x09)
+								if (*(uint32_t*)(Scuffness + 3) != 0xF0 && (*(uint8_t*)(Scuffness + 2) != 0xC || *(uint8_t*)(Scuffness + 3) != 0xB) && *(uint8_t*)(Scuffness + 2) != 0x09)
 									continue;
 
 								Utils::Patch<uint8_t>(__int64(&scanBytes[i + j + k]), 0xeb);
@@ -247,7 +247,7 @@ void PatchAllNetModes()
 							{
 								auto Scuffness = __int64(&scanBytes[i + j + k + 9]);
 
-								if (*(uint32_t*)Scuffness != 0xF0 && scanBytes[i + j + k + 8] != 0x09)
+								if (*(uint32_t*)Scuffness != 0xF0 && (scanBytes[i + j + k + 8] != 0xC || scanBytes[i + j + k + 9] != 0xB) && scanBytes[i + j + k + 8] != 0x09)
 									continue;
 
 								Utils::Patch<uint32_t>(__int64(&scanBytes[i + j + k]), 0x90909090);
@@ -260,7 +260,7 @@ void PatchAllNetModes()
 								auto Scuffness = __int64(&scanBytes[i + j + k]);
 								Scuffness = (Scuffness + 6) + *(int32_t*)(Scuffness + 2);
 
-								if (*(uint32_t*)(Scuffness + 3) != 0xF0 && *(uint8_t*)(Scuffness + 3) != 0x09)
+								if (*(uint32_t*)(Scuffness + 3) != 0xF0 && (*(uint8_t*)(Scuffness + 2) != 0xC || *(uint8_t*)(Scuffness + 3) != 0xB) && *(uint8_t*)(Scuffness + 2) != 0x09)
 									continue;
 
 								Utils::Patch<uint16_t>(__int64(&scanBytes[i + j + k]), 0xe990);
