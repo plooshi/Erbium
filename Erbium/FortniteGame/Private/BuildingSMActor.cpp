@@ -121,7 +121,7 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 
 void ABuildingSMActor::PostLoadHook()
 {
-	if (VersionInfo.FortniteVersion >= 28)
+	if (!GetDefaultObj()->HasBuildingResourceAmountOverride())
 	{
 		GetSparseClassData_ = Memcury::Scanner::FindPattern("48 83 EC ? 48 8B 81 ? ? ? ? 45 33 C0 4C 8B C9").Get();
 
