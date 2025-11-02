@@ -209,10 +209,8 @@ void PatchAllNetModes()
 
 				// scan for the read of World->NetDriver
 
-				for (auto j = 0; j > -2048; j--)
+				for (auto j = 0; j > -0x100000; j--) // so we find everything. no func is actually 1mb
 				{
-					bool found = true;
-
 					if ((scanBytes[i + j] & 0xF8) == 0x48 && ((scanBytes[i + j + 1] & 0xFC) == 0x80 || (scanBytes[i + j + 1] & 0xF8) == 0x38) && scanBytes[i + j + 3] == 0x38)
 					{
 						// now, scan for if (NetDriver) return NM_Client;
@@ -288,6 +286,7 @@ void Misc::Hook()
 	if (VersionInfo.FortniteVersion >= 25 && VersionInfo.FortniteVersion < 28)
 	{
 		Utils::Hook(Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 4C 8B C1").Get(), GetNetMode);
+		Utils::Hook(Memcury::Scanner::FindPattern("48 83 EC ? 48 8B 01 FF 90 ? ? ? ? 84 C0 0F 85").Get(), GetNetMode);
 		PatchAllNetModes();
 	}
 	else if (VersionInfo.FortniteVersion >= 28)

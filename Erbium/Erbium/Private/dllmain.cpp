@@ -54,7 +54,7 @@ void Main()
         *(uint32_t*)IrisBool = true;
         //UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"net.Iris.UseIrisReplication 1"), nullptr);
     }
-    if (VersionInfo.FortniteVersion >= 28)
+    if (VersionInfo.EngineVersion >= 5.4)
     {
         // sprint fix
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"Fort.MME.TacticalSprint 0"), nullptr);
