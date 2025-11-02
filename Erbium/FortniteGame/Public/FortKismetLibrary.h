@@ -35,6 +35,12 @@ public:
 	static const UFortItemDefinition* K2_GetResourceItemDefinition(EFortResourceType Type)
 	{
 		// exec func doesnt exist on rlly old builds
+		
+		static auto K2_GetResourceItemDefinition__Ptr = GetDefaultObj()->GetFunction("K2_GetResourceItemDefinition");
+
+		if (K2_GetResourceItemDefinition__Ptr)
+			return GetDefaultObj()->Call<UFortItemDefinition*>(K2_GetResourceItemDefinition__Ptr, Type);
+
 		static auto WoodItemData = FindObject<UFortItemDefinition>(L"/Game/Items/ResourcePickups/WoodItemData.WoodItemData");
 		static auto StoneItemData = FindObject<UFortItemDefinition>(L"/Game/Items/ResourcePickups/StoneItemData.StoneItemData");
 		static auto MetalItemData = FindObject<UFortItemDefinition>(L"/Game/Items/ResourcePickups/MetalItemData.MetalItemData");
