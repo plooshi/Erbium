@@ -533,40 +533,52 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                     static auto PlaylistOverrideLootTableDataOffset = Object->GetOffset("PlaylistOverrideLootTableData");
 
                     auto& LootTableData = GetFromOffset<FFortGameFeatureLootTableData>(Object, DefaultLootTableDataOffset);
+                    auto& LootTableDataUE52 = GetFromOffset<FFortGameFeatureLootTableData_UE52>(Object, DefaultLootTableDataOffset);
                     auto& PlaylistOverrideLootTableData = GetFromOffset<TMap<FGameplayTag, FFortGameFeatureLootTableData>>(Object, PlaylistOverrideLootTableDataOffset);
                     auto& PlaylistOverrideLootTableDataLWC = GetFromOffset<TMap<int32, FFortGameFeatureLootTableData>>(Object, PlaylistOverrideLootTableDataOffset);
                     auto& PlaylistOverrideLootTableDataUE52 = GetFromOffset<TMap<int32, FFortGameFeatureLootTableData_UE52>>(Object, PlaylistOverrideLootTableDataOffset);
-                    auto LTDFeatureData = LootTableData.LootTierData.Get();
-                    auto LootPackageData = LootTableData.LootPackageData.Get();
+                    auto LTDFeatureData = VersionInfo.EngineVersion >= 5.2 ? LootTableDataUE52.LootTierData.Get() : LootTableData.LootTierData.Get();
+                    auto LootPackageData = VersionInfo.EngineVersion >= 5.2 ? LootTableDataUE52.LootPackageData.Get() : LootTableData.LootPackageData.Get();
 
                     if (LTDFeatureData)
                     {
                         UEAllocatedMap<int32, FFortLootTierData*> LTDTempData;
 
-                        AddToTierData(LTDFeatureData, LTDTempData);
+                        auto DataTable = LTDFeatureData;
 
                         if (Playlist)
                         {
                             if (VersionInfo.EngineVersion >= 5.2)
                             {
-                                /*for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
+                                for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
                                     for (auto& Override : PlaylistOverrideLootTableDataUE52)
                                         if (Tag.TagName.ComparisonIndex == Override.First)
-                                            AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);*/
+                                        {
+                                            DataTable = Override.Second.LootTierData.Get();
+                                            break;
+                                        }
                             }
                             else if (VersionInfo.FortniteVersion < 20.00)
                             {
                                 for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
                                     for (auto& Override : PlaylistOverrideLootTableData)
                                         if (Tag.TagName == Override.First.TagName)
-                                            AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);
+                                        {
+                                            DataTable = Override.Second.LootTierData.Get();
+                                            break;
+                                        }
                             }
                             else
                                 for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
                                     for (auto& Override : PlaylistOverrideLootTableDataLWC)
                                         if (Tag.TagName.ComparisonIndex == Override.First)
-                                            AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);
+                                        {
+                                            DataTable = Override.Second.LootTierData.Get();
+                                            break;
+                                        }
                         }
+
+                        AddToTierData(DataTable, LTDTempData);
 
                         //for (auto& [_, Val] : LTDTempData)
                         //    TierDataAllGroups.Add(Val);
@@ -579,7 +591,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                     {
                         UEAllocatedMap<int32, FFortLootPackageData*> LPTempData;
 
-                        AddToPackages(LootPackageData, LPTempData);
+                        auto DataTable = LootPackageData;
 
                         if (Playlist)
                         {
@@ -595,14 +607,22 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                                 for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
                                     for (auto& Override : PlaylistOverrideLootTableData)
                                         if (Tag.TagName == Override.First.TagName)
-                                            AddToPackages(Override.Second.LootPackageData.Get(), LPTempData);
+                                        {
+                                            DataTable = Override.Second.LootPackageData.Get();
+                                            break;
+                                        }
                             }
                             else
                                 for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
                                     for (auto& Override : PlaylistOverrideLootTableDataLWC)
                                         if (Tag.TagName.ComparisonIndex == Override.First)
-                                            AddToPackages(Override.Second.LootPackageData.Get(), LPTempData);
+                                        {
+                                            DataTable = Override.Second.LootPackageData.Get();
+                                            break;
+                                        }
                         }
+
+                        AddToPackages(DataTable, LPTempData);
 
                         for (auto& [_, Val] : LPTempData)
                             LootPackageMap[Val->LootPackageID.ComparisonIndex].Add(Val);

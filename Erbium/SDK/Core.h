@@ -1173,9 +1173,9 @@ namespace SDK
 				}
 				else if (VersionInfo.FortniteVersion >= 23)
 				{
-					auto PackageName = *(FName*)(__int64(this) + (VersionInfo.EngineVersion < 5.2 ? 0xC : 0x8));
-					auto AssetName = *(FName*)(__int64(this) + (VersionInfo.EngineVersion < 5.2 ? 0x10 : 0xC));
-					auto SubPathString = *(FString*)(__int64(this) + (VersionInfo.EngineVersion < 5.2 ? 0x14 : 0x10));
+					auto& PackageName = *(FName*)(__int64(this) + (VersionInfo.EngineVersion < 5.2 ? 0xC : 0x8));
+					auto& AssetName = *(FName*)(__int64(this) + (VersionInfo.EngineVersion < 5.2 ? 0x10 : 0xC));
+					auto& SubPathString = *(FString*)(__int64(this) + (VersionInfo.EngineVersion < 5.2 ? 0x14 : 0x10));
 
 					if (PackageName.ComparisonIndex > 0)
 					{

@@ -1321,12 +1321,12 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 					Member->SquadId = PlayerState->SquadId;
 					Member->MemberUniqueId = PlayerState->UniqueId;
 
-					GameState->GameMemberInfoArray.Members.Add(*Member, FGameMemberInfo::Size());
-					GameState->GameMemberInfoArray.MarkItemDirty(*Member);
+					auto& NewMember = GameState->GameMemberInfoArray.Members.Add(*Member, FGameMemberInfo::Size());
+					GameState->GameMemberInfoArray.MarkItemDirty(NewMember);
 
-					auto NotifyGameMemberAdded = (void(*)(AFortGameStateAthena*, uint8_t, uint8_t, FUniqueNetIdRepl*)) NotifyGameMemberAdded_;
+					/*auto NotifyGameMemberAdded = (void(*)(AFortGameStateAthena*, uint8_t, uint8_t, FUniqueNetIdRepl*)) NotifyGameMemberAdded_;
 					if (NotifyGameMemberAdded)
-						NotifyGameMemberAdded(GameState, Member->SquadId, Member->TeamIndex, &Member->MemberUniqueId);
+						NotifyGameMemberAdded(GameState, Member->SquadId, Member->TeamIndex, &Member->MemberUniqueId);*/
 
 					free(Member);
 				}
