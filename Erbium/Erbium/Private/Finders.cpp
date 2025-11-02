@@ -2484,19 +2484,22 @@ void FindNullsAndRetTrues()
         {
             auto sRef = Memcury::Scanner::FindStringRef(L"CanActivateAbility %s failed, blueprint refused", true, 0, VersionInfo.EngineVersion >= 5.0).Get();
 
-            for (int i = 0; i < 0x2000; i++)
+            if (sRef)
             {
-                auto Ptr = (uint8_t*)(sRef - i);
+                for (int i = 0; i < 0x2000; i++)
+                {
+                    auto Ptr = (uint8_t*)(sRef - i);
 
-                if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
-                {
-                    RetTrueFuncs.push_back(uint64_t(Ptr));
-                    break;
-                }
-                else if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4)
-                {
-                    RetTrueFuncs.push_back(uint64_t(Ptr));
-                    break;
+                    if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
+                    {
+                        RetTrueFuncs.push_back(uint64_t(Ptr));
+                        break;
+                    }
+                    else if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4)
+                    {
+                        RetTrueFuncs.push_back(uint64_t(Ptr));
+                        break;
+                    }
                 }
             }
         }
