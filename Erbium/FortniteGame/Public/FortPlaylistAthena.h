@@ -68,4 +68,5 @@ public:
     DEFINE_PROP(bForceRespawnLocationInsideOfVolume, bool);
     DEFINE_PROP(bIsLargeTeamGame, bool);
     DEFINE_PROP(ModifierList, TArray<TSoftObjectPtr<UFortGameplayModifierItemDefinition>>);
+    DEFINE_PROP(PreloadPersistentLevel, TSoftObjectPtr<UWorld>);
 };

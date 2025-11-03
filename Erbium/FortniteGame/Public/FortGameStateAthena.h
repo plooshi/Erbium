@@ -3,6 +3,7 @@
 #include "FortPlaylistAthena.h"
 #include "../../Engine/Public/CurveTable.h"
 #include "FortPlayerStateAthena.h"
+#include "LevelStreamingDynamic.h"
 
 struct FGameMemberInfo : public FFastArraySerializerItem
 {
@@ -123,6 +124,22 @@ public:
     DEFINE_FUNC(GetMapCenter, FVector);
 };
 
+class AFortVolumeManager : public AActor
+{
+public:
+    UCLASS_COMMON_MEMBERS(AFortVolumeManager);
+
+    DEFINE_BITFIELD_PROP(bInSpawningStartup);
+};
+
+struct FPlaylistStreamedLevelData
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FPlaylistStreamedLevelData);
+    ULevelStreamingDynamic* StreamingLevel;
+
+    DEFINE_STRUCT_PROP(bIsFinishedStreaming, bool);
+};
 
 class AFortGameStateAthena : public AActor
 {
@@ -156,6 +173,7 @@ public:
     DEFINE_PROP(SafeZoneIndicator, AActor*);
     DEFINE_PROP(StructuralSupportSystem, UObject*);
     DEFINE_PROP(bPlaylistDataIsLoaded, bool);
+    DEFINE_PROP(VolumeManager, AFortVolumeManager*);
 
     DEFINE_FUNC(OnRep_CurrentPlaylistInfo, void);
     DEFINE_FUNC(OnRep_CurrentPlaylistData, void);

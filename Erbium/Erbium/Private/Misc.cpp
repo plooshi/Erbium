@@ -113,17 +113,17 @@ void Misc::InitClient()
 {
 	UEngine::GetEngine()->GameViewport->ViewportConsole = UGameplayStatics::SpawnObject(UEngine::GetEngine()->ConsoleClass, UEngine::GetEngine()->GameViewport);
 
-	auto ArenaUI = UKismetStringLibrary::Conv_StringToName(FString(L"/Game/UI/Competitive/Arena/ArenaScoringHUD.ArenaScoringHUD_C"));
+	auto ArenaUI = FName(L"/Game/UI/Competitive/Arena/ArenaScoringHUD.ArenaScoringHUD_C");
 	FUIExtension ArenaUIExtension{};
 	ArenaUIExtension.Slot = 0;
 	ArenaUIExtension.WidgetClass.ObjectID.AssetPathName = ArenaUI;
 
-	auto ShowdownUI = UKismetStringLibrary::Conv_StringToName(FString(L"/Game/UI/Frontend/Showdown/ShowdownScoringHUD.ShowdownScoringHUD_C"));
+	auto ShowdownUI = FName(L"/Game/UI/Frontend/Showdown/ShowdownScoringHUD.ShowdownScoringHUD_C");
 	FUIExtension ShowdownUIExtension{};
 	ShowdownUIExtension.Slot = 0;
 	ShowdownUIExtension.WidgetClass.ObjectID.AssetPathName = ShowdownUI;
 
-	auto AIKillsUI = UKismetStringLibrary::Conv_StringToName(FString(L"/Game/Athena/HUD/AthenaAIKillsWidget.AthenaAIKillsWidget_C"));
+	auto AIKillsUI = FName(L"/Game/Athena/HUD/AthenaAIKillsWidget.AthenaAIKillsWidget_C");
 	FUIExtension AIKillsUIExtension{};
 	AIKillsUIExtension.Slot = 2;
 	AIKillsUIExtension.WidgetClass.ObjectID.AssetPathName = AIKillsUI;

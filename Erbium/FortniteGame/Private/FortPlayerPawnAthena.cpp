@@ -236,8 +236,11 @@ void AFortPlayerPawnAthena::OnCapsuleBeginOverlap_(UObject* Context, FFrame& Sta
 void AFortPlayerPawnAthena::MovingEmoteStopped(UObject* Context, FFrame& Stack)
 {
 	Stack.IncrementCode();
-
 	auto Pawn = (AFortPlayerPawnAthena*)Context;
+
+	if (Pawn->bIsPlayingEmote)
+		return;
+
 	static auto HasbMovingEmote = Pawn->HasbMovingEmote();
 	if (HasbMovingEmote)
 		Pawn->bMovingEmote = false;
@@ -270,8 +273,8 @@ void AFortPlayerPawnAthena::Athena_MedConsumable_Triggered(UObject* Context, FFr
 		return Athena_MedConsumable_TriggeredOG(Context, Stack);
 
 	auto PlayerState = (AFortPlayerStateAthena*)Consumable->PlayerPawn->PlayerState;
-	static auto ShieldCue = UKismetStringLibrary::Conv_StringToName(FString(L"GameplayCue.Shield.PotionConsumed"));
-	static auto HealthCue = UKismetStringLibrary::Conv_StringToName(FString(L"GameplayCue.Athena.Health.HealUsed"));
+	static auto ShieldCue = FName(L"GameplayCue.Shield.PotionConsumed");
+	static auto HealthCue = FName(L"GameplayCue.Athena.Health.HealUsed");
 
 	auto Handle = PlayerState->AbilitySystemComponent->MakeEffectContext();
 	FGameplayTag Tag{};

@@ -338,10 +338,10 @@ bool UFortLootPackage::SpawnLootHook(ABuildingContainer* Container)
 	}
 	else
 	{
-		static auto Loot_Treasure = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_Treasure"));
-		static auto Loot_Ammo = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_Ammo"));
-		static auto Loot_AthenaTreasure = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_AthenaTreasure"));
-		static auto Loot_AthenaAmmoLarge = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_AthenaAmmoLarge"));
+		static auto Loot_Treasure = FName(L"Loot_Treasure");
+		static auto Loot_Ammo = FName(L"Loot_Ammo");
+		static auto Loot_AthenaTreasure = FName(L"Loot_AthenaTreasure");
+		static auto Loot_AthenaAmmoLarge = FName(L"Loot_AthenaAmmoLarge");
 
 		if (Container->SearchLootTierGroup == Loot_Treasure)
 			RealTierGroup = Loot_AthenaTreasure;
@@ -382,10 +382,10 @@ void UFortLootPackage::SpawnLoot(FName& TierGroup, FVector Loc)
 	}
 	else
 	{
-		static auto Loot_Treasure = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_Treasure"));
-		static auto Loot_Ammo = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_Ammo"));
-		static auto Loot_AthenaTreasure = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_AthenaTreasure"));
-		static auto Loot_AthenaAmmoLarge = UKismetStringLibrary::Conv_StringToName(FString(L"Loot_AthenaAmmoLarge"));
+		static auto Loot_Treasure = FName(L"Loot_Treasure");
+		static auto Loot_Ammo = FName(L"Loot_Ammo");
+		static auto Loot_AthenaTreasure = FName(L"Loot_AthenaTreasure");
+		static auto Loot_AthenaAmmoLarge = FName(L"Loot_AthenaAmmoLarge");
 
 		if (TierGroup == Loot_Treasure)
 			RealTierGroup = Loot_AthenaTreasure;
@@ -451,7 +451,7 @@ void UFortLootPackage::SpawnConsumableActor(ABGAConsumableSpawner* Spawner)
 
 	auto ItemDefinition = (UBGAConsumableWrapperItemDefinition*)LootDrops[0]->ItemDefinition;
 
-	auto GroundLoc = UFortKismetLibrary::FindGroundLocationAt(UWorld::GetWorld(), nullptr, Spawner->K2_GetActorLocation(), -1000.f, 2500.f, UKismetStringLibrary::Conv_StringToName(FString(L"FortDynamicMeshPhysics")));
+	auto GroundLoc = UFortKismetLibrary::FindGroundLocationAt(UWorld::GetWorld(), nullptr, Spawner->K2_GetActorLocation(), -1000.f, 2500.f, FName(L"FortDynamicMeshPhysics"));
 	auto SpawnTransform = FTransform(GroundLoc, Spawner->K2_GetActorRotation());
 
 	auto Class = ItemDefinition->ConsumableClass.Get();

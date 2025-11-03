@@ -653,6 +653,7 @@ namespace SDK
 		UCLASS_COMMON_MEMBERS(ULevel);
 
 		DEFINE_PROP(OwningWorld, UObject*);
+		DEFINE_BITFIELD_PROP(bIsVisible);
 	};
 
 	class UWorld : public UObject

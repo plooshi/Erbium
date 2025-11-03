@@ -59,6 +59,7 @@ public:
     DEFINE_PROP(PickupSpeedMultiplier, float);
     DEFINE_PROP(HeldObject, TWeakObjectPtr<AActor>);
     DEFINE_PROP(RepActiveMovementModeExtension, void*);
+    DEFINE_BITFIELD_PROP(bIsPlayingEmote);
 
     DEFINE_FUNC(BeginSkydiving, void);
     DEFINE_FUNC(GetHealth, float);

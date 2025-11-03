@@ -69,7 +69,7 @@ void Events::StartEvent()
 
 					auto SetUnvaultFn = FindObject<UFunction>(L"/Game/Athena/Prototype/Blueprints/White/BP_SnowScripting.BP_SnowScripting_C.SetUnvaultItemName");
 					auto PillarsFn = FindObject<UFunction>(L"/Game/Athena/Prototype/Blueprints/White/BP_SnowScripting.BP_SnowScripting_C.PillarsConcluded");
-					FName Name = UKismetStringLibrary::Conv_StringToName(FString(L"DrumGun"));
+					FName Name = FName(L"DrumGun");
 
 					ScriptingObject->ProcessEvent(const_cast<UFunction*>(SetUnvaultFn), &Name);
 					ScriptingObject->ProcessEvent(const_cast<UFunction*>(PillarsFn), &Name);

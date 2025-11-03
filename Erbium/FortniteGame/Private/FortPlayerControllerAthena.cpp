@@ -13,7 +13,7 @@
 
 void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena* PlayerController, FVector& Loc, FRotator& Rot)
 {
-	static auto SFName = UKismetStringLibrary::Conv_StringToName(FString(L"Spectating"));
+	static auto SFName = FName(L"Spectating");
 	if (PlayerController->StateName == SFName)
 	{
 		Loc = PlayerController->LastSpectatorSyncLocation;
@@ -98,7 +98,7 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 			PlayerController = (AFortPlayerControllerAthena*)Context;
 
 		GameMode->RestartPlayer(PlayerController);
-		PlayerController->SetControlRotation(Rotation);
+		PlayerController->ClientSetRotation(Rotation, true);
 
 		if (PlayerController->MyFortPawn)
 		{
@@ -130,7 +130,7 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 				AbilitySystemComponent->SetActiveGameplayEffectLevel(SpecHandle, 0);
 
 				AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(SpecHandle,
-					FGameplayTag(UKismetStringLibrary::Conv_StringToName(FString(L"SetByCaller.StormCampingDamage"))), 1);
+					FGameplayTag(FName(L"SetByCaller.StormCampingDamage")), 1);
 			}
 
 			PlayerController->MyFortPawn->bIsInAnyStorm = false;
@@ -925,7 +925,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 
 		if (VersionInfo.FortniteVersion >= 15)
 		{
-			//static auto SpectatingName = UKismetStringLibrary::Conv_StringToName(FString(L"Spectating"));
+			//static auto SpectatingName = FName(L"Spectating");
 			//PlayerController->StateName = SpectatingName;
 			//PlayerController->ClientGotoState(SpectatingName);
 			PlayerController->Pawn->CharacterMovement->ProcessEvent(PlayerController->Pawn->CharacterMovement->GetFunction("DisableMovement"), nullptr);
@@ -936,7 +936,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 		{
 			auto Handle = KillerPlayerState->AbilitySystemComponent->MakeEffectContext();
 			FGameplayTag Tag;
-			static auto Cue = UKismetStringLibrary::Conv_StringToName(FString(L"GameplayCue.Shield.PotionConsumed"));
+			static auto Cue = FName(L"GameplayCue.Shield.PotionConsumed");
 			Tag.TagName = Cue;
 			auto PredictionKey = (FPredictionKey*)malloc(FPredictionKey::Size());
 			__stosb((PBYTE)PredictionKey, 0, FPredictionKey::Size());

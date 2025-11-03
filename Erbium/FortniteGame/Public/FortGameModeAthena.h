@@ -44,6 +44,7 @@ public:
     DEFINE_PROP(bSafeZoneActive, bool);
     DEFINE_PROP(bSafeZonePaused, bool);
     DEFINE_PROP(OnSafeZoneIndicatorSpawned, TMulticastInlineDelegate<void(AFortSafeZoneIndicator*)>);
+    DEFINE_PROP(MatchState, FName);
 
     DEFINE_FUNC(SpawnDefaultPawnAtTransform, AFortPlayerPawnAthena*);
     DEFINE_FUNC(RestartPlayer, void);

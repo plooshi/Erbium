@@ -140,11 +140,6 @@ void AFortInventory::Remove(FGuid Guid)
 
     auto Instance = ItemInstance ? *ItemInstance : nullptr;
 
-    if (OnItemInstanceAddedVft && Instance && Instance->ItemEntry.ItemDefinition)
-    {
-        ((bool(*)(const UFortWorldItem*, const IInterface*, uint32_t)) Instance->Vft[OnItemInstanceAddedVft + 1])(Instance, Owner->GetInterface(IFortInventoryOwnerInterface::StaticClass()), Instance->ItemEntry.Count);
-        //((bool(*)(const UFortItemDefinition*, const IInterface*, UFortWorldItem*)) Instance->ItemEntry.ItemDefinition->Vft[OnItemInstanceAddedVft + 1])(Instance->ItemEntry.ItemDefinition, Owner->GetInterface(IFortInventoryOwnerInterface::StaticClass()), Instance);
-    }
 
     if (VersionInfo.FortniteVersion < 3)
     {
@@ -175,6 +170,11 @@ _Skip:
     Inventory.MarkArrayDirty();
     ForceNetUpdate();
 
+    if (OnItemInstanceAddedVft && Instance && Instance->ItemEntry.ItemDefinition)
+    {
+        ((bool(*)(const UFortWorldItem*, const IInterface*, uint32_t)) Instance->Vft[OnItemInstanceAddedVft + 1])(Instance, Owner->GetInterface(IFortInventoryOwnerInterface::StaticClass()), Instance->ItemEntry.Count);
+        //((bool(*)(const UFortItemDefinition*, const IInterface*, UFortWorldItem*)) Instance->ItemEntry.ItemDefinition->Vft[OnItemInstanceAddedVft + 1])(Instance->ItemEntry.ItemDefinition, Owner->GetInterface(IFortInventoryOwnerInterface::StaticClass()), Instance);
+    }
     //HandleInventoryLocalUpdate();
     //Update(nullptr);
 }

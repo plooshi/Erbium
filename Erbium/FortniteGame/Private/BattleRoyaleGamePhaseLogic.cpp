@@ -286,7 +286,7 @@ AFortSafeZoneIndicator* UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Setu
 				PhaseInfo->ShrinkTime = SafeZoneDefinition.ShrinkTime.Evaluate(i);
 				PhaseInfo->PlayerCap = (int)SafeZoneDefinition.PlayerCapSolo.Evaluate(i);
 
-				UDataTableFunctionLibrary::EvaluateCurveTableRow(GameState->AthenaGameDataTable, UKismetStringLibrary::Conv_StringToName(FString(L"Default.SafeZone.Damage")), i, nullptr, &PhaseInfo->DamageInfo.Damage, FString());
+				UDataTableFunctionLibrary::EvaluateCurveTableRow(GameState->AthenaGameDataTable, FName(L"Default.SafeZone.Damage"), i, nullptr, &PhaseInfo->DamageInfo.Damage, FString());
 				if (i == 0.f)
 					PhaseInfo->DamageInfo.Damage = 0.01f;
 				PhaseInfo->DamageInfo.bPercentageBasedDamage = true;
@@ -435,7 +435,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 				Pawn->K2_DestroyActor();
 			auto Reset = (void (*)(AFortPlayerControllerAthena*)) FindReset();
 			Reset(Player);
-			Player->ClientGotoState(UKismetStringLibrary::Conv_StringToName(FString(L"Spectating")));
+			Player->ClientGotoState(FName(L"Spectating"));
 		}
 
 		Aircrafts.Add(Aircraft);
@@ -508,7 +508,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 
 					if (Player->IsInAircraft())
 					{
-						Player->GetAircraftComponent()->KickFromAircraft();
+						Player->GetAircraftComponent()->ServerAttemptAircraftJump();
 					}
 				}
 
@@ -612,7 +612,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 
 								AbilitySystemComponent->SetActiveGameplayEffectLevel(Handle, SafeZoneIndicator->CurrentPhase);
 
-								AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(Handle, FGameplayTag(UKismetStringLibrary::Conv_StringToName(FString(L"SetByCaller.StormCampingDamage"))), 1);
+								AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(Handle, FGameplayTag(FName(L"SetByCaller.StormCampingDamage")), 1);
 								//printf("found\n");
 								break;
 							}

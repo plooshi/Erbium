@@ -257,20 +257,6 @@ float Sum = 0;
 float Weight;
 float TotalWeight;
 
-
-
-static inline uint64 FindInitHost()
-{
-    auto Addr = Memcury::Scanner::FindStringRef(L"BeaconPort=");
-    return Addr.ScanFor({ 0x48, 0x8B, 0xC4 }, false).Get();
-}
-
-
-static inline uint64 FindPauseBeaconRequests()
-{
-    return Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 48 83 EC 20 33 ED 48 8B F1 84 D2 74 27 80 3D").Get();
-}
-
 void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Ret)
 {
     Stack.IncrementCode();
@@ -286,14 +272,10 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
     if (GameMode->WarmupRequiredPlayerCount != 1)
     {
-        // credit mariki
-        if (UWorld::GetWorld()->HasServerStreamingLevelsVisibility())
-            UWorld::GetWorld()->ServerStreamingLevelsVisibility = UWorld::SpawnActor<AServerStreamingLevelsVisibility>(FVector{}, {});
-
         // if u listen before setting playlist it behaves the same as using proper listening iirc
         auto World = UWorld::GetWorld();
         auto Engine = UEngine::GetEngine();
-        auto NetDriverName = UKismetStringLibrary::Conv_StringToName(FString(L"GameNetDriver"));
+        auto NetDriverName = FName(L"GameNetDriver");
 
         UNetDriver* NetDriver = nullptr;
         if (VersionInfo.FortniteVersion >= 16.00)
@@ -344,7 +326,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
         if (VersionInfo.FortniteVersion >= 4.0)
             SetupPlaylist(GameMode, GameState);
-
+        
         if (VersionInfo.EngineVersion >= 4.27)
         {
             auto MeshNetworkSubsystem = TUObjectArray::FindFirstObject("MeshNetworkSubsystem");
@@ -685,7 +667,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
             if (AthenaGameDataTable)
             {
-                static FName DefaultSafeZoneDamageName = UKismetStringLibrary::Conv_StringToName(FString(L"Default.SafeZone.Damage"));
+                static FName DefaultSafeZoneDamageName = FName(L"Default.SafeZone.Damage");
 
                 for (const auto& [RowName, RowPtr] : AthenaGameDataTable->RowMap)
                 {
@@ -851,7 +833,23 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
         PlayerList.Free();
 
-        *Ret = GameState->bPlaylistDataIsLoaded && ReadyPlayers >= GameMode->WarmupRequiredPlayerCount;
+        auto VolumeManager = GameState->VolumeManager;
+        TArray<FPlaylistStreamedLevelData>& AdditionalPlaylistLevels = *(TArray<FPlaylistStreamedLevelData>*) (__int64(GameState) + GameState->GetOffset("AdditionalPlaylistLevelsStreamed") - 0x10);
+
+        bool bAllLevelsFinishedStreaming = true;
+        for (int i = 0; i < AdditionalPlaylistLevels.Num(); i++)
+        {
+            auto& AdditionalPlaylistLevel = AdditionalPlaylistLevels.Get(i, FPlaylistStreamedLevelData::Size());
+
+            if (!AdditionalPlaylistLevel.bIsFinishedStreaming || !AdditionalPlaylistLevel.StreamingLevel || !AdditionalPlaylistLevel.StreamingLevel->LoadedLevel->bIsVisible)
+            {
+                bAllLevelsFinishedStreaming = false;
+                break;
+            }
+        }
+
+        static auto WaitingToStart = FName(L"WaitingToStart");
+        *Ret = GameMode->bWorldIsReady && GameState->bPlaylistDataIsLoaded && GameMode->MatchState == WaitingToStart && bAllLevelsFinishedStreaming && (!VolumeManager || !VolumeManager->bInSpawningStartup) && ReadyPlayers >= GameMode->WarmupRequiredPlayerCount;
     }
     else
         *Ret = callOGWithRet(GameMode, Stack.GetCurrentNativeFunction(), ReadyToStartMatch);
@@ -1119,8 +1117,8 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
 
             auto GameData = GameMode->HasAthenaGameDataTable() ? GameMode->AthenaGameDataTable : GameState->AthenaGameDataTable;
 
-            auto ShrinkTime = UKismetStringLibrary::Conv_StringToName(FString(L"Default.SafeZone.ShrinkTime"));
-            auto HoldTime = UKismetStringLibrary::Conv_StringToName(FString(L"Default.SafeZone.WaitTime"));
+            auto ShrinkTime = FName(L"Default.SafeZone.ShrinkTime");
+            auto HoldTime = FName(L"Default.SafeZone.WaitTime");
 
             for (int i = 0; i < Durations.Num(); i++)
             {
@@ -1221,6 +1219,9 @@ void AFortGameModeAthena::HandleStartingNewPlayer_(UObject* Context, FFrame& Sta
         NewPlayer->WorldInventory = UWorld::SpawnActor<AFortInventory>(NewPlayer->WorldInventoryClass, FVector{});
         NewPlayer->WorldInventory->SetOwner(NewPlayer);
     }
+
+    if (wcsstr(FConfiguration::Playlist, L"/Game/Athena/Playlists/Creative/Playlist_PlaygroundV2.Playlist_PlaygroundV2"))
+    { }
 
     return callOG(GameMode, Stack.GetCurrentNativeFunction(), HandleStartingNewPlayer, NewPlayer);
 }
@@ -1387,7 +1388,7 @@ AFortSafeZoneIndicator* SetupSafeZoneIndicator(AFortGameModeAthena* GameMode)
                 PhaseInfo->ShrinkTime = SafeZoneDefinition.ShrinkTime.Evaluate(i);
                 PhaseInfo->PlayerCap = (int)SafeZoneDefinition.PlayerCapSolo.Evaluate(i);
 
-                UDataTableFunctionLibrary::EvaluateCurveTableRow(GameState->AthenaGameDataTable, UKismetStringLibrary::Conv_StringToName(FString(L"Default.SafeZone.Damage")), i, nullptr, &PhaseInfo->DamageInfo.Damage, FString());
+                UDataTableFunctionLibrary::EvaluateCurveTableRow(GameState->AthenaGameDataTable, FName(L"Default.SafeZone.Damage"), i, nullptr, &PhaseInfo->DamageInfo.Damage, FString());
                 if (i == 0.f)
                     PhaseInfo->DamageInfo.Damage = 0.01f;
                 PhaseInfo->DamageInfo.bPercentageBasedDamage = true;
@@ -1480,7 +1481,7 @@ void SpawnInitialSafeZone(AFortGameModeAthena* GameMode)
     GameMode->bSafeZoneActive = true;
     auto SafeZoneIndicator = SetupSafeZoneIndicator(GameMode);
 
-    SafeZoneIndicator->OnSafeZonePhaseChanged.Bind(GameMode, UKismetStringLibrary::Conv_StringToName(FString(L"HandlePostSafeZonePhaseChanged")));
+    SafeZoneIndicator->OnSafeZonePhaseChanged.Bind(GameMode, FName(L"HandlePostSafeZonePhaseChanged"));
     GameMode->OnSafeZoneIndicatorSpawned.Process(SafeZoneIndicator);
 
     StartNewSafeZonePhase(GameMode, 1);
@@ -1523,6 +1524,21 @@ void AFortGameModeAthena::Hook()
     Utils::ExecHook(GetDefaultObj()->GetFunction("ReadyToStartMatch"), ReadyToStartMatch_, ReadyToStartMatch_OG);
 }
 
+bool (*LoadMapOG)(UEngine*, __int64*, __int64*, UObject*, FString*);
+bool LoadMap(UEngine* Engine, __int64* WorldContext, __int64* URL, UObject* Pending, FString* Error)
+{
+    auto Ret = LoadMapOG(Engine, WorldContext, URL, Pending, Error);
+
+    if (Ret)
+    {
+        // credit mariki
+        if (UWorld::GetWorld()->HasServerStreamingLevelsVisibility())
+            UWorld::GetWorld()->ServerStreamingLevelsVisibility = UWorld::SpawnActor<AServerStreamingLevelsVisibility>(FVector{}, {});
+    }
+
+    return Ret;
+}
+
 void AFortGameModeAthena::PostLoadHook()
 {
     ApplyCharacterCustomization = FindApplyCharacterCustomization();
@@ -1549,5 +1565,28 @@ void AFortGameModeAthena::PostLoadHook()
             Utils::Hook(FindUpdateSafeZonesPhase(), UpdateSafeZonesPhase, UpdateSafeZonesPhaseOG);
         }
         Utils::ExecHook(L"/Script/FortniteGame.FortSafeZoneIndicator.GetPhaseInfo", GetPhaseInfo);
+    }
+
+    if (VersionInfo.EngineVersion >= 5.1)
+    {
+        auto sRef = Memcury::Scanner::FindStringRef(L"STAT_LoadMap").Get();
+
+        uint64_t LoadMapAddr = 0;
+        for (int i = 0; i < 3000; i++)
+        {
+            if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x5C)
+            {
+                LoadMapAddr = sRef - i;
+                break;
+            }
+
+            if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
+            {
+                LoadMapAddr = sRef - i;
+                break;
+            }
+        }
+
+        Utils::Hook(LoadMapAddr, LoadMap, LoadMapOG);
     }
 }
