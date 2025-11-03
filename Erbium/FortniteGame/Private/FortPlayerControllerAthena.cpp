@@ -9,6 +9,7 @@
 #include "../../Erbium/Public/Events.h"
 #include "../../Erbium/Public/LateGame.h"
 #include "../Public/BuildingItemCollectorActor.h"
+#include "../Public/FortPhysicsPawn.h"
 
 void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena* PlayerController, FVector& Loc, FRotator& Rot)
 {
@@ -1488,8 +1489,49 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 	else
 		PlayerController = (AFortPlayerControllerAthena*)Context;
 
+	auto Pawn = (AFortPlayerPawnAthena*)PlayerController->Pawn;
+
 	if (auto Container = bDidntFind ? ReceivingActor->Cast<ABuildingContainer>() : nullptr)
 		UFortLootPackage::SpawnLootHook(Container);
+	else if (auto Vehicle = ReceivingActor->Cast<AFortAthenaVehicle>())
+	{
+		ServerAttemptInteract_OG(Context, Stack);
+
+		UFortVehicleSeatWeaponComponent* SeatWeaponComponent = (UFortVehicleSeatWeaponComponent*)Vehicle->GetComponentByClass(UFortVehicleSeatWeaponComponent::StaticClass());
+
+		if (SeatWeaponComponent)
+		{
+			auto SeatIdx = Vehicle->FindSeatIndex(Pawn);
+			UFortWeaponItemDefinition* Weapon = nullptr;
+
+			for (int i = 0; i < SeatWeaponComponent->WeaponSeatDefinitions.Num(); i++)
+			{
+				auto& WeaponDefinition = SeatWeaponComponent->WeaponSeatDefinitions.Get(i, FWeaponSeatDefinition::Size());
+
+				if (WeaponDefinition.SeatIndex != SeatIdx)
+					continue;
+
+				Weapon = WeaponDefinition.VehicleWeapon;
+				break;
+			}
+
+			if (Weapon)
+			{
+				printf("Weapon: %s\n", Weapon->Name.ToString().c_str());
+				auto Item = PlayerController->WorldInventory->GiveItem(Weapon, 1, 99999);
+
+				auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+					{ return entry.ItemDefinition == Weapon; }, FFortItemEntry::Size());
+				auto CurrentWeapon = Pawn->CurrentWeapon;
+				PlayerController->ServerExecuteInventoryItem(ItemEntry->ItemGuid);
+				PlayerController->ClientEquipItem(ItemEntry->ItemGuid, true);
+				if (Pawn->HasPreviousWeapon())
+					Pawn->PreviousWeapon = CurrentWeapon;
+			}
+		}
+
+		return;
+	}
 	else if (auto CollectorActor = ReceivingActor->Cast<ABuildingItemCollectorActor>())
 	{
 		CollectorActor->ControllingPlayer = PlayerController;
@@ -1520,7 +1562,7 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 			{
 				CollectorActor->bCurrentInteractionSuccess = false;
 				CollectorActor->ControllingPlayer = nullptr;
-				CollectorActor->Call(CollectorActor->GetFunction("BlueprintOnInteract"), PlayerController->MyFortPawn);
+				CollectorActor->Call(CollectorActor->GetFunction("BlueprintOnInteract"), Pawn);
 				//CollectorActor->PlayVendFailFX();
 				return ServerAttemptInteract_OG(Context, Stack);
 			}
@@ -1563,7 +1605,7 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 
 		CollectorActor->ClientPausedActiveInputItem = CollectorActor->ActiveInputItem;
 		CollectorActor->bCurrentInteractionSuccess = true;
-		CollectorActor->Call(CollectorActor->GetFunction("BlueprintOnInteract"), PlayerController->MyFortPawn);
+		CollectorActor->Call(CollectorActor->GetFunction("BlueprintOnInteract"), Pawn);
 		//CollectorActor->PlayVendFX();
 	}
 
@@ -1627,6 +1669,10 @@ void OnUnEquip(AFortWeapon* Weapon)
 		for (int i = 0; i < Weapon->EquippedAbilityHandles.Num(); i++)
 		{
 			auto& Handle = Weapon->EquippedAbilityHandles.Get(i, FGameplayAbilitySpecHandle::Size());
+
+			if (IsBadReadPtr(&Handle)) // what
+				continue;
+
 			if (Handle.Handle != -1)
 			{
 				ClearAbility(AbilitySystemComponent, Handle);

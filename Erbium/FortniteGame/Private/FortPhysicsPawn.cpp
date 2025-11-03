@@ -33,7 +33,7 @@ public:
     DEFINE_FUNC(SetPhysicsAngularVelocityInDegrees, void);
 };
 
-void ServerMove(UObject* Context, FFrame& Stack)
+void AFortPhysicsPawn::ServerMove(UObject* Context, FFrame& Stack)
 {
     FQuat Rotation;
     FVector Translation;
@@ -87,7 +87,6 @@ void ServerMove(UObject* Context, FFrame& Stack)
         if (VersionInfo.FortniteVersion >= 4.24)
         {
             RealRotation.Yaw = FRotator::UnwindDegrees(RealRotation.Yaw);
-
             RealRotation.Pitch = 0;
             RealRotation.Roll = 0;
         }
@@ -96,6 +95,31 @@ void ServerMove(UObject* Context, FFrame& Stack)
         RootComponent->SetPhysicsLinearVelocity(LinearVelocity, 0, FName(0));
         RootComponent->SetPhysicsAngularVelocityInDegrees(AngularVelocity, 0, FName(0));
     }
+}
+
+void AFortOctopusVehicle::ServerUpdateTowhook(UObject* Context, FFrame& Stack)
+{
+    FVector InNetTowhookAimDir;
+
+    Stack.StepCompiledIn(&InNetTowhookAimDir);
+    Stack.IncrementCode();
+    auto Vehicle = (AFortOctopusVehicle*)Context;
+
+    printf("ServerUpdateTowhook\n");
+    Vehicle->NetTowhookAimDir = InNetTowhookAimDir;
+    Vehicle->OnRep_NetTowhookAimDir();
+}
+
+void AFortSpaghettiVehicle::ServerUpdateTowhook(UObject* Context, FFrame& Stack)
+{
+    FVector InNetTowhookAimDir;
+
+    Stack.StepCompiledIn(&InNetTowhookAimDir);
+    Stack.IncrementCode();
+    auto Vehicle = (AFortSpaghettiVehicle*)Context;
+
+    Vehicle->NetTowhookAimDir = InNetTowhookAimDir;
+    Vehicle->OnRep_NetTowhookAimDir();
 }
 
 void AFortPhysicsPawn::Hook()
@@ -122,4 +146,16 @@ void AFortPhysicsPawn::Hook()
         if (DefaultVehicle)
             Utils::ExecHook(DefaultVehicle->GetFunction("ServerUpdatePhysicsParams"), ServerMove);
     }
+
+    auto DefaultOctopusVehicle = AFortOctopusVehicle::GetDefaultObj();
+
+    if (DefaultOctopusVehicle)
+    {
+        Utils::ExecHook(DefaultOctopusVehicle->GetFunction("ServerUpdateTowhook"), AFortOctopusVehicle::ServerUpdateTowhook);
+    }
+
+    auto DefaultSpaghettiVehicle = AFortSpaghettiVehicle::GetDefaultObj();
+
+    if (DefaultSpaghettiVehicle)
+        Utils::ExecHook(DefaultSpaghettiVehicle->GetFunction("ServerUpdateTowhook"), AFortSpaghettiVehicle::ServerUpdateTowhook);
 }

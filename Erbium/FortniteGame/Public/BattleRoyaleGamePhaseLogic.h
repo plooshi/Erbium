@@ -35,6 +35,9 @@ class UFortGameStateComponent_BattleRoyaleGamePhaseLogic : public UActorComponen
 {
 public:
     UCLASS_COMMON_MEMBERS(UFortGameStateComponent_BattleRoyaleGamePhaseLogic);
+	static inline bool bSkipWarmup = false;
+	static inline bool bSkipAircraft = false;
+	static inline bool bEnableZones = true;
 
 	DEFINE_PROP(WarmupCountdownStartTime, float);
 	DEFINE_PROP(WarmupCountdownEndTime, float);
@@ -69,6 +72,7 @@ public:
 	AFortSafeZoneIndicator* SetupSafeZoneIndicator();
 	void StartNewSafeZonePhase(int NewSafeZonePhase);
 	static void GenerateStormCircles(AFortAthenaMapInfo* MapInfo);
+	void StartAircraftPhase();
 
     InitHooks;
 };

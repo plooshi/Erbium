@@ -809,12 +809,15 @@ namespace SDK
 		static const UObject* FindFirstObject(const char* Name)
 		{
 			UClass* TargetClass = (UClass*)FindObject(Name, 0x20);
-			for (int i = 0; i < Num(); i++)
-			{
-				const UObject* Obj = GetObjectByIndex(i);
-				if (Obj && !Obj->IsDefaultObject() && Obj->IsA(TargetClass))
-					return Obj;
-			}
+
+			if (TargetClass)
+				for (int i = 0; i < Num(); i++)
+				{
+					const UObject* Obj = GetObjectByIndex(i);
+					if (Obj && !Obj->IsDefaultObject() && Obj->IsA(TargetClass))
+						return Obj;
+				}
+
 			return nullptr;
 		}
 	};
@@ -1201,6 +1204,11 @@ namespace SDK
 			}
 
 			return Object;
+		}
+
+		static uint32_t Size()
+		{
+			return VersionInfo.EngineVersion >= 5.2 ? 0x20 : sizeof(FSoftObjectPtr);
 		}
 	};
 

@@ -303,6 +303,8 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         }
         else
             World->NetDriver = NetDriver = ((UNetDriver * (*)(UEngine*, UWorld*, FName)) FindCreateNetDriver())(Engine, World, NetDriverName);
+        if (VersionInfo.FortniteVersion >= 20)
+            NetDriver->NetServerMaxTickRate = 30;
 
         NetDriver->NetDriverName = NetDriverName;
         NetDriver->World = World;
@@ -388,8 +390,14 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
         static auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
 
+        if (Playlist && Playlist->HasbSkipWarmup())
+            UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bSkipWarmup = Playlist->bSkipWarmup;
+        if (Playlist && Playlist->HasbSkipAircraft())
+            UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bSkipAircraft = Playlist->bSkipAircraft;
+
         if (Playlist && Playlist->HasGameplayTagContainer())
         {
+
             for (int i = 0; i < Playlist->GameplayTagContainer.GameplayTags.Num(); i++)
             {
                 auto& PlaylistTag = Playlist->GameplayTagContainer.GameplayTags.Get(i, FGameplayTag::Size());
@@ -419,7 +427,10 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                             else
                                 printf("[Events] Failed to load event level!\n");
 
-                        GameMode->SafeZoneLocations.Free();
+                        if (GameMode->HasSafeZoneLocations())
+                            GameMode->SafeZoneLocations.Free();
+                        else
+                            UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bEnableZones = false;
                         break;
                     }
 
@@ -440,6 +451,27 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
         auto AbilitySet = VersionInfo.FortniteVersion >= 8.30 ? FindObject<UFortAbilitySet>(L"/Game/Abilities/Player/Generic/Traits/DefaultPlayer/GAS_AthenaPlayer.GAS_AthenaPlayer") : FindObject<UFortAbilitySet>(L"/Game/Abilities/Player/Generic/Traits/DefaultPlayer/GAS_DefaultPlayer.GAS_DefaultPlayer");
         AbilitySets.Add(AbilitySet);
+
+        if (Playlist && Playlist->HasModifierList())
+            for (int i = 0; i < Playlist->ModifierList.Num(); i++)
+            {
+                auto Modifier = Playlist->ModifierList.Get(i, FSoftObjectPtr::Size()).Get();
+
+                for (int j = 0; j < Modifier->PersistentAbilitySets.Num(); j++)
+                {
+                    auto& DeliveryInfo = Modifier->PersistentAbilitySets.Get(j, FFortAbilitySetDeliveryInfo::Size());
+
+                    if (!DeliveryInfo.DeliveryRequirements.bApplyToPlayerPawns)
+                        continue;
+
+                    for (int k = 0; k < DeliveryInfo.AbilitySets.Num(); k++)
+                    {
+                        auto AbilitySet = DeliveryInfo.AbilitySets.Get(k, FSoftObjectPtr::Size()).Get();
+
+                        AbilitySets.Add(AbilitySet);
+                    }
+                }
+            }
 
         auto AddToTierData = [&](const UDataTable* Table, UEAllocatedMap<int32, FFortLootTierData*>& TempArr)
             {
@@ -1321,11 +1353,6 @@ void AFortGameModeAthena::OnAircraftExitedDropZone_(UObject* Context, FFrame& St
     callOG(GameMode, Stack.GetCurrentNativeFunction(), OnAircraftExitedDropZone, Aircraft);
 }
 
-void AFortGameModeAthena::Hook()
-{
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ReadyToStartMatch"), ReadyToStartMatch_, ReadyToStartMatch_OG);
-}
-
 TArray<FFortSafeZonePhaseInfo> Phases;
 
 AFortSafeZoneIndicator* SetupSafeZoneIndicator(AFortGameModeAthena* GameMode)
@@ -1489,6 +1516,11 @@ void GetPhaseInfo(UObject* Context, FFrame& Stack, bool* Ret)
         return;
     }
     *Ret = false;
+}
+
+void AFortGameModeAthena::Hook()
+{
+    Utils::ExecHook(GetDefaultObj()->GetFunction("ReadyToStartMatch"), ReadyToStartMatch_, ReadyToStartMatch_OG);
 }
 
 void AFortGameModeAthena::PostLoadHook()

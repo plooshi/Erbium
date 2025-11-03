@@ -77,6 +77,7 @@ public:
     DEFINE_FUNC(OnRep_PlayerState, void);
     DEFINE_FUNC(ServerSetAttachment, void);
     DEFINE_FUNC(GetActiveZipline, AFortAscenderZipline*);
+    DEFINE_FUNC(ServerOnExitVehicle, void);
 
     DefUHookOg(ServerHandlePickup_);
     DefUHookOg(ServerHandlePickupInfo);
@@ -85,6 +86,7 @@ public:
     DefUHookOg(OnCapsuleBeginOverlap_);
     static void MovingEmoteStopped(UObject*, FFrame&);
     DefUHookOg(Athena_MedConsumable_Triggered);
+    DefUHookOg(ServerOnExitVehicle_);
 
     InitPostLoadHooks;
 };

@@ -3,6 +3,7 @@
 #include "../Public/FortInventory.h"
 #include "../Public/FortPlayerControllerAthena.h"
 #include "../Public/FortWeapon.h"
+#include "../Public/FortPhysicsPawn.h"
 
 struct _Pad_0xC
 {
@@ -290,6 +291,74 @@ void AFortPlayerPawnAthena::Athena_MedConsumable_Triggered(UObject* Context, FFr
 	return Athena_MedConsumable_TriggeredOG(Context, Stack);
 }
 
+void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack)
+{
+	uint8_t ExitForceBehavior;
+	bool bDestroyVehicleWhenForced;
+
+	Stack.StepCompiledIn(&ExitForceBehavior);
+	Stack.StepCompiledIn(&bDestroyVehicleWhenForced);
+	Stack.IncrementCode();
+
+	auto Pawn = (AFortPlayerPawnAthena*)Context;
+	auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
+	static auto GetVehicleFunc = Pawn->GetFunction("GetVehicle");
+	if (!GetVehicleFunc)
+		GetVehicleFunc = Pawn->GetFunction("BP_GetVehicle");
+
+	auto Vehicle = Pawn->Call<AFortAthenaVehicle*>(GetVehicleFunc);
+
+	auto SeatIdx = Vehicle->FindSeatIndex(PlayerController->MyFortPawn);
+
+	UFortVehicleSeatWeaponComponent* SeatWeaponComponent = (UFortVehicleSeatWeaponComponent*)Vehicle->GetComponentByClass(UFortVehicleSeatWeaponComponent::StaticClass());
+
+	if (SeatWeaponComponent)
+	{
+		UFortWeaponItemDefinition* Weapon = nullptr;
+		for (int i = 0; i < SeatWeaponComponent->WeaponSeatDefinitions.Num(); i++)
+		{
+			auto& WeaponDefinition = SeatWeaponComponent->WeaponSeatDefinitions.Get(i, FWeaponSeatDefinition::Size());
+
+			if (WeaponDefinition.SeatIndex != SeatIdx)
+				continue;
+
+			Weapon = WeaponDefinition.VehicleWeapon;
+			break;
+		}
+
+
+		auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([Weapon](FFortItemEntry& entry)
+			{ return entry.ItemDefinition == Weapon; }, FFortItemEntry::Size());
+
+		if (ItemEntry)
+		{
+			printf("3");
+			PlayerController->WorldInventory->Remove(ItemEntry->ItemGuid);
+
+			auto LastItem = Pawn->HasPreviousWeapon() ? (AFortWeapon*)Pawn->PreviousWeapon : nullptr;
+			if (LastItem)
+			{
+				PlayerController->ServerExecuteInventoryItem(LastItem->ItemEntryGuid);
+				PlayerController->ClientEquipItem(LastItem->ItemEntryGuid, true);
+			}
+			else
+			{
+				auto pickaxeEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([Weapon](FFortItemEntry& entry)
+					{ return entry.ItemDefinition->IsA<UFortWeaponMeleeItemDefinition>(); }, FFortItemEntry::Size());
+
+				if (pickaxeEntry)
+				{
+					PlayerController->ServerExecuteInventoryItem(pickaxeEntry->ItemGuid);
+					PlayerController->ClientEquipItem(pickaxeEntry->ItemGuid, true);
+				}
+			}
+		}
+		printf("3");
+	}
+
+	return callOG(Pawn, Stack.GetCurrentNativeFunction(), ServerOnExitVehicle, ExitForceBehavior, bDestroyVehicleWhenForced);
+}
+
 void AFortPlayerPawnAthena::PostLoadHook()
 {
 	OnRep_ZiplineState = FindOnRep_ZiplineState();
@@ -311,4 +380,6 @@ void AFortPlayerPawnAthena::PostLoadHook()
 
 	if (VersionInfo.EngineVersion >= 4.24 && VersionInfo.EngineVersion < 4.27)
 		Utils::ExecHook((UFunction*)FindObject<UFunction>(L"/Game/Athena/Items/Consumables/Parents/GA_Athena_MedConsumable_Parent.GA_Athena_MedConsumable_Parent_C.Triggered_4C02BFB04B18D9E79F84848FFE6D2C32"), Athena_MedConsumable_Triggered, Athena_MedConsumable_TriggeredOG);
+
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerOnExitVehicle"), ServerOnExitVehicle_, ServerOnExitVehicle_OG);
 }
