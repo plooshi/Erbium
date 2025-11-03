@@ -1389,6 +1389,23 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 			if (PlayerController->Pawn)
 				PlayerController->Pawn->K2_SetActorLocation(FVector(X, Y, Z), false, nullptr, true);
 		}
+		else if (command == "launch" || command == "launchpawn")
+		{
+			if (args.size() != 4)
+			{
+				PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1);
+				return;
+			}
+
+			double X = 0., Y = 0., Z = 0.;
+
+			X = strtod(args[1].c_str(), nullptr);
+			Y = strtod(args[2].c_str(), nullptr);
+			Z = strtod(args[3].c_str(), nullptr);
+
+			if (PlayerController->Pawn)
+				PlayerController->Pawn->LaunchCharacterJump(FVector(X, Y, Z), false, nullptr, true);
+			}
 		else if (command == "giveitem")
 		{
 			if (args.size() != 2 && args.size() != 3)
