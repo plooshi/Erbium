@@ -79,6 +79,7 @@ public:
     DEFINE_FUNC(ServerSetAttachment, void);
     DEFINE_FUNC(GetActiveZipline, AFortAscenderZipline*);
     DEFINE_FUNC(ServerOnExitVehicle, void);
+    DEFINE_FUNC(SetInVortex, void);
 
     DefUHookOg(ServerHandlePickup_);
     DefUHookOg(ServerHandlePickupInfo);

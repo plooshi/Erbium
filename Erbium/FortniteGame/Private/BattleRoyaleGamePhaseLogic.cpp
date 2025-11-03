@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "../Public/BattleRoyaleGamePhaseLogic.h"
+#include "../../Erbium/Public/Configuration.h"
 
 uint64_t SetGamePhase_ = 0;
 void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::SetGamePhase(EAthenaGamePhase GamePhase)
@@ -159,6 +160,9 @@ inline void SinCos(float* ScalarSin, float* ScalarCos, float  Value)
 
 void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::GenerateStormCircles(AFortAthenaMapInfo* MapInfo)
 {
+	if (StormCircles.size() > 0)
+		return;
+
 	StormCircles.clear();
 
 	auto FRandSeeded = [&]() { return (float) rand() / 32767.f; };
@@ -400,6 +404,36 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 	{
 		TArray<AFortAthenaAircraft*> Aircrafts;
 		auto& FlightInfo = GameState->MapInfo->FlightInfos[0];
+
+		if (FConfiguration::bLateGame)
+		{
+			/*if (VersionInfo.FortniteVersion < 16)
+			{
+				GameState->GamePhase = 4;
+				GameState->GamePhaseStep = 7;
+				GameState->OnRep_GamePhase(3);
+			}*/
+
+			GenerateStormCircles(GameState->MapInfo);
+			
+			if (StormCircles.size() < 4)
+			{
+				printf("LateGame is not supported on this version!\n");
+				return;
+			}
+			FVector Loc = StormCircles[3].Center;
+			Loc.Z = 17500.f;
+
+			FlightInfo.FlightSpeed = 0.f;
+
+			FlightInfo.FlightStartLocation = Loc;
+
+			FlightInfo.TimeTillFlightEnd = 7.f;
+			FlightInfo.TimeTillDropEnd = 7.f;
+			FlightInfo.TimeTillDropStart = 0.f;
+			//GameState->bAircraftIsLocked = false;
+			//GameState->SafeZonesStartTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + 8.f;
+		}
 		auto Aircraft = AFortAthenaAircraft::SpawnAircraft(UWorld::GetWorld(), GameState->MapInfo->AircraftClass, FlightInfo);
 
 		Aircraft->FlightElapsedTime = 0;
@@ -451,82 +485,89 @@ uint64_t Reset_ = 0;
 void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 {
 	auto Time = UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
+	static auto GamePhaseOffset = this->GetOffset("GamePhase");
+	auto& _GamePhase = *(EAthenaGamePhase*)(__int64(this) + GamePhaseOffset);
 
 	static bool finishedFlight = false;
 	if (!bSkipAircraft)
 	{
-		static bool gettingReady = false;
-		if (!gettingReady)
+		if (_GamePhase <= EAthenaGamePhase::Warmup)
 		{
-			if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && WarmupEarlyCountdownDuration != -1 && WarmupEarlyCountdownDuration < Time)
+			static bool gettingReady = false;
+			if (!gettingReady)
 			{
-				gettingReady = true;
-
-				SetGamePhaseStep(EAthenaGamePhaseStep::GetReady);
-				return;
-			}
-		}
-
-		static bool startedBus = false;
-		if (gettingReady && !startedBus)
-		{
-			if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && WarmupCountdownEndTime != -1 && WarmupCountdownEndTime < Time)
-			{
-				startedBus = true;
-
-				StartAircraftPhase();
-
-				return;
-			}
-		}
-
-		static bool busUnlocked = false;
-		if (startedBus && !busUnlocked)
-		{
-			if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && Aircrafts_GameState[0].Get() && Aircrafts_GameState[0]->DropStartTime < Time)
-			{
-				busUnlocked = true;
-
-				bAircraftIsLocked = false;
-				SetGamePhaseStep(EAthenaGamePhaseStep::BusFlying);
-				return;
-			}
-		}
-
-		static bool startedForming = false;
-		if (startedBus && !startedForming)
-		{
-			if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && Aircrafts_GameState[0].Get() && Aircrafts_GameState[0]->DropEndTime != -1 && Aircrafts_GameState[0]->DropEndTime < Time)
-			{
-				startedForming = true;
-				auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
-				auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
-
-				for (auto& Player__Uncasted : GameMode->AlivePlayers)
+				if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && WarmupEarlyCountdownDuration != -1 && WarmupEarlyCountdownDuration < Time)
 				{
-					auto Player = (AFortPlayerControllerAthena*)Player__Uncasted;
+					gettingReady = true;
 
-					if (Player->IsInAircraft())
-					{
-						Player->GetAircraftComponent()->ServerAttemptAircraftJump();
-					}
+					SetGamePhaseStep(EAthenaGamePhaseStep::GetReady);
+					return;
 				}
+			}
 
-				/*if (bLateGame)
+			if (gettingReady)
+			{
+				if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && WarmupCountdownEndTime != -1 && WarmupCountdownEndTime < Time)
 				{
-					GameState->GamePhase = EAthenaGamePhase::SafeZones;
-					GameState->GamePhaseStep = EAthenaGamePhaseStep::StormHolding;
-					GameState->OnRep_GamePhase(EAthenaGamePhase::Aircraft);
-				}*/
-				SafeZonesStartTime = (float)Time + 60.f;
+					StartAircraftPhase();
 
-				SetGamePhase(EAthenaGamePhase::SafeZones);
-				SetGamePhaseStep(EAthenaGamePhaseStep::StormForming);
-				return;
+					return;
+				}
 			}
 		}
 
-		if (busUnlocked && !finishedFlight)
+		if (_GamePhase == EAthenaGamePhase::Aircraft)
+		{
+			static bool busUnlocked = false;
+			if (!busUnlocked)
+			{
+				if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && Aircrafts_GameState[0].Get() && Aircrafts_GameState[0]->DropStartTime < Time)
+				{
+					busUnlocked = true;
+
+					bAircraftIsLocked = false;
+					SetGamePhaseStep(EAthenaGamePhaseStep::BusFlying);
+					return;
+				}
+			}
+
+			static bool startedForming = false;
+			if (!startedForming)
+			{
+				if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && Aircrafts_GameState[0].Get() && Aircrafts_GameState[0]->DropEndTime != -1 && Aircrafts_GameState[0]->DropEndTime < Time)
+				{
+					startedForming = true;
+					auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
+					auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+
+					/*for (auto& Player__Uncasted : GameMode->AlivePlayers)
+					{
+						auto Player = (AFortPlayerControllerAthena*)Player__Uncasted;
+
+						if (Player->IsInAircraft())
+						{
+							Player->GetAircraftComponent()->ServerAttemptAircraftJump();
+						}
+					}*/
+
+					/*if (bLateGame)
+					{
+						GameState->GamePhase = EAthenaGamePhase::SafeZones;
+						GameState->GamePhaseStep = EAthenaGamePhaseStep::StormHolding;
+						GameState->OnRep_GamePhase(EAthenaGamePhase::Aircraft);
+					}*/
+					if (FConfiguration::bLateGame)
+						SafeZonesStartTime = (float)Time;
+					else
+						SafeZonesStartTime = (float)Time + 60.f;
+
+					SetGamePhaseStep(EAthenaGamePhaseStep::StormForming);
+					return;
+				}
+			}
+		}
+
+		if (!finishedFlight)
 		{
 			if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && Aircrafts_GameState[0].Get() && Aircrafts_GameState[0]->FlightEndTime != -1 && Aircrafts_GameState[0]->FlightEndTime < Time)
 			{
@@ -536,6 +577,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 				Aircraft->K2_DestroyActor();
 				Aircrafts_GameState.Clear();
 				Aircrafts_GameMode.Clear();
+				SetGamePhase(EAthenaGamePhase::SafeZones);
 				return;
 			}
 		}
@@ -546,79 +588,81 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 		{
 			finishedFlight = true;
 
-			SetGamePhase(EAthenaGamePhase::SafeZones);
 			SetGamePhaseStep(EAthenaGamePhaseStep::StormForming);
 		}
 	}
 
 	if (bEnableZones)
 	{
-		static bool formedZone = false;
-		if (finishedFlight && !formedZone)
+		if (_GamePhase == EAthenaGamePhase::SafeZones)
 		{
-			if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && SafeZonesStartTime != -1 && SafeZonesStartTime < Time)
+			static bool formedZone = false;
+			if (!bPausedZone && finishedFlight && !formedZone)
 			{
-				formedZone = true;
-				auto SafeZoneIndicator = SetupSafeZoneIndicator();
-				StartNewSafeZonePhase(1);
-				return;
-			}
-		}
-
-		static bool bUpdatedPhase = false;
-		if (formedZone)
-		{
-			bool bStartedNewPhase = false;
-			if (!bUpdatedPhase && SafeZoneIndicator->SafeZoneStartShrinkTime < Time)
-			{
-				bUpdatedPhase = true;
-				SetGamePhaseStep(EAthenaGamePhaseStep::StormShrinking);
-			}
-			else if (SafeZoneIndicator->SafeZoneFinishShrinkTime < Time)
-			{
-				bStartedNewPhase = true;
-				StartNewSafeZonePhase(SafeZoneIndicator->CurrentPhase + 1);
-				bUpdatedPhase = false;
-			}
-
-			auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
-			static auto ZoneEffect = FindObject<UClass>(L"/Game/Athena/SafeZone/GE_OutsideSafeZoneDamage.GE_OutsideSafeZoneDamage_C");
-
-			for (auto& UncastedPlayer : GameMode->AlivePlayers)
-			{
-				auto Player = (AFortPlayerControllerAthena*)UncastedPlayer;
-				if (auto Pawn = Player->MyFortPawn)
+				if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && SafeZonesStartTime != -1 && SafeZonesStartTime < Time)
 				{
-					bool bInZone = IsInCurrentSafeZone(Player->MyFortPawn->K2_GetActorLocation(), true);
+					formedZone = true;
+					auto SafeZoneIndicator = SetupSafeZoneIndicator();
+					StartNewSafeZonePhase(FConfiguration::bLateGame ? 4 : 1);
+					return;
+				}
+			}
 
-					if (Pawn->bIsInsideSafeZone != bInZone || Pawn->bIsInAnyStorm != !bInZone)
+			static bool bUpdatedPhase = false;
+			if (formedZone)
+			{
+				bool bStartedNewPhase = false;
+				if (!bPausedZone && !bUpdatedPhase && SafeZoneIndicator->SafeZoneStartShrinkTime < Time)
+				{
+					bUpdatedPhase = true;
+					SetGamePhaseStep(EAthenaGamePhaseStep::StormShrinking);
+				}
+				else if (!bPausedZone && SafeZoneIndicator->SafeZoneFinishShrinkTime < Time)
+				{
+					bStartedNewPhase = true;
+					StartNewSafeZonePhase(SafeZoneIndicator->CurrentPhase + 1);
+					bUpdatedPhase = false;
+				}
+
+				auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+				static auto ZoneEffect = FindObject<UClass>(L"/Game/Athena/SafeZone/GE_OutsideSafeZoneDamage.GE_OutsideSafeZoneDamage_C");
+
+				for (auto& UncastedPlayer : GameMode->AlivePlayers)
+				{
+					auto Player = (AFortPlayerControllerAthena*)UncastedPlayer;
+					if (auto Pawn = Player->MyFortPawn)
 					{
-						//printf("Pawn %s new storm status: %s\n", Pawn->Name.ToString().c_str(), bInZone ? "true" : "false");
-						Pawn->bIsInAnyStorm = !bInZone;
-						Pawn->OnRep_IsInAnyStorm();
-						Pawn->bIsInsideSafeZone = bInZone;
-						Pawn->OnRep_IsInsideSafeZone();
+						bool bInZone = IsInCurrentSafeZone(Player->MyFortPawn->K2_GetActorLocation(), true);
 
-						auto AbilitySystemComponent = Player->PlayerState->AbilitySystemComponent;
-						for (int i = 0; i < AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Num(); i++)
+						if (Pawn->bIsInsideSafeZone != bInZone || Pawn->bIsInAnyStorm != !bInZone)
 						{
-							auto& Effect = AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Get(i, FActiveGameplayEffect::Size());
+							//printf("Pawn %s new storm status: %s\n", Pawn->Name.ToString().c_str(), bInZone ? "true" : "false");
+							Pawn->bIsInAnyStorm = !bInZone;
+							Pawn->OnRep_IsInAnyStorm();
+							Pawn->bIsInsideSafeZone = bInZone;
+							Pawn->OnRep_IsInsideSafeZone();
 
-							//printf("%s %s\n", Effect.Spec.Def->Name.ToString().c_str(), Effect.Spec.Def->Class->Name.ToString().c_str());
-							if (Effect.Spec.Def->Class == ZoneEffect)
+							auto AbilitySystemComponent = Player->PlayerState->AbilitySystemComponent;
+							for (int i = 0; i < AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Num(); i++)
 							{
-								auto Handle = *(FActiveGameplayEffectHandle*)(__int64(&Effect) + 0xc);
+								auto& Effect = AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Get(i, FActiveGameplayEffect::Size());
+
+								//printf("%s %s\n", Effect.Spec.Def->Name.ToString().c_str(), Effect.Spec.Def->Class->Name.ToString().c_str());
+								if (Effect.Spec.Def->Class == ZoneEffect)
+								{
+									auto Handle = *(FActiveGameplayEffectHandle*)(__int64(&Effect) + 0xc);
 
 
-								AbilitySystemComponent->SetActiveGameplayEffectLevel(Handle, SafeZoneIndicator->CurrentPhase);
+									AbilitySystemComponent->SetActiveGameplayEffectLevel(Handle, SafeZoneIndicator->CurrentPhase);
 
-								AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(Handle, FGameplayTag(FName(L"SetByCaller.StormCampingDamage")), 1);
-								//printf("found\n");
-								break;
+									AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(Handle, FGameplayTag(FName(L"SetByCaller.StormCampingDamage")), 1);
+									//printf("found\n");
+									break;
+								}
 							}
 						}
-					}
 
+					}
 				}
 			}
 		}

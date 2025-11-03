@@ -14,6 +14,22 @@ public:
     TSoftClassPtr<class UClass>                   WidgetClass;                                       // 0x0008(0x0028)(Edit, DisableEditOnInstance, UObjectWrapper, HasGetValueTypeHash, NativeAccessSpecifierPublic)
 };
 
+struct EPlaylistUIExtensionSlot
+{
+public:
+    UENUM_COMMON_MEMBERS(EPlaylistUIExtensionSlot);
+
+    DEFINE_ENUM_PROP(Primary);
+};
+
+struct EUIExtensionSlot
+{
+public:
+    UENUM_COMMON_MEMBERS(EUIExtensionSlot);
+
+    DEFINE_ENUM_PROP(Primary);
+};
+
 struct FFortDeliveryInfoRequirementsFilter
 {
 public:

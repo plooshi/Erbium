@@ -10,6 +10,8 @@
 #include "../../Erbium/Public/LateGame.h"
 #include "../Public/BuildingItemCollectorActor.h"
 #include "../Public/FortPhysicsPawn.h"
+#include "../Public/BattleRoyaleGamePhaseLogic.h"
+#include "../../Erbium/Public/GUI.h"
 
 void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena* PlayerController, FVector& Loc, FRotator& Rot)
 {
@@ -142,7 +144,15 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 			{
 				PlayerController->MyFortPawn->SetShield(100.f);
 
-				FVector AircraftLocation = GameState->Aircrafts[0]->K2_GetActorLocation();
+				auto Aircraft = GameState->HasAircrafts() ? GameState->Aircrafts[0] : (GameState->HasAircraft() ? GameState->Aircraft : nullptr);
+				if (!Aircraft) // gamephaselogic builds
+				{
+					auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
+
+					Aircraft = GamePhaseLogic->Aircrafts_GameState[0].Get();
+				}
+
+				FVector AircraftLocation = Aircraft->K2_GetActorLocation();
 
 				float Angle = (float)rand() / 5215.03002625f;
 				float Radius = (float)(rand() % 1000);
@@ -1198,11 +1208,73 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 		std::transform(command.begin(), command.end(), command.begin(), tolower);
 
 		if (command == "startaircraft")
-			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
+		{
+			GUI::gsStatus = 2;
+
+			if (UFortGameStateComponent_BattleRoyaleGamePhaseLogic::GetDefaultObj())
+			{
+				auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
+
+				GamePhaseLogic->StartAircraftPhase();
+			}
+			else
+				UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
+		}
 		else if (command == "resumesafezone")
+		{
+			UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bPausedZone = false;
 			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startsafezone"), nullptr);
+		}
 		else if (command == "pausesafezone")
+		{
+			UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bPausedZone = true;
 			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"pausesafezone"), nullptr);
+		}
+		else if (command == "skipsafezone")
+		{
+			auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+			if (GameMode->HasSafeZoneIndicator())
+			{
+				if (GameMode->SafeZoneIndicator)
+				{
+					GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
+					GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + 0.05f;
+				}
+			}
+			else
+			{
+				auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
+
+				if (GamePhaseLogic->SafeZoneIndicator)
+				{
+					GamePhaseLogic->SafeZoneIndicator->SafeZoneStartShrinkTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
+					GamePhaseLogic->SafeZoneIndicator->SafeZoneFinishShrinkTime = GamePhaseLogic->SafeZoneIndicator->SafeZoneStartShrinkTime + 0.05f;
+				}
+			}
+			//UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"skipsafezone"), nullptr);
+		}
+		else if (command == "startshrinksafezone")
+		{
+			auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+			if (GameMode->HasSafeZoneIndicator())
+			{
+				if (GameMode->SafeZoneIndicator)
+					GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
+			}
+			else
+			{
+				auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
+
+				if (GamePhaseLogic->SafeZoneIndicator)
+					GamePhaseLogic->SafeZoneIndicator->SafeZoneStartShrinkTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
+			}
+
+			//UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startshrinksafezone"), nullptr);
+		}
+		else if (command == "infiniteammo")
+			FConfiguration::bInfiniteAmmo ^= 1;
+		else if (command == "infinitemats")
+			FConfiguration::bInfiniteMats ^= 1;
 		else if (command == "demospeed")
 		{
 			if (args.size() != 2)
@@ -1458,6 +1530,17 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 			else
 				return PlayerController->ClientMessage(FString(L"Failed to find class! Try passing it as a path or check your spelling & casing"), FName(), 1);
 		}
+		else if (command == "skydive")
+		{
+			auto Pawn = PlayerController->Pawn;
+			if (!Pawn)
+				return;
+
+			static bool bInVortex = false;
+			bInVortex ^= 1;
+
+			Pawn->SetInVortex(bInVortex);
+		}
 		else
 			goto _help;
 	}
@@ -1497,6 +1580,7 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 	else if (auto Vehicle = ReceivingActor->Cast<AFortAthenaVehicle>())
 	{
 		ServerAttemptInteract_OG(Context, Stack);
+		return; // delete ltr
 
 		UFortVehicleSeatWeaponComponent* SeatWeaponComponent = (UFortVehicleSeatWeaponComponent*)Vehicle->GetComponentByClass(UFortVehicleSeatWeaponComponent::StaticClass());
 

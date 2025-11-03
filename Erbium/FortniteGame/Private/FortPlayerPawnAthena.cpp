@@ -384,5 +384,6 @@ void AFortPlayerPawnAthena::PostLoadHook()
 	if (VersionInfo.EngineVersion >= 4.24 && VersionInfo.EngineVersion < 4.27)
 		Utils::ExecHook((UFunction*)FindObject<UFunction>(L"/Game/Athena/Items/Consumables/Parents/GA_Athena_MedConsumable_Parent.GA_Athena_MedConsumable_Parent_C.Triggered_4C02BFB04B18D9E79F84848FFE6D2C32"), Athena_MedConsumable_Triggered, Athena_MedConsumable_TriggeredOG);
 
-	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerOnExitVehicle"), ServerOnExitVehicle_, ServerOnExitVehicle_OG);
+	// uncomment ltr
+	//Utils::ExecHook(GetDefaultObj()->GetFunction("ServerOnExitVehicle"), ServerOnExitVehicle_, ServerOnExitVehicle_OG);
 }

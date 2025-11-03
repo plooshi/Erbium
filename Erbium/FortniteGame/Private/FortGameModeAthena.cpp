@@ -66,7 +66,8 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
             Playlist->RespawnTime.Value = 3;
             Playlist->RespawnType = 1; // InfiniteRespawns
             Playlist->bAllowJoinInProgress = true;
-            Playlist->bForceRespawnLocationInsideOfVolume = true;
+            if (Playlist->HasbForceRespawnLocationInsideOfVolume())
+                Playlist->bForceRespawnLocationInsideOfVolume = true;
         }
         if (Playlist->HasGarbageCollectionFrequency())
             Playlist->GarbageCollectionFrequency = 9999999999999999.f; // easier than hooking collectgarbage
@@ -562,7 +563,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                     {
                         UEAllocatedMap<int32, FFortLootTierData*> LTDTempData;
 
-                        auto DataTable = LTDFeatureData;
+                        AddToTierData(LTDFeatureData, LTDTempData);
 
                         if (Playlist)
                         {
@@ -571,32 +572,21 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                                 /*for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
                                     for (auto& Override : PlaylistOverrideLootTableDataUE52)
                                         if (Tag.TagName.ComparisonIndex == Override.First)
-                                        {
-                                            DataTable = Override.Second.LootTierData.Get();
-                                            break;
-                                        }*/
+                                            AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);*/
                             }
                             else if (VersionInfo.FortniteVersion < 20.00)
                             {
                                 for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
                                     for (auto& Override : PlaylistOverrideLootTableData)
                                         if (Tag.TagName == Override.First.TagName)
-                                        {
-                                            DataTable = Override.Second.LootTierData.Get();
-                                            break;
-                                        }
+                                            AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);
                             }
                             else
                                 for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
                                     for (auto& Override : PlaylistOverrideLootTableDataLWC)
                                         if (Tag.TagName.ComparisonIndex == Override.First)
-                                        {
-                                            DataTable = Override.Second.LootTierData.Get();
-                                            break;
-                                        }
+                                            AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);
                         }
-
-                        AddToTierData(DataTable, LTDTempData);
 
                         //for (auto& [_, Val] : LTDTempData)
                         //    TierDataAllGroups.Add(Val);
@@ -609,7 +599,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                     {
                         UEAllocatedMap<int32, FFortLootPackageData*> LPTempData;
 
-                        auto DataTable = LootPackageData;
+                        AddToPackages(LootPackageData, LPTempData);
 
                         if (Playlist)
                         {
@@ -625,22 +615,15 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                                 for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
                                     for (auto& Override : PlaylistOverrideLootTableData)
                                         if (Tag.TagName == Override.First.TagName)
-                                        {
-                                            DataTable = Override.Second.LootPackageData.Get();
-                                            break;
-                                        }
+                                            AddToPackages(Override.Second.LootPackageData.Get(), LPTempData);
                             }
                             else
                                 for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
                                     for (auto& Override : PlaylistOverrideLootTableDataLWC)
                                         if (Tag.TagName.ComparisonIndex == Override.First)
-                                        {
-                                            DataTable = Override.Second.LootPackageData.Get();
-                                            break;
-                                        }
+                                            AddToPackages(Override.Second.LootPackageData.Get(), LPTempData);
                         }
 
-                        AddToPackages(DataTable, LPTempData);
 
                         for (auto& [_, Val] : LPTempData)
                             LootPackageMap[Val->LootPackageID.ComparisonIndex].Add(Val);
@@ -1488,7 +1471,7 @@ void SpawnInitialSafeZone(AFortGameModeAthena* GameMode)
     SafeZoneIndicator->OnSafeZonePhaseChanged.Bind(GameMode, FName(L"HandlePostSafeZonePhaseChanged"));
     GameMode->OnSafeZoneIndicatorSpawned.Process(SafeZoneIndicator);
 
-    StartNewSafeZonePhase(GameMode, 1);
+    StartNewSafeZonePhase(GameMode, FConfiguration::bLateGame ? 4 : 1);
 
 
     //return SpawnInitialSafeZoneOG(GameMode);

@@ -112,41 +112,77 @@ void ClientThread()
 void Misc::InitClient()
 {
 	UEngine::GetEngine()->GameViewport->ViewportConsole = UGameplayStatics::SpawnObject(UEngine::GetEngine()->ConsoleClass, UEngine::GetEngine()->GameViewport);
+	
+	auto PrimarySlot = uint8_t(EPlaylistUIExtensionSlot::StaticEnum() ? EPlaylistUIExtensionSlot::GetPrimary() : EUIExtensionSlot::GetPrimary());
 
-	auto ArenaUI = FName(L"/Game/UI/Competitive/Arena/ArenaScoringHUD.ArenaScoringHUD_C");
-	FUIExtension ArenaUIExtension{};
-	ArenaUIExtension.Slot = 0;
-	ArenaUIExtension.WidgetClass.ObjectID.AssetPathName = ArenaUI;
-
-	auto ShowdownUI = FName(L"/Game/UI/Frontend/Showdown/ShowdownScoringHUD.ShowdownScoringHUD_C");
-	FUIExtension ShowdownUIExtension{};
-	ShowdownUIExtension.Slot = 0;
-	ShowdownUIExtension.WidgetClass.ObjectID.AssetPathName = ShowdownUI;
-
-	auto AIKillsUI = FName(L"/Game/Athena/HUD/AthenaAIKillsWidget.AthenaAIKillsWidget_C");
-	FUIExtension AIKillsUIExtension{};
-	AIKillsUIExtension.Slot = 2;
-	AIKillsUIExtension.WidgetClass.ObjectID.AssetPathName = AIKillsUI;
-
-	TArray<FUIExtension> ArenaExtensions, ShowdownExtensions;
-	ArenaExtensions.Add(ArenaUIExtension);
-	ShowdownExtensions.Add(ShowdownUIExtension);
-	ShowdownExtensions.Add(AIKillsUIExtension);
-		
-	/*auto PlaylistClass = FindClass("FortPlaylistAthena");
-
-	for (int i = 0; i < TUObjectArray::Num(); i++)
+	if (VersionInfo.FortniteVersion >= 10 || FConfiguration::bForceRespawns)
 	{
-		auto Object = TUObjectArray::GetObjectByIndex(i);
-		if (Object && Object->IsA((UClass*)PlaylistClass))
-		{
-			auto Playlist = (UFortPlaylistAthena*)Object;
+		TArray<FUIExtension> ArenaExtensions, ShowdownExtensions;
 
-			auto Name = Object->Name.ToString();
-			if (Name.contains("Showdown"))
-				Playlist->UIExtensions = Name.contains("ShowdownAlt") ? ArenaExtensions : ShowdownExtensions;
+		if (VersionInfo.FortniteVersion >= 10)
+		{
+			FUIExtension ArenaUIExtension{};
+			ArenaUIExtension.Slot = PrimarySlot;
+			if (VersionInfo.FortniteVersion < 23)
+				ArenaUIExtension.WidgetClass.ObjectID.AssetPathName = FName(L"/Game/UI/Competitive/Arena/ArenaScoringHUD.ArenaScoringHUD_C");
+			else
+			{
+				auto& PackageName = *(FName*)(__int64(&ArenaUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.2 ? 0xC : 0x8));
+				auto& AssetName = *(FName*)(__int64(&ArenaUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.2 ? 0x10 : 0xC));
+
+				PackageName = FName(L"/Game/UI/Competitive/Arena/ArenaScoringHUD");
+				AssetName = FName(L"ArenaScoringHUD_C");
+			}
+
+			FUIExtension ShowdownUIExtension{};
+			ShowdownUIExtension.Slot = PrimarySlot;
+			if (VersionInfo.FortniteVersion < 23)
+				ShowdownUIExtension.WidgetClass.ObjectID.AssetPathName = FName(L"/Game/UI/Frontend/Showdown/ShowdownScoringHUD.ShowdownScoringHUD_C");
+			else
+			{
+				auto& PackageName = *(FName*)(__int64(&ArenaUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.2 ? 0xC : 0x8));
+				auto& AssetName = *(FName*)(__int64(&ArenaUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.2 ? 0x10 : 0xC));
+
+				PackageName = FName(L"/Game/UI/Competitive/Arena/ShowdownScoringHUD");
+				AssetName = FName(L"ShowdownScoringHUD_C");
+			}
+
+			ArenaExtensions.Add(ArenaUIExtension);
+			ShowdownExtensions.Add(ShowdownUIExtension);
 		}
-	}*/
+
+		auto PlaylistClass = FindClass("FortPlaylistAthena");
+
+		for (int i = 0; i < TUObjectArray::Num(); i++)
+		{
+			auto Object = TUObjectArray::GetObjectByIndex(i);
+
+			if (Object && Object->IsA((UClass*)PlaylistClass))
+			{
+				auto Playlist = (UFortPlaylistAthena*)Object;
+
+				if (FConfiguration::bForceRespawns)
+				{
+					Playlist->bRespawnInAir = true;
+					Playlist->RespawnHeight.Curve.CurveTable = nullptr;
+					Playlist->RespawnHeight.Curve.RowName = FName();
+					Playlist->RespawnHeight.Value = 20000;
+					Playlist->RespawnTime.Curve.CurveTable = nullptr;
+					Playlist->RespawnTime.Curve.RowName = FName();
+					Playlist->RespawnTime.Value = 3;
+					Playlist->RespawnType = 1; // InfiniteRespawns
+					if (Playlist->HasbForceRespawnLocationInsideOfVolume())
+						Playlist->bForceRespawnLocationInsideOfVolume = true;
+				}
+				if (VersionInfo.FortniteVersion >= 10)
+				{
+					auto Name = Object->Name.ToString();
+					if (Name.contains("Showdown"))
+						Playlist->UIExtensions = Name.contains("ShowdownAlt") ? ArenaExtensions : ShowdownExtensions;
+				}
+			}
+		}
+	}
 
 	if (VersionInfo.FortniteVersion < 20)
 	{
@@ -180,6 +216,11 @@ void Misc::InitClient()
 			MH_CreateHook(SelectResetAddr, SelectReset, (LPVOID*)&SelectResetOG);
 
 		MH_EnableHook(MH_ALL_HOOKS);
+	}
+
+	if (FConfiguration::bForceRespawns)
+	{
+
 	}
 
 	CreateThread(0, 0, (LPTHREAD_START_ROUTINE)ClientThread, 0, 0, 0);

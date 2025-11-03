@@ -412,6 +412,9 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
     static auto InterfaceOffset = FindClass("FortPlayerController")->GetSuper()->GetPropertiesSize() + (VersionInfo.EngineVersion >= 4.27 ? 16 : 8);
     auto PlayerController = (AFortPlayerControllerAthena*)(__int64(Interface) - InterfaceOffset);
 
+    if (PlayerController->bInfiniteAmmo)
+        return true;
+
     auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* entry)
         { return entry->ItemEntry.ItemGuid == ItemGuid; });
     auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)

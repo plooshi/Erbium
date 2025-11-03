@@ -6,6 +6,7 @@
 #include "../../ImGui/imgui_impl_dx11.h"
 #include "../Public/Configuration.h"
 #include "../Public/Events.h"
+#include "../../FortniteGame/Public/BattleRoyaleGamePhaseLogic.h"
 #pragma comment(lib, "d3d11.lib")
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -52,7 +53,7 @@ void GUI::Init()
 
     wchar_t buffer[67];
     swprintf_s(buffer, VersionInfo.EngineVersion >= 5.0 ? L"Erbium (FN %.2f, UE %.1f)" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? L"Erbium (FN %.2f, UE %.2f)" : L"Erbium (FN %.1f, UE %.2f)"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
-    auto hWnd = CreateWindow(wc.lpszClassName, buffer, (WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX), 100, 100, (int)(WindowWidth * main_scale), (int)(WindowHeight * main_scale), nullptr, nullptr, nullptr, nullptr);
+    auto hWnd = CreateWindow(wc.lpszClassName, buffer, WS_OVERLAPPEDWINDOW, 100, 100, (int)(WindowWidth * main_scale), (int)(WindowHeight * main_scale), nullptr, nullptr, nullptr, nullptr);
 
     IDXGISwapChain* g_pSwapChain = nullptr;
     ID3D11Device* g_pd3dDevice = nullptr;
@@ -264,7 +265,14 @@ void GUI::Init()
             {
                 gsStatus = 2;
 
-                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
+                if (UFortGameStateComponent_BattleRoyaleGamePhaseLogic::GetDefaultObj())
+                {
+                    auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get();
+
+                    GamePhaseLogic->StartAircraftPhase();
+                }
+                else
+                    UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
             }
 
             ImGui::InputText("Console command", commandBuffer, 1024);
@@ -279,16 +287,59 @@ void GUI::Init()
             break;
         case 1:
             if (ImGui::Button("Resume zone"))
+            {
+                UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bPausedZone = false;
                 UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startsafezone"), nullptr);
+            }
 
             if (ImGui::Button("Pause zone"))
+            {
+                UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bPausedZone = true;
                 UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"pausesafezone"), nullptr);
+            }
 
             if (ImGui::Button("Skip zone"))
-                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"skipsafezone"), nullptr);
+            {
+                auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+                if (GameMode->HasSafeZoneIndicator())
+                {
+                    if (GameMode->SafeZoneIndicator)
+                    {
+                        GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
+                        GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + 0.05f;
+                    }
+                }
+                else
+                {
+                    auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
+
+                    if (GamePhaseLogic->SafeZoneIndicator)
+                    {
+                        GamePhaseLogic->SafeZoneIndicator->SafeZoneStartShrinkTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
+                        GamePhaseLogic->SafeZoneIndicator->SafeZoneFinishShrinkTime = GamePhaseLogic->SafeZoneIndicator->SafeZoneStartShrinkTime + 0.05f;
+                    }
+                }
+                //UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"skipsafezone"), nullptr);
+            }
 
             if (ImGui::Button("Start shrinking"))
-                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startshrinksafezone"), nullptr);
+            {
+                auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+                if (GameMode->HasSafeZoneIndicator())
+                {
+                    if (GameMode->SafeZoneIndicator)
+                        GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
+                }
+                else
+                {
+                    auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
+
+                    if (GamePhaseLogic->SafeZoneIndicator)
+                        GamePhaseLogic->SafeZoneIndicator->SafeZoneStartShrinkTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
+                }
+
+                //UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startshrinksafezone"), nullptr);
+            }
 
             break;
         case 2:

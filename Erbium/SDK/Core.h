@@ -1223,7 +1223,6 @@ namespace SDK
 		TSoftObjectPtr(UEType* Obj)
 		{
 			WeakPtr = FWeakObjectPtr(Obj);
-			ObjectID.AssetPathName = FName(0);
 		}
 
 		const UEType* Get()
@@ -1252,6 +1251,7 @@ namespace SDK
 		TSoftClassPtr(UClass* Obj)
 		{
 			WeakPtr = FWeakObjectPtr(Obj);
+			if (VersionInfo.FortniteVersion )
 			ObjectID.AssetPathName = FName(0);
 		}
 

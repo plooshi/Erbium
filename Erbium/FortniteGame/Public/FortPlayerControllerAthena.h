@@ -130,6 +130,7 @@ public:
     DEFINE_PROP(CosmeticLoadoutPC, FFortAthenaLoadout);
     DEFINE_PROP(CustomizationLoadout, FFortAthenaLoadout);
     DEFINE_BITFIELD_PROP(bBuildFree);
+    DEFINE_BITFIELD_PROP(bInfiniteAmmo);
     DEFINE_PROP(SwappingItemDefinition, FFortItemEntry*); // scuffness
     DEFINE_PROP(QuickBars, AFortQuickBars*);
     DEFINE_PROP(XPComponent, UFortPlayerControllerAthenaXPComponent*);
