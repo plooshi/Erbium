@@ -272,6 +272,10 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
     if (GameMode->WarmupRequiredPlayerCount != 1)
     {
+        // credit mariki
+        if (UWorld::GetWorld()->HasServerStreamingLevelsVisibility())
+            UWorld::GetWorld()->ServerStreamingLevelsVisibility = UWorld::SpawnActor<AServerStreamingLevelsVisibility>(FVector{}, {});
+
         // if u listen before setting playlist it behaves the same as using proper listening iirc
         auto World = UWorld::GetWorld();
         auto Engine = UEngine::GetEngine();
@@ -1519,22 +1523,6 @@ void GetPhaseInfo(UObject* Context, FFrame& Stack, bool* Ret)
     *Ret = false;
 }
 
-
-bool (*LoadMapOG)(UEngine*, __int64*, __int64*, UObject*, FString*);
-bool LoadMap(UEngine* Engine, __int64* WorldContext, __int64* URL, UObject* Pending, FString* Error)
-{
-    auto Ret = LoadMapOG(Engine, WorldContext, URL, Pending, Error);
-
-    if (Ret)
-    {
-        // credit mariki
-        if (UWorld::GetWorld()->HasServerStreamingLevelsVisibility())
-            UWorld::GetWorld()->ServerStreamingLevelsVisibility = UWorld::SpawnActor<AServerStreamingLevelsVisibility>(FVector{}, {});
-    }
-
-    return Ret;
-}
-
 void AFortGameModeAthena::Hook()
 {
     Utils::ExecHook(GetDefaultObj()->GetFunction("ReadyToStartMatch"), ReadyToStartMatch_, ReadyToStartMatch_OG);
@@ -1558,8 +1546,6 @@ void AFortGameModeAthena::Hook()
                 break;
             }
         }
-
-        Utils::Hook(LoadMapAddr, LoadMap, LoadMapOG);
     }
 }
 
