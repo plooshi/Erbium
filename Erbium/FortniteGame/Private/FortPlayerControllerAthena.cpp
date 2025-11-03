@@ -1288,6 +1288,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				//auto PlayerState = PlayerController->PlayerState;
 
 				PlayerController->Possess(Pawn);
+				PlayerController->MyFortPawn = Pawn; // dont't ask, crashes on 27+
 
 				auto PlayerState = (AFortPlayerStateAthena*)UWorld::SpawnActor(AFortPlayerStateAthena::StaticClass(), FVector{});
 
