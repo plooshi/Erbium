@@ -1519,10 +1519,6 @@ void GetPhaseInfo(UObject* Context, FFrame& Stack, bool* Ret)
     *Ret = false;
 }
 
-void AFortGameModeAthena::Hook()
-{
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ReadyToStartMatch"), ReadyToStartMatch_, ReadyToStartMatch_OG);
-}
 
 bool (*LoadMapOG)(UEngine*, __int64*, __int64*, UObject*, FString*);
 bool LoadMap(UEngine* Engine, __int64* WorldContext, __int64* URL, UObject* Pending, FString* Error)
@@ -1537,6 +1533,34 @@ bool LoadMap(UEngine* Engine, __int64* WorldContext, __int64* URL, UObject* Pend
     }
 
     return Ret;
+}
+
+void AFortGameModeAthena::Hook()
+{
+    Utils::ExecHook(GetDefaultObj()->GetFunction("ReadyToStartMatch"), ReadyToStartMatch_, ReadyToStartMatch_OG);
+
+    if (VersionInfo.EngineVersion >= 5.1)
+    {
+        auto sRef = Memcury::Scanner::FindStringRef(L"STAT_LoadMap").Get();
+
+        uint64_t LoadMapAddr = 0;
+        for (int i = 0; i < 3000; i++)
+        {
+            if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x5C)
+            {
+                LoadMapAddr = sRef - i;
+                break;
+            }
+
+            if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
+            {
+                LoadMapAddr = sRef - i;
+                break;
+            }
+        }
+
+        Utils::Hook(LoadMapAddr, LoadMap, LoadMapOG);
+    }
 }
 
 void AFortGameModeAthena::PostLoadHook()
@@ -1565,28 +1589,5 @@ void AFortGameModeAthena::PostLoadHook()
             Utils::Hook(FindUpdateSafeZonesPhase(), UpdateSafeZonesPhase, UpdateSafeZonesPhaseOG);
         }
         Utils::ExecHook(L"/Script/FortniteGame.FortSafeZoneIndicator.GetPhaseInfo", GetPhaseInfo);
-    }
-
-    if (VersionInfo.EngineVersion >= 5.1)
-    {
-        auto sRef = Memcury::Scanner::FindStringRef(L"STAT_LoadMap").Get();
-
-        uint64_t LoadMapAddr = 0;
-        for (int i = 0; i < 3000; i++)
-        {
-            if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x5C)
-            {
-                LoadMapAddr = sRef - i;
-                break;
-            }
-
-            if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
-            {
-                LoadMapAddr = sRef - i;
-                break;
-            }
-        }
-
-        Utils::Hook(LoadMapAddr, LoadMap, LoadMapOG);
     }
 }
