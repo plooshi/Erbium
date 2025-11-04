@@ -235,7 +235,7 @@ void GUI::Init()
                     SelectedUI = 1;
                     ImGui::EndTabItem();
                 }
-                
+
                 if (hasEvent == 2 && ImGui::BeginTabItem("Events"))
                 {
                     SelectedUI = 2;
@@ -256,12 +256,12 @@ void GUI::Init()
         switch (SelectedUI)
         {
         case 0:
-            ImGui::Text((std::string("Status: ") + (gsStatus == 0 ? "Setting up" : (gsStatus == 1 ? "Joinable" : "Match started"))).c_str());
-            
+            ImGui::Text((std::string("Status: ") + (gsStatus == 0 ? "Setting up the server..." : (gsStatus == 1 ? "Joinable!" : "Match Started."))).c_str());
+
             if (gsStatus <= 1)
                 ImGui::Checkbox("Lategame", &FConfiguration::bLateGame);
 
-            if (gsStatus == 1 && ImGui::Button("Start bus early"))
+            if (gsStatus == 1 && ImGui::Button("Start Bus Early"))
             {
                 gsStatus = 2;
 
@@ -275,7 +275,7 @@ void GUI::Init()
                     UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
             }
 
-            ImGui::InputText("Console command", commandBuffer, 1024);
+            ImGui::InputText("Console Command", commandBuffer, 1024);
 
             if (ImGui::Button("Execute"))
             {
@@ -286,21 +286,22 @@ void GUI::Init()
             }
             break;
         case 1:
-            if (ImGui::Button("Resume zone"))
-            {
-                UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bPausedZone = false;
-                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startsafezone"), nullptr);
-            }
-
-            if (ImGui::Button("Pause zone"))
+            if (ImGui::Button("Pause Safe Zone"))
             {
                 UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bPausedZone = true;
                 UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"pausesafezone"), nullptr);
             }
 
-            if (ImGui::Button("Skip zone"))
+            if (ImGui::Button("Resume Safe Zone"))
+            {
+                UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bPausedZone = false;
+                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startsafezone"), nullptr);
+            }
+
+            if (ImGui::Button("Skip Safe Zone"))
             {
                 auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+
                 if (GameMode->HasSafeZoneIndicator())
                 {
                     if (GameMode->SafeZoneIndicator)
@@ -319,12 +320,14 @@ void GUI::Init()
                         GamePhaseLogic->SafeZoneIndicator->SafeZoneFinishShrinkTime = GamePhaseLogic->SafeZoneIndicator->SafeZoneStartShrinkTime + 0.05f;
                     }
                 }
-                //UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"skipsafezone"), nullptr);
+
+                // UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"skipsafezone"), nullptr);
             }
 
-            if (ImGui::Button("Start shrinking"))
+            if (ImGui::Button("Start Shrinking Safe Zone"))
             {
                 auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+
                 if (GameMode->HasSafeZoneIndicator())
                 {
                     if (GameMode->SafeZoneIndicator)
@@ -338,20 +341,20 @@ void GUI::Init()
                         GamePhaseLogic->SafeZoneIndicator->SafeZoneStartShrinkTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
                 }
 
-                //UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startshrinksafezone"), nullptr);
+                // UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startshrinksafezone"), nullptr);
             }
 
             break;
         case 2:
-            if (ImGui::Button("Start event"))
+            if (ImGui::Button("Start Event"))
                 Events::StartEvent();
 
             break;
         case 3:
-            ImGui::Checkbox("Infinite materials", &FConfiguration::bInfiniteMats);
-            ImGui::Checkbox("Infinite ammo", &FConfiguration::bInfiniteAmmo);
+            ImGui::Checkbox("Infinite Materials", &FConfiguration::bInfiniteMats);
+            ImGui::Checkbox("Infinite Ammo", &FConfiguration::bInfiniteAmmo);
 
-            ImGui::SliderInt("Siphon amount", &FConfiguration::SiphonAmount, 0, 200);
+            ImGui::SliderInt("Siphon Amount:", &FConfiguration::SiphonAmount, 0, 200);
             break;
         }
 
