@@ -432,7 +432,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 			FlightInfo.FlightStartLocation = Loc;
 
 			FlightInfo.TimeTillFlightEnd = 7.f;
-			FlightInfo.TimeTillDropEnd = 0.f;
+			FlightInfo.TimeTillDropEnd = 7.f;
 			FlightInfo.TimeTillDropStart = 0.f;
 			//GameState->bAircraftIsLocked = false;
 			//GameState->SafeZonesStartTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + 8.f;
@@ -550,7 +550,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 					for (auto& Player__Uncasted : GameMode->AlivePlayers)
 					{
 						auto Player = (AFortPlayerControllerAthena*)Player__Uncasted;
-						if (Player->IsInAircraft())
+						if (!Player->PlayerState->bIsABot && Player->IsInAircraft())
 						{
 							Player->GetAircraftComponent()->ServerAttemptAircraftJump(FRotator{});
 						}

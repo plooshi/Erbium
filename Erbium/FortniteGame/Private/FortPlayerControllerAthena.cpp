@@ -1416,17 +1416,11 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 		}
 		else if (command == "spawnbot")
 		{
-			if (args.size() < 2)
-			{
-				PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1);
-				return;
-			}
-
 			int Count = 1;
 
-			if (args.size() >= 3)
+			if (args.size() >= 2)
 			{
-				Count = std::stoi(args[2].c_str(), nullptr);
+				Count = std::stoi(args[1].c_str(), nullptr);
 			}
 
 			for (int i = 0; i < Count; i++)
@@ -1442,7 +1436,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				//auto PlayerState = PlayerController->PlayerState;
 
 				PlayerController->Possess(Pawn);
-				PlayerController->MyFortPawn = Pawn; // dont't ask, crashes on 27+
+				//PlayerController->MyFortPawn = Pawn; // dont't ask, crashes on 27+
 
 				auto PlayerState = (AFortPlayerStateAthena*)UWorld::SpawnActor(AFortPlayerStateAthena::StaticClass(), FVector{});
 
