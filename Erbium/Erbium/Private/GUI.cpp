@@ -41,6 +41,22 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 auto WindowWidth = 533;
 auto WindowHeight = 400;
 
+enum class Playlist : int
+{
+    Solos,
+    Duos,
+    Trios,
+    Squads,
+    OneShotSolos,
+    OneShotDuos,
+    OneShotSquads,
+    TeamRumble,
+    BattleLabs,
+    Playground,
+    Creative,
+    Custom
+};
+
 void GUI::Init()
 {
     ImGui_ImplWin32_EnableDpiAwareness();
@@ -228,6 +244,15 @@ void GUI::Init()
                 ImGui::EndTabItem();
             }
 
+            if (gsStatus == 0)
+            {
+                if (ImGui::BeginTabItem("Gamemode"))
+                {
+                    SelectedUI = 4;
+                    ImGui::EndTabItem();
+                }
+            }
+
             if (gsStatus == 2)
             {
                 if (ImGui::BeginTabItem("Zones"))
@@ -235,7 +260,7 @@ void GUI::Init()
                     SelectedUI = 1;
                     ImGui::EndTabItem();
                 }
-                
+
                 if (hasEvent == 2 && ImGui::BeginTabItem("Events"))
                 {
                     SelectedUI = 2;
@@ -256,26 +281,19 @@ void GUI::Init()
         switch (SelectedUI)
         {
         case 0:
-            ImGui::Text((std::string("Status: ") + (gsStatus == 0 ? "Setting up" : (gsStatus == 1 ? "Joinable" : "Match started"))).c_str());
-            
+            ImGui::Text((std::string("Status: ") + (gsStatus == 0 ? "Setting up the server..." : (gsStatus == 1 ? "Joinable!" : "Match Started."))).c_str());
+
             if (gsStatus <= 1)
                 ImGui::Checkbox("Lategame", &FConfiguration::bLateGame);
 
-            if (gsStatus == 1 && ImGui::Button("Start bus early"))
+            if (gsStatus == 1 && ImGui::Button("Start Bus Early"))
             {
                 gsStatus = 2;
 
-                if (UFortGameStateComponent_BattleRoyaleGamePhaseLogic::GetDefaultObj())
-                {
-                    auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get();
-
-                    GamePhaseLogic->StartAircraftPhase();
-                }
-                else
-                    UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
+                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
             }
 
-            ImGui::InputText("Console command", commandBuffer, 1024);
+            ImGui::InputText("Console Command", commandBuffer, 1024);
 
             if (ImGui::Button("Execute"))
             {
@@ -286,21 +304,22 @@ void GUI::Init()
             }
             break;
         case 1:
-            if (ImGui::Button("Resume zone"))
-            {
-                UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bPausedZone = false;
-                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startsafezone"), nullptr);
-            }
-
-            if (ImGui::Button("Pause zone"))
+            if (ImGui::Button("Pause Safe Zone"))
             {
                 UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bPausedZone = true;
                 UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"pausesafezone"), nullptr);
             }
 
-            if (ImGui::Button("Skip zone"))
+            if (ImGui::Button("Resume Safe Zone"))
+            {
+                UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bPausedZone = false;
+                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startsafezone"), nullptr);
+            }
+
+            if (ImGui::Button("Skip Safe Zone"))
             {
                 auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+
                 if (GameMode->HasSafeZoneIndicator())
                 {
                     if (GameMode->SafeZoneIndicator)
@@ -319,12 +338,14 @@ void GUI::Init()
                         GamePhaseLogic->SafeZoneIndicator->SafeZoneFinishShrinkTime = GamePhaseLogic->SafeZoneIndicator->SafeZoneStartShrinkTime + 0.05f;
                     }
                 }
-                //UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"skipsafezone"), nullptr);
+
+                // UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"skipsafezone"), nullptr);
             }
 
-            if (ImGui::Button("Start shrinking"))
+            if (ImGui::Button("Start Shrinking Safe Zone"))
             {
                 auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+
                 if (GameMode->HasSafeZoneIndicator())
                 {
                     if (GameMode->SafeZoneIndicator)
@@ -338,21 +359,101 @@ void GUI::Init()
                         GamePhaseLogic->SafeZoneIndicator->SafeZoneStartShrinkTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
                 }
 
-                //UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startshrinksafezone"), nullptr);
+                // UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startshrinksafezone"), nullptr);
             }
 
             break;
         case 2:
-            if (ImGui::Button("Start event"))
+            if (ImGui::Button("Start Event"))
                 Events::StartEvent();
 
             break;
         case 3:
-            ImGui::Checkbox("Infinite materials", &FConfiguration::bInfiniteMats);
-            ImGui::Checkbox("Infinite ammo", &FConfiguration::bInfiniteAmmo);
+            ImGui::Checkbox("Infinite Materials", &FConfiguration::bInfiniteMats);
+            ImGui::Checkbox("Infinite Ammo", &FConfiguration::bInfiniteAmmo);
 
-            ImGui::SliderInt("Siphon amount", &FConfiguration::SiphonAmount, 0, 200);
+            ImGui::SliderInt("Siphon Amount:", &FConfiguration::SiphonAmount, 0, 200);
             break;
+        case 4:
+            static int SelectedPlaylist = (int)Playlist::Solos;
+
+            ImGui::RadioButton("Solos", &SelectedPlaylist, (int)Playlist::Solos);
+            ImGui::RadioButton("Duos", &SelectedPlaylist, (int)Playlist::Duos);
+            ImGui::RadioButton("Trios", &SelectedPlaylist, (int)Playlist::Trios);
+            ImGui::RadioButton("Squads", &SelectedPlaylist, (int)Playlist::Squads);
+            ImGui::RadioButton("One Shot Solos", &SelectedPlaylist, (int)Playlist::OneShotSolos);
+            ImGui::RadioButton("One Shot Duos", &SelectedPlaylist, (int)Playlist::OneShotDuos);
+            ImGui::RadioButton("One Shot Squads", &SelectedPlaylist, (int)Playlist::OneShotSquads);
+            ImGui::RadioButton("Team Rumble", &SelectedPlaylist, (int)Playlist::TeamRumble);
+            ImGui::RadioButton("Battle Labs", &SelectedPlaylist, (int)Playlist::BattleLabs);
+            ImGui::RadioButton("Playground", &SelectedPlaylist, (int)Playlist::Playground);
+            ImGui::RadioButton("Creative", &SelectedPlaylist, (int)Playlist::Creative);
+            ImGui::RadioButton("Custom", &SelectedPlaylist, (int)Playlist::Custom);
+
+            switch (SelectedPlaylist)
+            {
+            case (int)Playlist::Solos:
+            {
+                FConfiguration::Playlist = L"/Game/Athena/Playlists/Playlist_DefaultSolo.Playlist_DefaultSolo";
+                break;
+            }
+            case (int)Playlist::Duos:
+            {
+                FConfiguration::Playlist = L"/Game/Athena/Playlists/Playlist_DefaultDuo.Playlist_DefaultDuo";
+                break;
+            }
+            case (int)Playlist::Trios:
+            {
+                FConfiguration::Playlist = L"/Game/Athena/Playlists/Trios/Playlist_Trios.Playlist_Trios";
+                break;
+            }
+            case (int)Playlist::Squads:
+            {
+                FConfiguration::Playlist = L"/Game/Athena/Playlists/Playlist_DefaultSquad.Playlist_DefaultSquad";
+                break;
+            }
+            case (int)Playlist::OneShotSolos:
+            {
+                FConfiguration::Playlist = L"/Game/Athena/Playlists/Playlist_DefaultSquad.Playlist_DefaultSquad";
+                break;
+            }
+            case (int)Playlist::OneShotDuos:
+            {
+                FConfiguration::Playlist = L"/Game/Athena/Playlists/Playlist_DefaultSquad.Playlist_DefaultSquad";
+                break;
+            }
+            case (int)Playlist::OneShotSquads:
+            {
+                FConfiguration::Playlist = L"/Game/Athena/Playlists/Playlist_DefaultSquad.Playlist_DefaultSquad";
+                break;
+            }
+            case (int)Playlist::TeamRumble:
+            {
+                FConfiguration::Playlist = L"/Game/Athena/Playlists/Playlist_DefaultSquad.Playlist_DefaultSquad";
+                break;
+            }
+            case (int)Playlist::BattleLabs:
+            {
+                FConfiguration::Playlist = L"/Game/Athena/Playlists/Playlist_DefaultSquad.Playlist_DefaultSquad";
+                break;
+            }
+            case (int)Playlist::Playground:
+            {
+                FConfiguration::Playlist = L"/Game/Athena/Playlists/Playlist_DefaultSquad.Playlist_DefaultSquad";
+                break;
+            }
+            case (int)Playlist::Creative:
+            {
+                FConfiguration::Playlist = L"/Game/Athena/Playlists/Playlist_DefaultSquad.Playlist_DefaultSquad";
+                break;
+            }
+            case (int)Playlist::Custom:
+            {
+                break;
+            }
+            default:
+                break;
+            }
         }
 
         ImGui::End();
