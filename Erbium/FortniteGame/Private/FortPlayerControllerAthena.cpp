@@ -107,38 +107,41 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 			PlayerController->MyFortPawn->BeginSkydiving(true);
 			PlayerController->MyFortPawn->SetHealth(100.f);
 			
-			static auto Effect = FindObject<UClass>(L"/Game/Athena/SafeZone/GE_OutsideSafeZoneDamage.GE_OutsideSafeZoneDamage_C");
-
-			bool Found = false;
-			auto AbilitySystemComponent = PlayerController->PlayerState->AbilitySystemComponent;
-
-			for (int i = 0; i < AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Num(); i++)
+			if (VersionInfo.FortniteVersion >= 25.20)
 			{
-				auto& ActiveEffect = AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Get(i, FActiveGameplayEffect::Size());
+				static auto Effect = FindObject<UClass>(L"/Game/Athena/SafeZone/GE_OutsideSafeZoneDamage.GE_OutsideSafeZoneDamage_C");
 
-				if (ActiveEffect.Spec.Def)
-					if (ActiveEffect.Spec.Def->IsA(Effect))
-					{
-						Found = true;
-						break;
-					}
+				bool Found = false;
+				auto AbilitySystemComponent = PlayerController->PlayerState->AbilitySystemComponent;
+
+				for (int i = 0; i < AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Num(); i++)
+				{
+					auto& ActiveEffect = AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Get(i, FActiveGameplayEffect::Size());
+
+					if (ActiveEffect.Spec.Def)
+						if (ActiveEffect.Spec.Def->IsA(Effect))
+						{
+							Found = true;
+							break;
+						}
+				}
+
+				if (!Found)
+				{
+					auto EffectHandle = FGameplayEffectContextHandle();
+					auto SpecHandle = AbilitySystemComponent->BP_ApplyGameplayEffectToSelf(Effect, 0, EffectHandle);
+
+					AbilitySystemComponent->SetActiveGameplayEffectLevel(SpecHandle, 0);
+
+					AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(SpecHandle,
+						FGameplayTag(FName(L"SetByCaller.StormCampingDamage")), 1);
+				}
+
+				PlayerController->MyFortPawn->bIsInAnyStorm = false;
+				PlayerController->MyFortPawn->OnRep_IsInAnyStorm();
+				PlayerController->MyFortPawn->bIsInsideSafeZone = true;
+				PlayerController->MyFortPawn->OnRep_IsInsideSafeZone();
 			}
-
-			if (!Found)
-			{
-				auto EffectHandle = FGameplayEffectContextHandle();
-				auto SpecHandle = AbilitySystemComponent->BP_ApplyGameplayEffectToSelf(Effect, 0, EffectHandle);
-
-				AbilitySystemComponent->SetActiveGameplayEffectLevel(SpecHandle, 0);
-
-				AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(SpecHandle,
-					FGameplayTag(FName(L"SetByCaller.StormCampingDamage")), 1);
-			}
-
-			PlayerController->MyFortPawn->bIsInAnyStorm = false;
-			PlayerController->MyFortPawn->OnRep_IsInAnyStorm();
-			PlayerController->MyFortPawn->bIsInsideSafeZone = true;
-			PlayerController->MyFortPawn->OnRep_IsInsideSafeZone();
 
 			if (FConfiguration::bLateGame)
 			{

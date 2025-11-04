@@ -179,6 +179,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 	auto& NetworkObjectList = GetNetworkObjectList(Driver);
 	auto& ActiveNetworkObjects = NetworkObjectList.ActiveNetworkObjects;
 	auto IsNetReady = (int32(*)(UNetConnection*, bool))FindIsNetReady();
+	static auto CloseActorChannel = (void(*)(UActorChannel*, uint8_t)) FindCloseActorChannel();
 
 	for (auto& ViewerPair : ViewerMap)
 	{
@@ -232,8 +233,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 				continue;
 			}
 
-			static auto CloseActorChannel = (void(*)(UActorChannel*, uint8_t)) FindCloseActorChannel();
-			if (Channel && !bRelevant && (!bLevelInitializedForActor || !(Actor->HasbNetStartup() ? Actor->bNetStartup : true)))
+			if (Channel && !Actor->bTearOff && !bRelevant && (!bLevelInitializedForActor || !(Actor->HasbNetStartup() ? Actor->bNetStartup : true)))
 			{
 				CloseActorChannel(Channel, 3);
 				continue;
@@ -423,6 +423,11 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 					{
 						break;
 					}
+				}
+
+				if (Channel && Actor->bTearOff)
+				{
+					CloseActorChannel(Channel, 4);
 				}
 			}
 			i++;

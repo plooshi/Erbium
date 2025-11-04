@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "../Public/BattleRoyaleGamePhaseLogic.h"
 #include "../../Erbium/Public/Configuration.h"
+#include "../../Erbium/Public/GUI.h"
 
 uint64_t SetGamePhase_ = 0;
 void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::SetGamePhase(EAthenaGamePhase GamePhase)
@@ -509,6 +510,10 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 			{
 				if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && WarmupCountdownEndTime != -1 && WarmupCountdownEndTime < Time)
 				{
+					GUI::gsStatus = 2;
+					sprintf_s(GUI::windowTitle, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Match started" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Match started" : "Erbium (FN %.1f, UE %.2f): Match started"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
+					SetConsoleTitleA(GUI::windowTitle);
+
 					StartAircraftPhase();
 
 					return;

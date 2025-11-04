@@ -106,6 +106,9 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
         if (GameState->HasCachedSafeZoneStartUp() && Playlist->HasSafeZoneStartUp())
             GameState->CachedSafeZoneStartUp = Playlist->SafeZoneStartUp;
 
+        if (GameMode->HasbEnableDBNO())
+            GameMode->bEnableDBNO = Playlist->MaxSquadSize > 1;
+
         bIsLargeTeamGame = Playlist->bIsLargeTeamGame;
 
         if (VersionInfo.FortniteVersion >= 6 && VersionInfo.FortniteVersion < 7)
@@ -1262,6 +1265,7 @@ bool AFortGameModeAthena::StartAircraftPhase(AFortGameModeAthena* GameMode, char
         auto Aircraft = GameState->HasAircrafts() ? GameState->Aircrafts[0] : GameState->Aircraft;
         if (GameMode->SafeZoneLocations.Num() < 4)
         {
+            FConfiguration::bLateGame = false;
             printf("LateGame is not supported on this version!\n");
             return Ret;
         }
