@@ -31,6 +31,29 @@ public:
     DEFINE_FUNC(OnRep_PawnUsingHandle, void);
 };
 
+struct FFortGameplayAttributeData
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FFortGameplayAttributeData);
+
+    DEFINE_STRUCT_PROP(CurrentValue, float);
+    DEFINE_STRUCT_PROP(BaseValue, float);
+    DEFINE_STRUCT_PROP(Minimum, float);
+    DEFINE_STRUCT_PROP(Maximum, float);
+    DEFINE_STRUCT_PROP(UnclampedBaseValue, float);
+    DEFINE_STRUCT_PROP(UnclampedCurrentValue, float);
+};
+
+class UFortHealthSet : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortHealthSet);
+
+    DEFINE_PROP(Health, FFortGameplayAttributeData);
+
+    DEFINE_FUNC(OnRep_Health, void);
+};
+
 class AFortPlayerPawnAthena : public AActor
 {
 public:
@@ -60,6 +83,7 @@ public:
     DEFINE_PROP(HeldObject, TWeakObjectPtr<AActor>);
     DEFINE_PROP(RepActiveMovementModeExtension, void*);
     DEFINE_BITFIELD_PROP(bIsPlayingEmote);
+    DEFINE_PROP(HealthSet, UFortHealthSet*);
 
     DEFINE_FUNC(BeginSkydiving, void);
     DEFINE_FUNC(GetHealth, float);

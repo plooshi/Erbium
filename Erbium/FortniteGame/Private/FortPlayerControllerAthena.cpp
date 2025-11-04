@@ -1428,13 +1428,12 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 			for (int i = 0; i < Count; i++)
 			{
 				auto Transform = PlayerController->Pawn->GetTransform();
-				Transform.Translation.Z += 500.f;
 
 				auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
 				auto GameState = GameMode->GameState;
 				//auto PlayerController = (AFortPlayerControllerAthena*)UWorld::SpawnActor(GameMode->PlayerControllerClass, FVector{});
 				auto Pawn = (AFortPlayerPawnAthena*)UWorld::SpawnActor(GameMode->DefaultPawnClass, Transform);
-				auto PlayerController = (AFortPlayerControllerAthena*)UWorld::SpawnActor(Pawn->AIControllerClass, FVector{});
+				auto PlayerController = (AFortPlayerControllerAthena*)UWorld::SpawnActor(FindObject<UClass>(L"/Game/Athena/Athena_PlayerController.Athena_PlayerController_C"), FVector{});
 				//auto PlayerState = PlayerController->PlayerState;
 
 				PlayerController->Possess(Pawn);
@@ -1452,6 +1451,13 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 
 				Pawn->SetMaxHealth(100.f);
 				Pawn->SetHealth(100.f);
+
+				auto& OldHealth = PlayerController->MyFortPawn->HealthSet->Health;
+				PlayerController->MyFortPawn->HealthSet->Health.CurrentValue = 100;
+				PlayerController->MyFortPawn->HealthSet->Health.Maximum = 100;
+				PlayerController->MyFortPawn->HealthSet->Health.UnclampedCurrentValue = 100;
+				PlayerController->MyFortPawn->HealthSet->OnRep_Health(OldHealth);
+
 
 				PlayerState->TeamIndex = AFortGameModeAthena::PickTeam(GameMode, 0, PlayerController);
 				if (PlayerState->HasSquadId())

@@ -1869,25 +1869,25 @@ uint64_t FindEnterAircraft()
 
 uint64_t FindGetPlayerViewPoint()
 {
-    if (std::floor(VersionInfo.FortniteVersion) == 22)
-        return Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 56 41 57 48 8B EC 48 83 EC ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 4D 8B F0 48 8B F2 48 8B D9").Get();
-    else if (VersionInfo.FortniteVersion >= 25)
-        return Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 0F 29 70 ? 0F 29 78 ? 44 0F 29 40 ? 44 0F 29 48 ? 44 0F 29 90 ? ? ? ? 44 0F 29 98 ? ? ? ? 44 0F 29 ?? ? ? ? ? 44 0F 29 B0 ? ? ? ? 44 0F 29 B8 ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 49 8B F0").Get();
-    
     uint64 ftspAddr = 0;
-    auto ftspRef = Memcury::Scanner::FindStringRef(L"%s failed to spawn a pawn", true, 0, VersionInfo.FortniteVersion >= 19).Get();
-
-    for (int i = 0; i < 1000; i++)
+    if (VersionInfo.FortniteVersion >= 20)
+        ftspAddr = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC ? 48 8B F9 E8 ? ? ? ? 48 8B 07 48 8B 98 ? ? ? ? E8 ? ? ? ? 48 8B CF").Get();
+    else
     {
-        if (*(uint8_t*)(ftspRef - i) == 0x40 && *(uint8_t*)(ftspRef - i + 1) == 0x53)
+        auto ftspRef = Memcury::Scanner::FindStringRef(L"%s failed to spawn a pawn", true, 0, VersionInfo.FortniteVersion >= 19).Get();
+
+        for (int i = 0; i < 1000; i++)
         {
-            ftspAddr = ftspRef - i;
-            break;
-        }
-        else if (*(uint8_t*)(ftspRef - i) == 0x48 && *(uint8_t*)(ftspRef - i + 1) == 0x89 && *(uint8_t*)(ftspRef - i + 2) == 0x5C)
-        {
-            ftspAddr = ftspRef - i;
-            break;
+            if (*(uint8_t*)(ftspRef - i) == 0x40 && *(uint8_t*)(ftspRef - i + 1) == 0x53)
+            {
+                ftspAddr = ftspRef - i;
+                break;
+            }
+            else if (*(uint8_t*)(ftspRef - i) == 0x48 && *(uint8_t*)(ftspRef - i + 1) == 0x89 && *(uint8_t*)(ftspRef - i + 2) == 0x5C)
+            {
+                ftspAddr = ftspRef - i;
+                break;
+            }
         }
     }
 
@@ -1897,7 +1897,7 @@ uint64_t FindGetPlayerViewPoint()
     auto PCVft = AFortPlayerControllerAthena::GetDefaultObj()->Vft;
     int ftspIdx = 0;
 
-    for (int i = 0; i < 500; i++)
+    for (int i = 0; i < 0x1000; i++)
     {
         if (PCVft[i] == (void*)ftspAddr)
         {
@@ -1908,6 +1908,9 @@ uint64_t FindGetPlayerViewPoint()
 
     if (ftspIdx == 0)
         return 0;
+
+    if (VersionInfo.FortniteVersion >= 20 && *(uint8_t*)(PCVft[ftspIdx - 1]) == 0xE9)
+        return Memcury::Scanner(PCVft[ftspIdx - 1]).RelativeOffset(1).Get();
 
     return __int64(PCVft[ftspIdx - 1]);
 }
