@@ -669,25 +669,6 @@ void AFortPlayerControllerAthena::ServerEditBuildingActor(UObject* Context, FFra
 	{
 		NewBuild->bPlayerPlaced = true;
 	}
-
-	if (VersionInfo.EngineVersion >= 4.24)
-	{
-		// serverendeditingbuildingactor cus they made it not call idk why
-		SetEditingPlayer(Building, nullptr);
-
-		auto EditToolEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
-			{
-				return entry.ItemDefinition->IsA(UFortEditToolItemDefinition::StaticClass());
-			}, FFortItemEntry::Size());
-
-		PlayerController->MyFortPawn->EquipWeaponDefinition((UFortWeaponItemDefinition*)EditToolEntry->ItemDefinition, EditToolEntry->ItemGuid, EditToolEntry->HasTrackerGuid() ? EditToolEntry->TrackerGuid : FGuid(), false);
-
-		if (auto EditTool = PlayerController->MyFortPawn->CurrentWeapon->Cast<AFortWeap_EditingTool>())
-		{
-			EditTool->EditActor = nullptr;
-			EditTool->OnRep_EditActor();
-		}
-	}
 }
 
 void AFortPlayerControllerAthena::ServerEndEditingBuildingActor(UObject* Context, FFrame& Stack)
