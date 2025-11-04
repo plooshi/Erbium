@@ -365,8 +365,9 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 			{
 				if (!CanBePlacedByPlayer(CreateBuildingData.BuildingClassData.BuildingClass))
 				{
-					//Stack.IncrementCode();
-					//return;
+					printf("[building] couldnt find class!\n");
+					Stack.IncrementCode();
+					return;
 				}
 
 				BuildingClass = CreateBuildingData.BuildingClassData.BuildingClass;
@@ -379,8 +380,8 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 					});
 				if (!BuildingClassPtr)
 				{
-					//Stack.IncrementCode();
-					//return;
+					Stack.IncrementCode();
+					return;
 				}
 
 				BuildingClass = BuildingClassPtr->Get();
@@ -439,12 +440,19 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 			{ return entry->ItemEntry.ItemDefinition == Resource; });
 
 		if (!ItemP)
+		{
+			printf("[building] cant find mats\n");
 			return;
+		}
+
 
 		Item = *ItemP;
 
 		if (Item->ItemEntry.Count < 10)
+		{
+			printf("[building] no mats!\n");
 			return;
+		}
 	}
 
 	/*TArray<ABuildingSMActor*> RemoveBuildings;
