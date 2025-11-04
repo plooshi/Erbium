@@ -1276,6 +1276,8 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 					GamePhaseLogic->SafeZoneIndicator->SafeZoneFinishShrinkTime = GamePhaseLogic->SafeZoneIndicator->SafeZoneStartShrinkTime + 0.05f;
 				}
 			}
+
+			PlayerController->ClientMessage(FString(L"Currently skipping the zone."), FName(), 1);
 			//UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"skipsafezone"), nullptr);
 		}
 		else if (command == "startshrinksafezone")
@@ -1293,6 +1295,8 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				if (GamePhaseLogic->SafeZoneIndicator)
 					GamePhaseLogic->SafeZoneIndicator->SafeZoneStartShrinkTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
 			}
+
+			PlayerController->ClientMessage(FString(L"Started shrinking the zone."), FName(), 1);
 
 			//UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startshrinksafezone"), nullptr);
 		}
@@ -1346,6 +1350,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				return;
 
 			Pawn->ProcessEvent(SetMovementSpeedFn, &Speed);
+			PlayerController->ClientMessage(FString(L"Set player speed!"), FName(), 1);
 		}
 		else if (command == "timeofday" || command == "time" || command == "t")
 		{
@@ -1469,7 +1474,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 						PlayerController->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
 				}*/
 
-				PlayerController->ClientMessage(FString(L"Spawned bot!"), FName(), 1);
+				PlayerController->ClientMessage(FString(L"Spawned a player bot!"), FName(), 1);
 			}
 		}
 		else if (command == "startevent")
