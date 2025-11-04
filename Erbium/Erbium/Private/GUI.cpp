@@ -41,22 +41,6 @@ LRESULT WINAPI WndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
 auto WindowWidth = 533;
 auto WindowHeight = 400;
 
-enum class Playlist : int
-{
-    Solos,
-    Duos,
-    Trios,
-    Squads,
-    OneShotSolos,
-    OneShotDuos,
-    OneShotSquads,
-    TeamRumble,
-    BattleLabs,
-    Playground,
-    Creative,
-    Custom
-};
-
 void GUI::Init()
 {
     ImGui_ImplWin32_EnableDpiAwareness();
@@ -244,15 +228,6 @@ void GUI::Init()
                 ImGui::EndTabItem();
             }
 
-            if (gsStatus == 0)
-            {
-                if (ImGui::BeginTabItem("Gamemode"))
-                {
-                    SelectedUI = 4;
-                    ImGui::EndTabItem();
-                }
-            }
-
             if (gsStatus == 2)
             {
                 if (ImGui::BeginTabItem("Zones"))
@@ -290,7 +265,14 @@ void GUI::Init()
             {
                 gsStatus = 2;
 
-                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
+                if (UFortGameStateComponent_BattleRoyaleGamePhaseLogic::GetDefaultObj())
+                {
+                    auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get();
+
+                    GamePhaseLogic->StartAircraftPhase();
+                }
+                else
+                    UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
             }
 
             ImGui::InputText("Console Command", commandBuffer, 1024);
@@ -374,86 +356,6 @@ void GUI::Init()
 
             ImGui::SliderInt("Siphon Amount:", &FConfiguration::SiphonAmount, 0, 200);
             break;
-        case 4:
-            static int SelectedPlaylist = (int)Playlist::Solos;
-
-            ImGui::RadioButton("Solos", &SelectedPlaylist, (int)Playlist::Solos);
-            ImGui::RadioButton("Duos", &SelectedPlaylist, (int)Playlist::Duos);
-            ImGui::RadioButton("Trios", &SelectedPlaylist, (int)Playlist::Trios);
-            ImGui::RadioButton("Squads", &SelectedPlaylist, (int)Playlist::Squads);
-            ImGui::RadioButton("One Shot Solos", &SelectedPlaylist, (int)Playlist::OneShotSolos);
-            ImGui::RadioButton("One Shot Duos", &SelectedPlaylist, (int)Playlist::OneShotDuos);
-            ImGui::RadioButton("One Shot Squads", &SelectedPlaylist, (int)Playlist::OneShotSquads);
-            ImGui::RadioButton("Team Rumble", &SelectedPlaylist, (int)Playlist::TeamRumble);
-            ImGui::RadioButton("Battle Labs", &SelectedPlaylist, (int)Playlist::BattleLabs);
-            ImGui::RadioButton("Playground", &SelectedPlaylist, (int)Playlist::Playground);
-            ImGui::RadioButton("Creative", &SelectedPlaylist, (int)Playlist::Creative);
-            ImGui::RadioButton("Custom", &SelectedPlaylist, (int)Playlist::Custom);
-
-            switch (SelectedPlaylist)
-            {
-            case (int)Playlist::Solos:
-            {
-                FConfiguration::Playlist = L"/Game/Athena/Playlists/Playlist_DefaultSolo.Playlist_DefaultSolo";
-                break;
-            }
-            case (int)Playlist::Duos:
-            {
-                FConfiguration::Playlist = L"/Game/Athena/Playlists/Playlist_DefaultDuo.Playlist_DefaultDuo";
-                break;
-            }
-            case (int)Playlist::Trios:
-            {
-                FConfiguration::Playlist = L"/Game/Athena/Playlists/Trios/Playlist_Trios.Playlist_Trios";
-                break;
-            }
-            case (int)Playlist::Squads:
-            {
-                FConfiguration::Playlist = L"/Game/Athena/Playlists/Playlist_DefaultSquad.Playlist_DefaultSquad";
-                break;
-            }
-            case (int)Playlist::OneShotSolos:
-            {
-                FConfiguration::Playlist = L"/Game/Athena/Playlists/Playlist_DefaultSquad.Playlist_DefaultSquad";
-                break;
-            }
-            case (int)Playlist::OneShotDuos:
-            {
-                FConfiguration::Playlist = L"/Game/Athena/Playlists/Playlist_DefaultSquad.Playlist_DefaultSquad";
-                break;
-            }
-            case (int)Playlist::OneShotSquads:
-            {
-                FConfiguration::Playlist = L"/Game/Athena/Playlists/Playlist_DefaultSquad.Playlist_DefaultSquad";
-                break;
-            }
-            case (int)Playlist::TeamRumble:
-            {
-                FConfiguration::Playlist = L"/Game/Athena/Playlists/Playlist_DefaultSquad.Playlist_DefaultSquad";
-                break;
-            }
-            case (int)Playlist::BattleLabs:
-            {
-                FConfiguration::Playlist = L"/Game/Athena/Playlists/Playlist_DefaultSquad.Playlist_DefaultSquad";
-                break;
-            }
-            case (int)Playlist::Playground:
-            {
-                FConfiguration::Playlist = L"/Game/Athena/Playlists/Playlist_DefaultSquad.Playlist_DefaultSquad";
-                break;
-            }
-            case (int)Playlist::Creative:
-            {
-                FConfiguration::Playlist = L"/Game/Athena/Playlists/Playlist_DefaultSquad.Playlist_DefaultSquad";
-                break;
-            }
-            case (int)Playlist::Custom:
-            {
-                break;
-            }
-            default:
-                break;
-            }
         }
 
         ImGui::End();
