@@ -320,6 +320,14 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryWeapon(UObject* Context,
 	PlayerController->MyFortPawn->EquipWeaponDefinition(ItemDefinition, Weapon->ItemEntryGuid, entry->HasTrackerGuid() ? entry->TrackerGuid : FGuid(), false);
 }
 
+bool CanBePlacedByPlayer(TSubclassOf<AActor> BuildClass)
+{
+	auto GameState = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState);
+	static auto HasAllPlayerBuildableClasses = GameState->HasAllPlayerBuildableClasses();
+	return HasAllPlayerBuildableClasses ? GameState->AllPlayerBuildableClasses.Search([BuildClass](TSubclassOf<AActor> Class)
+		{ return Class == BuildClass; }) != 0 : true;
+}
+
 uint64_t CantBuild_ = 0;
 void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FFrame& Stack)
 {
@@ -341,8 +349,8 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	struct FBuildingClassData { UClass* BuildingClass; int PreviousBuildingLevel; int UpgradeLevel; };
 	if (VersionInfo.FortniteVersion >= 8.30)
 	{
-		struct FCreateBuildingActorData { uint32_t BuildingClassHandle; _Pad_0xC BuildLoc; _Pad_0xC BuildRot; bool bMirrored; uint8_t Pad_1[0x3]; float SyncKey; uint8 Pad_2[0x4]; uint8_t BuildingClassData[0x10]; };
-		struct FCreateBuildingActorData_New { uint32_t BuildingClassHandle; uint8_t Pad_1[0x4]; _Pad_0x18 BuildLoc; _Pad_0x18 BuildRot; bool bMirrored; uint8_t Pad_2[0x3]; float SyncKey; uint8_t BuildingClassData[0x10]; };
+		struct FCreateBuildingActorData { uint32_t BuildingClassHandle; _Pad_0xC BuildLoc; _Pad_0xC BuildRot; bool bMirrored; uint8_t Pad_1[0x3]; float SyncKey; uint8 Pad_2[0x4]; FBuildingClassData BuildingClassData; };
+		struct FCreateBuildingActorData_New { uint32_t BuildingClassHandle; uint8_t Pad_1[0x4]; _Pad_0x18 BuildLoc; _Pad_0x18 BuildRot; bool bMirrored; uint8_t Pad_2[0x3]; float SyncKey; FBuildingClassData BuildingClassData; };
 
 		if (VersionInfo.FortniteVersion >= 20.00)
 		{
@@ -353,17 +361,30 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 			BuildRot = *(FRotator*)&CreateBuildingData.BuildRot;
 			bMirrored = CreateBuildingData.bMirrored;
 
-			auto BuildingClassPtr = GameState->AllPlayerBuildableClassesIndexLookup.SearchForKey([&](TSubclassOf<AActor> Class, int32 Handle)
-				{
-					return Handle == CreateBuildingData.BuildingClassHandle;
-				});
-			if (!BuildingClassPtr)
+			if (CreateBuildingData.BuildingClassData.BuildingClass)
 			{
-				Stack.IncrementCode();
-				return;
-			}
+				if (!CanBePlacedByPlayer(CreateBuildingData.BuildingClassData.BuildingClass))
+				{
+					Stack.IncrementCode();
+					return;
+				}
 
-			BuildingClass = BuildingClassPtr->Get();
+				BuildingClass = CreateBuildingData.BuildingClassData.BuildingClass;
+			}
+			else
+			{
+				auto BuildingClassPtr = GameState->AllPlayerBuildableClassesIndexLookup.SearchForKey([&](TSubclassOf<AActor> Class, int32 Handle)
+					{
+						return Handle == CreateBuildingData.BuildingClassHandle;
+					});
+				if (!BuildingClassPtr)
+				{
+					Stack.IncrementCode();
+					return;
+				}
+
+				BuildingClass = BuildingClassPtr->Get();
+			}
 		}
 		else
 		{
@@ -563,14 +584,6 @@ void SetEditingPlayer(ABuildingSMActor* _this, AFortPlayerStateAthena* NewEditin
 				_this->EditingPlayer = NewEditingPlayer;
 		}
 	}
-}
-
-bool CanBePlacedByPlayer(TSubclassOf<AActor> BuildClass)
-{
-	auto GameState = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState);
-	static auto HasAllPlayerBuildableClasses = GameState->HasAllPlayerBuildableClasses();
-	return HasAllPlayerBuildableClasses ? GameState->AllPlayerBuildableClasses.Search([BuildClass](TSubclassOf<AActor> Class)
-		{ return Class == BuildClass; }) != 0 : true;
 }
 
 void AFortPlayerControllerAthena::ServerBeginEditingBuildingActor(UObject* Context, FFrame& Stack)
