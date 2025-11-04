@@ -60,6 +60,7 @@ bool bHasItemVariantGuid2 = false;
 bool bHasItemLevel = false;
 bool bHasPickupInstigatorHandle = false;
 bool bHasbUseItemPickupAnalyticEvent = false;
+bool bHasWeaponAmmoOverride = false;
 void UFortKismetLibrary::GiveItemToInventoryOwner(UObject* Object, FFrame& Stack)
 {
 	TScriptInterface<class IFortInventoryOwnerInterface> InventoryOwner;
@@ -70,6 +71,7 @@ void UFortKismetLibrary::GiveItemToInventoryOwner(UObject* Object, FFrame& Stack
 	int32 ItemLevel = -1;
 	int32 PickupInstigatorHandle = 0;
 	bool bUseItemPickupAnalyticEvent = false;
+	int32 WeaponAmmoOverride = -1;
 	Stack.StepCompiledIn(&InventoryOwner);
 	Stack.StepCompiledIn(&ItemDefinition);
 	if (bHasItemVariantGuid2)
@@ -82,10 +84,14 @@ void UFortKismetLibrary::GiveItemToInventoryOwner(UObject* Object, FFrame& Stack
 		Stack.StepCompiledIn(&PickupInstigatorHandle);
 	if (bHasbUseItemPickupAnalyticEvent)
 		Stack.StepCompiledIn(&bUseItemPickupAnalyticEvent);
+	if (bHasWeaponAmmoOverride)
+		Stack.StepCompiledIn(&WeaponAmmoOverride);
 	Stack.IncrementCode();
 
 	auto PlayerController = (AFortPlayerControllerAthena*)InventoryOwner.ObjectPointer;
 	auto ItemEntry = AFortInventory::MakeItemEntry(ItemDefinition, NumberToGive, ItemLevel);
+	if (WeaponAmmoOverride != -1)
+		ItemEntry->LoadedAmmo = WeaponAmmoOverride;
 	PlayerController->InternalPickup(ItemEntry);
 	free(ItemEntry);
 }
@@ -271,6 +277,8 @@ void UFortKismetLibrary::PostLoadHook()
 				bHasPickupInstigatorHandle = true;
 			else if (Param.Name == "bUseItemPickupAnalyticEvent")
 				bHasbUseItemPickupAnalyticEvent = true;
+			else if (Param.Name == "WeaponAmmoOverride")
+				bHasWeaponAmmoOverride = true;
 		}
 	Utils::ExecHook(GiveItemToInventoryOwnerFn, GiveItemToInventoryOwner);
 

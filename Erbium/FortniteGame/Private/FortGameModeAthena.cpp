@@ -1129,26 +1129,28 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
 
     HandlePostSafeZonePhaseChangedOG(GameMode, NewSafeZonePhase_Inp);
 
-    if (FConfiguration::bLateGame && GameMode->SafeZonePhase > 3)
+    if (FConfiguration::bLateGame && GameMode->SafeZonePhase > FConfiguration::LateGameZone)
     {
-        auto Duration = LateGameDurations[GameMode->SafeZonePhase - 2];
-        auto HoldDuration = LateGameHoldDurations[GameMode->SafeZonePhase - 2];
+        auto newIdx = GameMode->SafeZonePhase - FConfiguration::LateGameZone + 1;
+        auto Duration = LateGameDurations.size() >= newIdx ? 0.f : LateGameDurations[newIdx];
+        auto HoldDuration = LateGameHoldDurations.size() >= newIdx ? 0.f : LateGameHoldDurations[newIdx];
 
         GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = TimeSeconds + HoldDuration;
         GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
     }
 
 
-    if (FConfiguration::bLateGame && GameMode->SafeZonePhase < 3)
+    if (FConfiguration::bLateGame && GameMode->SafeZonePhase < FConfiguration::LateGameZone)
     {
         GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = TimeSeconds;
         GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + 0.15f;
     }
-    else if (FConfiguration::bLateGame && GameMode->SafeZonePhase == 3)
+    else if (FConfiguration::bLateGame && GameMode->SafeZonePhase == FConfiguration::LateGameZone)
     {
-        auto Duration = LateGameDurations[GameMode->SafeZonePhase - 2];
+        auto Duration = LateGameDurations[FConfiguration::LateGameZone];
+        auto HoldDuration = LateGameHoldDurations[FConfiguration::LateGameZone];
 
-        GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = TimeSeconds + 30.f;
+        GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = FConfiguration::bLateGame && FConfiguration::bLateGameLongZone ? 676767.f : TimeSeconds + HoldDuration;
         GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
     }
 }
@@ -1263,7 +1265,7 @@ bool AFortGameModeAthena::StartAircraftPhase(AFortGameModeAthena* GameMode, char
             printf("LateGame is not supported on this version!\n");
             return Ret;
         }
-        FVector Loc = GameMode->SafeZoneLocations.Get(3, FVector::Size());
+        FVector Loc = GameMode->SafeZoneLocations.Get(FConfiguration::LateGameZone + (VersionInfo.FortniteVersion >= 24) - 1, FVector::Size());
         Loc.Z = 17500.f;
 
         if (Aircraft->HasFlightInfo())
@@ -1448,7 +1450,7 @@ void StartNewSafeZonePhase(AFortGameModeAthena* GameMode, int NewSafeZonePhase)
             GameMode->SafeZoneIndicator->NextNextMegaStormGridCellThickness = NextPhaseInfo.MegaStormGridCellThickness;
         }
 
-        GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = TimeSeconds + PhaseInfo.WaitTime;
+        GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = FConfiguration::bLateGame && FConfiguration::bLateGameLongZone ? 676767.f : TimeSeconds + PhaseInfo.WaitTime;
         GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + PhaseInfo.ShrinkTime;
 
         GameMode->SafeZoneIndicator->CurrentDamageInfo = PhaseInfo.DamageInfo;
@@ -1471,7 +1473,7 @@ void SpawnInitialSafeZone(AFortGameModeAthena* GameMode)
     SafeZoneIndicator->OnSafeZonePhaseChanged.Bind(GameMode, FName(L"HandlePostSafeZonePhaseChanged"));
     GameMode->OnSafeZoneIndicatorSpawned.Process(SafeZoneIndicator);
 
-    StartNewSafeZonePhase(GameMode, FConfiguration::bLateGame ? 4 : 1);
+    StartNewSafeZonePhase(GameMode, FConfiguration::bLateGame ? (FConfiguration::LateGameZone + (VersionInfo.FortniteVersion >= 24)) : 1);
 
 
     //return SpawnInitialSafeZoneOG(GameMode);

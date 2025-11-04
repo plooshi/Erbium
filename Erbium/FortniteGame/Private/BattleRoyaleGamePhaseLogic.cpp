@@ -363,7 +363,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartNewSafeZonePhase(i
 			SafeZoneIndicator->NextNextMegaStormGridCellThickness = NextPhaseInfo.MegaStormGridCellThickness;
 		}
 
-		SafeZoneIndicator->SafeZoneStartShrinkTime = TimeSeconds + PhaseInfo.WaitTime;
+		SafeZoneIndicator->SafeZoneStartShrinkTime = FConfiguration::bLateGame && FConfiguration::bLateGameLongZone ? 676767.f : TimeSeconds + PhaseInfo.WaitTime;
 		SafeZoneIndicator->SafeZoneFinishShrinkTime = SafeZoneIndicator->SafeZoneStartShrinkTime + PhaseInfo.ShrinkTime;
 
 		SafeZoneIndicator->CurrentDamageInfo = PhaseInfo.DamageInfo;
@@ -421,7 +421,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 				printf("LateGame is not supported on this version!\n");
 				return;
 			}
-			FVector Loc = StormCircles[3].Center;
+			FVector Loc = StormCircles[FConfiguration::LateGameZone].Center;
 			Loc.Z = 17500.f;
 
 			FlightInfo.FlightSpeed = 0.f;
@@ -540,15 +540,14 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 					auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
 					auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
 
-					/*for (auto& Player__Uncasted : GameMode->AlivePlayers)
+					for (auto& Player__Uncasted : GameMode->AlivePlayers)
 					{
 						auto Player = (AFortPlayerControllerAthena*)Player__Uncasted;
-
 						if (Player->IsInAircraft())
 						{
-							Player->GetAircraftComponent()->ServerAttemptAircraftJump();
+							Player->GetAircraftComponent()->ServerAttemptAircraftJump(FRotator{});
 						}
-					}*/
+					}
 
 					/*if (bLateGame)
 					{
@@ -603,7 +602,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 				{
 					formedZone = true;
 					auto SafeZoneIndicator = SetupSafeZoneIndicator();
-					StartNewSafeZonePhase(FConfiguration::bLateGame ? 4 : 1);
+					StartNewSafeZonePhase(FConfiguration::bLateGame ? FConfiguration::LateGameZone + 1 : 1);
 					return;
 				}
 			}
