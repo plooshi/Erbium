@@ -201,7 +201,9 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 		auto Actor = ActorInfo->Actor;
 
 		if (!Actor || /*!Actor->bActorInitialized || */Actor->NetDriverName != Driver->NetDriverName)
+		{
 			continue;
+		}
 
 		auto Outer = Actor->Outer;
 		if (Actor->bActorIsBeingDestroyed || (TUObjectArray::GetItemByIndex(Actor->Index)->Flags & ((1 << 29) | (1 << 21))) || Actor->RemoteRole == 0 || ((Actor->HasbNetStartup() ? Actor->bNetStartup : false) && Actor->NetDormancy == 4))
@@ -242,7 +244,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 			auto PriorityConn = Conn;
 			bool bDoCullCheck = true;
 
-			if (Actor->bAlwaysRelevant)
+			if (Actor->bAlwaysRelevant || Actor->bTearOff)
 				bDoCullCheck = false;
 
 			if (Actor->bOnlyRelevantToOwner)
@@ -254,7 +256,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 				{
 					if (!bHasNullViewTarget && Channel != NULL && !bRelevant)
 						CloseActorChannel(Channel, 3);
-
+					
 					continue;
 				}
 			}
@@ -276,7 +278,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 						((int32(*)(UActorChannel*))FindStartBecomingDormant())(Channel);
 			}
 
-			if (bRelevant && bLevelInitializedForActor)
+			if (Actor->bTearOff || (bRelevant && bLevelInitializedForActor))
 			{
 				bAnyRelevant = true;
 				auto Priority = 0.f;

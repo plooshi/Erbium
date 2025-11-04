@@ -419,12 +419,12 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 
 			GenerateStormCircles(GameState->MapInfo);
 			
-			if (StormCircles.size() < 4)
+			if (StormCircles.size() < FConfiguration::LateGameZone)
 			{
 				printf("LateGame is not supported on this version!\n");
 				return;
 			}
-			FVector Loc = StormCircles[FConfiguration::LateGameZone].Center;
+			FVector Loc = StormCircles[FConfiguration::LateGameZone - 1].Center;
 			Loc.Z = 17500.f;
 
 			FlightInfo.FlightSpeed = 0.f;
@@ -609,7 +609,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 				{
 					formedZone = true;
 					auto SafeZoneIndicator = SetupSafeZoneIndicator();
-					StartNewSafeZonePhase(FConfiguration::bLateGame ? FConfiguration::LateGameZone + 1 : 1);
+					StartNewSafeZonePhase(FConfiguration::bLateGame ? FConfiguration::LateGameZone : 1);
 					return;
 				}
 			}

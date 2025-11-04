@@ -65,32 +65,32 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 	for (auto& Guid : GuidsToRemove)
 		PlayerController->WorldInventory->Remove(Guid);
 
-	static auto SmartItemDefClass = FindClass("FortSmartBuildingItemDefinition");
-	static bool HasCosmeticLoadoutPC = PlayerController->HasCosmeticLoadoutPC();
-	static bool HasCustomizationLoadout = PlayerController->HasCustomizationLoadout();
-
-	if (HasCosmeticLoadoutPC && PlayerController->CosmeticLoadoutPC.Pickaxe)
-		PlayerController->WorldInventory->GiveItem(PlayerController->CosmeticLoadoutPC.Pickaxe->WeaponDefinition);
-	else if (HasCustomizationLoadout && PlayerController->CustomizationLoadout.Pickaxe)
-		PlayerController->WorldInventory->GiveItem(PlayerController->CustomizationLoadout.Pickaxe->WeaponDefinition);
-	else
-	{
-		static auto DefaultPickaxe = FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
-
-		PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
-	}
-
-	auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
-	for (int i = 0; i < GameMode->StartingItems.Num(); i++)
-	{
-		auto& StartingItem = GameMode->StartingItems.Get(i, FItemAndCount::Size());
-
-		if (StartingItem.Count && (!SmartItemDefClass || !StartingItem.Item->IsA(SmartItemDefClass)))
-			PlayerController->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
-	}
-
 	if (Num == 0)
 	{
+		static auto SmartItemDefClass = FindClass("FortSmartBuildingItemDefinition");
+		static bool HasCosmeticLoadoutPC = PlayerController->HasCosmeticLoadoutPC();
+		static bool HasCustomizationLoadout = PlayerController->HasCustomizationLoadout();
+
+		if (HasCosmeticLoadoutPC && PlayerController->CosmeticLoadoutPC.Pickaxe)
+			PlayerController->WorldInventory->GiveItem(PlayerController->CosmeticLoadoutPC.Pickaxe->WeaponDefinition);
+		else if (HasCustomizationLoadout && PlayerController->CustomizationLoadout.Pickaxe)
+			PlayerController->WorldInventory->GiveItem(PlayerController->CustomizationLoadout.Pickaxe->WeaponDefinition);
+		else
+		{
+			//static auto DefaultPickaxe = FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
+
+			//PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
+		}
+
+		auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+		for (int i = 0; i < GameMode->StartingItems.Num(); i++)
+		{
+			auto& StartingItem = GameMode->StartingItems.Get(i, FItemAndCount::Size());
+
+			if (StartingItem.Count && (!SmartItemDefClass || !StartingItem.Item->IsA(SmartItemDefClass)))
+				PlayerController->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
+		}
+
 		for (auto& AbilitySet : AFortGameModeAthena::AbilitySets)
 			PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
 	}
@@ -1608,7 +1608,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				Locations.push_back(PawnLocation);
 				Waypoints[Phrase] = Locations;
 
-				PlayerController->ClientMessage(FString(L"Waypoint saved! Use « cheat waypoint (phrase) » to teleport to that location!"), FName(), 1);
+				PlayerController->ClientMessage(FString(L"Waypoint saved! Use ï¿½ cheat waypoint (phrase) ï¿½ to teleport to that location!"), FName(), 1);
 			}
 		}
 		else if (command == "waypoint" || command == "w")
@@ -2233,6 +2233,7 @@ void AFortPlayerControllerAthena::EnterAircraft(UObject* Object, AActor* Aircraf
 
 	for (auto& Guid : GuidsToRemove)
 		PlayerController->WorldInventory->Remove(Guid);
+	PlayerController->WorldInventory->Inventory.MarkArrayDirty();
 
 	return EnterAircraftOG(Object, Aircraft);
 }
