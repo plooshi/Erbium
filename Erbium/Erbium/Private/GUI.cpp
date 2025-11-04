@@ -264,6 +264,8 @@ void GUI::Init()
             if (gsStatus == 1 && ImGui::Button("Start Bus Early"))
             {
                 gsStatus = 2;
+                sprintf_s(GUI::windowTitle, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Match started" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Match started" : "Erbium (FN %.1f, UE %.2f): Match started"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
+                SetConsoleTitleA(GUI::windowTitle);
 
                 if (UFortGameStateComponent_BattleRoyaleGamePhaseLogic::GetDefaultObj())
                 {

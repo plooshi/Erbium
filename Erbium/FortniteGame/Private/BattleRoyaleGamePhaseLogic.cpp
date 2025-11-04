@@ -567,6 +567,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 					else
 						SafeZonesStartTime = (float)Time + 60.f;
 
+					SetGamePhase(EAthenaGamePhase::SafeZones);
 					SetGamePhaseStep(EAthenaGamePhaseStep::StormForming);
 					return;
 				}
@@ -583,7 +584,6 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 				Aircraft->K2_DestroyActor();
 				Aircrafts_GameState.Clear();
 				Aircrafts_GameMode.Clear();
-				SetGamePhase(EAthenaGamePhase::SafeZones);
 				return;
 			}
 		}
