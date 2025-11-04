@@ -1269,8 +1269,10 @@ bool AFortGameModeAthena::StartAircraftPhase(AFortGameModeAthena* GameMode, char
             printf("LateGame is not supported on this version!\n");
             return Ret;
         }
-        FVector Loc = GameMode->SafeZoneLocations.Get(FConfiguration::LateGameZone + (VersionInfo.FortniteVersion >= 24) - 1, FVector::Size());
+        FVector Loc = GameMode->SafeZoneLocations.Get(FConfiguration::LateGameZone + (VersionInfo.FortniteVersion >= 24 ? 3 : 0) - 1, FVector::Size());
         Loc.Z = 17500.f;
+        if (GameState->HasDefaultParachuteDeployTraceForGroundDistance())
+            GameState->DefaultParachuteDeployTraceForGroundDistance = 2500.f;
 
         if (Aircraft->HasFlightInfo())
         {
@@ -1477,7 +1479,7 @@ void SpawnInitialSafeZone(AFortGameModeAthena* GameMode)
     SafeZoneIndicator->OnSafeZonePhaseChanged.Bind(GameMode, FName(L"HandlePostSafeZonePhaseChanged"));
     GameMode->OnSafeZoneIndicatorSpawned.Process(SafeZoneIndicator);
 
-    StartNewSafeZonePhase(GameMode, FConfiguration::bLateGame ? (FConfiguration::LateGameZone + (VersionInfo.FortniteVersion >= 24)) : 1);
+    StartNewSafeZonePhase(GameMode, FConfiguration::bLateGame ? (FConfiguration::LateGameZone + (VersionInfo.FortniteVersion >= 24 ? 3 : 0)) : 1);
 
 
     //return SpawnInitialSafeZoneOG(GameMode);

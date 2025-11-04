@@ -415,6 +415,8 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 				GameState->OnRep_GamePhase(3);
 			}*/
 
+			GameState->DefaultParachuteDeployTraceForGroundDistance = 2500.f;
+
 			GenerateStormCircles(GameState->MapInfo);
 			
 			if (StormCircles.size() < 4)
@@ -430,7 +432,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 			FlightInfo.FlightStartLocation = Loc;
 
 			FlightInfo.TimeTillFlightEnd = 7.f;
-			FlightInfo.TimeTillDropEnd = 7.f;
+			FlightInfo.TimeTillDropEnd = 0.f;
 			FlightInfo.TimeTillDropStart = 0.f;
 			//GameState->bAircraftIsLocked = false;
 			//GameState->SafeZonesStartTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + 8.f;

@@ -204,7 +204,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 			continue;
 
 		auto Outer = Actor->Outer;
-		if ((VersionInfo.FortniteVersion >= 23.00 ? false : (Actor->bActorIsBeingDestroyed || (TUObjectArray::GetItemByIndex(Actor->Index)->Flags & ((1 << 29) | (1 << 21))))) || Actor->RemoteRole == 0 || ((Actor->HasbNetStartup() ? Actor->bNetStartup : false) && Actor->NetDormancy == 4))
+		if (Actor->bActorIsBeingDestroyed || (TUObjectArray::GetItemByIndex(Actor->Index)->Flags & ((1 << 29) | (1 << 21))) || Actor->RemoteRole == 0 || ((Actor->HasbNetStartup() ? Actor->bNetStartup : false) && Actor->NetDormancy == 4))
 		{
 			//RemoveNetworkActor(&NetworkObjectList, Actor);
 			continue;
@@ -426,9 +426,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 				}
 
 				if (Channel && Actor->bTearOff)
-				{
 					CloseActorChannel(Channel, 4);
-				}
 			}
 			i++;
 		}

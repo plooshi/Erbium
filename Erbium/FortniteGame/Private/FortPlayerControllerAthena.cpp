@@ -49,35 +49,81 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 
 	auto Num = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num();
 
+	UEAllocatedVector<FGuid> GuidsToRemove;
+	for (int i = 0; i < PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
+	{
+		auto& Entry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
+
+		if (Entry.ItemDefinition->bCanBeDropped)
+		{
+			//NewPlayer->WorldInventory->Inventorxy.ReplicatedEntries.Remove(i, FFortItemEntry::Size());
+			//i--;
+			GuidsToRemove.push_back(Entry.ItemGuid);
+		}
+	}
+
+	for (auto& Guid : GuidsToRemove)
+		PlayerController->WorldInventory->Remove(Guid);
+
+	static auto SmartItemDefClass = FindClass("FortSmartBuildingItemDefinition");
+	static bool HasCosmeticLoadoutPC = PlayerController->HasCosmeticLoadoutPC();
+	static bool HasCustomizationLoadout = PlayerController->HasCustomizationLoadout();
+
+	if (HasCosmeticLoadoutPC && PlayerController->CosmeticLoadoutPC.Pickaxe)
+		PlayerController->WorldInventory->GiveItem(PlayerController->CosmeticLoadoutPC.Pickaxe->WeaponDefinition);
+	else if (HasCustomizationLoadout && PlayerController->CustomizationLoadout.Pickaxe)
+		PlayerController->WorldInventory->GiveItem(PlayerController->CustomizationLoadout.Pickaxe->WeaponDefinition);
+	else
+	{
+		static auto DefaultPickaxe = FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
+
+		PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
+	}
+
+	auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+	for (int i = 0; i < GameMode->StartingItems.Num(); i++)
+	{
+		auto& StartingItem = GameMode->StartingItems.Get(i, FItemAndCount::Size());
+
+		if (StartingItem.Count && (!SmartItemDefClass || !StartingItem.Item->IsA(SmartItemDefClass)))
+			PlayerController->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
+	}
+
 	if (Num == 0)
 	{
-		static auto SmartItemDefClass = FindClass("FortSmartBuildingItemDefinition");
-		static bool HasCosmeticLoadoutPC = PlayerController->HasCosmeticLoadoutPC();
-		static bool HasCustomizationLoadout = PlayerController->HasCustomizationLoadout();
-
-		if (HasCosmeticLoadoutPC && PlayerController->CosmeticLoadoutPC.Pickaxe)
-			PlayerController->WorldInventory->GiveItem(PlayerController->CosmeticLoadoutPC.Pickaxe->WeaponDefinition);
-		else if (HasCustomizationLoadout && PlayerController->CustomizationLoadout.Pickaxe)
-			PlayerController->WorldInventory->GiveItem(PlayerController->CustomizationLoadout.Pickaxe->WeaponDefinition);
-		else
-		{
-			static auto DefaultPickaxe = FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
-
-			PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
-		}
-
-		auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
-		for (int i = 0; i < GameMode->StartingItems.Num(); i++)
-		{
-			auto& StartingItem = GameMode->StartingItems.Get(i, FItemAndCount::Size());
-
-			if (StartingItem.Count && (!SmartItemDefClass || !StartingItem.Item->IsA(SmartItemDefClass)))
-				PlayerController->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
-		}
-
-
 		for (auto& AbilitySet : AFortGameModeAthena::AbilitySets)
 			PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
+	}
+	else if (FConfiguration::bLateGame)
+	{
+		auto Shotgun = LateGame::GetShotgun();
+		auto AssaultRifle = LateGame::GetAssaultRifle();
+		auto Sniper = LateGame::GetSniper();
+		auto Heal = LateGame::GetHeal();
+		auto HealSlot2 = LateGame::GetHeal();
+
+		int ShotgunClipSize = Shotgun.Item->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)Shotgun.Item)->ClipSize : 0;
+		int AssaultRifleClipSize = AssaultRifle.Item->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)AssaultRifle.Item)->ClipSize : 0;
+		int SniperClipSize = Sniper.Item->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)Sniper.Item)->ClipSize : 0;
+		// for grappler
+		int HealClipSize = Heal.Item->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)Heal.Item)->ClipSize : 0;
+		int HealSlot2ClipSize = HealSlot2.Item->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)HealSlot2.Item)->ClipSize : 0;
+
+		PlayerController->WorldInventory->GiveItem(LateGame::GetResource(EFortResourceType::Wood), 500);
+		PlayerController->WorldInventory->GiveItem(LateGame::GetResource(EFortResourceType::Stone), 500);
+		PlayerController->WorldInventory->GiveItem(LateGame::GetResource(EFortResourceType::Metal), 500);
+
+		PlayerController->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Assault), 250);
+		PlayerController->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Shotgun), 50);
+		PlayerController->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Submachine), 400);
+		PlayerController->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Rocket), 6);
+		PlayerController->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Sniper), 20);
+
+		PlayerController->WorldInventory->GiveItem(Shotgun.Item, Shotgun.Count, ShotgunClipSize);
+		PlayerController->WorldInventory->GiveItem(AssaultRifle.Item, AssaultRifle.Count, AssaultRifleClipSize);
+		PlayerController->WorldInventory->GiveItem(Sniper.Item, Sniper.Count, SniperClipSize);
+		PlayerController->WorldInventory->GiveItem(Heal.Item, Heal.Count, HealClipSize);
+		PlayerController->WorldInventory->GiveItem(HealSlot2.Item, HealSlot2.Count, HealSlot2ClipSize);
 	}
 }
 
@@ -2010,38 +2056,6 @@ void AFortPlayerControllerAthena::EnterAircraft(UObject* Object, AActor* Aircraf
 
 	for (auto& Guid : GuidsToRemove)
 		PlayerController->WorldInventory->Remove(Guid);
-
-	if (FConfiguration::bLateGame)
-	{
-		auto Shotgun = LateGame::GetShotgun();
-		auto AssaultRifle = LateGame::GetAssaultRifle();
-		auto Sniper = LateGame::GetSniper();
-		auto Heal = LateGame::GetHeal();
-		auto HealSlot2 = LateGame::GetHeal();
-
-		int ShotgunClipSize = Shotgun.Item->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)Shotgun.Item)->ClipSize : 0;
-		int AssaultRifleClipSize = AssaultRifle.Item->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)AssaultRifle.Item)->ClipSize : 0;
-		int SniperClipSize = Sniper.Item->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)Sniper.Item)->ClipSize : 0;
-		// for grappler
-		int HealClipSize = Heal.Item->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)Heal.Item)->ClipSize : 0;
-		int HealSlot2ClipSize = HealSlot2.Item->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)HealSlot2.Item)->ClipSize : 0;
-
-		PlayerController->WorldInventory->GiveItem(LateGame::GetResource(EFortResourceType::Wood), 500);
-		PlayerController->WorldInventory->GiveItem(LateGame::GetResource(EFortResourceType::Stone), 500);
-		PlayerController->WorldInventory->GiveItem(LateGame::GetResource(EFortResourceType::Metal), 500);
-
-		PlayerController->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Assault), 250);
-		PlayerController->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Shotgun), 50);
-		PlayerController->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Submachine), 400);
-		PlayerController->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Rocket), 6);
-		PlayerController->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Sniper), 20);
-
-		PlayerController->WorldInventory->GiveItem(Shotgun.Item, Shotgun.Count, ShotgunClipSize);
-		PlayerController->WorldInventory->GiveItem(AssaultRifle.Item, AssaultRifle.Count, AssaultRifleClipSize);
-		PlayerController->WorldInventory->GiveItem(Sniper.Item, Sniper.Count, SniperClipSize);
-		PlayerController->WorldInventory->GiveItem(Heal.Item, Heal.Count, HealClipSize);
-		PlayerController->WorldInventory->GiveItem(HealSlot2.Item, HealSlot2.Count, HealSlot2ClipSize);
-	}
 
 	return EnterAircraftOG(Object, Aircraft);
 }
