@@ -327,6 +327,16 @@ bool CanBePlacedByPlayer(TSubclassOf<AActor> BuildClass)
 		{ return Class == BuildClass; }) != 0 : true;
 }
 
+struct FBuildingClassData 
+{
+public:
+	USCRIPTSTRUCT_COMMON_MEMBERS(FBuildingClassData);
+
+	TSubclassOf<ABuildingSMActor> BuildingClass;
+	int PreviousBuildingLevel;
+	int UpgradeLevel;
+};
+
 uint64_t CantBuild_ = 0;
 uint64_t CanAffordToPlaceBuildableClass_;
 uint64_t PayBuildableClassPlacementCost_;
@@ -347,7 +357,6 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	};
 
 	auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
-	struct FBuildingClassData { TSubclassOf<ABuildingSMActor> BuildingClass; int PreviousBuildingLevel; int UpgradeLevel; };
 
 	FBuildingClassData BuildingClassData;
 	if (VersionInfo.FortniteVersion >= 8.30)
@@ -399,7 +408,7 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 
 			BuildingClass = BuildingClassPtr->Get();
 		}
-		BuildingClassData.BuildingClass = (UClass*)BuildingClass;
+		//BuildingClassData.BuildingClass = (UClass*)BuildingClass;
 	}
 	else
 	{
@@ -448,7 +457,6 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 				return;
 		}
 	}
-	printf("fr\n");
 
 	/*TArray<ABuildingSMActor*> RemoveBuildings;
 	char _Unk_OutVar1;
@@ -496,7 +504,8 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	if (!Building)
 		return;
 
-	Building->CurrentBuildingLevel = BuildingClassData.UpgradeLevel;
+	static auto UpgradeLevelOffset = FBuildingClassData::StaticStruct()->GetOffset("UpgradeLevel");
+	Building->CurrentBuildingLevel = VersionInfo.EngineVersion >= 5.3 ? *(uint8*)(__int64(&BuildingClassData) + UpgradeLevelOffset) : *(uint32*)(__int64(&BuildingClassData) + UpgradeLevelOffset);
 	Building->OnRep_CurrentBuildingLevel();
 
 	Building->SetMirrored(bMirrored);
@@ -507,7 +516,6 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 
 	if (!PlayerController->bBuildFree && !FConfiguration::bInfiniteMats)
 	{
-		printf("fr2\n");
 		auto PayBuildableClassPlacementCost = (int(*)(AFortPlayerControllerAthena*, FBuildingClassData)) PayBuildableClassPlacementCost_;
 
 		PayBuildableClassPlacementCost(PlayerController, BuildingClassData);
