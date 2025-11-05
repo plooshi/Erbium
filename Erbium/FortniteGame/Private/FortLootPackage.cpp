@@ -220,7 +220,7 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 	if (!LootTierData)
 		return {};
 	
-	printf("Picked LootTierData %s\n", LootTierData->LootPackage.ToString().c_str());
+	//printf("Picked LootTierData %s\n", LootTierData->LootPackage.ToString().c_str());
 
 	if (LootTierData->NumLootPackageDrops <= 0)
 		return {};

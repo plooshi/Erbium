@@ -901,17 +901,32 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
 
     if (Num == 0)
     {
-        if (VersionInfo.FortniteVersion <= 1.82 && VersionInfo.FortniteVersion != 1.1 && VersionInfo.FortniteVersion != 1.11)
+        if (VersionInfo.FortniteVersion <= 1.91 && VersionInfo.FortniteVersion != 1.1 && VersionInfo.FortniteVersion != 1.11)
         {
-            static auto Head = FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Heads/F_Med_Head1.F_Med_Head1");
-            static auto Body = FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Bodies/F_Med_Soldier_01.F_Med_Soldier_01");
-            static auto Backpack = FindObject<UObject>(L"/Game/Characters/CharacterParts/Backpacks/NoBackpack.NoBackpack");
+            static auto HeroCharPartsOffset = NewPlayer->StrongMyHero->GetOffset("CharacterParts");
+            auto& HeroCharParts = GetFromOffset<TArray<UObject*>>(NewPlayer->StrongMyHero, HeroCharPartsOffset);
             static auto CharacterPartsOffset = NewPlayer->PlayerState->GetOffset("CharacterParts");
             auto& CharacterParts = GetFromOffset<const UObject * [0x6]>(NewPlayer->PlayerState, CharacterPartsOffset);
+            
+            if (HeroCharParts.Num() > 0)
+            {
+                for (auto& Part : HeroCharParts)
+                {
+                    static auto PartTypeOffset = Part->GetOffset("CharacterPartType");
+                    CharacterParts[GetFromOffset<uint8>(Part, PartTypeOffset)] = Part;
+                }
+            }
+            else
+            {
 
-            CharacterParts[0] = Head;
-            CharacterParts[1] = Body;
-            CharacterParts[3] = Backpack;
+                static auto Head = FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Heads/F_Med_Head1.F_Med_Head1");
+                static auto Body = FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Bodies/F_Med_Soldier_01.F_Med_Soldier_01");
+                static auto Backpack = FindObject<UObject>(L"/Game/Characters/CharacterParts/Backpacks/NoBackpack.NoBackpack");
+
+                CharacterParts[0] = Head;
+                CharacterParts[1] = Body;
+                CharacterParts[3] = Backpack;
+            }
         }
 
 

@@ -145,6 +145,7 @@ public:
     DEFINE_PROP(bEnableBroadcastRemoteClientInfo, bool);
     DEFINE_BITFIELD_PROP(bReadyToStartMatch);
     DEFINE_BITFIELD_PROP(bHoldingObject);
+    DEFINE_PROP(StrongMyHero, UObject*);
 
     DEFINE_FUNC(GetViewTarget, AActor*);
     DEFINE_FUNC(GetControlRotation, FRotator);

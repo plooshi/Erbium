@@ -189,10 +189,9 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 				PlayerController->MyFortPawn->OnRep_IsInsideSafeZone();
 			}
 
+			PlayerController->MyFortPawn->SetShield(FConfiguration::bLateGame ? 100.f : 0.f);
 			if (FConfiguration::bLateGame)
 			{
-				PlayerController->MyFortPawn->SetShield(100.f);
-
 				auto Aircraft = GameState->HasAircrafts() ? GameState->Aircrafts[0] : (GameState->HasAircraft() ? GameState->Aircraft : nullptr);
 				if (!Aircraft) // gamephaselogic builds
 				{
@@ -225,6 +224,8 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 		static auto ServerAttemptAircraftJumpOG = (void(*)(AFortPlayerControllerAthena*, FRotator&)) ((AFortPlayerControllerAthena*)Context)->Vft[((AFortPlayerControllerAthena*)Context)->GetFunction("ServerAttemptAircraftJump")->GetVTableIndex()];
 
 		ServerAttemptAircraftJumpOG((AFortPlayerControllerAthena*)Context, Rotation);
+
+		((AFortPlayerControllerAthena*)Context)->MyFortPawn->SetShield(0.f);
 	}
 }
 
