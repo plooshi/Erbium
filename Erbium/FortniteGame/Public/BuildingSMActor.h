@@ -69,6 +69,7 @@ public:
     DEFINE_FUNC(GetHealthPercent, float);
     DEFINE_FUNC(RepairBuilding, void);
     DEFINE_FUNC(SilentDie, void);
+    DEFINE_FUNC(OnRep_CurrentBuildingLevel, void);
     DEFINE_STATIC_FUNC(K2_SpawnBuildingActor, ABuildingSMActor*);
     
     DefHookOg(void, OnDamageServer, ABuildingSMActor*, float, FGameplayTagContainer, FVector, __int64, AActor*, AActor*, __int64);

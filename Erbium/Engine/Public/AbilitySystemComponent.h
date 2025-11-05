@@ -19,6 +19,7 @@ struct FPredictionKey
 {
 public:
     USCRIPTSTRUCT_COMMON_MEMBERS(FPredictionKey);
+    uint8_t Padding[0x18];
 
     DEFINE_STRUCT_PROP(Current, int16);
 };

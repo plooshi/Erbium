@@ -189,9 +189,9 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 				PlayerController->MyFortPawn->OnRep_IsInsideSafeZone();
 			}
 
-			PlayerController->MyFortPawn->SetShield(FConfiguration::bLateGame ? 100.f : 0.f);
 			if (FConfiguration::bLateGame)
 			{
+				PlayerController->MyFortPawn->SetShield(100.f);
 				auto Aircraft = GameState->HasAircrafts() ? GameState->Aircrafts[0] : (GameState->HasAircraft() ? GameState->Aircraft : nullptr);
 				if (!Aircraft) // gamephaselogic builds
 				{
@@ -224,8 +224,6 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 		static auto ServerAttemptAircraftJumpOG = (void(*)(AFortPlayerControllerAthena*, FRotator&)) ((AFortPlayerControllerAthena*)Context)->Vft[((AFortPlayerControllerAthena*)Context)->GetFunction("ServerAttemptAircraftJump")->GetVTableIndex()];
 
 		ServerAttemptAircraftJumpOG((AFortPlayerControllerAthena*)Context, Rotation);
-
-		((AFortPlayerControllerAthena*)Context)->MyFortPawn->SetShield(0.f);
 	}
 }
 
@@ -349,7 +347,9 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	};
 
 	auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
-	struct FBuildingClassData { UClass* BuildingClass; int PreviousBuildingLevel; int UpgradeLevel; };
+	struct FBuildingClassData { TSubclassOf<ABuildingSMActor> BuildingClass; int PreviousBuildingLevel; int UpgradeLevel; };
+
+	FBuildingClassData BuildingClassData;
 	if (VersionInfo.FortniteVersion >= 8.30)
 	{
 		struct FCreateBuildingActorData { uint32_t BuildingClassHandle; _Pad_0xC BuildLoc; _Pad_0xC BuildRot; bool bMirrored; uint8_t Pad_1[0x3]; float SyncKey; uint8 Pad_2[0x4]; FBuildingClassData BuildingClassData; };
@@ -363,40 +363,7 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 			BuildLoc = *(FVector*)&CreateBuildingData.BuildLoc;
 			BuildRot = *(FRotator*)&CreateBuildingData.BuildRot;
 			bMirrored = CreateBuildingData.bMirrored;
-
-			if (CreateBuildingData.BuildingClassData.BuildingClass)
-			{
-				if (!CanBePlacedByPlayer(CreateBuildingData.BuildingClassData.BuildingClass))
-				{
-					Stack.IncrementCode();
-					return;
-				}
-
-				BuildingClass = CreateBuildingData.BuildingClassData.BuildingClass;
-			}
-			else
-			{
-				auto BuildingClassPtr = GameState->AllPlayerBuildableClassesIndexLookup.SearchForKey([&](TSubclassOf<AActor> Class, int32 Handle)
-					{
-						return Handle == CreateBuildingData.BuildingClassHandle;
-					});
-				if (!BuildingClassPtr)
-				{
-					Stack.IncrementCode();
-					return;
-				}
-
-				BuildingClass = BuildingClassPtr->Get();
-			}
-		}
-		else
-		{
-			FCreateBuildingActorData CreateBuildingData;
-			Stack.StepCompiledIn(&CreateBuildingData);
-
-			BuildLoc = *(FVector*)&CreateBuildingData.BuildLoc;
-			BuildRot = *(FRotator*)&CreateBuildingData.BuildRot;
-			bMirrored = CreateBuildingData.bMirrored;
+			BuildingClassData = CreateBuildingData.BuildingClassData;
 
 			auto BuildingClassPtr = GameState->AllPlayerBuildableClassesIndexLookup.SearchForKey([&](TSubclassOf<AActor> Class, int32 Handle)
 				{
@@ -410,11 +377,32 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 
 			BuildingClass = BuildingClassPtr->Get();
 		}
+		else
+		{
+			FCreateBuildingActorData CreateBuildingData;
+			Stack.StepCompiledIn(&CreateBuildingData);
+
+			BuildLoc = *(FVector*)&CreateBuildingData.BuildLoc;
+			BuildRot = *(FRotator*)&CreateBuildingData.BuildRot;
+			bMirrored = CreateBuildingData.bMirrored;
+			BuildingClassData = CreateBuildingData.BuildingClassData;
+
+			auto BuildingClassPtr = GameState->AllPlayerBuildableClassesIndexLookup.SearchForKey([&](TSubclassOf<AActor> Class, int32 Handle)
+				{
+					return Handle == CreateBuildingData.BuildingClassHandle;
+				});
+			if (!BuildingClassPtr)
+			{
+				Stack.IncrementCode();
+				return;
+			}
+
+			BuildingClass = BuildingClassPtr->Get();
+		}
+		BuildingClassData.BuildingClass = (UClass*)BuildingClass;
 	}
 	else
 	{
-
-		FBuildingClassData BuildingClassData;
 		Stack.StepCompiledIn(&BuildingClassData);
 		Stack.StepCompiledIn(&BuildLoc);
 		Stack.StepCompiledIn(&BuildRot);
@@ -426,6 +414,7 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 			Stack.IncrementCode();
 			return;
 		}
+
 		BuildingClass = BuildingClassData.BuildingClass;
 	}
 	Stack.IncrementCode();
@@ -436,19 +425,30 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	auto Resource = UFortKismetLibrary::K2_GetResourceItemDefinition(((ABuildingSMActor*)BuildingClass->GetDefaultObj())->ResourceType);
 
 	UFortWorldItem* Item = nullptr;
-	if (!PlayerController->bBuildFree && !FConfiguration::bInfiniteMats)
-	{	
-		auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* entry)
-			{ return entry->ItemEntry.ItemDefinition == Resource; });
+	if (!FConfiguration::bInfiniteMats)
+	{
+		auto CanAffordToPlaceBuildableClass = (bool(*)(AFortPlayerControllerAthena*, FBuildingClassData)) CanAffordToPlaceBuildableClass_;
 
-		if (!ItemP)
-			return;
+		if (CanAffordToPlaceBuildableClass)
+		{
+			if (!CanAffordToPlaceBuildableClass(PlayerController, BuildingClassData))
+				return;
+		}
+		else if (!PlayerController->bBuildFree)
+		{
+			auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* entry)
+				{ return entry->ItemEntry.ItemDefinition == Resource; });
 
-		Item = *ItemP;
+			if (!ItemP)
+				return;
 
-		if (Item->ItemEntry.Count < 10)
-			return;
+			Item = *ItemP;
+
+			if (Item->ItemEntry.Count < 10)
+				return;
+		}
 	}
+	printf("fr\n");
 
 	/*TArray<ABuildingSMActor*> RemoveBuildings;
 	char _Unk_OutVar1;
@@ -465,19 +465,16 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	if (FuncPtr)
 	{
 		if (GameState->StructuralSupportSystem->Call<uint8_t>(FuncPtr, UWorld::GetWorld(), BuildingClass, BuildLoc, BuildRot, bMirrored, &RemoveBuildings, nullptr, false))
-		{
 			return;
-		}
 	}
 	else
 	{
 		char _Unk_OutVar1;
-		static auto CantBuild = (__int64 (*)(UWorld*, const UClass*, _Pad_0xC, _Pad_0xC, bool, TArray<ABuildingSMActor*> *, char*))CantBuild_;
-		static auto CantBuildNew = (__int64 (*)(UWorld*, const UClass*, _Pad_0x18, _Pad_0x18, bool, TArray<ABuildingSMActor*> *, char*))CantBuild_;
+		auto CantBuild = (__int64 (*)(UWorld*, const UClass*, _Pad_0xC, _Pad_0xC, bool, TArray<ABuildingSMActor*> *, char*))CantBuild_;
+		auto CantBuildNew = (__int64 (*)(UWorld*, const UClass*, _Pad_0x18, _Pad_0x18, bool, TArray<ABuildingSMActor*> *, char*))CantBuild_;
+
 		if (VersionInfo.FortniteVersion >= 20.00 ? CantBuildNew(UWorld::GetWorld(), BuildingClass, *(_Pad_0x18*)&BuildLoc, *(_Pad_0x18*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1) : CantBuild(UWorld::GetWorld(), BuildingClass, *(_Pad_0xC*)&BuildLoc, *(_Pad_0xC*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1))
-		{
 			return;
-		}
 	}	
 
 	for (auto& RemoveBuilding : RemoveBuildings)
@@ -499,8 +496,8 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	if (!Building)
 		return;
 
-	//Building->CurrentBuildingLevel = CreateBuildingData.BuildingClassData.UpgradeLevel;
-	//Building->OnRep_CurrentBuildingLevel();
+	Building->CurrentBuildingLevel = BuildingClassData.UpgradeLevel;
+	Building->OnRep_CurrentBuildingLevel();
 
 	Building->SetMirrored(bMirrored);
 
@@ -508,41 +505,12 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 
 	Building->InitializeKismetSpawnedBuildingActor(Building, PlayerController, true, nullptr);
 
-		
 	if (!PlayerController->bBuildFree && !FConfiguration::bInfiniteMats)
 	{
-		auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
-			{ return entry.ItemDefinition == Resource; }, FFortItemEntry::Size());
+		printf("fr2\n");
+		auto PayBuildableClassPlacementCost = (int(*)(AFortPlayerControllerAthena*, FBuildingClassData)) PayBuildableClassPlacementCost_;
 
-		/*for (int i = 0; i < itemEntry->StateValues.Num(); i++)
-		{
-			auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
-
-			if (StateValue.StateType != 2)
-				continue;
-
-			StateValue.IntValue = 0;
-		}*/
-
-		Item->ItemEntry.Count -= 10;
-		if (Item->ItemEntry.Count <= 0)
-			PlayerController->WorldInventory->Remove(Item->ItemEntry.ItemGuid);
-		else
-		{
-			/*for (int i = 0; i < itemEntry->StateValues.Num(); i++)
-			{
-				auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
-
-				if (StateValue.StateType != 2)
-					continue;
-
-				StateValue.IntValue = 0;
-				break;
-			}*/
-
-
-			PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
-		}
+		PayBuildableClassPlacementCost(PlayerController, BuildingClassData);
 	}
 
 	Building->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
@@ -2272,6 +2240,8 @@ void AFortPlayerControllerAthena::PostLoadHook()
 	ClearAbility_ = FindClearAbility();
 	CanAffordToPlaceBuildableClass_ = FindCanAffordToPlaceBuildableClass();
 	PayBuildableClassPlacementCost_ = FindPayBuildableClassPlacementCost();
+	printf("%llx\n", PayBuildableClassPlacementCost_ - ImageBase);
+	printf("%llx\n", CanAffordToPlaceBuildableClass_ - ImageBase);
 
 	auto DefaultFortPC = DefaultObjImpl("FortPlayerController");
 

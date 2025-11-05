@@ -2307,10 +2307,20 @@ uint64 FindSetGamePhase()
 
 uint64_t FindPayBuildableClassPlacementCost()
 {
-    auto sRef = Memcury::Scanner::FindStringRef(L"Failed to remove item %s during pay building costs, item duplicated!", false, VersionInfo.FortniteVersion >= 11.10 ? 1 : 0, VersionInfo.FortniteVersion >= 18.00);
+    auto sRef = Memcury::Scanner::FindStringRef(L"Failed to remove item %s during pay building costs, item duplicated!", false, 0, VersionInfo.FortniteVersion >= 18.00);
 
     if (sRef.IsValid())
-        return sRef.ScanFor({ 0x48, 0x89, 0x5C }, false).Get();
+    {
+        for (int i = 0; i < 2000; i++)
+        {
+            auto Ptr = (uint8_t*)(sRef.Get() - i);
+
+            if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4)
+                return uint64_t(Ptr);
+            else if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
+                return uint64_t(Ptr);
+        }
+    }
     else if (VersionInfo.FortniteVersion >= 10.00)
     {
         auto Addr = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 56 57 41 56 48 83 EC ? 48 8B 1A 33 F6");
@@ -2344,7 +2354,28 @@ uint64_t FindCanAffordToPlaceBuildableClass()
     }
 
     if (sRef.IsValid())
-        return sRef.ScanFor(VersionInfo.FortniteVersion >= 12.00 ? std::vector<uint8_t>{ 0x48, 0x89, 0x5C } : std::vector<uint8_t>{ 0x40, 0x53 }, false).Get();
+    {
+        if (VersionInfo.FortniteVersion < 12.00)
+        {
+            for (int i = 0; i < 2000; i++)
+            {
+                auto Ptr = (uint8_t*)(sRef.Get() - i);
+
+                if (*Ptr == 0x40 && (*(Ptr + 1) == 0x57 || *(Ptr + 1) == 0x55 || *(Ptr + 1) == 0x53))
+                    return uint64_t(Ptr);
+            }
+        }
+        else
+            for (int i = 0; i < 2000; i++)
+            {
+                auto Ptr = (uint8_t*)(sRef.Get() - i);
+
+                if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4)
+                    return uint64_t(Ptr);
+                else if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
+                    return uint64_t(Ptr);
+            }
+    }
     else
         return Memcury::Scanner::FindPattern("40 53 56 41 56 48 83 EC ? 48 8B 1A 4C 8B F2").Get();
 }
@@ -2355,6 +2386,7 @@ void FindNullsAndRetTrues()
     {
         //NullFuncs.push_back(Memcury::Scanner::FindPattern("4C 89 44 24 ? 88 54 24 ? 48 89 4C 24 ? 56 57 48 81 EC ? ? ? ? 33 C0 83 F8 ? 0F 84 ? ? ? ? B8").Get());
         NullFuncs.push_back(Memcury::Scanner::FindPattern("48 89 54 24 ? 48 89 4C 24 ? 55 53 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 8B 41 08 C1 E8 05").Get());
+        NullFuncs.push_back(Memcury::Scanner::FindPattern("E8 ? ? ? ? F0 FF 0D ? ? ? ? 0F B6 C3").RelativeOffset(1).Get());
         //NullFuncs.push_back(Memcury::Scanner::FindPattern("48 89 54 24 ? 48 89 4C 24 ? 55 53 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 8B 41 ? C1 E8 ? A8 ? 0F 84 ? ? ? ? 80 3D").Get());
     }
     else if (VersionInfo.EngineVersion == 4.19)

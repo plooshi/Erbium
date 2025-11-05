@@ -229,9 +229,8 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 				break;
 			}
 
-			bool bRelevant = IsActorRelevantToConnection(Actor, Viewers);
 			bool bLevelInitializedForActor = IsLevelInitializedForActor(Driver, Actor, Conn);
-			if (!Channel && (!bRelevant || !bLevelInitializedForActor))
+			if (!Channel && (!bLevelInitializedForActor || !IsActorRelevantToConnection(Actor, Viewers)))
 			{
 				continue;
 			}
@@ -273,16 +272,21 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 						((int32(*)(UActorChannel*))FindStartBecomingDormant())(Channel);
 			}
 
-			bool bIsRelevant = bLevelInitializedForActor && !Actor->bTearOff && (!Channel || Driver->GetTime() - Channel->GetRelevantTime() > 1.0);
+			bool bIsRelevant = bLevelInitializedForActor && !Actor->bTearOff && (!Channel || Driver->GetTime() - Channel->GetRelevantTime() > 1.0) && IsActorRelevantToConnection(Actor, Viewers);
 			bool bIsRecentlyRelevant = bIsRelevant || (Channel && Driver->GetTime() - Channel->GetRelevantTime() < Driver->RelevantTimeout);
 
-			if (bIsRecentlyRelevant)
+			if (bIsRecentlyRelevant && (!Channel || Channel->Actor))
 			{
 				bAnyRelevant = true;
 				auto Priority = 0.f;
 
-				static auto PCClass = FindClass("PlayerController");
-				if (Actor->RootComponent && !Actor->IsA(PCClass))
+				bool bIsAController = false;
+				for (auto& Viewer : Viewers)
+				{
+					if (Actor == Viewer->InViewer)
+						bIsAController = true;
+				}
+				if (Actor->RootComponent && bIsAController)
 				{
 					FVector Loc;
 
@@ -408,7 +412,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 						}
 						else if (SendDestructionInfo)
 							SendDestructionInfo(Driver, Conn, DestructionInfo);
-						printf("Path: %s\n", DestructionInfo->PathName.ToString().c_str());
+						//printf("Path: %s\n", DestructionInfo->PathName.ToString().c_str());
 					}
 				}
 				DestroyedStartupOrDormantActorGUIDs.Reset();
