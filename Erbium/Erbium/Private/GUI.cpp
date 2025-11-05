@@ -7,6 +7,7 @@
 #include "../Public/Configuration.h"
 #include "../Public/Events.h"
 #include "../../FortniteGame/Public/BattleRoyaleGamePhaseLogic.h"
+#include "../../FortniteGame/Public/BuildingSMActor.h"
 #pragma comment(lib, "d3d11.lib")
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -269,9 +270,10 @@ void GUI::Init()
 
                 if (UFortGameStateComponent_BattleRoyaleGamePhaseLogic::GetDefaultObj())
                 {
-                    auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get();
+                    UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bStartAircraft = true;
+                    //auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get();
 
-                    GamePhaseLogic->StartAircraftPhase();
+                    //GamePhaseLogic->StartAircraftPhase();
                 }
                 else
                     UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
@@ -291,13 +293,19 @@ void GUI::Init()
             if (ImGui::Button("Pause Safe Zone"))
             {
                 UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bPausedZone = true;
-                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"pausesafezone"), nullptr);
+                auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+                if (GameMode->HasbSafeZonePaused())
+                    GameMode->bSafeZonePaused = true;
+                //UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"pausesafezone"), nullptr);
             }
 
             if (ImGui::Button("Resume Safe Zone"))
             {
                 UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bPausedZone = false;
-                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startsafezone"), nullptr);
+                auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+                if (GameMode->HasbSafeZonePaused())
+                    GameMode->bSafeZonePaused = false;
+                //UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startsafezone"), nullptr);
             }
 
             if (ImGui::Button("Skip Safe Zone"))
@@ -357,6 +365,17 @@ void GUI::Init()
             ImGui::Checkbox("Infinite Ammo", &FConfiguration::bInfiniteAmmo);
 
             ImGui::SliderInt("Siphon Amount:", &FConfiguration::SiphonAmount, 0, 200);
+
+            if (ImGui::Button("Reset Builds"))
+            {
+                auto Builds = Utils::GetAll<ABuildingSMActor>();
+
+                for (auto& Build : Builds)
+                    if (Build->bPlayerPlaced)
+                        Build->K2_DestroyActor();
+
+                Builds.Free();
+            }
             break;
         }
 

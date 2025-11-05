@@ -258,6 +258,9 @@ uint64_t FindCreateNetDriverWorldContext()
             if (!CreateNetDriver_.Get())
                 CreateNetDriver_ = Memcury::Scanner::FindPattern("41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 63 81 ? ? ? ? 4C 8D 3D");
 
+            if (!CreateNetDriver_.Get())
+                CreateNetDriver_ = Memcury::Scanner::FindPattern("41 56 41 57 48 83 EC ? 4C 8B EA 4C 8B E1 48 81 C1");
+
             auto StartOfFuncBefore = CreateNetDriver_.Get();
             if (CreateNetDriver_.Get())
             {
@@ -358,10 +361,10 @@ uint64_t FindSetWorld()
 
         if (VersionInfo.FortniteVersion >= 25)
         {
-            SetWorld = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC ? 4C 8D B9 ? ? ? ? 48 8B FA").Get();
+            SetWorld = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 4C 89 70 ? 41 57 48 83 EC ? 48 8B FA 4C 8D B1 ? ? ? ? 48 8B 91").Get();
 
             if (!SetWorld)
-                SetWorld = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 4C 89 70 ? 41 57 48 83 EC ? 48 8B FA 4C 8D B1 ? ? ? ? 48 8B 91").Get();
+                SetWorld = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC ? 4C 8D B9 ? ? ? ? 48 8B FA").Get();
         }
         else if (VersionInfo.FortniteVersion >= 22 || std::floor(VersionInfo.FortniteVersion) == 19)
             SetWorld = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC ? 48 8B FA 48 8B D9 48 8B 91 ? ? ? ? 48 85 D2 75").Get();
@@ -656,7 +659,7 @@ uint64_t FindGiveAbility()
             return GiveAbility = Memcury::Scanner::FindPattern("48 89 5C 24 ? 56 57 41 56 48 83 EC 20 83 B9").Get();
         else if (VersionInfo.EngineVersion == 4.21)
             return GiveAbility = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 7C 24 ? 41 56 48 83 EC 20 83 B9 ? ? ? ? ? 49 8B E8 4C 8B F2").Get();
-        else if (VersionInfo.EngineVersion >= 5.2)
+        else if (VersionInfo.EngineVersion >= 5.3)
             return GiveAbility = Memcury::Scanner::FindPattern("40 55 53 56 57 41 54 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 49 8B 40 ? 45 33 E4").Get();
         else if (VersionInfo.EngineVersion >= 5.0)
         {
@@ -940,6 +943,8 @@ uint64_t FindFinishedTargetSpline()
             if (!FinishedTargetSpline)
                 FinishedTargetSpline = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 55 57 41 56 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 44 8B 81").Get();
         }
+        else if (VersionInfo.EngineVersion == 5.2)
+            FinishedTargetSpline = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 55 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 44 8B 81 ? ? ? ? 48 8B D9 BE").Get();
         else if (VersionInfo.EngineVersion >= 5.3)
         {
             FinishedTargetSpline = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 4C 8B E1 48 89 4C 24 ? 48 81 C1").Get();
@@ -1947,7 +1952,7 @@ uint32_t FindOnItemInstanceAddedVft()
         auto ItemDefObj = UFortWorldItem::GetDefaultObj();
 
 
-        for (int i = 0; i < 0x100; i++)
+        for (int i = 0; i < 0x400; i++)
             if (uint64_t(ItemDefObj->Vft[i]) == OnItemInstanceAdded)
                 return OnItemInstanceAddedVft = i;
     }
@@ -2357,7 +2362,7 @@ void FindNullsAndRetTrues()
 
         NullFuncs.push_back(pattern);
     }
-    else if (VersionInfo.EngineVersion == 5.1)
+    else if (VersionInfo.EngineVersion == 5.1 || VersionInfo.EngineVersion == 5.2)
     {
         auto pattern = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 48 89 7C 24 ? 55 41 54 41 55 41 56 41 57 48 8B EC 48 83 EC ? 4C 8B E2 4C 8B F1 E8 ? ? ? ? 48 8B 0D").Get();
 
@@ -2366,7 +2371,7 @@ void FindNullsAndRetTrues()
 
         NullFuncs.push_back(pattern);
     }
-    else if (VersionInfo.EngineVersion >= 5.2)
+    else if (VersionInfo.EngineVersion >= 5.3)
     {
         auto pattern = Memcury::Scanner::FindPattern("48 89 5C ? ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC ? ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 8B F2 4C 8B F1 E8").Get();
 

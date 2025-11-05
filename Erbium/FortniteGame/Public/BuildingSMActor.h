@@ -71,6 +71,8 @@ public:
     DEFINE_STATIC_FUNC(K2_SpawnBuildingActor, ABuildingSMActor*);
     
     DefHookOg(void, OnDamageServer, ABuildingSMActor*, float, FGameplayTagContainer, FVector, __int64, AFortPlayerControllerAthena*, AActor*, __int64);
+    DefUHookOg(ServerSpawnDeco);
+    DefUHookOg(ServerSpawnDeco_Implementation);
 
     InitPostLoadHooks;
 };

@@ -119,6 +119,21 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 	return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
 }
 
+void ABuildingSMActor::ServerSpawnDeco(UObject* Context, FFrame& Stack)
+{
+	ServerSpawnDecoOG(Context, Stack);
+
+	auto AttachedActor = *(ABuildingSMActor**)(Stack.Locals + 0x18);
+
+	printf("AttachedActor %s\n", AttachedActor->Name.ToString().c_str());
+}
+
+void ABuildingSMActor::ServerSpawnDeco_Implementation(UObject* Context, FFrame& Stack)
+{
+	ServerSpawnDeco_ImplementationOG(Context, Stack);
+}
+
+
 void ABuildingSMActor::PostLoadHook()
 {
 	if (!GetDefaultObj()->HasBuildingResourceAmountOverride())
@@ -127,9 +142,15 @@ void ABuildingSMActor::PostLoadHook()
 
 		if (!GetSparseClassData_)
 			GetSparseClassData_ = Memcury::Scanner::FindPattern("48 83 EC ? 48 8B 81 ? ? ? ? 48 85 C0 74 ? 48 83 C4 ? C3").Get();
+
+		if (!GetSparseClassData_)
+			GetSparseClassData_ = Memcury::Scanner::FindPattern("48 83 EC ? 48 8B 81 ? ? ? ? 45 33 C0 48 85 C0 75").Get();
 	}
 
 	auto OnDamageServerAddr = FindFunctionCall(L"OnDamageServer", VersionInfo.EngineVersion == 4.16 ? std::vector<uint8_t>{ 0x4C, 0x89, 0x4C } : VersionInfo.EngineVersion == 4.19 || VersionInfo.EngineVersion >= 4.27 ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x40, 0x55 });
 
 	Utils::Hook(OnDamageServerAddr, OnDamageServer, OnDamageServerOG);
+
+	//Utils::ExecHook(L"/Script/FortniteGame.FortDecoTool.ServerSpawnDeco", ServerSpawnDeco, ServerSpawnDecoOG);
+	//Utils::ExecHook(L"/Script/FortniteGame.FortDecoTool_ContextTrap.ServerSpawnDeco_Implementation", ServerSpawnDeco_Implementation, ServerSpawnDeco_ImplementationOG);
 }

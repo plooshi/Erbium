@@ -447,6 +447,9 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             {
                 auto Modifier = Playlist->ModifierList.Get(i, FSoftObjectPtr::Size()).Get();
 
+                if (!Modifier)
+                    continue;
+
                 for (int j = 0; j < Modifier->PersistentAbilitySets.Num(); j++)
                 {
                     auto& DeliveryInfo = Modifier->PersistentAbilitySets.Get(j, FFortAbilitySetDeliveryInfo::Size());
@@ -555,12 +558,12 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                     static auto PlaylistOverrideLootTableDataOffset = Object->GetOffset("PlaylistOverrideLootTableData");
 
                     auto& LootTableData = GetFromOffset<FFortGameFeatureLootTableData>(Object, DefaultLootTableDataOffset);
-                    auto& LootTableDataUE52 = GetFromOffset<FFortGameFeatureLootTableData_UE52>(Object, DefaultLootTableDataOffset);
+                    auto& LootTableDataUE53 = GetFromOffset<FFortGameFeatureLootTableData_UE53>(Object, DefaultLootTableDataOffset);
                     auto& PlaylistOverrideLootTableData = GetFromOffset<TMap<FGameplayTag, FFortGameFeatureLootTableData>>(Object, PlaylistOverrideLootTableDataOffset);
                     auto& PlaylistOverrideLootTableDataLWC = GetFromOffset<TMap<int32, FFortGameFeatureLootTableData>>(Object, PlaylistOverrideLootTableDataOffset);
-                    auto& PlaylistOverrideLootTableDataUE52 = GetFromOffset<TMap<int32, FFortGameFeatureLootTableData_UE52>>(Object, PlaylistOverrideLootTableDataOffset);
-                    auto LTDFeatureData = VersionInfo.EngineVersion >= 5.2 ? LootTableDataUE52.LootTierData.Get() : LootTableData.LootTierData.Get();
-                    auto LootPackageData = VersionInfo.EngineVersion >= 5.2 ? LootTableDataUE52.LootPackageData.Get() : LootTableData.LootPackageData.Get();
+                    auto& PlaylistOverrideLootTableDataUE53 = GetFromOffset<TMap<int32, FFortGameFeatureLootTableData_UE53>>(Object, PlaylistOverrideLootTableDataOffset);
+                    auto LTDFeatureData = VersionInfo.EngineVersion >= 5.3 ? LootTableDataUE53.LootTierData.Get() : LootTableData.LootTierData.Get();
+                    auto LootPackageData = VersionInfo.EngineVersion >= 5.3 ? LootTableDataUE53.LootPackageData.Get() : LootTableData.LootPackageData.Get();
 
                     if (LTDFeatureData)
                     {
@@ -570,7 +573,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
                         if (Playlist)
                         {
-                            if (VersionInfo.EngineVersion >= 5.2)
+                            if (VersionInfo.EngineVersion >= 5.3)
                             {
                                 /*for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
                                     for (auto& Override : PlaylistOverrideLootTableDataUE52)
@@ -606,7 +609,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
                         if (Playlist)
                         {
-                            if (VersionInfo.EngineVersion >= 5.2)
+                            if (VersionInfo.EngineVersion >= 5.3)
                             {
                                 /*for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
                                     for (auto& Override : PlaylistOverrideLootTableDataUE52)

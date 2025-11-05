@@ -141,7 +141,7 @@ void AFortInventory::Remove(FGuid Guid)
     auto Instance = ItemInstance ? *ItemInstance : nullptr;
 
 
-    if (VersionInfo.FortniteVersion < 3)
+    if (VersionInfo.FortniteVersion < 3 && ItemEntryIdx != -1)
     {
         auto PlayerController = (AFortPlayerControllerAthena*)Owner;
         auto& QuickBar = IsPrimaryQuickbar(ItemEntry.ItemDefinition) ? PlayerController->QuickBars->PrimaryQuickBar : PlayerController->QuickBars->SecondaryQuickBar;

@@ -17,6 +17,12 @@ public:
 
     DEFINE_PROP(Actor, AActor*);
 
+    double& GetRelevantTime()
+    {
+        static auto Offset = GetOffset("Actor") + (VersionInfo.EngineVersion >= 5.3 ? 20 : 16);
+        return *(double*)(__int64(this) + Offset);
+    }
+
     bool IsPendingDormancy()
     {
         static auto BitfieldOffset = GetOffset("Connection") + 8;
@@ -178,11 +184,19 @@ public:
     DEFINE_PROP(ClientConnections, TArray<UNetConnection*>);
     DEFINE_PROP(WorldPackage, UObject*);
     DEFINE_PROP(NetServerMaxTickRate, int32);
+    DEFINE_PROP(RelevantTimeout, float);
 
     DefHookOg(void, TickFlush, UNetDriver*, float);
     static void TickFlush__RepGraph(UNetDriver*, float);
     static void TickFlush__Iris(UNetDriver*, float);
     DefHookOg(void, NotifyActorDestroyed, UNetDriver*, AActor*, bool);
+
+    double GetTime()
+    {
+        static auto TimeOff = GetOffset("Time");
+        static auto Offset = TimeOff == -1 ? GetOffset("bNoTimeouts") - 9 : TimeOff;
+        return TimeOff == -1 ? *(double*)(__int64(this) + Offset) : *(float*)(__int64(this) + Offset);
+    }
 
     InitPostLoadHooks;
 };

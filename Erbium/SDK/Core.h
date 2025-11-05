@@ -1176,9 +1176,9 @@ namespace SDK
 				}
 				else if (VersionInfo.FortniteVersion >= 23)
 				{
-					auto& PackageName = *(FName*)(__int64(this) + (VersionInfo.EngineVersion < 5.2 ? 0xC : 0x8));
-					auto& AssetName = *(FName*)(__int64(this) + (VersionInfo.EngineVersion < 5.2 ? 0x10 : 0xC));
-					auto& SubPathString = *(FString*)(__int64(this) + (VersionInfo.EngineVersion < 5.2 ? 0x14 : 0x10));
+					auto& PackageName = *(FName*)(__int64(this) + (VersionInfo.EngineVersion < 5.3 ? 0xC : 0x8));
+					auto& AssetName = *(FName*)(__int64(this) + (VersionInfo.EngineVersion < 5.3 ? 0x10 : 0xC));
+					auto& SubPathString = *(FString*)(__int64(this) + (VersionInfo.EngineVersion < 5.3 ? 0x14 : 0x10));
 
 					if (PackageName.ComparisonIndex > 0)
 					{
@@ -1208,7 +1208,7 @@ namespace SDK
 
 		static uint32_t Size()
 		{
-			return VersionInfo.EngineVersion >= 5.2 ? 0x20 : sizeof(FSoftObjectPtr);
+			return VersionInfo.EngineVersion >= 5.3 ? 0x20 : sizeof(FSoftObjectPtr);
 		}
 	};
 

@@ -216,7 +216,7 @@ void AFortPlayerPawnAthena::OnCapsuleBeginOverlap_(UObject* Context, FFrame& Sta
 		return callOG(Pawn, Stack.GetCurrentNativeFunction(), OnCapsuleBeginOverlap, OverlappedComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
 	auto Pickup = OtherActor->Cast<AFortPickupAthena>();
-	if (!Pickup || !Pickup->PrimaryPickupItemEntry.ItemDefinition)
+	if (!Pickup || !Pickup->PrimaryPickupItemEntry.ItemDefinition || !((AFortPlayerControllerAthena*)Pawn->Controller)->WorldInventory)
 		return callOG(Pawn, Stack.GetCurrentNativeFunction(), OnCapsuleBeginOverlap, OverlappedComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
 	auto MaxStack = Pickup->PrimaryPickupItemEntry.ItemDefinition->GetMaxStackSize();
@@ -238,7 +238,7 @@ void AFortPlayerPawnAthena::MovingEmoteStopped(UObject* Context, FFrame& Stack)
 	Stack.IncrementCode();
 	auto Pawn = (AFortPlayerPawnAthena*)Context;
 
-	if (Pawn->bIsPlayingEmote)
+	if (Pawn->HasbIsPlayingEmote() && Pawn->bIsPlayingEmote)
 		return;
 
 	static auto HasbMovingEmote = Pawn->HasbMovingEmote();

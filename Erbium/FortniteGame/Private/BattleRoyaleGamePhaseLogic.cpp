@@ -497,7 +497,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 		if (_GamePhase <= EAthenaGamePhase::Warmup)
 		{
 			static bool gettingReady = false;
-			if (!gettingReady)
+			if (!bStartAircraft && !gettingReady)
 			{
 				if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && WarmupEarlyCountdownDuration != -1 && WarmupEarlyCountdownDuration < Time)
 				{
@@ -508,9 +508,9 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 				}
 			}
 
-			if (gettingReady)
+			if (bStartAircraft || gettingReady)
 			{
-				if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && WarmupCountdownEndTime != -1 && WarmupCountdownEndTime < Time)
+				if (bStartAircraft || (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && WarmupCountdownEndTime != -1 && WarmupCountdownEndTime < Time))
 				{
 					GUI::gsStatus = 2;
 					sprintf_s(GUI::windowTitle, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Match started" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Match started" : "Erbium (FN %.1f, UE %.2f): Match started"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);

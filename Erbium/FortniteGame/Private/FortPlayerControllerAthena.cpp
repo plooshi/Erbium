@@ -1216,6 +1216,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 	Stack.StepCompiledIn(&Msg);
 	Stack.IncrementCode();
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+	auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
 
 	auto fullCommand = Msg.ToString();
 
@@ -1284,18 +1285,21 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 		else if (command == "resumesafezone")
 		{
 			UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bPausedZone = false;
-			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startsafezone"), nullptr);
+			if (GameMode->HasbSafeZonePaused())
+				GameMode->bSafeZonePaused = false;
+			//UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startsafezone"), nullptr);
 			PlayerController->ClientMessage(FString(L"Resumed the safe zone."), FName(), 1);
 		}
 		else if (command == "pausesafezone")
 		{
 			UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bPausedZone = true;
-			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"pausesafezone"), nullptr);
+			if (GameMode->HasbSafeZonePaused())
+				GameMode->bSafeZonePaused = true;
+			//UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"pausesafezone"), nullptr);
 			PlayerController->ClientMessage(FString(L"Paused the safe zone."), FName(), 1);
 		}
 		else if (command == "skipsafezone")
 		{
-			auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
 			if (GameMode->HasSafeZoneIndicator())
 			{
 				if (GameMode->SafeZoneIndicator)
@@ -1442,11 +1446,14 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				Pawn->SetMaxHealth(100.f);
 				Pawn->SetHealth(100.f);
 
-				auto& OldHealth = PlayerController->MyFortPawn->HealthSet->Health;
-				PlayerController->MyFortPawn->HealthSet->Health.CurrentValue = 100;
-				PlayerController->MyFortPawn->HealthSet->Health.Maximum = 100;
-				PlayerController->MyFortPawn->HealthSet->Health.UnclampedCurrentValue = 100;
-				PlayerController->MyFortPawn->HealthSet->OnRep_Health(OldHealth);
+				if (Pawn->HasHealthSet() && Pawn->HealthSet->HasHealth())
+				{
+					auto& OldHealth = Pawn->HealthSet->Health;
+					Pawn->HealthSet->Health.CurrentValue = 100;
+					Pawn->HealthSet->Health.Maximum = 100;
+					Pawn->HealthSet->Health.UnclampedCurrentValue = 100;
+					Pawn->HealthSet->OnRep_Health(OldHealth);
+				}
 
 
 				PlayerState->TeamIndex = AFortGameModeAthena::PickTeam(GameMode, 0, PlayerController);
@@ -1562,7 +1569,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 		}
 		else if (command == "savewaypoint" || command == "s")
 		{
-			if (args.size() < 1)
+			if (args.size() < 2)
 			{
 				PlayerController->ClientMessage(FString(L"Please provide a phrase to save the waypoint to."), FName(), 1);
 				return;
@@ -1608,12 +1615,12 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				Locations.push_back(PawnLocation);
 				Waypoints[Phrase] = Locations;
 
-				PlayerController->ClientMessage(FString(L"Waypoint saved! Use � cheat waypoint (phrase) � to teleport to that location!"), FName(), 1);
+				PlayerController->ClientMessage(FString(L"Waypoint saved! Use \" cheat waypoint (phrase) \" to teleport to that location!"), FName(), 1);
 			}
 		}
 		else if (command == "waypoint" || command == "w")
 		{
-			if (args.size() < 1)
+			if (args.size() < 2)
 			{
 				PlayerController->ClientMessage(FString(L"Please provide a waypoint phrase to teleport to."), FName(), 1);
 				return;
@@ -1766,6 +1773,16 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 			bInVortex ^= 1;
 
 			Pawn->SetInVortex(bInVortex);
+		}
+		else if (command == "resetbuilds" || command == "reset")
+		{
+			auto Builds = Utils::GetAll<ABuildingSMActor>();
+			
+			for (auto& Build : Builds)
+				if (Build->bPlayerPlaced)
+					Build->K2_DestroyActor();
+
+			Builds.Free();
 		}
 		else
 			goto _help;

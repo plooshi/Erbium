@@ -232,19 +232,18 @@ public:
 	UCLASS_COMMON_MEMBERS(UIpNetDriver);
 };
 
-void PatchAllNetModes()
+void PatchAllNetModes(uintptr_t AttemptDeriveFromURL)
 {
 	Memcury::PE::Address add{ nullptr };
 
 	const auto sizeOfImage = Memcury::PE::GetNTHeaders()->OptionalHeader.SizeOfImage;
 	const auto scanBytes = reinterpret_cast<std::uint8_t*>(Memcury::PE::GetModuleBase());
-	auto AttemptDeriveFromURL = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 4C 8B C1").GetAs<void*>();
 
 	for (auto i = 0ul; i < sizeOfImage - 5; ++i)
 	{
-		if (scanBytes[i] == 0xE8)
+		if (scanBytes[i] == 0xE8 || scanBytes[i] == 0xE9)
 		{
-			if (Memcury::PE::Address(&scanBytes[i]).RelativeOffset(1).GetAs<void*>() == AttemptDeriveFromURL)
+			if (Memcury::PE::Address(&scanBytes[i]).RelativeOffset(1).GetAs<void*>() == (void*)AttemptDeriveFromURL)
 			{
 				add = Memcury::PE::Address(&scanBytes[i]);
 
@@ -323,15 +322,18 @@ bool RetFalse()
 
 void Misc::Hook()
 {
-	Utils::Hook(FindGetNetMode(), GetNetMode);
 	if (VersionInfo.FortniteVersion >= 25 && VersionInfo.FortniteVersion < 28)
 	{
-		Utils::Hook(Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 4C 8B C1").Get(), GetNetMode);
+		auto AttemptDeriveFromURL = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 4C 8B C1").Get();
+		if (!AttemptDeriveFromURL)
+			AttemptDeriveFromURL = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 4C 8B D1").Get();
+		Utils::Hook(AttemptDeriveFromURL, GetNetMode);
 		Utils::Hook(Memcury::Scanner::FindPattern("48 83 EC ? 48 8B 01 FF 90 ? ? ? ? 84 C0 0F 85").Get(), GetNetMode);
-		PatchAllNetModes();
+		PatchAllNetModes(AttemptDeriveFromURL);
 	}
-	else if (VersionInfo.FortniteVersion >= 28)
-		Utils::Hook(Memcury::Scanner::FindPattern("48 83 EC ? 48 8B 01 FF 90 ? ? ? ? 84 C0 0F 85").Get(), GetNetMode);
+	else
+		Utils::Hook(FindGetNetMode(), GetNetMode);
+
 	Utils::Hook(FindSendRequestNow(), SendRequestNow, SendRequestNowOG);
 	Utils::Hook(FindGetMaxTickRate(), GetMaxTickRate);
 	if (VersionInfo.FortniteVersion >= 17)
@@ -340,6 +342,10 @@ void Misc::Hook()
 
 		if (!pattern)
 			pattern = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 65 48 8B 04 25 ? ? ? ? 4C 8B E9").Get();
+
+		if (!pattern)
+			pattern = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 56 57 41 54 41 55 41 56 48 81 EC ? ? ? ? 65 48 8B 04 25").Get();
+
 		Utils::Hook(pattern, CheckCheckpointHeartBeat);
 	}
 	if (VersionInfo.EngineVersion < 4.20)

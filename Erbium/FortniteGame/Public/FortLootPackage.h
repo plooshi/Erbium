@@ -27,7 +27,7 @@ public:
     }
 };
 
-struct FFortGameFeatureLootTableData_UE52
+struct FFortGameFeatureLootTableData_UE53
 {
 public:
     Scuff LootTierData;

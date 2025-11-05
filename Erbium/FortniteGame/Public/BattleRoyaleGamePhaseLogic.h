@@ -39,6 +39,7 @@ public:
 	static inline bool bSkipAircraft = false;
 	static inline bool bEnableZones = true;
 	static inline bool bPausedZone = false;
+	static inline bool bStartAircraft = false;
 
 	DEFINE_PROP(WarmupCountdownStartTime, float);
 	DEFINE_PROP(WarmupCountdownEndTime, float);
