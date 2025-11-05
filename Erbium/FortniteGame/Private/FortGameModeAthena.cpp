@@ -724,8 +724,8 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             BattleBusDef = FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_WorldCupBus.BBID_WorldCupBus");
         else if (VersionInfo.FortniteVersion == 21.00)
             BattleBusDef = FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_CelebrationBus.BBID_CelebrationBus");
-        else if (VersionInfo.FortniteVersion == 27)
-			BattleBusDef = FindObject<UObject>(L"/Rufus/Game/Athena/Items/Cosmetics/BattleBuses/BBID_DefaultBus.BBID_DefaultBus");
+        else if (std::floor(VersionInfo.FortniteVersion) == 27)
+			BattleBusDef = FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_DefaultBus.BBID_DefaultBus");
 
         if (BattleBusDef)
         {
