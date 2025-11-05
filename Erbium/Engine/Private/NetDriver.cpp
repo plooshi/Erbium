@@ -627,6 +627,7 @@ void SetNetDormancy(AActor* Actor, int NewDormancy)
 {
 	auto Driver = (UNetDriver*)UWorld::GetWorld()->NetDriver;
 
+
 	SetNetDormancyOG(Actor, NewDormancy);
 
 	if (Driver)

@@ -284,7 +284,7 @@ AFortSafeZoneIndicator* UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Setu
 			for (float i = 0; i < SafeZoneCount; i++)
 			{
 				auto PhaseInfo = (FFortSafeZonePhaseInfo*)malloc(FFortSafeZonePhaseInfo::Size());
-				__stosb((PBYTE)PhaseInfo, 0, FFortSafeZonePhaseInfo::Size());
+				memset((PBYTE)PhaseInfo, 0, FFortSafeZonePhaseInfo::Size());
 
 				PhaseInfo->Radius = SafeZoneDefinition.Radius.Evaluate(i);
 				PhaseInfo->WaitTime = SafeZoneDefinition.WaitTime.Evaluate(i);

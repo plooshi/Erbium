@@ -31,7 +31,7 @@ public:
 
     FCollectorUnitInfo& operator=(FCollectorUnitInfo& _Rhs)
     {
-        __movsb((PBYTE)this, (const PBYTE)&_Rhs, Size());
+        memcpy((PBYTE)this, (const PBYTE)&_Rhs, Size());
         return *this;
     }
 

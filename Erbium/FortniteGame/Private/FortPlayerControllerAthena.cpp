@@ -790,7 +790,7 @@ void AFortPlayerControllerAthena::ServerPlayEmoteItem(UObject* Context, FFrame& 
 
 	auto* AbilitySystemComponent = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->AbilitySystemComponent;
 	auto Spec = (FGameplayAbilitySpec*)malloc(FGameplayAbilitySpec::Size());
-	__stosb(PBYTE(Spec), 0, FGameplayAbilitySpec::Size());
+	memset(PBYTE(Spec), 0, FGameplayAbilitySpec::Size());
 	UObject* AbilityToUse = nullptr;
 
 	static auto SprayClass = FindClass("AthenaSprayItemDefinition");
@@ -988,7 +988,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 			static auto Cue = FName(L"GameplayCue.Shield.PotionConsumed");
 			Tag.TagName = Cue;
 			auto PredictionKey = (FPredictionKey*)malloc(FPredictionKey::Size());
-			__stosb((PBYTE)PredictionKey, 0, FPredictionKey::Size());
+			memset((PBYTE)PredictionKey, 0, FPredictionKey::Size());
 			KillerPlayerState->AbilitySystemComponent->NetMulticast_InvokeGameplayCueAdded(Tag, *PredictionKey, Handle);
 			KillerPlayerState->AbilitySystemComponent->NetMulticast_InvokeGameplayCueExecuted(Tag, *PredictionKey, Handle);
 			free(PredictionKey);
@@ -1177,7 +1177,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 			if (!bFound)
 			{
 				auto Value = (FFortItemEntryStateValue*)malloc(FFortItemEntryStateValue::Size());
-				__stosb((PBYTE)Value, 0, FFortItemEntryStateValue::Size());
+				memset((PBYTE)Value, 0, FFortItemEntryStateValue::Size());
 				Value->IntValue = true;
 				Value->StateType = 2;
 				itemEntry->StateValues.Add(*Value, FFortItemEntryStateValue::Size());
@@ -1466,7 +1466,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				if (GameState->HasGameMemberInfoArray())
 				{
 					auto Member = (FGameMemberInfo*)malloc(FGameMemberInfo::Size());
-					__stosb((PBYTE)Member, 0, FGameMemberInfo::Size());
+					memset((PBYTE)Member, 0, FGameMemberInfo::Size());
 
 					Member->MostRecentArrayReplicationKey = -1;
 					Member->ReplicationID = -1;

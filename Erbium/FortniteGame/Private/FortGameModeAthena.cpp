@@ -185,7 +185,7 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
                 if (AdditionalLevelStruct)
                 {
                     auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
-                    __stosb((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
+                    memset((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
                     level->bIsServerOnly = false;
                     level->LevelName = Level.ObjectID.AssetPathName;
                     if (Success)
@@ -205,7 +205,7 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
                 if (AdditionalLevelStruct)
                 {
                     auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
-                    __stosb((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
+                    memset((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
                     level->bIsServerOnly = true;
                     level->LevelName = Level.ObjectID.AssetPathName;
                     if (Success)
@@ -327,7 +327,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         }
 
         auto URL = (FURL*)malloc(FURL::Size());
-        __stosb((PBYTE)URL, 0, FURL::Size());
+        memset((PBYTE)URL, 0, FURL::Size());
         URL->Port = 7777;
 
         auto InitListen = (bool (*)(UNetDriver*, UWorld*, FURL*, bool, FString&)) FindInitListen();
@@ -1208,7 +1208,7 @@ void AFortGameModeAthena::HandleStartingNewPlayer_(UObject* Context, FFrame& Sta
     if (GameState->HasGameMemberInfoArray())
     {
         auto Member = (FGameMemberInfo*)malloc(FGameMemberInfo::Size());
-        __stosb((PBYTE)Member, 0, FGameMemberInfo::Size());
+        memset((PBYTE)Member, 0, FGameMemberInfo::Size());
 
         Member->MostRecentArrayReplicationKey = -1;
         Member->ReplicationID = -1;
@@ -1400,7 +1400,7 @@ AFortSafeZoneIndicator* SetupSafeZoneIndicator(AFortGameModeAthena* GameMode)
             for (float i = 0; i < SafeZoneCount; i++)
             {
                 auto PhaseInfo = (FFortSafeZonePhaseInfo*)malloc(FFortSafeZonePhaseInfo::Size());
-                __stosb((PBYTE)PhaseInfo, 0, FFortSafeZonePhaseInfo::Size());
+                memset((PBYTE)PhaseInfo, 0, FFortSafeZonePhaseInfo::Size());
 
                 PhaseInfo->Radius = SafeZoneDefinition.Radius.Evaluate(i);
                 PhaseInfo->WaitTime = SafeZoneDefinition.WaitTime.Evaluate(i);

@@ -531,7 +531,7 @@ namespace UC
 		{
 			Reserve(1, Size);
 
-			__movsb(PBYTE(Data) + (NumElements * Size), (const PBYTE)&Element, Size);
+			memcpy(PBYTE(Data) + (NumElements * Size), (const PBYTE)&Element, Size);
 			NumElements++;
 			return *(ArrayElementType*)((uint8*)Data + ((NumElements - 1) * Size));
 		}
@@ -542,10 +542,10 @@ namespace UC
 
 			for (int i = NumElements; i > Index; i--)
 			{
-				__movsb(PBYTE((uint8*)Data + i * Size), (const PBYTE)((uint8*)Data + (i - 1) * Size), Size);
+				memcpy(PBYTE((uint8*)Data + i * Size), (const PBYTE)((uint8*)Data + (i - 1) * Size), Size);
 			}
 			NumElements++;
-			__movsb(PBYTE((uint8*)Data + Index * Size), (const PBYTE)&Element, Size);
+			memcpy(PBYTE((uint8*)Data + Index * Size), (const PBYTE)&Element, Size);
 			//*(ArrayElementType*)((uint8*)Data + Index * Size) = Element;
 			return *(ArrayElementType*)((uint8*)Data + Index * Size);
 		}
@@ -560,7 +560,7 @@ namespace UC
 			for (int i = Index; i < NumElements; i++)
 			{
 				/* NumElements was decremented, acessing i + 1 is safe */
-				__movsb(PBYTE((uint8*)Data + i * Size), (const PBYTE)((uint8*)Data + (i + 1) * Size), Size);
+				memcpy(PBYTE((uint8*)Data + i * Size), (const PBYTE)((uint8*)Data + (i + 1) * Size), Size);
 			}
 
 			return true;
@@ -612,7 +612,7 @@ namespace UC
 			NumElements = 0;
 
 			if (Data)
-				__stosb((PBYTE)Data, 0, NumElements * Size);
+				memset((PBYTE)Data, 0, NumElements * Size);
 		}
 
 	public:

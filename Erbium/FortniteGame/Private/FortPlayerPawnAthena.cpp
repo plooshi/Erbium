@@ -172,7 +172,7 @@ void AFortPlayerPawnAthena::ServerSendZiplineState(UObject* Context, FFrame& Sta
 
 	auto Zipline = Pawn->GetActiveZipline();
 
-	__movsb((PBYTE)&Pawn->ZiplineState, (const PBYTE)&State, FZiplinePawnState::Size());
+	memcpy((PBYTE)&Pawn->ZiplineState, (const PBYTE)&State, FZiplinePawnState::Size());
 
 	((void (*)(AFortPlayerPawnAthena*)) OnRep_ZiplineState)(Pawn);
 
@@ -287,7 +287,7 @@ void AFortPlayerPawnAthena::Athena_MedConsumable_Triggered(UObject* Context, FFr
 	Tag.TagName = CueName;
 
 	auto PredictionKey = (FPredictionKey*)malloc(FPredictionKey::Size());
-	__stosb((PBYTE)PredictionKey, 0, FPredictionKey::Size());
+	memset((PBYTE)PredictionKey, 0, FPredictionKey::Size());
 
 	PlayerState->AbilitySystemComponent->NetMulticast_InvokeGameplayCueAdded(Tag, *PredictionKey, Handle);
 	PlayerState->AbilitySystemComponent->NetMulticast_InvokeGameplayCueExecuted(Tag, *PredictionKey, Handle);
@@ -381,7 +381,7 @@ void AFortPlayerPawnAthena::PostLoadHook()
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerSendZiplineState"), ServerSendZiplineState);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("MovingEmoteStopped"), MovingEmoteStopped);
-	
+
 	// uncomment ltr
 	//Utils::ExecHook(GetDefaultObj()->GetFunction("ServerOnExitVehicle"), ServerOnExitVehicle_, ServerOnExitVehicle_OG);
 }

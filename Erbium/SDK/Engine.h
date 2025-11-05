@@ -110,13 +110,13 @@ namespace SDK
 
 		FVector& operator=(FVector& Rhs)
 		{
-			__movsb((PBYTE)this, (const PBYTE)&Rhs, Size());
+			memcpy((PBYTE)this, (const PBYTE)&Rhs, Size());
 			return *this;
 		}
 
 		FVector& operator=(FVector&& Rhs)
 		{
-			__movsb((PBYTE)this, (const PBYTE)&Rhs, Size());
+			memcpy((PBYTE)this, (const PBYTE)&Rhs, Size());
 			return *this;
 		}
 
@@ -249,13 +249,13 @@ namespace SDK
 
 		FQuat& operator=(FQuat&& Rhs)
 		{
-			__movsb((PBYTE)this, (const PBYTE)&Rhs, Size());
+			memcpy((PBYTE)this, (const PBYTE)&Rhs, Size());
 			return *this;
 		}
 
 		FQuat& operator=(FQuat& Rhs)
 		{
-			__movsb((PBYTE)this, (const PBYTE)&Rhs, Size());
+			memcpy((PBYTE)this, (const PBYTE)&Rhs, Size());
 			return *this;
 		}
 
@@ -280,13 +280,13 @@ namespace SDK
 
 		FRotator& operator=(FRotator& Rhs)
 		{
-			__movsb((PBYTE)this, (const PBYTE)&Rhs, Size());
+			memcpy((PBYTE)this, (const PBYTE)&Rhs, Size());
 			return *this;
 		}
 
 		FRotator& operator=(FRotator&& Rhs)
 		{
-			__movsb((PBYTE)this, (const PBYTE)&Rhs, Size());
+			memcpy((PBYTE)this, (const PBYTE)&Rhs, Size());
 			return *this;
 		}
 
@@ -396,13 +396,13 @@ namespace SDK
 
 		FTransform& operator=(FTransform&& Rhs)
 		{
-			__movsb((PBYTE)this, (const PBYTE)&Rhs, Size());
+			memcpy((PBYTE)this, (const PBYTE)&Rhs, Size());
 			return *this;
 		}
 
 		FTransform& operator=(FTransform& Rhs)
 		{
-			__movsb((PBYTE)this, (const PBYTE)&Rhs, Size());
+			memcpy((PBYTE)this, (const PBYTE)&Rhs, Size());
 			return *this;
 		}
 

@@ -606,7 +606,7 @@ namespace SDK
 
 		auto Params = Function->GetParams();
 		auto Mem = FMemory::Malloc(Params.Size);
-		__stosb((PBYTE)Mem, 0, Params.Size);
+		memset((PBYTE)Mem, 0, Params.Size);
 
 		size_t i = 0;
 		([&]
@@ -624,7 +624,7 @@ namespace SDK
 
 				const auto& Arg = args;
 
-				__movsb(PBYTE(__int64(Mem) + Param.Offset), (const PBYTE)&Arg, Param.ElementSize);
+				memcpy(PBYTE(__int64(Mem) + Param.Offset), (const PBYTE)&Arg, Param.ElementSize);
 				i++;
 			}(), ...);
 
@@ -648,12 +648,12 @@ namespace SDK
 			if constexpr (std::is_pointer_v<decltype(args)>)
 			{
 				if (Arg != nullptr)
-					__movsb((PBYTE)Arg, (const PBYTE)(__int64(Mem) + Param.Offset), Param.ElementSize);
+					memcpy((PBYTE)Arg, (const PBYTE)(__int64(Mem) + Param.Offset), Param.ElementSize);
 			}
 			else if constexpr (std::is_reference_v<decltype(args)>)
 			{
 				if ((Param.PropertyFlags & 0x2) != 0)
-					__movsb((PBYTE)&Arg, (const PBYTE)(__int64(Mem) + Param.Offset), Param.ElementSize);
+					memcpy((PBYTE)&Arg, (const PBYTE)(__int64(Mem) + Param.Offset), Param.ElementSize);
 			}
 			i++;
 			}(), ...);
@@ -666,7 +666,7 @@ namespace SDK
 				if ((Param.PropertyFlags & 0x400) == 0)
 					continue;
 
-				__movsb((PBYTE)&ret, (const PBYTE)(__int64(Mem) + Param.Offset), Param.ElementSize);
+				memcpy((PBYTE)&ret, (const PBYTE)(__int64(Mem) + Param.Offset), Param.ElementSize);
 				break;
 			}
 

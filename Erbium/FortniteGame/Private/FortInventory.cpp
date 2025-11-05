@@ -196,7 +196,7 @@ FFortRangedWeaponStats* AFortInventory::GetStats(UFortWeaponItemDefinition* Def)
 FFortItemEntry* AFortInventory::MakeItemEntry(const UFortItemDefinition* ItemDefinition, int32 Count, int32 Level)
 {
     auto ItemEntry = (FFortItemEntry*)malloc(FFortItemEntry::Size());
-    __stosb((PBYTE)ItemEntry, 0, FFortItemEntry::Size());
+    memset((PBYTE)ItemEntry, 0, FFortItemEntry::Size());
 
     ItemEntry->MostRecentArrayReplicationKey = -1;
     ItemEntry->ReplicationID = -1;
@@ -399,7 +399,7 @@ void AFortInventory::UpdateEntry(FFortItemEntry& Entry)
             { return item->ItemEntry.ItemGuid == Entry.ItemGuid; });
         if (ent2)
             (*ent2)->ItemEntry = Entry;*/
-            //__movsb((PBYTE)&(*ent)->ItemEntry, (const PBYTE)&Entry, FFortItemEntry::Size());
+            //memcpy((PBYTE)&(*ent)->ItemEntry, (const PBYTE)&Entry, FFortItemEntry::Size());
 
     Update(&Entry);
 }

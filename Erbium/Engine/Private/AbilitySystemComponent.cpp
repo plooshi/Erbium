@@ -11,7 +11,7 @@ FGameplayAbilitySpecHandle UAbilitySystemComponent::GiveAbility(const UObject* A
         return {};
 
     auto Spec = (FGameplayAbilitySpec*) malloc(FGameplayAbilitySpec::Size());
-    __stosb(PBYTE(Spec), 0, FGameplayAbilitySpec::Size());
+    memset(PBYTE(Spec), 0, FGameplayAbilitySpec::Size());
 
     if (ConstructAbilitySpec)
         ((void (*)(FGameplayAbilitySpec*, const UObject*, int, int, UObject*)) ConstructAbilitySpec)(Spec, Ability, 1, -1, SourceObject);
