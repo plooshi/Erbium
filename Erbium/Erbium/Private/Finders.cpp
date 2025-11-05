@@ -2442,7 +2442,7 @@ void FindNullsAndRetTrues()
 
     if (VersionInfo.FortniteVersion == 1.10 || VersionInfo.FortniteVersion == 1.11 || (VersionInfo.FortniteVersion >= 2.2 && VersionInfo.FortniteVersion <= 2.4))
         RetTrueFuncs.push_back(Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 57 41 56 41 57 48 81 EC ? ? ? ? 48 8B 01 49 8B E9 45 0F B6 F8").Get());
-    else if (std::floor(VersionInfo.FortniteVersion) == 17)
+    else if (VersionInfo.EngineVersion >= 4.26)
     {
         auto pattern = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 08 48 89 70 10 48 89 78 18 4C 89 60 20 55 41 56 41 57 48 8B EC 48 83 EC 60 4D 8B F9 41 8A F0 4C 8B F2 48 8B F9 45 32 E4").Get();
 
@@ -2451,8 +2451,7 @@ void FindNullsAndRetTrues()
 
         RetTrueFuncs.push_back(pattern);
     }
-    else
-        RetTrueFuncs.push_back(FindKickPlayer());
+    RetTrueFuncs.push_back(FindKickPlayer());
 
     if (VersionInfo.FortniteVersion >= 23)
     {
