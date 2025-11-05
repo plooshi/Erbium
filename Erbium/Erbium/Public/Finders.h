@@ -61,6 +61,8 @@ uint64 FindInitializeFlightPath();
 uint64 FindReset();
 uint64 FindNotifyGameMemberAdded();
 uint64 FindSetGamePhase();
+uint64 FindPayBuildableClassPlacementCost();
+uint64 FindCanAffordToPlaceBuildableClass();
 
 inline std::vector<uint64_t> NullFuncs = {};
 inline std::vector<uint64_t> RetTrueFuncs = {};

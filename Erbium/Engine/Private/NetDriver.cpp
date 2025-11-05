@@ -349,7 +349,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 		if (IsNetReady && VersionInfo.FortniteVersion < 22 && !IsNetReady(Conn, false))
 			goto _out;
 
-		if (DestroyedStartupOrDormantActorGUIDsOffset && VersionInfo.EngineVersion != 5.2)
+		if (DestroyedStartupOrDormantActorGUIDsOffset)
 		{
 			static auto& DestroyedStartupOrDormantActors = *(TMap<uint32, FActorDestructionInfo*>*)(__int64(Driver) + DestroyedStartupOrDormantActorsOffset);
 			static auto& DestroyedStartupOrDormantActors_UE53 = *(TMap<uint64, FActorDestructionInfo*>*)(__int64(Driver) + DestroyedStartupOrDormantActorsOffset);
@@ -408,7 +408,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 						}
 						else if (SendDestructionInfo)
 							SendDestructionInfo(Driver, Conn, DestructionInfo);
-						//printf("Path: %s\n", DestructionInfo->PathName.ToString().c_str());
+						printf("Path: %s\n", DestructionInfo->PathName.ToString().c_str());
 					}
 				}
 				DestroyedStartupOrDormantActorGUIDs.Reset();

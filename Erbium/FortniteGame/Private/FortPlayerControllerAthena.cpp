@@ -330,6 +330,8 @@ bool CanBePlacedByPlayer(TSubclassOf<AActor> BuildClass)
 }
 
 uint64_t CantBuild_ = 0;
+uint64_t CanAffordToPlaceBuildableClass_;
+uint64_t PayBuildableClassPlacementCost_;
 void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FFrame& Stack)
 {
 	const UClass* BuildingClass = nullptr;
@@ -2268,6 +2270,8 @@ void AFortPlayerControllerAthena::PostLoadHook()
 	RemoveFromAlivePlayers_ = FindRemoveFromAlivePlayers();
 	GiveAbilityAndActivateOnce = FindGiveAbilityAndActivateOnce();
 	ClearAbility_ = FindClearAbility();
+	CanAffordToPlaceBuildableClass_ = FindCanAffordToPlaceBuildableClass();
+	PayBuildableClassPlacementCost_ = FindPayBuildableClassPlacementCost();
 
 	auto DefaultFortPC = DefaultObjImpl("FortPlayerController");
 
