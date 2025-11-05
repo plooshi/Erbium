@@ -359,7 +359,7 @@ uint64_t FindSetWorld()
     {
         bInitialized = true;
 
-        SetWorld = VersionInfo.FortniteVersion < 13 ? Memcury::Scanner::FindStringRef(L"AOnlineBeaconHost::InitHost failed").ScanFor({ 0x48, 0x8B, 0xD0, 0xE8 }, false).RelativeOffset(4).Get() : 0;
+        SetWorld = VersionInfo.FortniteVersion <= 13.20 ? Memcury::Scanner::FindStringRef(L"AOnlineBeaconHost::InitHost failed").ScanFor({ 0x48, 0x8B, 0xD0, 0xE8 }, false).RelativeOffset(4).Get() : 0;
 
         if (VersionInfo.FortniteVersion >= 25)
         {
@@ -370,7 +370,7 @@ uint64_t FindSetWorld()
         }
         else if (VersionInfo.FortniteVersion >= 22 || std::floor(VersionInfo.FortniteVersion) == 19)
             SetWorld = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC ? 48 8B FA 48 8B D9 48 8B 91 ? ? ? ? 48 85 D2 75").Get();
-        else if (VersionInfo.FortniteVersion >= 13)
+        else if (VersionInfo.FortniteVersion > 13.20)
         {
             auto Season = (int)floor(VersionInfo.FortniteVersion);
             uint32 VftIdx = 0;
