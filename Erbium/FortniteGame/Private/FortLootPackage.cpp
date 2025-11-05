@@ -219,6 +219,8 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 		{ return ((float)rand() / 32767.f) * Total; });
 	if (!LootTierData)
 		return {};
+	
+	printf("Picked LootTierData %s\n", LootTierData->LootPackage.ToString().c_str());
 
 	if (LootTierData->NumLootPackageDrops <= 0)
 		return {};
@@ -462,20 +464,34 @@ void UFortLootPackage::SpawnConsumableActor(ABGAConsumableSpawner* Spawner)
 		free(LootDrop);
 }
 
-void PostUpdate(ABuildingSMActor* BuildingSMActor)
+void (*OnAuthorityRandomUpgradeAppliedOG)(ABuildingContainer*, FName&);
+void OnAuthorityRandomUpgradeApplied(ABuildingContainer* Container, FName& UpgradeTierGroup)
 {
-	if (auto Container = BuildingSMActor->Cast<ABuildingContainer>())
+	auto ChosenRandomUpgrade = Container->ChosenRandomUpgrade;
+
+	if (Container->HasAlternateMeshes())
 	{
-		auto ChosenRandomUpgrade = Container->ChosenRandomUpgrade;
+		if (ChosenRandomUpgrade < 0 || ChosenRandomUpgrade >= Container->AlternateMeshes.Num())
+			return OnAuthorityRandomUpgradeAppliedOG(Container, UpgradeTierGroup);
 
-		if (ChosenRandomUpgrade < 0 || ChosenRandomUpgrade >= BuildingSMActor->AlternateMeshes.Num())
-			return;
-
-		auto& AlternateMeshSet = BuildingSMActor->AlternateMeshes[ChosenRandomUpgrade];
+		auto& AlternateMeshSet = Container->AlternateMeshes[ChosenRandomUpgrade];
 
 		Container->ReplicatedLootTier = AlternateMeshSet.Tier;
 		Container->OnRep_LootTier();
 	}
+	else
+	{
+		auto ClassData = Container->GetClassData();
+		if (ChosenRandomUpgrade < 0 || ChosenRandomUpgrade >= ClassData->AlternateMeshes.Num())
+			return OnAuthorityRandomUpgradeAppliedOG(Container, UpgradeTierGroup);
+
+		auto& AlternateMeshSet = ClassData->AlternateMeshes[ChosenRandomUpgrade];
+
+		Container->ReplicatedLootTier = AlternateMeshSet.Tier;
+		Container->OnRep_LootTier();
+	}
+
+	return OnAuthorityRandomUpgradeAppliedOG(Container, UpgradeTierGroup);
 }
 
 bool bDidntFind = false;
@@ -484,28 +500,9 @@ void UFortLootPackage::Hook()
 	if (VersionInfo.FortniteVersion >= 11.00)
 	{
 		Utils::Hook(FindSpawnLoot(), SpawnLootHook);
-		auto PostUpdate_ = Memcury::Scanner::FindStringRef(L"ABuildingSMActor::PostUpdate() Building: %s, AltMeshIdx: %d", false, 0, VersionInfo.FortniteVersion >= 19).ScanFor({ 0x40, 0x53 }, false).Get();
 
-		for (int i = 0; i < 1000; i++)
-		{
-			auto Ptr = (uint8_t*)(PostUpdate_ - i);
-
-			if (*Ptr == 0x48 && *(Ptr + 1) == 0x83 && *(Ptr + 2) == 0xEC)
-			{
-				if (*(Ptr - 2) == 0x40 && *(Ptr - 1) == 0x53)
-				{
-					Ptr -= 2;
-				}
-
-				Utils::Hook((uint64_t)Ptr, PostUpdate);
-				break;
-			}
-			else if (*Ptr == 0x40 && *(Ptr + 1) == 0x53)
-			{
-				Utils::Hook((uint64_t)Ptr, PostUpdate);
-				break;
-			}
-		}
+		auto OnAuthorityRandomUpgradeAppliedAddr = FindFunctionCall(L"OnAuthorityRandomUpgradeApplied", std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
+		Utils::Hook(OnAuthorityRandomUpgradeAppliedAddr, OnAuthorityRandomUpgradeApplied, OnAuthorityRandomUpgradeAppliedOG);
 		return;
 	}
 	else

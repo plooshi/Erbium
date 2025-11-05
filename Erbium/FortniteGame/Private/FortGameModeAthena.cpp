@@ -111,6 +111,7 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
 
         bIsLargeTeamGame = Playlist->bIsLargeTeamGame;
 
+        // misc C1 poi things
         if (VersionInfo.FortniteVersion >= 6 && VersionInfo.FortniteVersion < 7)
         {
             if (VersionInfo.FortniteVersion > 6.10)
@@ -128,18 +129,22 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
                 IslandScripting->ProcessEvent(IslandScripting->GetFunction("OnRep_UpdateMap"), nullptr);
             }
         }
-
-        if (VersionInfo.FortniteVersion >= 8 && VersionInfo.FortniteVersion < 10)
+        else if (VersionInfo.FortniteVersion >= 7 && VersionInfo.FortniteVersion < 8)
         {
-            auto Volcano = FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.LF_Athena_POI_50x53_Volcano");
-            ShowFoundation(Volcano);
+            ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.LF_Athena_POI_25x36"));
+            ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.ShopsNew"));
         }
+        else if (VersionInfo.FortniteVersion >= 8 && VersionInfo.FortniteVersion < 10)
+            ShowFoundation(FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.LF_Athena_POI_50x53_Volcano"));
+        else if (VersionInfo.FortniteVersion >= 10.20 && VersionInfo.FortniteVersion < 11)
+            ShowFoundation(FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.LF_Athena_POI_50x53_Volcano"));
 
         if (VersionInfo.FortniteVersion >= 7 && VersionInfo.FortniteVersion <= 10)
             ShowFoundation(FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.SLAB_2"));
         else if (VersionInfo.EngineVersion == 4.23) // rest of S10
             ShowFoundation(FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.SLAB_4"));
 
+        bool bEvent = false;
         if (Playlist->HasGameplayTagContainer())
         {
             for (int i = 0; i < Playlist->GameplayTagContainer.GameplayTags.Num(); i++)
@@ -148,7 +153,10 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
 
                 if (PlaylistTag.TagName.ToString() == "Athena.Playlist.SpecialEvent")
                 {
-                    if (VersionInfo.FortniteVersion == 12.41)
+                    bEvent = true;
+                    if (VersionInfo.FortniteVersion == 7.30)
+                        ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.PleasentParkFestivus"));
+                    else if (VersionInfo.FortniteVersion == 12.41)
                     {
                         ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.LF_Athena_POI_19x19_2"));
                         ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.BP_Jerky_Head6_18"));
@@ -162,6 +170,10 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
                 }
             }
         }
+
+        if (VersionInfo.FortniteVersion == 7.30 && !bEvent)
+            ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.PleasentParkDefault"));
+
 
         auto AdditionalPlaylistLevelsStreamed__Off = GameState->GetOffset("AdditionalPlaylistLevelsStreamed");
         auto AdditionalLevelStruct = FAdditionalLevelStreamed::StaticStruct();
@@ -926,100 +938,107 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
             }
         }
 
-        if (floor(VersionInfo.FortniteVersion) == 20)
+        static bool bFinalSetup = false;
+        if (!bFinalSetup)
         {
-            UFortLootPackage::SpawnFloorLootForContainer(FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_Warmup.Tiered_Athena_FloorLoot_Warmup_C"));
-            UFortLootPackage::SpawnFloorLootForContainer(FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_01.Tiered_Athena_FloorLoot_01_C"));
-        }
+            bFinalSetup = true;
 
-        if (VersionInfo.FortniteVersion > 3.4)
-        {
-            for (auto& CollectorActor : Utils::GetAll<ABuildingItemCollectorActor>())
+            if (floor(VersionInfo.FortniteVersion) == 20)
             {
-                if (Sum > Weight)
-                {
-                PickNum:
-                    auto RandomNum = (float)rand() / (RAND_MAX / TotalWeight);
-
-                    int Rarity = 0;
-                    bool found = false;
-
-                    for (auto& Element : WeightMap)
-                    {
-                        float Weight = Element.second;
-
-                        if (Weight == 0)
-                            continue;
-
-                        if (RandomNum <= Weight)
-                        {
-                            Rarity = Element.first;
-
-                            found = true;
-                            break;
-                        }
-
-                        RandomNum -= Weight;
-                    }
-
-                    if (!found)
-                        goto PickNum;
-
-                    if (Rarity == 0)
-                    {
-                        CollectorActor->K2_DestroyActor();
-                        continue;
-                    }
-
-                    int AttemptsToGetItem = 0;
-                    for (int i = 0; i < CollectorActor->ItemCollections.Num(); i++)
-                    {
-                        if (AttemptsToGetItem > 10)
-                        {
-                            AttemptsToGetItem = 0;
-                            goto PickNum;
-                        }
-
-                        auto& Collection = CollectorActor->ItemCollections.Get(i, FCollectorUnitInfo::Size());
-
-                        if (Collection.bUseDefinedOutputItem)
-                            continue;
-
-                        auto LootDrops = UFortLootPackage::ChooseLootForContainer(CollectorActor->DefaultItemLootTierGroupName, Rarity);
-
-                        if (Collection.OutputItemEntry.Num() > 0)
-                        {
-                            Collection.OutputItemEntry.ResetNum();
-                            Collection.OutputItem = nullptr;
-                        }
-
-                        for (auto& LootDrop : LootDrops)
-                        {
-                            if (!Collection.OutputItem && AFortInventory::IsPrimaryQuickbar(LootDrop->ItemDefinition))
-                                Collection.OutputItem = LootDrop->ItemDefinition;
-
-                            Collection.OutputItemEntry.Add(*LootDrop, FFortItemEntry::Size());
-                            free(LootDrop);
-                        }
-
-                        if (!Collection.OutputItem)
-                        {
-                            i--;
-                            AttemptsToGetItem++;
-
-                            continue;
-                        }
-
-                        AttemptsToGetItem = 0;
-                    }
-
-                    CollectorActor->StartingGoalLevel = Rarity;
-                }
-                else
-                    CollectorActor->K2_DestroyActor();
+                UFortLootPackage::SpawnFloorLootForContainer(FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_Warmup.Tiered_Athena_FloorLoot_Warmup_C"));
+                UFortLootPackage::SpawnFloorLootForContainer(FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_01.Tiered_Athena_FloorLoot_01_C"));
             }
 
-            Utils::ExecHook((UFunction*)FindObject<UFunction>(L"/Game/Athena/Items/Gameplay/VendingMachine/B_Athena_VendingMachine.B_Athena_VendingMachine_C:VendWobble__FinishedFunc"), VendWobble__FinishedFunc, VendWobble__FinishedFuncOG);
+            if (VersionInfo.FortniteVersion > 3.4)
+            {
+                for (auto& CollectorActor : Utils::GetAll<ABuildingItemCollectorActor>())
+                {
+                    if (Sum > Weight)
+                    {
+                    PickNum:
+                        auto RandomNum = (float)rand() / (RAND_MAX / TotalWeight);
+
+                        int Rarity = 0;
+                        bool found = false;
+
+                        for (auto& Element : WeightMap)
+                        {
+                            float Weight = Element.second;
+
+                            if (Weight == 0)
+                                continue;
+
+                            if (RandomNum <= Weight)
+                            {
+                                Rarity = Element.first;
+
+                                found = true;
+                                break;
+                            }
+
+                            RandomNum -= Weight;
+                        }
+
+                        if (!found)
+                            goto PickNum;
+
+                        if (Rarity == 0)
+                        {
+                            CollectorActor->K2_DestroyActor();
+                            continue;
+                        }
+
+                        int AttemptsToGetItem = 0;
+                        for (int i = 0; i < CollectorActor->ItemCollections.Num(); i++)
+                        {
+                            if (AttemptsToGetItem > 10)
+                            {
+                                AttemptsToGetItem = 0;
+                                goto PickNum;
+                            }
+
+                            auto& Collection = CollectorActor->ItemCollections.Get(i, FCollectorUnitInfo::Size());
+
+                            if (Collection.bUseDefinedOutputItem)
+                                continue;
+
+                            auto LootDrops = UFortLootPackage::ChooseLootForContainer(CollectorActor->DefaultItemLootTierGroupName, Rarity);
+
+                            if (Collection.OutputItemEntry.Num() > 0)
+                            {
+                                Collection.OutputItemEntry.ResetNum();
+                                Collection.OutputItem = nullptr;
+                            }
+
+                            for (auto& LootDrop : LootDrops)
+                            {
+                                if (!Collection.OutputItem && AFortInventory::IsPrimaryQuickbar(LootDrop->ItemDefinition))
+                                    Collection.OutputItem = LootDrop->ItemDefinition;
+
+                                Collection.OutputItemEntry.Add(*LootDrop, FFortItemEntry::Size());
+                                free(LootDrop);
+                            }
+
+                            if (!Collection.OutputItem)
+                            {
+                                i--;
+                                AttemptsToGetItem++;
+
+                                continue;
+                            }
+
+                            AttemptsToGetItem = 0;
+                        }
+
+                        CollectorActor->StartingGoalLevel = Rarity;
+                    }
+                    else
+                        CollectorActor->K2_DestroyActor();
+                }
+
+                Utils::ExecHook((UFunction*)FindObject<UFunction>(L"/Game/Athena/Items/Gameplay/VendingMachine/B_Athena_VendingMachine.B_Athena_VendingMachine_C:VendWobble__FinishedFunc"), VendWobble__FinishedFunc, VendWobble__FinishedFuncOG);
+            }
+            Utils::ExecHook((UFunction*)FindObject<UFunction>(L"/Game/Athena/Items/Consumables/Parents/GA_Athena_MedConsumable_Parent.GA_Athena_MedConsumable_Parent_C:Triggered_4C02BFB04B18D9E79F84848FFE6D2C32"), AFortPlayerPawnAthena::Athena_MedConsumable_Triggered, AFortPlayerPawnAthena::Athena_MedConsumable_TriggeredOG);
         }
     }
     else

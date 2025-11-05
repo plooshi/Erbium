@@ -1,8 +1,8 @@
 #pragma once
 #include "../../pch.h"
-#include "FortPlayerControllerAthena.h"
+#include "FortPlayerStateAthena.h"
 #include "GameplayTagContainer.h"
-#include "FortWeapon.h"
+#include "../../Engine/Public/CurveTable.h"
 
 enum class EFortResourceType : uint8
 {
@@ -30,6 +30,7 @@ public:
     USCRIPTSTRUCT_COMMON_MEMBERS(FBuildingSMActorClassData);
 
     DEFINE_STRUCT_PROP(BuildingResourceAmountOverride, FCurveTableRowHandle);
+    DEFINE_STRUCT_PROP(AlternateMeshes, TArray<FTierMeshSets>);
 };
 
 class ABuildingSMActor : public AActor
@@ -70,14 +71,14 @@ public:
     DEFINE_FUNC(SilentDie, void);
     DEFINE_STATIC_FUNC(K2_SpawnBuildingActor, ABuildingSMActor*);
     
-    DefHookOg(void, OnDamageServer, ABuildingSMActor*, float, FGameplayTagContainer, FVector, __int64, AFortPlayerControllerAthena*, AActor*, __int64);
+    DefHookOg(void, OnDamageServer, ABuildingSMActor*, float, FGameplayTagContainer, FVector, __int64, AActor*, AActor*, __int64);
     DefUHookOg(ServerSpawnDeco);
     DefUHookOg(ServerSpawnDeco_Implementation);
 
     InitPostLoadHooks;
 };
 
-class AFortWeap_EditingTool : public AFortWeapon
+class AFortWeap_EditingTool : public AActor
 {
 public:
     UCLASS_COMMON_MEMBERS(AFortWeap_EditingTool);

@@ -2,6 +2,7 @@
 #include "../Public/FortKismetLibrary.h"
 #include "../Public/FortInventory.h"
 #include "../Public/FortLootPackage.h"
+#include "../Public/FortPlayerControllerAthena.h"
 
 bool bHasbPickupOnlyRelevantToOwner = false;
 bool bHasbToss = false;

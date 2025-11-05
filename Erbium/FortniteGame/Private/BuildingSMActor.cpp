@@ -4,9 +4,10 @@
 #include "../Public/FortGameStateAthena.h"
 #include "../Public/FortWeapon.h"
 #include "../Public/FortKismetLibrary.h"
+#include "../Public/FortPlayerControllerAthena.h"
 
 
-void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGameplayTagContainer DamageTags, FVector Momentum, __int64 HitInfo, AFortPlayerControllerAthena* InstigatedBy, AActor* DamageCauser, __int64 EffectContext)
+void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGameplayTagContainer DamageTags, FVector Momentum, __int64 HitInfo, AActor* InstigatedBy, AActor* DamageCauser, __int64 EffectContext)
 {
 	auto GameState = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState);
 
@@ -51,13 +52,14 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 		}
 	}
 
+	auto Controller = (AFortPlayerControllerAthena*)InstigatedBy;
 	if (ResCount > 0)
 	{
-		auto ItemP = InstigatedBy->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* entry)
+		auto ItemP = Controller->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* entry)
 			{
 				return entry->ItemEntry.ItemDefinition == Resource;
 			});
-		auto itemEntry = InstigatedBy->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+		auto itemEntry = Controller->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
 		{
 			return entry.ItemDefinition == Resource;
 		}, FFortItemEntry::Size());
@@ -80,7 +82,7 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 			Item->ItemEntry.Count += ResCount;
 			if (Item->ItemEntry.Count > MaxMat)
 			{
-				AFortInventory::SpawnPickup(InstigatedBy->Pawn->K2_GetActorLocation(), Item->ItemEntry.ItemDefinition, Item->ItemEntry.Count - MaxMat, 0, EFortPickupSourceTypeFlag::GetTossed(), EFortPickupSpawnSource::GetUnset(), InstigatedBy->MyFortPawn);
+				AFortInventory::SpawnPickup(Controller->Pawn->K2_GetActorLocation(), Item->ItemEntry.ItemDefinition, Item->ItemEntry.Count - MaxMat, 0, EFortPickupSourceTypeFlag::GetTossed(), EFortPickupSpawnSource::GetUnset(), Controller->MyFortPawn);
 				Item->ItemEntry.Count = MaxMat;
 			}
 
@@ -97,23 +99,23 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 
 
 			//Item->ItemEntry.Count = itemEntry->Count;
-			InstigatedBy->WorldInventory->UpdateEntry(Item->ItemEntry);
+			Controller->WorldInventory->UpdateEntry(Item->ItemEntry);
 		}
 		else
 		{
 			if (ResCount > MaxMat)
 			{
-				AFortInventory::SpawnPickup(InstigatedBy->Pawn->K2_GetActorLocation(), Resource, ResCount - MaxMat, 0, EFortPickupSourceTypeFlag::GetTossed(), EFortPickupSpawnSource::GetUnset(), InstigatedBy->MyFortPawn);
+				AFortInventory::SpawnPickup(Controller->Pawn->K2_GetActorLocation(), Resource, ResCount - MaxMat, 0, EFortPickupSourceTypeFlag::GetTossed(), EFortPickupSpawnSource::GetUnset(), Controller->MyFortPawn);
 				ResCount = MaxMat;
 			}
 
-			InstigatedBy->WorldInventory->GiveItem(Resource, ResCount, 0, 0, false);
+			Controller->WorldInventory->GiveItem(Resource, ResCount, 0, 0, false);
 		}
 	}
 
 
 	if (ResCount > 0)
-		InstigatedBy->ClientReportDamagedResourceBuilding(Actor, ResCount == 0 ? EFortResourceType::None : Actor->ResourceType, ResCount, Actor->GetHealth() - Damage <= 0, Damage == 100.f);
+		Controller->ClientReportDamagedResourceBuilding(Actor, ResCount == 0 ? EFortResourceType::None : Actor->ResourceType, ResCount, Actor->GetHealth() - Damage <= 0, Damage == 100.f);
 
 	Actor->ForceNetUpdate();
 	return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);

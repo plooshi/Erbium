@@ -1,5 +1,6 @@
 #pragma once
 #include "../../pch.h"
+#include "BuildingSMActor.h"
 
 struct FFortSearchBounceData
 {
@@ -18,7 +19,7 @@ public:
     float Z;
 };
 
-class ABuildingContainer : public AActor
+class ABuildingContainer : public ABuildingSMActor
 {
 public:
     UCLASS_COMMON_MEMBERS(ABuildingContainer);
