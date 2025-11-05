@@ -324,6 +324,8 @@ uint64_t FindInitListen()
         }
         else if (VersionInfo.EngineVersion >= 4.27)
             InitListen = Memcury::Scanner::FindPattern("4C 8B DC 49 89 5B 08 49 89 73 10 57 48 83 EC 50 48 8B BC 24 ? ? ? ? 49 8B F0 48 8B 01 48 8B").Get();
+        else if (VersionInfo.FortniteVersion == 1.91)
+            InitListen = ImageBase + 0x3A5D200;
         else {
             auto sRef = Memcury::Scanner::FindStringRef(L"%s IpNetDriver listening on port %i").Get();
             int skip = 1;
