@@ -477,9 +477,32 @@ int32_t FindIsNetRelevantForVft()
     {
         bInitialized = true;
 
-        auto sRef = Memcury::Scanner::FindStringRef(L"Actor %s / %s has no root component in AActor::IsNetRelevantFor. (Make bAlwaysRelevant=true?)", false, 0, VersionInfo.FortniteVersion >= 19);
+        auto sRef = Memcury::Scanner::FindStringRef(L"Actor %s / %s has no root component in AActor::IsNetRelevantFor. (Make bAlwaysRelevant=true?)", false, 0, VersionInfo.FortniteVersion >= 19).Get();
 
-        auto IsNetRelevantFor = sRef.ScanFor({ 0x48, 0x89, 0x5C }, false).Get();
+        uintptr_t IsNetRelevantFor = 0;
+        for (int i = 0; i < 2048; i++)
+        {
+            auto Ptr = (uint8_t*)(sRef - i);
+
+            if (*Ptr == 0x48 && *(Ptr + 1) == 0x8b && *(Ptr + 2) == 0xc4)
+            {
+                IsNetRelevantFor = uint64_t(Ptr);
+                break;
+            }
+            else if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5c)
+            {
+                IsNetRelevantFor = uint64_t(Ptr);
+                break;
+            }
+            else if (*Ptr == 0x40 && *(Ptr + 1) == 0x55)
+            {
+                IsNetRelevantFor = uint64_t(Ptr);
+                break;
+            }
+        }
+        
+        if (!IsNetRelevantFor)
+            return 0;
 
         auto ActorVft = AActor::GetDefaultObj()->Vft;
 
@@ -618,6 +641,9 @@ uint64 FindGetMaxTickRate()
 
             if (!GetMaxTickRate)
                 GetMaxTickRate = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 68 ? 48 89 70 ? 57 41 55 41 56 48 83 EC ? 0F 29 70 ? 48 8B D9").Get();
+
+            if (!GetMaxTickRate)
+                GetMaxTickRate = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 68 ? 48 89 70 ? 57 41 54 41 56 48 83 EC ? 0F 29 70 ? 48 8B D9").Get();
 
             return GetMaxTickRate;
         }
@@ -1587,13 +1613,13 @@ uint64 FindSetChannelActor()
             SetChannelActor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 33 FF 4C 8D 35 ? ? ? ? 89 BD").Get();
 
             if (!SetChannelActor)
+                SetChannelActor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 55 57 41 54 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 45 33 FF").Get();
+
+            if (!SetChannelActor)
                 SetChannelActor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 45 33 F6").Get();
 
             if (!SetChannelActor)
                 SetChannelActor = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 10 48 89 70 18 48 89 78 20 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 45 33 ED 48 8D 35 ? ? ? ? 44 89 AD ? ? ? ? 48 8B D9 48 8B 41 28 45 8B E0 48 8B FA 45 8B").Get();
-
-            if (!SetChannelActor)
-                SetChannelActor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 55 57 41 54 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 45 33 FF").Get();
         }
     }
 
@@ -1746,6 +1772,8 @@ uint64 FindCloseActorChannel()
         {
             if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x5C)
                 return CloseActorChannel = sRef - i;
+            else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
+                return CloseActorChannel = sRef - i;
             else if (*(uint8_t*)(sRef - i) == 0x40 && *(uint8_t*)(sRef - i + 1) == 0x55)
                 return CloseActorChannel = sRef - i;
         }
@@ -1763,10 +1791,10 @@ uint64 FindClientHasInitializedLevelFor()
     {
         bInitialized = true;
 
-        ClientHasInitializedLevelFor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 20 48 8B 5A 20 48 8B F1 4C 8B C3", false).Get();
+        ClientHasInitializedLevelFor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 20 48 8B 5A 20 48 8B F1 4C 8B C3 48 8D", false).Get();
 
         if (!ClientHasInitializedLevelFor)
-            ClientHasInitializedLevelFor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 20 48 8B 5A 20 48 8B F1 4C 8B C3 48 8D", false).Get();
+            ClientHasInitializedLevelFor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 20 48 8B 5A 20 48 8B F1 4C 8B C3", false).Get();
 
         if (!ClientHasInitializedLevelFor)
             ClientHasInitializedLevelFor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 20 48 8B F9 48 85 D2 74 35 48").Get();
@@ -2375,6 +2403,7 @@ uint64_t FindCanAffordToPlaceBuildableClass()
     }
     else
         return Memcury::Scanner::FindPattern("40 53 56 41 56 48 83 EC ? 48 8B 1A 4C 8B F2").Get();
+    return 0;
 }
 
 uint64 FindCanPlaceBuildableClassInStructuralGrid()

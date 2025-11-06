@@ -1271,7 +1271,7 @@ uint8_t AFortGameModeAthena::PickTeam(AFortGameModeAthena* GameMode, uint8_t Pre
     }
     else
     {
-        auto Playlist = VersionInfo.FortniteVersion >= 4.0 ? GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData : nullptr;
+        auto Playlist = VersionInfo.FortniteVersion >= 4.0 ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
         if (++PlayersOnCurTeam >= (Playlist ? Playlist->MaxSquadSize : 1))
         {
             CurrentTeam++;

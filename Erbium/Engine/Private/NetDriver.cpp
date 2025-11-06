@@ -154,6 +154,7 @@ struct FPrioActor
 	UActorChannel* Channel;
 	float Priority;
 	bool bIsRelevant;
+	bool bLevelInitializedForActor;
 
 	bool operator<(FPrioActor& _Rhs)
 	{
@@ -323,10 +324,10 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 
 
 				auto& PriorityList = PriorityLists[Conn];
-				PriorityList.push_back({ ActorInfo.Get(), Channel, Priority, bIsRelevant });
+				PriorityList.push_back({ ActorInfo.Get(), Channel, Priority, bIsRelevant, bLevelInitializedForActor });
 			}
 
-			if (Channel && !bIsRecentlyRelevant && (Actor->bTearOff || !bLevelInitializedForActor || !(Actor->HasbNetStartup() ? Actor->bNetStartup : true)))
+			if (Channel && !bIsRecentlyRelevant && (Actor->bTearOff || !bLevelInitializedForActor || !(Actor->HasbNetStartup() ? Actor->bNetStartup : false)))
 			{
 				CloseActorChannel(Channel, Actor->bTearOff ? 4 : 3);
 				continue;
@@ -465,7 +466,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 					}
 				}
 
-				if (Channel && Actor->bTearOff)
+				if (Channel && Actor->bTearOff && (!PriorityActor.bLevelInitializedForActor || !(Actor->HasbNetStartup() ? Actor->bNetStartup : false)))
 					CloseActorChannel(Channel, 4);
 			}
 			i++;
@@ -690,12 +691,12 @@ void UNetDriver::PostLoadHook()
 		ReplicationFrameOffset = VersionInfo.FortniteVersion == 24.20 ? 0x438 : 0x440;
 		NetworkObjectListOffset = VersionInfo.FortniteVersion < 24 ? 0x720 : 0x730;
 	}
-	else if (VersionInfo.FortniteVersion >= 25 && VersionInfo.FortniteVersion < 27)
+	else if (VersionInfo.FortniteVersion >= 25 && VersionInfo.FortniteVersion < 28)
 	{
 		NetworkObjectListOffset = 0x750;
 		ReplicationFrameOffset = 0x458;
 	}
-	else if (VersionInfo.FortniteVersion >= 27)
+	else if (VersionInfo.FortniteVersion >= 28)
 	{
 		NetworkObjectListOffset = 0x760;
 		ReplicationFrameOffset = 0x468;
@@ -719,14 +720,16 @@ void UNetDriver::PostLoadHook()
 		ClientWorldPackageNameOffset = 0x1820;
 	else if (VersionInfo.FortniteVersion == 3.3)
 		ClientWorldPackageNameOffset = 0x1828;
-	else if (VersionInfo.FortniteVersion < 24 && VersionInfo.FortniteVersion > 23.10) 
+	else if (VersionInfo.FortniteVersion < 24 && VersionInfo.FortniteVersion > 23.10)
 		ClientWorldPackageNameOffset = 0x17D0;
-	else if (VersionInfo.FortniteVersion >= 23 && VersionInfo.FortniteVersion <= 23.10) 
+	else if (VersionInfo.FortniteVersion >= 23 && VersionInfo.FortniteVersion <= 23.10)
 		ClientWorldPackageNameOffset = 0x1780;
 	else if (std::floor(VersionInfo.FortniteVersion) == 22)
 		ClientWorldPackageNameOffset = 0x1730;
-	else if (VersionInfo.FortniteVersion >= 27)
+	else if (VersionInfo.FortniteVersion >= 28)
 		ClientWorldPackageNameOffset = 0x1828;
+	else if (VersionInfo.EngineVersion >= 5.3)
+		ClientWorldPackageNameOffset = 0x1820;
 	else if (VersionInfo.EngineVersion == 5.2)
 		ClientWorldPackageNameOffset = 0x1818;
 	else if (VersionInfo.FortniteVersion >= 24)
@@ -736,8 +739,8 @@ void UNetDriver::PostLoadHook()
 
 	if (VersionInfo.FortniteVersion >= 25)
 	{
-		DestroyedStartupOrDormantActorsOffset = VersionInfo.FortniteVersion >= 27 ? 0x328 : 0x318;
-		DestroyedStartupOrDormantActorGUIDsOffset = VersionInfo.FortniteVersion >= 27 ? 0x14b8 : (VersionInfo.EngineVersion == 5.2 ? 0x14a8 : 0x14b0);
+		DestroyedStartupOrDormantActorsOffset = VersionInfo.FortniteVersion >= 28 ? 0x328 : 0x318;
+		DestroyedStartupOrDormantActorGUIDsOffset = VersionInfo.FortniteVersion >= 28 ? 0x14b8 : (VersionInfo.EngineVersion == 5.2 ? 0x14a8 : 0x14b0);
 		ClientVisibleLevelNamesOffset = DestroyedStartupOrDormantActorGUIDsOffset + (VersionInfo.FortniteVersion < 24 ? 0x190 : 0x1e0);
 	}
 	else if (VersionInfo.FortniteVersion >= 23)
