@@ -2374,6 +2374,9 @@ uint64_t FindCanAffordToPlaceBuildableClass()
     {
         auto Addr = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 56 57 41 56 48 83 EC ? 33 DB 4C 8B F2 48 8B F9 48 39 1A");
 
+        if (!Addr.IsValid())
+            Addr = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 68 ? 48 89 70 ? 48 89 78 ? 41 56 48 83 EC ? 33 DB 4C 8B F2 48 8B F9 48 39 1A");
+
         if (Addr.IsValid())
             return Addr.Get();
     }

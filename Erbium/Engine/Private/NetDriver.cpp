@@ -194,11 +194,14 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 		PriorityLists[Conn] = List;
 	}
 
+	auto TimeSeconds = UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
+
+	auto Scale = Driver->NetServerMaxTickRate / FConfiguration::MaxTickRate;
 	FFrame FakeStack;
 	for (auto& ActorInfo : ActiveNetworkObjects)
 	{
-		//if (!ActorInfo->bPendingNetUpdate && Time <= ActorInfo->NextUpdateTime)
-		//	continue;
+		if (/*!ActorInfo->bPendingNetUpdate && */TimeSeconds <= ActorInfo->NextUpdateTime)
+			continue;
 
 		auto Actor = ActorInfo->Actor;
 
@@ -333,6 +336,8 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 				continue;
 			}
 		}
+
+		ActorInfo->NextUpdateTime = TimeSeconds + Scale / Actor->NetUpdateFrequency;
 
 		if (bAnyRelevant)
 			((void(*)(AActor*, UNetDriver*)) FindCallPreReplication())(Actor, Driver);
