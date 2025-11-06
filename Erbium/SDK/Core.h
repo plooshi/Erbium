@@ -286,7 +286,7 @@ namespace SDK
 		}
 
 		template <typename Ret = void, typename... Args>
-		Ret Call(UFunction* Function, Args... args) const;
+		Ret Call(UFunction* Function, Args&&... args) const;
 
 		static const UClass* StaticClass();
 
@@ -582,7 +582,7 @@ namespace SDK
 	};
 
 	template <typename Ret, typename... Args>
-	Ret UObject::Call(UFunction* Function, Args... args) const
+	Ret UObject::Call(UFunction* Function, Args&&... args) const
 	{
 
 		if (!Function)
@@ -645,15 +645,15 @@ namespace SDK
 
 			const auto& Arg = args;
 
-			if constexpr (std::is_pointer_v<decltype(args)>)
+			if constexpr (std::is_pointer_v<std::remove_reference_t<decltype(args)>>)
 			{
 				if (Arg != nullptr)
 					memcpy((PBYTE)Arg, (const PBYTE)(__int64(Mem) + Param.Offset), Param.ElementSize);
 			}
 			else if constexpr (std::is_reference_v<decltype(args)>)
 			{
-				if ((Param.PropertyFlags & 0x2) != 0)
-					memcpy((PBYTE)&Arg, (const PBYTE)(__int64(Mem) + Param.Offset), Param.ElementSize);
+				//if ((Param.PropertyFlags & 0x2) != 0)
+				//	memcpy((PBYTE)&Arg, (const PBYTE)(__int64(Mem) + Param.Offset), Param.ElementSize);
 			}
 			i++;
 			}(), ...);

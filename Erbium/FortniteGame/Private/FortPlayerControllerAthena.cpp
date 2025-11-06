@@ -487,13 +487,13 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	static auto K2_SpawnBuildingActor = ABuildingSMActor::GetDefaultObj()->GetFunction("K2_SpawnBuildingActor");
 
 	ABuildingSMActor* Building = nullptr;
-	if (K2_SpawnBuildingActor)
+	/*if (K2_SpawnBuildingActor)
 	{
 		FTransform SpawnTransform(BuildLoc, BuildRot);
 		Building = ABuildingSMActor::K2_SpawnBuildingActor(PlayerController, BuildingClass, SpawnTransform, PlayerController, PlayerController, false, false);
 	}
-	else
-		Building = UWorld::SpawnActor<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, PlayerController);
+	else*/
+	Building = UWorld::SpawnActorUnfinished<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, PlayerController);
 
 	if (!Building)
 		return;
@@ -518,6 +518,8 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	Building->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
 	if (Building->HasTeamIndex())
 		Building->TeamIndex = Building->Team;
+
+	UWorld::FinishSpawnActor(Building, BuildLoc, BuildRot);
 }
 
 void SetEditingPlayer(ABuildingSMActor* _this, AFortPlayerStateAthena* NewEditingPlayer)
@@ -2243,8 +2245,6 @@ void AFortPlayerControllerAthena::PostLoadHook()
 	ClearAbility_ = FindClearAbility();
 	CanAffordToPlaceBuildableClass_ = FindCanAffordToPlaceBuildableClass();
 	PayBuildableClassPlacementCost_ = FindPayBuildableClassPlacementCost();
-	printf("%llx\n", PayBuildableClassPlacementCost_ - ImageBase);
-	printf("%llx\n", CanAffordToPlaceBuildableClass_ - ImageBase);
 
 	auto DefaultFortPC = DefaultObjImpl("FortPlayerController");
 

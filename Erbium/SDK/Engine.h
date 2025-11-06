@@ -741,7 +741,7 @@ namespace SDK
 		}
 
 		template <typename T = AActor>
-		static T* SpawnActorUnfinished(UClass* Class, FVector Loc, FRotator Rot = {}, AActor* Owner = nullptr)
+		static T* SpawnActorUnfinished(const UClass* Class, FVector Loc, FRotator Rot = {}, AActor* Owner = nullptr)
 		{
 			FTransform Transform(Loc, Rot);
 

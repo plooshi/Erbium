@@ -249,7 +249,7 @@
     }*/                                                                                                                                                              \
                                                                                                                                                                      \
     template <typename... Args>                                                                                                                                      \
-    __VA_ARGS__ Name(Args... Params) const                                                                                                                           \
+    __VA_ARGS__ Name(Args&&... Params) const                                                                                                                         \
     {                                                                                                                                                                \
         if (!Name##__Initialized)                                                                                                                                    \
         {                                                                                                                                                            \
