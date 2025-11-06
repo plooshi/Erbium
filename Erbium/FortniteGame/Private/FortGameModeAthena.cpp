@@ -311,7 +311,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         NetDriver->NetDriverName = NetDriverName;
         NetDriver->World = World;
 
-        if (VersionInfo.EngineVersion >= 5.3 && FConfiguration::bEnableIris)
+        if (VersionInfo.EngineVersion >= 5.4 && FConfiguration::bEnableIris)
         {
             *(bool*)(__int64(&NetDriver->ReplicationDriver) + 0x11) = true;
         }
