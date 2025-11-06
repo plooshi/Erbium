@@ -26,34 +26,60 @@ uint64_t FindGIsClient()
 
         int Skip = 2;
         uint8_t correctByte = 0;
-        for (int i = 0; i < 0x100; i++)
+        for (int i = 0; i < 0x200; i++)
         {
             auto Ptr = (uint8_t*)(sRef - i);
 
-            for (auto& Load : GIsClientLoads)
+            if ((*Ptr == 0x40 || *Ptr == 0x44) && *(Ptr + 1) == 0x88)
             {
-                bool bMatches = true;
-                for (int x = 0; x < Load.size(); x++)
-                {
-                    if (Load[x] != *(Ptr + x))
-                    {
-                        bMatches = false;
-                        break;
-                    }
-                }
-                if (!bMatches) continue;
-                if ((Load[0] == 0x44 || Load[0] == 0x40) && (*(Ptr + 2) == 0x74 || *(Ptr + 2) == 0x30)) continue;
-                if (!correctByte)
-                    correctByte = Load[0];
-                else if (Load[0] != correctByte)
+                if (*(Ptr + 2) == 0x74 || *(Ptr + 2) == 0x30)
                     continue;
+                
+                if (!correctByte)
+                    correctByte = *Ptr;
+                else if (*Ptr != correctByte)
+                    continue;
+
                 if (Skip > 0)
                 {
                     Skip--;
                     continue;
                 }
 
-                return GIsClient = Memcury::Scanner(Ptr).RelativeOffset((Load[0] == 0x44 || Load[0] == 0x40) ? 3 : 2, Load[0] == 0xc6).Get();
+                GIsClient = Memcury::Scanner(Ptr).RelativeOffset(3).Get();
+                break;
+            }
+            else if (*Ptr == 0x88 && (*(Ptr + 1) == 0x05 || *(Ptr + 1) == 0x1D))
+            {
+                if (Skip > 0)
+                {
+                    Skip--;
+                    continue;
+                }
+
+                if (!correctByte)
+                    correctByte = *Ptr;
+                else if (*Ptr != correctByte)
+                    continue;
+
+                GIsClient = Memcury::Scanner(Ptr).RelativeOffset(2).Get();
+                break;
+            }
+            else if (*Ptr == 0xC6 && *(Ptr + 1) == 0x05)
+            {
+                if (Skip > 0)
+                {
+                    Skip--;
+                    continue;
+                }
+
+                if (!correctByte)
+                    correctByte = *Ptr;
+                else if (*Ptr != correctByte)
+                    continue;
+    
+                GIsClient = Memcury::Scanner(Ptr).RelativeOffset(2, 1).Get();
+                break;
             }
         }
     }

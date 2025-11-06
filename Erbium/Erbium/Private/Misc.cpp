@@ -186,8 +186,8 @@ void Misc::InitClient()
 
 	if (VersionInfo.FortniteVersion < 20)
 	{
-		auto SelectEditAddr = Memcury::Scanner::FindStringRef(L"EditModeInputComponent0").ScanFor({ 0x48, 0x8D, 0x05 }, true, 1).RelativeOffset(3).GetAs<void*>();
-		auto SelectResetAddr = Memcury::Scanner::FindStringRef(L"EditModeInputComponent0").ScanFor({ 0x48, 0x8D, 0x05 }, true, 2).RelativeOffset(3).GetAs<void*>();
+		auto SelectEditAddr = Memcury::Scanner::FindStringRef(L"EditModeInputComponent0").ScanFor({ 0x48, 0x8D, 0x05 }, true, 1).RelativeOffset(3).Get();
+		auto SelectResetAddr = Memcury::Scanner::FindStringRef(L"EditModeInputComponent0").ScanFor({ 0x48, 0x8D, 0x05 }, true, 2).RelativeOffset(3).Get();
 
 		auto sRef = Memcury::Scanner::FindStringRef("CompleteBuildingEditInteraction", true, VersionInfo.EngineVersion >= 4.27).Get();
 		uintptr_t CompleteBuildingEditInteractionLea = 0;
@@ -211,9 +211,9 @@ void Misc::InitClient()
 		MH_Initialize();
 
 		if (VersionInfo.FortniteVersion < 11)
-			MH_CreateHook(SelectEditAddr, SelectEdit, (LPVOID*)&SelectEditOG);
+			Utils::Hook(SelectEditAddr, SelectEdit, SelectEditOG);
 		if (VersionInfo.FortniteVersion < 24.40)
-			MH_CreateHook(SelectResetAddr, SelectReset, (LPVOID*)&SelectResetOG);
+			Utils::Hook(SelectResetAddr, SelectReset, SelectResetOG);
 
 		MH_EnableHook(MH_ALL_HOOKS);
 	}

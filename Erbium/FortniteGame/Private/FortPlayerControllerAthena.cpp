@@ -432,8 +432,6 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	if (!BuildingClass)
 		return;
 
-	auto Resource = UFortKismetLibrary::K2_GetResourceItemDefinition(((ABuildingSMActor*)BuildingClass->GetDefaultObj())->ResourceType);
-
 	UFortWorldItem* Item = nullptr;
 	if (!FConfiguration::bInfiniteMats)
 	{
@@ -446,6 +444,8 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 		}
 		else if (!PlayerController->bBuildFree)
 		{
+			auto Resource = UFortKismetLibrary::K2_GetResourceItemDefinition(((ABuildingSMActor*)BuildingClass->GetDefaultObj())->ResourceType);
+
 			auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* entry)
 				{ return entry->ItemEntry.ItemDefinition == Resource; });
 
@@ -458,7 +458,6 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 				return;
 		}
 	}
-	static auto FuncPtr = GameState->StructuralSupportSystem->GetFunction("CanAddBuildingActorClassToGrid");
 
 	TArray<ABuildingSMActor*> RemoveBuildings;
 	if (VersionInfo.FortniteVersion >= 27)
@@ -483,24 +482,13 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 		RemoveBuilding->K2_DestroyActor();
 	RemoveBuildings.Free();
 
-
-	static auto K2_SpawnBuildingActor = ABuildingSMActor::GetDefaultObj()->GetFunction("K2_SpawnBuildingActor");
-
-	ABuildingSMActor* Building = nullptr;
-	/*if (K2_SpawnBuildingActor)
-	{
-		FTransform SpawnTransform(BuildLoc, BuildRot);
-		Building = ABuildingSMActor::K2_SpawnBuildingActor(PlayerController, BuildingClass, SpawnTransform, PlayerController, PlayerController, false, false);
-	}
-	else*/
-	Building = UWorld::SpawnActorUnfinished<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, PlayerController);
+	ABuildingSMActor* Building = UWorld::SpawnActorUnfinished<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, PlayerController);
 
 	if (!Building)
 		return;
 
 	static auto UpgradeLevelOffset = FBuildingClassData::StaticStruct()->GetOffset("UpgradeLevel");
 	Building->CurrentBuildingLevel = VersionInfo.EngineVersion >= 5.3 ? *(uint8*)(__int64(&BuildingClassData) + UpgradeLevelOffset) : *(uint32*)(__int64(&BuildingClassData) + UpgradeLevelOffset);
-	Building->OnRep_CurrentBuildingLevel();
 
 	Building->SetMirrored(bMirrored);
 
@@ -575,7 +563,7 @@ void AFortPlayerControllerAthena::ServerBeginEditingBuildingActor(UObject* Conte
 
 	auto EditToolEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
 		{
-			return entry.ItemDefinition->IsA(UFortEditToolItemDefinition::StaticClass());
+			return entry.ItemDefinition->Class == UFortEditToolItemDefinition::StaticClass();
 		}, FFortItemEntry::Size());
 
 
@@ -669,7 +657,7 @@ void AFortPlayerControllerAthena::ServerEndEditingBuildingActor(UObject* Context
 
 	auto EditToolEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
 		{
-			return entry.ItemDefinition->IsA(UFortEditToolItemDefinition::StaticClass());
+			return entry.ItemDefinition->Class == UFortEditToolItemDefinition::StaticClass();
 		}, FFortItemEntry::Size());
 
 	if (VersionInfo.EngineVersion >= 4.24)

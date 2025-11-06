@@ -224,6 +224,42 @@ void UFortKismetLibrary::PickLootDrops(UObject* Object, FFrame& Stack, bool* Ret
 	*Ret = LootDrops.Num() > 0;
 }
 
+
+void UFortKismetLibrary::K2_SpawnPickupInWorldWithClassAndItemEntry(UObject* Context, FFrame& Stack, AFortPickupAthena** Ret)
+{
+	UObject* WorldContextObject;
+	FFortItemEntry Entry;
+	TSubclassOf<AFortPickupAthena> PickupClass;
+	FVector Position;
+	FVector Direction;
+	int32 OverrideMaxStackCount;
+	bool bToss;
+	bool bRandomRotation;
+	bool bBlockedFromAutoPickup;
+	uint8_t SourceType;
+	uint8_t Source;
+	class AFortPlayerControllerAthena* OptionalOwnerPC;
+	bool bPickupOnlyRelevantToOwner;
+
+	Stack.StepCompiledIn(&WorldContextObject);
+	Stack.StepCompiledIn(&Entry);
+	Stack.StepCompiledIn(&PickupClass);
+	Stack.StepCompiledIn(&Position);
+	Stack.StepCompiledIn(&Direction);
+	Stack.StepCompiledIn(&OverrideMaxStackCount);
+	Stack.StepCompiledIn(&bToss);
+	Stack.StepCompiledIn(&bRandomRotation);
+	Stack.StepCompiledIn(&bBlockedFromAutoPickup);
+	Stack.StepCompiledIn(&SourceType);
+	Stack.StepCompiledIn(&Source);
+	Stack.StepCompiledIn(&OptionalOwnerPC);
+	Stack.StepCompiledIn(&bPickupOnlyRelevantToOwner);
+	Stack.IncrementCode();
+
+	*Ret = AFortInventory::SpawnPickup(Position, Entry.ItemDefinition, Entry.Count, Entry.Level, SourceType, Source, OptionalOwnerPC ? OptionalOwnerPC->MyFortPawn : nullptr, bToss, bRandomRotation, PickupClass.Get());
+}
+
+
 void UFortKismetLibrary::Hook()
 {
 	auto K2_SpawnPickupInWorldFn = GetDefaultObj()->GetFunction("K2_SpawnPickupInWorld");

@@ -61,6 +61,7 @@ public:
 	static void K2_RemoveItemFromPlayerByGuid(UObject*, FFrame&, int32*);
 	static void SpawnItemVariantPickupInWorld(UObject*, FFrame&, AFortPickupAthena**);
 	static void PickLootDrops(UObject*, FFrame&, bool*);
+	static void K2_SpawnPickupInWorldWithClassAndItemEntry(UObject*, FFrame&, AFortPickupAthena**);
 
 	InitHooks;
 	InitPostLoadHooks;

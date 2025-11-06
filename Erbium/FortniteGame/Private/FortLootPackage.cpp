@@ -225,6 +225,7 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 	if (LootTierData->NumLootPackageDrops <= 0)
 		return {};
 
+	printf("Selecting %f loot drops from <unk>\n", LootTierData->NumLootPackageDrops);
 	if (VersionInfo.FortniteVersion >= 11)
 	{
 		auto& MinArr = LootTierData->LootPackageCategoryMinArray;
@@ -248,6 +249,7 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 		if (RemainderSomething > 0.0000099999997f)
 			DropCount += RemainderSomething >= ((float)rand() / 32767);
 	}
+	printf("Actual number of loot drops is: %i\n", DropCount);
 
 	float AmountOfLootDrops = 0;
 	float MinLootDrops = 0;
@@ -258,7 +260,7 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 		AmountOfLootDrops += Min;
 	}
 
-	int SumWeights = 0;
+	/*int SumWeights = 0;
 
 	for (int i = 0; i < LootTierData->LootPackageCategoryWeightArray.Num(); ++i)
 		if (LootTierData->LootPackageCategoryWeightArray[i] > 0 && (LootTierData->LootPackageCategoryMaxArray[i] < 0 || 0 < LootTierData->LootPackageCategoryMaxArray[i]))
@@ -279,7 +281,7 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 		}
 
 	if (!AmountOfLootDrops)
-		return {};
+		return {};*/
 
 	TArray<FFortItemEntry*> LootDrops;
 	LootDrops.Reserve((int)DropCount);
@@ -289,6 +291,8 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 	int CurrentCategory = 0;
 	while (SpawnedItems < DropCount && CurrentCategory < LootTierData->LootPackageCategoryMinArray.Num())
 	{
+		if (LootTierData->LootPackageCategoryMaxArray[CurrentCategory] != -1)
+			printf("Min: %d, Max: %d, Weight: %d\n", LootTierData->LootPackageCategoryMinArray[CurrentCategory], LootTierData->LootPackageCategoryMaxArray[CurrentCategory], LootTierData->LootPackageCategoryWeightArray[CurrentCategory]);
 		for (int j = 0; j < LootTierData->LootPackageCategoryMinArray[CurrentCategory]; j++)
 			SetupLDSForPackage(LootDrops, LootTierData->LootPackage, CurrentCategory, TierGroup, WorldLevel);
 

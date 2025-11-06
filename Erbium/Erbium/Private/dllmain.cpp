@@ -10,7 +10,7 @@
 #include "../Public/Misc.h"
 #include "../Public/GUI.h"
 #include "../../Erbium/Plugins/CrashReporter/Public/CrashReporter.h"
-#include <FortniteGame/Public/FortPlayerControllerAthena.h>
+#include "../../FortniteGame/Public/FortPlayerControllerAthena.h"
 
 void Main()
 {

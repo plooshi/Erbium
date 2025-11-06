@@ -68,7 +68,7 @@
                                                                                                                                                                      \
     __Class& operator=(__Class& _Rhs)                                                                                                                                \
     {                                                                                                                                                                \
-        memcpy((PBYTE)this, (const PBYTE)&_Rhs, Size());                                                                                                            \
+        memcpy((PBYTE)this, (const PBYTE)&_Rhs, Size());                                                                                                             \
         return *this;                                                                                                                                                \
     }
 
