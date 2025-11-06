@@ -496,7 +496,7 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	if (K2_SpawnBuildingActor)
 	{
 		FTransform SpawnTransform(BuildLoc, BuildRot);
-		Building = ABuildingSMActor::K2_SpawnBuildingActor(PlayerController, BuildingClass, SpawnTransform, PlayerController, nullptr, false, false);
+		Building = ABuildingSMActor::K2_SpawnBuildingActor(PlayerController, BuildingClass, SpawnTransform, PlayerController, PlayerController, false, false);
 	}
 	else
 		Building = UWorld::SpawnActor<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, PlayerController);
@@ -512,7 +512,7 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 
 	Building->bPlayerPlaced = true;
 
-	Building->InitializeKismetSpawnedBuildingActor(Building, PlayerController, true, nullptr);
+	Building->InitializeKismetSpawnedBuildingActor(Building, PlayerController, true, nullptr, false);
 
 	if (!PlayerController->bBuildFree && !FConfiguration::bInfiniteMats)
 	{
