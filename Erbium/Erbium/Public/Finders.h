@@ -63,6 +63,7 @@ uint64 FindNotifyGameMemberAdded();
 uint64 FindSetGamePhase();
 uint64 FindPayBuildableClassPlacementCost();
 uint64 FindCanAffordToPlaceBuildableClass();
+uint64 FindCanPlaceBuildableClassInStructuralGrid();
 
 inline std::vector<uint64_t> NullFuncs = {};
 inline std::vector<uint64_t> RetTrueFuncs = {};

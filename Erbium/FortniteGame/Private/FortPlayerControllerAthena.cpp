@@ -332,7 +332,7 @@ struct FBuildingClassData
 public:
 	USCRIPTSTRUCT_COMMON_MEMBERS(FBuildingClassData);
 
-	TSubclassOf<ABuildingSMActor> BuildingClass;
+	TSubclassOf<AActor> BuildingClass;
 	int PreviousBuildingLevel;
 	int UpgradeLevel;
 };
@@ -340,9 +340,10 @@ public:
 uint64_t CantBuild_ = 0;
 uint64_t CanAffordToPlaceBuildableClass_;
 uint64_t PayBuildableClassPlacementCost_;
+uint64_t CanPlaceBuildableClassInStructuralGrid_;
 void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FFrame& Stack)
 {
-	const UClass* BuildingClass = nullptr;
+	TSubclassOf<AActor> BuildingClass;
 	FVector BuildLoc;
 	FRotator BuildRot;
 	bool bMirrored;
@@ -384,7 +385,7 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 				return;
 			}
 
-			BuildingClass = BuildingClassPtr->Get();
+			BuildingClass = *BuildingClassPtr;
 		}
 		else
 		{
@@ -406,9 +407,9 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 				return;
 			}
 
-			BuildingClass = BuildingClassPtr->Get();
+			BuildingClass = *BuildingClassPtr;
 		}
-		//BuildingClassData.BuildingClass = (UClass*)BuildingClass;
+		BuildingClassData.BuildingClass = BuildingClass;
 	}
 	else
 	{
@@ -457,22 +458,15 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 				return;
 		}
 	}
-
-	/*TArray<ABuildingSMActor*> RemoveBuildings;
-	char _Unk_OutVar1;
-	static auto CantBuild = (__int64 (*)(UWorld*, const UClass*, _Pad_0xC, _Pad_0xC, bool, TArray<ABuildingSMActor*> *, char*))CantBuild_;
-	static auto CantBuildNew = (__int64 (*)(UWorld*, const UClass*, _Pad_0x18, _Pad_0x18, bool, TArray<ABuildingSMActor*> *, char*))CantBuild_;
-	if (VersionInfo.FortniteVersion >= 20.00 ? CantBuildNew(UWorld::GetWorld(), BuildingClass, *(_Pad_0x18*)&BuildLoc, *(_Pad_0x18*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1) : CantBuild(UWorld::GetWorld(), BuildingClass, *(_Pad_0xC*)&BuildLoc, *(_Pad_0xC*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1))
-	{
-		printf("cantbuild?");
-		return;
-	}*/
 	static auto FuncPtr = GameState->StructuralSupportSystem->GetFunction("CanAddBuildingActorClassToGrid");
 
 	TArray<ABuildingSMActor*> RemoveBuildings;
-	if (FuncPtr)
+	if (VersionInfo.FortniteVersion >= 27)
 	{
-		if (GameState->StructuralSupportSystem->Call<uint8_t>(FuncPtr, UWorld::GetWorld(), BuildingClass, BuildLoc, BuildRot, bMirrored, &RemoveBuildings, nullptr, false))
+		char _Unk_OutVar1;
+		auto CantBuild = (__int64 (*)(UWorld*, TSubclassOf<AActor>&, _Pad_0x18, _Pad_0x18, bool, TArray<ABuildingSMActor*> *, char*))CantBuild_;
+
+		if (CantBuild(UWorld::GetWorld(), BuildingClass, *(_Pad_0x18*)&BuildLoc, *(_Pad_0x18*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1))
 			return;
 	}
 	else
@@ -2236,10 +2230,11 @@ void AFortPlayerControllerAthena::EnterAircraft(UObject* Object, AActor* Aircraf
 
 void AFortPlayerControllerAthena::PostLoadHook()
 {
-	if (VersionInfo.FortniteVersion >= 28)
+	if (VersionInfo.FortniteVersion >= 27)
 	{
-		InitializeBuildingActor_ = FindInitializeBuildingActor();
-		PostInitializeSpawnedBuildingActor_ = FindPostInitializeSpawnedBuildingActor();
+		CanPlaceBuildableClassInStructuralGrid_ = FindCanPlaceBuildableClassInStructuralGrid();
+		//InitializeBuildingActor_ = FindInitializeBuildingActor();
+		//PostInitializeSpawnedBuildingActor_ = FindPostInitializeSpawnedBuildingActor();
 	}
 	CantBuild_ = FindCantBuild();
 	ReplaceBuildingActor_ = FindReplaceBuildingActor(); // pre-cache building offsets

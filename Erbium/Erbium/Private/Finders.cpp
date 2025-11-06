@@ -2377,6 +2377,24 @@ uint64_t FindCanAffordToPlaceBuildableClass()
         return Memcury::Scanner::FindPattern("40 53 56 41 56 48 83 EC ? 48 8B 1A 4C 8B F2").Get();
 }
 
+uint64 FindCanPlaceBuildableClassInStructuralGrid()
+{
+    static uint64_t CanPlaceBuildableClassInStructuralGrid = 0;
+    static bool bInitialized = false;
+
+    if (!bInitialized)
+    {
+        bInitialized = true;
+
+        CanPlaceBuildableClassInStructuralGrid = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 68 ? 48 89 70 ? 48 89 78 ? 41 54 41 56 41 57 48 83 EC ? 4D 8B E1 4D 8B F8 48 8B F2").Get();
+
+        if (!CanPlaceBuildableClassInStructuralGrid)
+            CanPlaceBuildableClassInStructuralGrid = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 54 41 55 41 56 41 57 48 83 EC ? 48 8B 1A 4D 8B E9").Get();
+    }
+
+    return CanPlaceBuildableClassInStructuralGrid;
+}
+
 void FindNullsAndRetTrues()
 {
     if (VersionInfo.EngineVersion == 4.16)
