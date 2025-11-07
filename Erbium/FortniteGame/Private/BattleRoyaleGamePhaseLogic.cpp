@@ -437,8 +437,14 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 			//GameState->bAircraftIsLocked = false;
 			//GameState->SafeZonesStartTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + 8.f;
 		}
+
+		if (!GameState->MapInfo->AircraftClass.Get())
+			return;
 		auto Aircraft = AFortAthenaAircraft::SpawnAircraft(UWorld::GetWorld(), GameState->MapInfo->AircraftClass, FlightInfo);
 
+		if (!Aircraft)
+			return;
+		
 		Aircraft->FlightElapsedTime = 0;
 		Aircraft->DropStartTime = (float)Time + FlightInfo.TimeTillDropStart;
 		Aircraft->DropEndTime = (float)Time + FlightInfo.TimeTillDropEnd;
