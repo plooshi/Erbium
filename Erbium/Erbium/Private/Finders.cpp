@@ -2461,7 +2461,11 @@ void FindNullsAndRetTrues()
         NullFuncs.push_back(Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 48 89 7C 24 ? 41 56 48 83 EC 30 41 0F B6 F0 48 8D 15 ? ? ? ? 48 8B F9 41 B8").Get());
     }
     else if (VersionInfo.EngineVersion >= 4.22 && VersionInfo.FortniteVersion <= 12.00)
+    {
+        if (VersionInfo.EngineVersion == 4.24)
+            NullFuncs.push_back(Memcury::Scanner::FindPattern("40 53 57 48 83 EC ? 48 8B 01 48 8B F9 FF 90 ? ? ? ? 48 8B C8").Get());
         NullFuncs.push_back(Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC 30 48 8B 41 28 48 8B DA 48 8B F9 48 85 C0 74 34 48 8B 4B 08 48 8D").Get());
+    }
     else if (VersionInfo.EngineVersion == 4.25)
     {
         NullFuncs.push_back(Memcury::Scanner::FindStringRef(L"Widget Class %s - Running Initialize On Archetype, %s.").ScanFor(std::vector<uint8_t>{ 0x48, 0x89, 0x5C }, false).Get()); // for 12.41

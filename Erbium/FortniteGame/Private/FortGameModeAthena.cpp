@@ -1202,8 +1202,8 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
     if (FConfiguration::bLateGame && GameMode->SafeZonePhase > FConfiguration::LateGameZone)
     {
         auto newIdx = GameMode->SafeZonePhase - FConfiguration::LateGameZone + 1;
-        auto Duration = LateGameDurations.size() >= newIdx ? 0.f : LateGameDurations[newIdx];
-        auto HoldDuration = LateGameHoldDurations.size() >= newIdx ? 0.f : LateGameHoldDurations[newIdx];
+        auto Duration = newIdx >= LateGameDurations.size() ? 0.f : LateGameDurations[newIdx];
+        auto HoldDuration = newIdx >= LateGameHoldDurations.size() ? 0.f : LateGameHoldDurations[newIdx];
 
         GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = TimeSeconds + HoldDuration;
         GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
