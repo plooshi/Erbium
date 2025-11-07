@@ -1319,7 +1319,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 			auto ws = L"demospeed " + UEAllocatedWString(args[1].begin(), args[1].end());
 
 			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(ws.c_str()), nullptr);
-			PlayerController->ClientMessage(FString(L"Set the server's demospeed to {}!"), ws.c_str(), FName(), 1);
+			//PlayerController->ClientMessage(FString(L"Set the server's demospeed to {}!"), ws.c_str(), FName(), 1);
 		}
 		else if (command == "god")
 		{
