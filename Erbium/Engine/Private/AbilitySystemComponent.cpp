@@ -108,7 +108,8 @@ void UFortGameplayAbility::K2_AddGameplayCueWithParams_(UObject* Context, FFrame
     auto AbilitySystemComponent = (UAbilitySystemComponent*)Ability->GetAbilitySystemComponentFromActorInfo();
 
     //AbilitySystemComponent->NetMulticast_InvokeGameplayCueAdded(GameplayCueTag, *PredictionKey, EffectContext);
-    AbilitySystemComponent->NetMulticast_InvokeGameplayCueAdded_WithParams(GameplayCueTag, *PredictionKey, GameplayCueParameter);
+    if (AbilitySystemComponent)
+        AbilitySystemComponent->NetMulticast_InvokeGameplayCueAdded_WithParams(GameplayCueTag, *PredictionKey, GameplayCueParameter);
 
     free(PredictionKey);
 }
@@ -128,7 +129,8 @@ void UFortGameplayAbility::K2_ExecuteGameplayCue_(UObject* Context, FFrame& Stac
     auto AbilitySystemComponent = (UAbilitySystemComponent*)Ability->GetAbilitySystemComponentFromActorInfo();
 
     //AbilitySystemComponent->NetMulticast_InvokeGameplayCueAdded(GameplayCueTag, *PredictionKey, EffectContext);
-    AbilitySystemComponent->NetMulticast_InvokeGameplayCueExecuted(GameplayCueTag, *PredictionKey, EffectContext);
+    if (AbilitySystemComponent)
+        AbilitySystemComponent->NetMulticast_InvokeGameplayCueExecuted(GameplayCueTag, *PredictionKey, EffectContext);
 
     free(PredictionKey);
 }
