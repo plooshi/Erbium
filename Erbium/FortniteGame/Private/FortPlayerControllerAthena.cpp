@@ -931,7 +931,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 			DamageCauser = Weapon;
 		if (RemoveFromAlivePlayers_)
 		{
-			((void (*)(AFortGameModeAthena*, AFortPlayerControllerAthena*, AFortPlayerStateAthena*, AFortPlayerPawnAthena*, UFortItemDefinition*, uint8, char))RemoveFromAlivePlayers_)(GameMode, PlayerController, KillerPlayerState == PlayerState ? nullptr : KillerPlayerState, KillerPawn, DamageCauser ? DamageCauser->WeaponData : nullptr, PlayerState->DeathInfo.DeathCause, 0);
+			((void (*)(AFortGameModeAthena*, AFortPlayerControllerAthena*, AFortPlayerStateAthena*, AFortPlayerPawnAthena*, UFortItemDefinition*, uint8, char))RemoveFromAlivePlayers_)(GameMode, PlayerController, KillerPlayerState == PlayerState ? nullptr : KillerPlayerState, KillerPawn, DamageCauser->IsA<AFortWeapon>() ? DamageCauser->WeaponData : nullptr, PlayerState->DeathInfo.DeathCause, 0);
 		}
 
 		if (VersionInfo.FortniteVersion >= 15)
@@ -2049,7 +2049,8 @@ void SetupOwningPawn(UFortHeldObjectComponent* HeldObjectComponent, AFortPlayerP
 		SetHeldObject(Pawn, HeldObject);
 
 	HeldObject->ForceNetUpdate();
-	HeldObjectComponent->OnHeldObjectOwningPawnChanged.Process();
+	if (HeldObjectComponent->HasOnHeldObjectOwningPawnChanged())
+		HeldObjectComponent->OnHeldObjectOwningPawnChanged.Process();
 	if (Pawn)
 		Pawn->OnHeldObjectPickedUp.Process(HeldObject);
 	else
