@@ -280,7 +280,7 @@ void PatchAllNetModes(uintptr_t AttemptDeriveFromURL)
 							{
 								auto Scuffness = __int64(&scanBytes[i + j + k]);
 								Scuffness = (Scuffness + 2) + *(int8_t*)(Scuffness + 1);
-
+								\
 								if (*(uint32_t*)(Scuffness + 3) != 0xF0 && (*(uint8_t*)(Scuffness + 2) != 0xC || *(uint8_t*)(Scuffness + 3) != 0xB) && *(uint8_t*)(Scuffness + 2) != 0x09)
 									continue;
 
