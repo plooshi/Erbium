@@ -214,13 +214,12 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 		}
 	}
 
-
 	auto LootTierData = PickWeighted(TierDataGroups, [](float Total)
 		{ return ((float)rand() / 32767.f) * Total; });
 	if (!LootTierData)
 		return {};
 	
-	//printf("Picked LootTierData %s\n", LootTierData->LootPackage.ToString().c_str());
+	printf("Picked LootTierData %s\n", LootTierData->LootPackage.ToString().c_str());
 
 	if (LootTierData->NumLootPackageDrops <= 0)
 		return {};

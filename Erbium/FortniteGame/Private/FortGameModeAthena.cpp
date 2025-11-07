@@ -478,7 +478,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                 }
             }
 
-        auto AddToTierData = [&](const UDataTable* Table, UEAllocatedMap<int32, FFortLootTierData*>& TempArr)
+        auto AddToTierData = [&](const UDataTable* Table, TArray<FFortLootTierData*>& TempArr)
             {
                 if (!Table)
                     return;
@@ -489,20 +489,46 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                     if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
                         for (auto& ParentTable : CompositeTable->ParentTables)
                             for (auto& [Key, Val] : *(TMap<int32, FFortLootTierData*>*) (__int64(ParentTable) + 0x30))
-                                TempArr[Key] = Val;
+                                TempArr.Add(Val);
 
                     for (auto& [Key, Val] : *(TMap<int32, FFortLootTierData*>*) (__int64(Table) + 0x30))
-                        TempArr[Key] = Val;
+                    {
+                        bool bFound = false;
+
+                        for (auto& TierData : TempArr)
+                            if (TierData->TierGroup == Val->TierGroup && TierData->LootPackage == Val->LootPackage)
+                            {
+                                TierData = Val;
+                                bFound = true;
+                                break;
+                            }
+
+                        if (!bFound)
+                            TempArr.Add(Val);
+                    }
                 }
                 else
                 {
                     if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
                         for (auto& ParentTable : CompositeTable->ParentTables)
                             for (auto& [Key, Val] : (TMap<FName, FFortLootTierData*>) ParentTable->RowMap)
-                                TempArr[Key.ComparisonIndex] = Val;
+                                TempArr.Add(Val);
 
                     for (auto& [Key, Val] : (TMap<FName, FFortLootTierData*>) Table->RowMap)
-                        TempArr[Key.ComparisonIndex] = Val;
+                    {
+                        bool bFound = false;
+
+                        for (auto& TierData : TempArr)
+                            if (TierData->TierGroup == Val->TierGroup && TierData->LootPackage == Val->LootPackage)
+                            {
+                                TierData = Val;
+                                bFound = true;
+                                break;
+                            }
+
+                        if (!bFound)
+                            TempArr.Add(Val);
+                    }
                 }
             };
 
@@ -530,20 +556,22 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                                 TempArr[Key.ComparisonIndex] = Val;
 
                     for (auto& [Key, Val] : (TMap<FName, FFortLootPackageData*>) Table->RowMap)
+                    {
+                        printf("Choice %d\n", Key.ComparisonIndex);
                         TempArr[Key.ComparisonIndex] = Val;
+                    }
                 }
             };
 
-        UEAllocatedMap<int32, FFortLootTierData*> LootTierDataTempArr;
+        TArray<FFortLootTierData*> LootTierDataTempArr;
         auto LootTierData = Playlist ? Playlist->LootTierData.Get() : nullptr;
         if (!LootTierData)
             LootTierData = FindObject<UDataTable>(L"/Game/Items/Datatables/AthenaLootTierData_Client.AthenaLootTierData_Client");
         if (LootTierData)
             AddToTierData(LootTierData, LootTierDataTempArr);
 
-        for (auto& [_, Val] : LootTierDataTempArr)
+        for (auto& Val : LootTierDataTempArr)
             TierDataMap[Val->TierGroup.ComparisonIndex].Add(Val);
-        //    TierDataAllGroups.Add(Val);
 
         UEAllocatedMap<int32, FFortLootPackageData*> LootPackageTempArr;
         auto LootPackages = Playlist ? Playlist->LootPackages.Get() : nullptr;
@@ -579,7 +607,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
                     if (LTDFeatureData)
                     {
-                        UEAllocatedMap<int32, FFortLootTierData*> LTDTempData;
+                        TArray<FFortLootTierData*> LTDTempData;
 
                         AddToTierData(LTDFeatureData, LTDTempData);
 
@@ -609,7 +637,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                         //for (auto& [_, Val] : LTDTempData)
                         //    TierDataAllGroups.Add(Val);
 
-                        for (auto& [_, Val] : LTDTempData)
+                        for (auto& Val : LTDTempData)
                             TierDataMap[Val->TierGroup.ComparisonIndex].Add(Val);
                     }
 
