@@ -26,60 +26,34 @@ uint64_t FindGIsClient()
 
         int Skip = 2;
         uint8_t correctByte = 0;
-        for (int i = 0; i < 0x200; i++)
+        for (int i = 0; i < 0x100; i++)
         {
             auto Ptr = (uint8_t*)(sRef - i);
 
-            if ((*Ptr == 0x40 || *Ptr == 0x44) && *(Ptr + 1) == 0x88)
+            for (auto& Load : GIsClientLoads)
             {
-                if (*(Ptr + 2) == 0x74 || *(Ptr + 2) == 0x30)
-                    continue;
-                
+                bool bMatches = true;
+                for (int x = 0; x < Load.size(); x++)
+                {
+                    if (Load[x] != *(Ptr + x))
+                    {
+                        bMatches = false;
+                        break;
+                    }
+                }
+                if (!bMatches) continue;
+                if ((Load[0] == 0x44 || Load[0] == 0x40) && (*(Ptr + 2) == 0x74 || *(Ptr + 2) == 0x30)) continue;
                 if (!correctByte)
-                    correctByte = *Ptr;
-                else if (*Ptr != correctByte)
+                    correctByte = Load[0];
+                else if (Load[0] != correctByte)
                     continue;
-
                 if (Skip > 0)
                 {
                     Skip--;
                     continue;
                 }
 
-                GIsClient = Memcury::Scanner(Ptr).RelativeOffset(3).Get();
-                break;
-            }
-            else if (*Ptr == 0x88 && (*(Ptr + 1) == 0x05 || *(Ptr + 1) == 0x1D))
-            {
-                if (Skip > 0)
-                {
-                    Skip--;
-                    continue;
-                }
-
-                if (!correctByte)
-                    correctByte = *Ptr;
-                else if (*Ptr != correctByte)
-                    continue;
-
-                GIsClient = Memcury::Scanner(Ptr).RelativeOffset(2).Get();
-                break;
-            }
-            else if (*Ptr == 0xC6 && *(Ptr + 1) == 0x05)
-            {
-                if (Skip > 0)
-                {
-                    Skip--;
-                    continue;
-                }
-
-                if (!correctByte)
-                    correctByte = *Ptr;
-                else if (*Ptr != correctByte)
-                    continue;
-    
-                GIsClient = Memcury::Scanner(Ptr).RelativeOffset(2, 1).Get();
-                break;
+                return GIsClient = Memcury::Scanner(Ptr).RelativeOffset((Load[0] == 0x44 || Load[0] == 0x40) ? 3 : 2, Load[0] == 0xc6).Get();
             }
         }
     }
@@ -1121,6 +1095,9 @@ uint64_t FindKickPlayer()
 
         if (!pattern)
             pattern = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 33 DB 48 8B FA 89 5C 24").Get();
+
+        if (!pattern)
+            pattern = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 33 FF 48 8B F2 89 7C 24").Get();
 
         return pattern;
     }

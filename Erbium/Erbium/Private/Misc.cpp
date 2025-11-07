@@ -251,12 +251,12 @@ void PatchAllNetModes(uintptr_t AttemptDeriveFromURL)
 
 				for (auto j = 0; j > -0x100000; j--) // so we find everything. no func is actually 1mb
 				{
-					if ((scanBytes[i + j] & 0xF8) == 0x48 && ((scanBytes[i + j + 1] & 0xFC) == 0x80 || (scanBytes[i + j + 1] & 0xF8) == 0x38) && scanBytes[i + j + 3] == 0x38)
+					if ((scanBytes[i + j] & 0xF8) == 0x48 && ((scanBytes[i + j + 1] & 0xFC) == 0x80 || (scanBytes[i + j + 1] & 0xF8) == 0x38) && (scanBytes[i + j + 2] & 0xF0) != 0xC0 && scanBytes[i + j + 2] != 0x65 && scanBytes[i + j + 3] == 0x38)
 					{
 						// now, scan for if (NetDriver) return NM_Client;
 
 						bool found = false;
-						for (auto k = 0; k < 0x100; k++)
+						for (auto k = 4; k < 0x104; k++)
 						{
 							if (scanBytes[i + j + k] == 0x75)
 							{
@@ -266,6 +266,13 @@ void PatchAllNetModes(uintptr_t AttemptDeriveFromURL)
 									continue;
 
 								Utils::Patch<uint16_t>(__int64(&scanBytes[i + j + k]), 0x9090);
+								if ((scanBytes[i + j + 1] & 0xF8) == 0x38)
+									Utils::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
+								else if ((scanBytes[i + j + 1] & 0xFC) == 0x80)
+								{
+									Utils::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
+									Utils::Patch<uint8_t>(__int64(&scanBytes[i + j + 4]), 0x90);
+								}
 								found = true;
 								break;
 							}
@@ -278,6 +285,13 @@ void PatchAllNetModes(uintptr_t AttemptDeriveFromURL)
 									continue;
 
 								Utils::Patch<uint8_t>(__int64(&scanBytes[i + j + k]), 0xeb);
+								if ((scanBytes[i + j + 1] & 0xF8) == 0x38)
+									Utils::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
+								else if ((scanBytes[i + j + 1] & 0xFC) == 0x80)
+								{
+									Utils::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
+									Utils::Patch<uint8_t>(__int64(&scanBytes[i + j + 4]), 0x90);
+								}
 								found = true;
 								break;
 							}
@@ -290,6 +304,13 @@ void PatchAllNetModes(uintptr_t AttemptDeriveFromURL)
 
 								Utils::Patch<uint32_t>(__int64(&scanBytes[i + j + k]), 0x90909090);
 								Utils::Patch<uint16_t>(__int64(&scanBytes[i + j + k + 4]), 0x9090);
+								if ((scanBytes[i + j + 1] & 0xF8) == 0x38)
+									Utils::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
+								else if ((scanBytes[i + j + 1] & 0xFC) == 0x80)
+								{
+									Utils::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
+									Utils::Patch<uint8_t>(__int64(&scanBytes[i + j + 4]), 0x90);
+								}
 								found = true;
 								break;
 							}
@@ -302,6 +323,13 @@ void PatchAllNetModes(uintptr_t AttemptDeriveFromURL)
 									continue;
 
 								Utils::Patch<uint16_t>(__int64(&scanBytes[i + j + k]), 0xe990);
+								if ((scanBytes[i + j + 1] & 0xF8) == 0x38)
+									Utils::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
+								else if ((scanBytes[i + j + 1] & 0xFC) == 0x80)
+								{
+									Utils::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
+									Utils::Patch<uint8_t>(__int64(&scanBytes[i + j + 4]), 0x90);
+								}
 								found = true;
 								break;
 							}

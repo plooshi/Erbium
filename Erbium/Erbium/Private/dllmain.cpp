@@ -48,7 +48,7 @@ void Main()
     }
     if (VersionInfo.EngineVersion >= 5.1)
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"net.AllowEncryption 0"), nullptr);
-    if (VersionInfo.EngineVersion >= 5.4 && FConfiguration::bEnableIris)
+    if (VersionInfo.EngineVersion >= 5.3 && FConfiguration::bEnableIris)
     {
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"log LogIris None"), nullptr);
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"log LogIrisRpc None"), nullptr);

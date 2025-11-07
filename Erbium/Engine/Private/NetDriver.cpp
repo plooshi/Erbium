@@ -763,7 +763,7 @@ void UNetDriver::PostLoadHook()
 
 	if (!FindServerReplicateActors())
 	{
-		if (VersionInfo.EngineVersion >= 5.4 && FConfiguration::bEnableIris)
+		if (VersionInfo.EngineVersion >= 5.3 && FConfiguration::bEnableIris)
 		{
 			FindSendClientAdjustment();
 			FindUpdateIrisReplicationViews();

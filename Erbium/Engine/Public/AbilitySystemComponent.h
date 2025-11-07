@@ -13,6 +13,13 @@ class UFortGameplayAbility : public UObject
 {
 public:
     UCLASS_COMMON_MEMBERS(UFortGameplayAbility);
+
+    DEFINE_FUNC(K2_ExecuteGameplayCue, void);
+    DEFINE_FUNC(GetAbilitySystemComponentFromActorInfo, UObject*);
+    DEFINE_FUNC(K2_AddGameplayCueWithParams, void);
+
+    DefUHookOg(K2_ExecuteGameplayCue_);
+    DefUHookOg(K2_AddGameplayCueWithParams_);
 };
 
 struct FPredictionKey
@@ -57,6 +64,16 @@ struct FGameplayEffectContextHandle
 {
     uint8_t Padding[0x18];
 };
+
+struct FGameplayCueParameters
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FGameplayCueParameters);
+    uint8_t Padding[0xD0];
+
+    DEFINE_STRUCT_PROP(EffectContext, FGameplayEffectContextHandle);
+};
+
 
 struct FActiveGameplayEffectHandle
 {
@@ -110,6 +127,7 @@ public:
     DEFINE_FUNC(ClientActivateAbilityFailed, void);
     DEFINE_FUNC(NetMulticast_InvokeGameplayCueAdded, void);
     DEFINE_FUNC(NetMulticast_InvokeGameplayCueExecuted, void);
+    DEFINE_FUNC(NetMulticast_InvokeGameplayCueAdded_WithParams, void);
     DEFINE_FUNC(MakeEffectContext, FGameplayEffectContextHandle);
     DEFINE_FUNC(BP_ApplyGameplayEffectToSelf, FActiveGameplayEffectHandle);
     DEFINE_FUNC(UpdateActiveGameplayEffectSetByCallerMagnitude, void);

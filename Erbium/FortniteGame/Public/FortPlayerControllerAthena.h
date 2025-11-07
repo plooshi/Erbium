@@ -171,6 +171,7 @@ public:
     DEFINE_FUNC(ClientIgnoreLookInput, void);
     DEFINE_FUNC(GetActorEyesViewPoint, void);
     DEFINE_FUNC(ClientActivateSlot, void);
+    DEFINE_FUNC(ServerReturnToMainMenu, void);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);
