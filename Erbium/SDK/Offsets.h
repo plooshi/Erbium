@@ -358,7 +358,7 @@ namespace SDK
 		Offsets::FField_Name = VersionInfo.EngineVersion >= 5.2 ? 0x20 : 0x28;
 		Offsets::FFrame_PropertyChainForCompiledIn = VersionInfo.FortniteVersion >= 20 ? 0x88 : 0x80;
 		Offsets::FFrame_CurrentNativeFunction = VersionInfo.FortniteVersion >= 20 ? 0x90 : 0x88;
-		Offsets::FFrame_Next = VersionInfo.EngineVersion >= 5.2 ? 0x18 : (VersionInfo.FortniteVersion >= 4.25 ? 0x20 : 0x28);
+		Offsets::FFrame_Next = VersionInfo.EngineVersion >= 5.2 ? 0x18 : (VersionInfo.EngineVersion >= 4.25 ? 0x20 : 0x28);
 
 		if (VersionInfo.FortniteVersion <= 6.31)
 			Offsets::ExecFunction = 0xB0;
