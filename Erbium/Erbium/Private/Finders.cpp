@@ -2338,7 +2338,7 @@ uint64 FindSetGamePhase()
 
 uint64_t FindPayBuildableClassPlacementCost()
 {
-    auto sRef = Memcury::Scanner::FindStringRef(L"Failed to remove item %s during pay building costs, item duplicated!", false, 0, VersionInfo.FortniteVersion >= 18.00);
+    auto sRef = Memcury::Scanner::FindStringRef(L"Failed to remove item %s during pay building costs, item duplicated!", false, VersionInfo.FortniteVersion >= 11 && VersionInfo.FortniteVersion < 19, VersionInfo.FortniteVersion >= 18.00);
 
     if (sRef.IsValid())
     {
