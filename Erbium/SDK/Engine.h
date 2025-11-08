@@ -696,19 +696,26 @@ namespace SDK
 
 		static AActor* SpawnActor(const UClass* Class, FTransform Transform, AActor* Owner = nullptr)
 		{
-			/*GameplayStatics_BeginDeferredActorSpawnFromClass Params;
-			Params.WorldContextObject = GetFirstInstance();
+			/*static auto BeginDeferredActorSpawnFromClassFn = UGameplayStatics::GetDefaultObj()->GetFunction("BeginDeferredActorSpawnFromClass");
+			static auto FinishSpawningActorFn = UGameplayStatics::GetDefaultObj()->GetFunction("FinishSpawningActor");
+			GameplayStatics_BeginDeferredActorSpawnFromClass Params{};
+			Params.WorldContextObject = GetWorld();
 			Params.ActorClass = Class;
 			Params.SpawnTransform = Transform;
 			Params.CollisionHandlingOverride = 2; // AdjustIfPossibleButAlwaysSpawn
-			Params.Owner = Owner;*/
+			Params.Owner = Owner;
+			
+			UGameplayStatics::GetDefaultObj()->ProcessEvent(BeginDeferredActorSpawnFromClassFn, &Params);*/
 			auto Actor = UGameplayStatics::BeginDeferredActorSpawnFromClass(GetWorld(), Class, Transform, 2, Owner);
 
-			/*GameplayStatics_FinishSpawningActor Params2;
+			/*GameplayStatics_FinishSpawningActor Params2{};
 			Params2.Actor = Params.ReturnValue;
 			Params2.SpawnTransform = Transform;
-			UGameplayStatics::FinishSpawningActor(&Params2);*/
-			return /*Params2.ReturnValue*/ UGameplayStatics::FinishSpawningActor(Actor, Transform);
+			UGameplayStatics::GetDefaultObj()->ProcessEvent(FinishSpawningActorFn, &Params2);
+			return Params2.ReturnValue;*/
+			//UGameplayStatics::FinishSpawningActor(&Params2);
+			
+			return UGameplayStatics::FinishSpawningActor(Actor, Transform);
 		}
 
 		static AActor* SpawnActor(const UClass* Class, FVector Loc, FRotator Rot = {}, AActor* Owner = nullptr)
@@ -758,7 +765,7 @@ namespace SDK
 
 		static UWorld* GetWorld()
 		{
-			return (UWorld*)UEngine::GetEngine()->GetGameViewport()->GetWorld();
+			return (UWorld*)UEngine::GetEngine()->GameViewport->World;
 		}
 	};
 
@@ -823,9 +830,10 @@ namespace SDK
 		return UKismetTextLibrary::Conv_TextToString(*this).ToString();
 	}
 
-	class alignas(0x8) FOutputDevice
+	class FOutputDevice
 	{
 	public:
+		void** VTable;
 		bool bSuppressEventTag;
 		bool bAutoEmitLineTerminator;
 	};
@@ -833,7 +841,6 @@ namespace SDK
 	class FFrame : public FOutputDevice
 	{
 	public:
-		void** VTable;
 		UFunction* Node;
 		UObject* Object;
 		uint8* Code;
@@ -846,11 +853,10 @@ namespace SDK
 	public:
 		UFunction* GetCurrentNativeFunction()
 		{
-			UFunction* Func = *(UFunction**)(__int64(this) + (VersionInfo.FortniteVersion >= 20 ? 0x90 : 0x88));
-
-			return Func;
+			return *(UFunction**)(__int64(this) + Offsets::FFrame_CurrentNativeFunction);
 		}
-		void StepCompiledIn(void* const Result = nullptr)
+		
+		__forceinline void StepCompiledIn(void* const Result = nullptr)
 		{
 			if (Code)
 			{
@@ -858,19 +864,21 @@ namespace SDK
 			}
 			else
 			{
-				const UField* _Prop = *(const UField**)(__int64(this) + (VersionInfo.FortniteVersion >= 20 ? 0x88 : 0x80));
+				const UField* _Prop = *(const UField**)(__int64(this) + Offsets::FFrame_PropertyChainForCompiledIn);
 				if (_Prop)
 				{
-					*(const UField**)(__int64(this) + (VersionInfo.FortniteVersion >= 20 ? 0x88 : 0x80)) = VersionInfo.EngineVersion >= 4.25 ? _Prop->FField_GetNext() : _Prop->GetNext();
+					*(const UField**)(__int64(this) + Offsets::FFrame_PropertyChainForCompiledIn) = *(const UField**)(__int64(_Prop) + Offsets::FFrame_Next);
 					((void (*)(FFrame*, void* const, const UField*)) Offsets::StepExplicitProperty)(this, Result, _Prop);
 				}
 			}
 		}
 
 
-		void* StepCompiledInRefInternal(void* _Tm)
+		__forceinline void* StepCompiledInRefInternal(void* _Tm)
 		{
 			MostRecentPropertyAddress = nullptr;
+			if (VersionInfo.FortniteVersion >= 20)
+				*(void**)(__int64(this) + 0x40) = nullptr;
 
 			if (Code)
 			{
@@ -878,8 +886,8 @@ namespace SDK
 			}
 			else
 			{
-				const UField* _Prop = *(const UField**)(__int64(this) + (VersionInfo.FortniteVersion >= 20 ? 0x88 : 0x80));
-				*(const UField**)(__int64(this) + (VersionInfo.FortniteVersion >= 20 ? 0x88 : 0x80)) = VersionInfo.EngineVersion >= 4.25 ? _Prop->FField_GetNext() : _Prop->GetNext();
+				const UField* _Prop = *(const UField**)(__int64(this) + Offsets::FFrame_PropertyChainForCompiledIn);
+				*(const UField**)(__int64(this) + Offsets::FFrame_PropertyChainForCompiledIn) = *(const UField**)(__int64(_Prop) + Offsets::FFrame_Next);
 				((void (*)(FFrame*, void* const, const UField*)) Offsets::StepExplicitProperty)(this, _Tm, _Prop);
 			}
 
@@ -887,16 +895,15 @@ namespace SDK
 		}
 
 		template <typename T>
-		T& StepCompiledInRef()
+		__forceinline T& StepCompiledInRef()
 		{
 			T TempVal{};
 			return *(T*)StepCompiledInRefInternal(&TempVal);
 		}
 
-		void IncrementCode()
+		__forceinline void IncrementCode()
 		{
-			if (Code)
-				Code++;
+			Code += !!Code;
 		}
 	};
 

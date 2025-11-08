@@ -42,6 +42,9 @@ namespace SDK
 		inline uint32_t FField_Next = 0;
 		inline uint32_t FField_Name = 0;
 		inline uint32_t ExecFunction = 0;
+		inline uint32_t FFrame_PropertyChainForCompiledIn = 0;
+		inline uint32_t FFrame_CurrentNativeFunction = 0;
+		inline uint32_t FFrame_Next = 0;
 	}
 
 	extern void UpdateNumElemsPerChunk();
@@ -353,6 +356,9 @@ namespace SDK
 		Offsets::Children = VersionInfo.EngineVersion >= 4.22 ? 0x48 : 0x38;
 		Offsets::FField_Next = VersionInfo.EngineVersion >= 5.2 ? 0x18 : 0x20;
 		Offsets::FField_Name = VersionInfo.EngineVersion >= 5.2 ? 0x20 : 0x28;
+		Offsets::FFrame_PropertyChainForCompiledIn = VersionInfo.FortniteVersion >= 20 ? 0x88 : 0x80;
+		Offsets::FFrame_CurrentNativeFunction = VersionInfo.FortniteVersion >= 20 ? 0x90 : 0x88;
+		Offsets::FFrame_Next = VersionInfo.EngineVersion >= 5.2 ? 0x18 : (VersionInfo.FortniteVersion >= 4.25 ? 0x20 : 0x28);
 
 		if (VersionInfo.FortniteVersion <= 6.31)
 			Offsets::ExecFunction = 0xB0;
