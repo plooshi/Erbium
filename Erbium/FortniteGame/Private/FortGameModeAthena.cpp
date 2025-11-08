@@ -557,7 +557,6 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
                     for (auto& [Key, Val] : (TMap<FName, FFortLootPackageData*>) Table->RowMap)
                     {
-                        printf("Choice %d\n", Key.ComparisonIndex);
                         TempArr[Key.ComparisonIndex] = Val;
                     }
                 }

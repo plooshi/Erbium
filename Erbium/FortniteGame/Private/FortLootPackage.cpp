@@ -248,7 +248,7 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 		if (RemainderSomething > 0.0000099999997f)
 			DropCount += RemainderSomething >= ((float)rand() / 32767);
 	}
-	printf("Actual number of loot drops is: %i\n", DropCount);
+	//printf("Actual number of loot drops is: %i\n", DropCount);
 
 	float AmountOfLootDrops = 0;
 	float MinLootDrops = 0;

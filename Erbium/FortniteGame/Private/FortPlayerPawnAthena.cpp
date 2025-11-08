@@ -282,8 +282,12 @@ void AFortPlayerPawnAthena::Athena_MedConsumable_Triggered(UObject* Context, FFr
 	FName CueName = Consumable->HealsShields ? ShieldCue : HealthCue;
 
 	if (Consumable->HealsHealth && Consumable->HealsShields)
-		if (Consumable->PlayerPawn->GetHealth() + Consumable->HealthHealAmount <= 100)
+	{
+		static auto HealthHealAmountOffset = Consumable->GetOffset("HealthHealAmount");
+		auto HealthHealAmount = Consumable->HasHealthHealAmount() ? *(float*)(__int64(Consumable) + HealthHealAmountOffset) : *(double*)(__int64(Consumable) + HealthHealAmountOffset);
+		if (Consumable->PlayerPawn->GetHealth() + HealthHealAmount <= 100)
 			CueName = HealthCue;
+	}
 	Tag.TagName = CueName;
 
 	auto PredictionKey = (FPredictionKey*)malloc(FPredictionKey::Size());
