@@ -145,7 +145,7 @@ class AFortGameStateAthena : public AActor
 {
 public:
     UCLASS_COMMON_MEMBERS(AFortGameStateAthena);
-    static inline std::map<int32, TSubclassOf<AActor>> BuildingClassMap;
+    static inline std::unordered_map<int32, TSubclassOf<AActor>> BuildingClassMap;
 
     DEFINE_PROP(CurrentPlaylistInfo, FPlaylistPropertyArray);
     DEFINE_PROP(CurrentPlaylistId, int32);
