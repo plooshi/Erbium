@@ -11,6 +11,14 @@
 #include "../Public/GUI.h"
 #include "../../Erbium/Plugins/CrashReporter/Public/CrashReporter.h"
 #include "../../FortniteGame/Public/FortPlayerControllerAthena.h"
+#ifndef CLIENT
+#pragma comment(lib, "libcurl/libcurl.lib")
+#pragma comment(lib, "libcurl/zlib.lib")
+#pragma comment(lib, "Ws2_32.lib")
+#pragma comment(lib, "Wldap32.lib")
+#pragma comment(lib, "Crypt32.lib")
+#pragma comment(lib, "Normaliz.lib")
+#endif
 
 void Main()
 {
@@ -71,6 +79,9 @@ void Main()
 
     return;
 #endif
+
+    if constexpr (FConfiguration::WebhookURL && *FConfiguration::WebhookURL)
+        curl_global_init(CURL_GLOBAL_ALL);
 
     sprintf_s(GUI::windowTitle, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Setting up" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Setting up" : "Erbium (FN %.1f, UE %.2f): Setting up"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
     SetConsoleTitleA(GUI::windowTitle);

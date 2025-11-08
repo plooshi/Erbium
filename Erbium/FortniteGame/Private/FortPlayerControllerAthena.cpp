@@ -968,14 +968,14 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 			//forgot to add this back
 		}
 
-		if (PlayerController->Pawn && ((KillerPlayerState && KillerPlayerState->Place == 1) || PlayerState->Place == 1))
+		if (PlayerController->Pawn && KillerPlayerState && KillerPlayerState->Place == 1)
 		{
-			if (PlayerState->Place == 1)
+			/*if (PlayerState->Place == 1)
 			{
 				KillerPlayerState = PlayerState;
 				KillerPawn = (AFortPlayerPawnAthena*)PlayerController->Pawn;
-			}
-
+			}*/
+			
 			auto KillerPlayerController = (AFortPlayerControllerAthena*)KillerPlayerState->Owner;
 			auto KillerWeapon = DamageCauser ? DamageCauser->WeaponData : nullptr;
 
@@ -1218,10 +1218,6 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 
 		if (command == "startaircraft")
 		{
-			GUI::gsStatus = 2;
-			sprintf_s(GUI::windowTitle, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Match started" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Match started" : "Erbium (FN %.1f, UE %.2f): Match started"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
-			SetConsoleTitleA(GUI::windowTitle);
-
 			if (UFortGameStateComponent_BattleRoyaleGamePhaseLogic::GetDefaultObj())
 			{
 				auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());

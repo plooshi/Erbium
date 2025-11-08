@@ -16,4 +16,5 @@ struct FConfiguration
     static inline constexpr auto bEnableIris = true; 
     static inline constexpr auto bGUI = true;
     static inline constexpr auto bCustomCrashReporter = true;
+    static inline constexpr auto WebhookURL = ""; // fill in if you want status to send to a webhook
 };
