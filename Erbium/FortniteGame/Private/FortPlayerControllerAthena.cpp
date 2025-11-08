@@ -234,7 +234,7 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryItem_(UObject* Context, 
 	Stack.IncrementCode();
 
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
-	if (!PlayerController)
+	if (!PlayerController || !PlayerController->MyFortPawn)
 		return;
 
 	auto entry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
@@ -242,12 +242,11 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryItem_(UObject* Context, 
 			return entry.ItemGuid == ItemGuid;
 		}, FFortItemEntry::Size());
 
-	if (!entry || !PlayerController->MyFortPawn)
+	if (!entry)
 		return;
 
 	UFortItemDefinition* ItemDefinition = (UFortItemDefinition*)entry->ItemDefinition;
 
-	static auto ContextTrapClass = FindClass("FortDecoTool_ContextTrap");
 
 	if (ItemDefinition->IsA(UFortGadgetItemDefinition::StaticClass()))
 		ItemDefinition = ItemDefinition->GetWeaponItemDefinition();
@@ -255,6 +254,8 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryItem_(UObject* Context, 
 	{
 		PlayerController->MyFortPawn->PickUpActor(nullptr, ItemDefinition);
 		((AFortWeapon*)PlayerController->MyFortPawn->CurrentWeapon)->ItemEntryGuid = ItemGuid;
+
+		static auto ContextTrapClass = FindClass("FortDecoTool_ContextTrap");
 
 		if (PlayerController->MyFortPawn->CurrentWeapon->IsA(ContextTrapClass))
 			((AFortWeapon*)PlayerController->MyFortPawn->CurrentWeapon)->ContextTrapItemDefinition = ItemDefinition;
@@ -375,17 +376,12 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 			bMirrored = CreateBuildingData.bMirrored;
 			BuildingClassData = CreateBuildingData.BuildingClassData;
 
-			auto BuildingClassPtr = GameState->AllPlayerBuildableClassesIndexLookup.SearchForKey([&](TSubclassOf<AActor> Class, int32 Handle)
-				{
-					return Handle == CreateBuildingData.BuildingClassHandle;
-				});
-			if (!BuildingClassPtr)
+			BuildingClass = AFortGameStateAthena::BuildingClassMap[CreateBuildingData.BuildingClassHandle];
+			if (!BuildingClass)
 			{
 				Stack.IncrementCode();
 				return;
 			}
-
-			BuildingClass = *BuildingClassPtr;
 		}
 		else
 		{
@@ -397,17 +393,12 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 			bMirrored = CreateBuildingData.bMirrored;
 			BuildingClassData = CreateBuildingData.BuildingClassData;
 
-			auto BuildingClassPtr = GameState->AllPlayerBuildableClassesIndexLookup.SearchForKey([&](TSubclassOf<AActor> Class, int32 Handle)
-				{
-					return Handle == CreateBuildingData.BuildingClassHandle;
-				});
-			if (!BuildingClassPtr)
+			BuildingClass = AFortGameStateAthena::BuildingClassMap[CreateBuildingData.BuildingClassHandle];
+			if (!BuildingClass)
 			{
 				Stack.IncrementCode();
 				return;
 			}
-
-			BuildingClass = *BuildingClassPtr;
 		}
 		BuildingClassData.BuildingClass = BuildingClass;
 	}
@@ -482,7 +473,7 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 		RemoveBuilding->K2_DestroyActor();
 	RemoveBuildings.Free();
 
-	ABuildingSMActor* Building = UWorld::SpawnActorUnfinished<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, PlayerController);
+	ABuildingSMActor* Building = UWorld::SpawnActor<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, PlayerController);
 
 	if (!Building)
 		return;
@@ -495,7 +486,7 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	Building->bPlayerPlaced = true;
 
 	Building->InitializeKismetSpawnedBuildingActor(Building, PlayerController, true, nullptr, false);
-	UWorld::FinishSpawnActor(Building, BuildLoc, BuildRot);
+	//UWorld::FinishSpawnActor(Building, BuildLoc, BuildRot);
 
 	if (!PlayerController->bBuildFree && !FConfiguration::bInfiniteMats)
 	{
@@ -1924,64 +1915,11 @@ void AFortPlayerControllerAthena::ServerDropAllItems(UObject* Context, FFrame& S
 	}
 }
 
-uint64_t ClearAbility_ = 0;
+
 void (*OnUnEquipOG)(AFortWeapon*);
 void OnUnEquip(AFortWeapon* Weapon)
 {
-	auto ClearAbility = (void(*)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle&)) ClearAbility_;
-	auto PlayerController = (AFortPlayerControllerAthena*)((AFortPlayerPawnAthena*)Weapon->Instigator)->Controller;
-	if (!PlayerController)
-		return;
-	auto AbilitySystemComponent = PlayerController->PlayerState->AbilitySystemComponent;
-
-	if (Weapon->PrimaryAbilitySpecHandle.Handle != -1)
-	{
-		ClearAbility(AbilitySystemComponent, Weapon->PrimaryAbilitySpecHandle);
-		Weapon->PrimaryAbilitySpecHandle.Handle = -1;
-	}
-	if (Weapon->SecondaryAbilitySpecHandle.Handle != -1)
-	{
-		ClearAbility(AbilitySystemComponent, Weapon->SecondaryAbilitySpecHandle);
-		Weapon->SecondaryAbilitySpecHandle.Handle = -1;
-	}
-	if (Weapon->ReloadAbilitySpecHandle.Handle != -1)
-	{
-		ClearAbility(AbilitySystemComponent, Weapon->ReloadAbilitySpecHandle);
-		Weapon->ReloadAbilitySpecHandle.Handle = -1;
-	}
-	if (Weapon->ImpactAbilitySpecHandle.Handle != -1)
-	{
-		ClearAbility(AbilitySystemComponent, Weapon->ImpactAbilitySpecHandle);
-		Weapon->ImpactAbilitySpecHandle.Handle = -1;
-	}
-	if (Weapon->EquippedAbilityHandles.Num())
-	{
-		for (int i = 0; i < Weapon->EquippedAbilityHandles.Num(); i++)
-		{
-			auto& Handle = Weapon->EquippedAbilityHandles.Get(i, FGameplayAbilitySpecHandle::Size());
-
-			if (IsBadReadPtr(&Handle)) // what
-				continue;
-
-			if (Handle.Handle != -1)
-			{
-				ClearAbility(AbilitySystemComponent, Handle);
-			}
-		}
-		Weapon->EquippedAbilityHandles.ResetNum();
-	}
-	if (Weapon->EquippedAbilitySetHandles.Num())
-	{
-		for (int i = 0; i < Weapon->EquippedAbilitySetHandles.Num(); i++)
-		{
-			auto& Handle = Weapon->EquippedAbilitySetHandles.Get(i, FFortAbilitySetHandle::Size());
-
-			UFortKismetLibrary::UnequipFortAbilitySet(Handle);
-		}
-
-		PlayerController->AppliedInGameModifierAbilitySetHandles.Reset();
-		Weapon->EquippedAbilitySetHandles.ResetNum();
-	}
+	AFortInventory::RemoveWeaponAbilities(Weapon);
 
 	return OnUnEquipOG(Weapon);
 }
@@ -2230,7 +2168,6 @@ void AFortPlayerControllerAthena::PostLoadHook()
 	ReplaceBuildingActor_ = FindReplaceBuildingActor(); // pre-cache building offsets
 	RemoveFromAlivePlayers_ = FindRemoveFromAlivePlayers();
 	GiveAbilityAndActivateOnce = FindGiveAbilityAndActivateOnce();
-	ClearAbility_ = FindClearAbility();
 	CanAffordToPlaceBuildableClass_ = FindCanAffordToPlaceBuildableClass();
 	PayBuildableClassPlacementCost_ = FindPayBuildableClassPlacementCost();
 

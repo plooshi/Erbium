@@ -337,6 +337,7 @@ public:
     static bool IsPrimaryQuickbar(const UFortItemDefinition*);
     void UpdateEntry(FFortItemEntry&);
     void SetRequiresUpdate();
+    static void RemoveWeaponAbilities(AActor*);
 
     InitPostLoadHooks;
 };

@@ -84,6 +84,7 @@ public:
     DEFINE_PROP(RepActiveMovementModeExtension, void*);
     DEFINE_BITFIELD_PROP(bIsPlayingEmote);
     DEFINE_PROP(HealthSet, UFortHealthSet*);
+    DEFINE_PROP(CurrentWeaponList, TArray<AActor*>);
 
     DEFINE_FUNC(BeginSkydiving, void);
     DEFINE_FUNC(GetHealth, float);

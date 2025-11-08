@@ -4,7 +4,7 @@
 #include "../Public/FortPlayerControllerAthena.h"
 #include "../Public/FortKismetLibrary.h"
 #include "../../Erbium/Public/Configuration.h"
-#include <objbase.h>
+#include "../Public/FortWeapon.h"
 
 uint32_t OnItemInstanceAddedVft;
 
@@ -120,12 +120,72 @@ _out:
     return Entry ? Inventory.MarkItemDirty(*Entry) : Inventory.MarkArrayDirty();*/
 }
 
+uint64_t ClearAbility_;
+void AFortInventory::RemoveWeaponAbilities(AActor* Weapon__Uncasted)
+{
+    auto Weapon = (AFortWeapon*)Weapon__Uncasted;
+    auto ClearAbility = (void(*)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle&)) ClearAbility_;
+    auto PlayerController = (AFortPlayerControllerAthena*)((AFortPlayerPawnAthena*)Weapon->Instigator)->Controller;
+    if (!PlayerController)
+        return;
+    auto AbilitySystemComponent = PlayerController->PlayerState->AbilitySystemComponent;
+
+    if (Weapon->PrimaryAbilitySpecHandle.Handle != -1)
+    {
+        ClearAbility(AbilitySystemComponent, Weapon->PrimaryAbilitySpecHandle);
+        Weapon->PrimaryAbilitySpecHandle.Handle = -1;
+    }
+    if (Weapon->SecondaryAbilitySpecHandle.Handle != -1)
+    {
+        ClearAbility(AbilitySystemComponent, Weapon->SecondaryAbilitySpecHandle);
+        Weapon->SecondaryAbilitySpecHandle.Handle = -1;
+    }
+    if (Weapon->ReloadAbilitySpecHandle.Handle != -1)
+    {
+        ClearAbility(AbilitySystemComponent, Weapon->ReloadAbilitySpecHandle);
+        Weapon->ReloadAbilitySpecHandle.Handle = -1;
+    }
+    if (Weapon->ImpactAbilitySpecHandle.Handle != -1)
+    {
+        ClearAbility(AbilitySystemComponent, Weapon->ImpactAbilitySpecHandle);
+        Weapon->ImpactAbilitySpecHandle.Handle = -1;
+    }
+    if (Weapon->EquippedAbilityHandles.Num())
+    {
+        for (int i = 0; i < Weapon->EquippedAbilityHandles.Num(); i++)
+        {
+            auto& Handle = Weapon->EquippedAbilityHandles.Get(i, FGameplayAbilitySpecHandle::Size());
+
+            if (IsBadReadPtr(&Handle)) // what
+                continue;
+
+            if (Handle.Handle != -1)
+            {
+                ClearAbility(AbilitySystemComponent, Handle);
+            }
+        }
+        Weapon->EquippedAbilityHandles.ResetNum();
+    }
+    if (Weapon->EquippedAbilitySetHandles.Num())
+    {
+        for (int i = 0; i < Weapon->EquippedAbilitySetHandles.Num(); i++)
+        {
+            auto& Handle = Weapon->EquippedAbilitySetHandles.Get(i, FFortAbilitySetHandle::Size());
+
+            UFortKismetLibrary::UnequipFortAbilitySet(Handle);
+        }
+
+        PlayerController->AppliedInGameModifierAbilitySetHandles.Reset();
+        Weapon->EquippedAbilitySetHandles.ResetNum();
+    }
+}
 
 void AFortInventory::Remove(FGuid Guid)
 {
     auto ItemEntryIdx = Inventory.ReplicatedEntries.SearchIndex([&](FFortItemEntry& entry)
         { return entry.ItemGuid == Guid; }, FFortItemEntry::Size());
     auto& ItemEntry = Inventory.ReplicatedEntries.Get(ItemEntryIdx, FFortItemEntry::Size());
+    auto EntryDef = ItemEntry.ItemDefinition;
 
     auto ItemInstanceIdx = Inventory.ItemInstances.SearchIndex([&](UFortWorldItem* entry)
         { return entry->ItemEntry.ItemGuid == Guid; });
@@ -141,10 +201,10 @@ void AFortInventory::Remove(FGuid Guid)
     auto Instance = ItemInstance ? *ItemInstance : nullptr;
 
 
+    auto PlayerController = (AFortPlayerControllerAthena*)Owner;
     if (VersionInfo.FortniteVersion < 3 && ItemEntryIdx != -1)
     {
-        auto PlayerController = (AFortPlayerControllerAthena*)Owner;
-        auto& QuickBar = IsPrimaryQuickbar(ItemEntry.ItemDefinition) ? PlayerController->QuickBars->PrimaryQuickBar : PlayerController->QuickBars->SecondaryQuickBar;
+        auto& QuickBar = IsPrimaryQuickbar(EntryDef) ? PlayerController->QuickBars->PrimaryQuickBar : PlayerController->QuickBars->SecondaryQuickBar;
         int i = 0;
         for (i = 0; i < QuickBar.Slots.Num(); i++)
         {
@@ -156,10 +216,23 @@ void AFortInventory::Remove(FGuid Guid)
         }
         goto _Skip;
     _Out:
-        PlayerController->QuickBars->EmptySlot(!IsPrimaryQuickbar(ItemEntry.ItemDefinition), i);
+        PlayerController->QuickBars->EmptySlot(!IsPrimaryQuickbar(EntryDef), i);
         PlayerController->QuickBars->ServerRemoveItemInternal(Guid, false, true);
     }
 
+    if (VersionInfo.FortniteVersion >= 14.00 && PlayerController->Pawn)
+    {
+        for (auto& Weapon__Uncasted : PlayerController->Pawn->CurrentWeaponList)
+        {
+            auto Weapon = (AFortWeapon*)Weapon__Uncasted;
+
+            if (Weapon->ItemEntryGuid == Guid)
+            {
+                RemoveWeaponAbilities(Weapon);
+                break;
+            }
+        }
+    }
 _Skip:
 
     bRequiresLocalUpdate = true;
@@ -529,6 +602,7 @@ void AFortInventory::PostLoadHook()
 {
     SetPickupItems = FindSetPickupItems();
     OnItemInstanceAddedVft = FindOnItemInstanceAddedVft();
+    ClearAbility_ = FindClearAbility();
 
     Utils::Hook(FindRemoveInventoryItem(), RemoveInventoryItem);
 

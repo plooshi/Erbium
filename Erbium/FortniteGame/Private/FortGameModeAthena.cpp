@@ -846,6 +846,10 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             }
         }
 
+        if (GameState->HasAllPlayerBuildableClassesIndexLookup())
+            for (auto& [Class, Handle] : GameState->AllPlayerBuildableClassesIndexLookup)
+                AFortGameStateAthena::BuildingClassMap[Handle] = Class;
+
         GUI::gsStatus = 1;
         sprintf_s(GUI::windowTitle, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Joinable" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Joinable" : "Erbium (FN %.1f, UE %.2f): Joinable"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
         SetConsoleTitleA(GUI::windowTitle);
