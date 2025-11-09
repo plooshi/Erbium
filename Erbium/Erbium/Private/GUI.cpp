@@ -293,7 +293,7 @@ void GUI::Init()
                 auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
                 if (GameMode->HasbSafeZonePaused())
                     GameMode->bSafeZonePaused = true;
-                //UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"pausesafezone"), nullptr);
+                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"pausesafezone"), nullptr);
             }
 
             if (ImGui::Button("Resume Safe Zone"))
@@ -302,7 +302,7 @@ void GUI::Init()
                 auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
                 if (GameMode->HasbSafeZonePaused())
                     GameMode->bSafeZonePaused = false;
-                //UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startsafezone"), nullptr);
+                UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startsafezone"), nullptr);
             }
 
             if (ImGui::Button("Skip Safe Zone"))
