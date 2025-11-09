@@ -718,6 +718,31 @@ namespace SDK
 			void* CallbackSum_HeapAllocation;
 		};
 
+		struct FActorSpawnParameters_UE52
+		{
+		public:
+			FName Name;
+
+			AActor* Template;
+			AActor* Owner;
+			AActor* Instigator;
+			ULevel* OverrideLevel;
+			UObject* OverrideParentComponent;
+			uint8_t SpawnCollisionHandlingOverride;
+			uint8_t TransformScaleMethod = 1;
+
+		private:
+			uint8 bRemoteOwned : 1;
+		public:
+			uint8 bNoFail : 1;
+			uint8 bDeferConstruction : 1;
+			uint8 bAllowDuringConstructionScript : 1;
+			uint8_t NameMode;
+			uint32_t ObjectFlags;
+			void* CallbackSum_Callable;
+			void* CallbackSum_HeapAllocation;
+		};
+
 		struct FActorSpawnParameters__Legacy
 		{
 			FName Name = FName(0);
@@ -735,7 +760,20 @@ namespace SDK
 
 		static AActor* SpawnActor(const UClass* Class, FTransform Transform, AActor* Owner = nullptr)
 		{
-			if (VersionInfo.EngineVersion >= 5.0)
+			if (VersionInfo.EngineVersion >= 5.2)
+			{
+				auto SpawnActorInternal = (AActor * (*)(UWorld*, const UClass*, FTransform*, void*)) Offsets::SpawnActor;
+
+				FActorSpawnParameters_UE52 SpawnParameters{};
+
+				SpawnParameters.Owner = Owner;
+				SpawnParameters.bDeferConstruction = false;
+				SpawnParameters.SpawnCollisionHandlingOverride = 2;
+				SpawnParameters.NameMode = 3;
+
+				return SpawnActorInternal(GetWorld(), Class, &Transform, &SpawnParameters);
+			}
+			else if (VersionInfo.EngineVersion >= 5.0)
 			{
 				auto SpawnActorInternal = (AActor * (*)(UWorld*, const UClass*, FTransform*, void*)) Offsets::SpawnActor;
 
