@@ -189,7 +189,7 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 	TArray<FFortLootTierData*> TierDataGroups;
 
 
-	if (VersionInfo.EngineVersion == 4.21)
+	/*if (VersionInfo.EngineVersion == 4.21)
 	{
 		auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
 
@@ -205,7 +205,7 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 				TierDataGroups.Add(Val);
 		}
 	}
-	else
+	else*/
 	{
 		for (auto const& Val : TierDataMap[TierGroup.ComparisonIndex])
 		{

@@ -1401,16 +1401,6 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				Pawn->SetMaxHealth(100.f);
 				Pawn->SetHealth(100.f);
 
-				if (Pawn->HasHealthSet() && Pawn->HealthSet->HasHealth())
-				{
-					auto& OldHealth = Pawn->HealthSet->Health;
-					Pawn->HealthSet->Health.CurrentValue = 100;
-					Pawn->HealthSet->Health.Maximum = 100;
-					Pawn->HealthSet->Health.UnclampedCurrentValue = 100;
-					Pawn->HealthSet->OnRep_Health(OldHealth);
-				}
-
-
 				PlayerState->TeamIndex = AFortGameModeAthena::PickTeam(GameMode, 0, PlayerController);
 				if (PlayerState->HasSquadId())
 					PlayerState->SquadId = PlayerState->TeamIndex - 3;

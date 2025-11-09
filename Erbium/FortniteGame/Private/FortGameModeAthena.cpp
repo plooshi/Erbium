@@ -58,15 +58,20 @@ void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameStat
     {
         if (FConfiguration::bForceRespawns)
         {
-            Playlist->bRespawnInAir = true;
+            if (Playlist->HasbRespawnInAir())
+                Playlist->bRespawnInAir = true;
             Playlist->RespawnHeight.Curve.CurveTable = nullptr;
             Playlist->RespawnHeight.Curve.RowName = FName();
             Playlist->RespawnHeight.Value = 20000;
-            Playlist->RespawnTime.Curve.CurveTable = nullptr;
-            Playlist->RespawnTime.Curve.RowName = FName();
-            Playlist->RespawnTime.Value = 3;
+            if (Playlist->HasRespawnTime())
+            {
+                Playlist->RespawnTime.Curve.CurveTable = nullptr;
+                Playlist->RespawnTime.Curve.RowName = FName();
+                Playlist->RespawnTime.Value = 3;
+            }
             Playlist->RespawnType = 1; // InfiniteRespawns
-            Playlist->bAllowJoinInProgress = true;
+            if (Playlist->HasbAllowJoinInProgress())
+                Playlist->bAllowJoinInProgress = true;
             if (Playlist->HasbForceRespawnLocationInsideOfVolume())
                 Playlist->bForceRespawnLocationInsideOfVolume = true;
         }

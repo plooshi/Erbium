@@ -389,7 +389,7 @@ namespace SDK
 			}
 		}
 
-		if (VersionInfo.EngineVersion >= 427)
+		if (VersionInfo.EngineVersion >= 4.27)
 			Offsets::SpawnActor = Memcury::Scanner::FindStringRef(L"STAT_SpawnActorTime").ScanFor({ 0x48, 0x8B, 0xC4 }, false, 0, 1, 3000).Get();
 		else
 		{
