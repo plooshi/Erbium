@@ -2430,6 +2430,55 @@ uint64 FindCanPlaceBuildableClassInStructuralGrid()
     return CanPlaceBuildableClassInStructuralGrid;
 }
 
+
+uint64 FindLoadPlayset(const std::vector<uint8_t>& Bytes, int recursive)
+{
+    static uint64_t LoadPlayset = 0;
+    static bool bInitialized = false;
+
+    if (!bInitialized)
+    {
+        bInitialized = true;
+
+        if (VersionInfo.EngineVersion >= 5.0)
+            return LoadPlayset = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 4C 8B B1 ? ? ? ? 45").Get();
+
+        if (recursive >= 2)
+            return 0;
+
+        auto StringRef = Memcury::Scanner::FindStringRef(L"UPlaysetLevelStreamComponent::LoadPlayset Error: no owner for %s", 0, 1);
+
+        if (!StringRef.Get())
+            return 0;
+
+        for (int i = 0; i < 400; i++)
+        {
+            auto CurrentByte = *(uint8_t*)(StringRef.Get() - i);
+
+            if (CurrentByte == Bytes[0])
+            {
+                bool Found = true;
+                for (int j = 1; j < Bytes.size(); j++)
+                    if (*(uint8_t*)(StringRef.Get() - i + j) != Bytes[j])
+                    {
+                        Found = false;
+                        break;
+                    }
+
+                if (Found)
+                    return LoadPlayset = StringRef.Get() - i;
+            }
+
+            if (CurrentByte == 0xC3)
+                return FindLoadPlayset({ 0x40, 0x55 }, ++recursive);
+        }
+
+        return 0;
+    }
+
+    return LoadPlayset;
+}
+
 void FindNullsAndRetTrues()
 {
     if (VersionInfo.EngineVersion == 4.16)

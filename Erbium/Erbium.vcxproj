@@ -250,6 +250,7 @@
     <ClInclude Include="FortniteGame\Public\BuildingFoundation.h" />
     <ClInclude Include="FortniteGame\Public\BuildingItemCollectorActor.h" />
     <ClInclude Include="FortniteGame\Public\BuildingSMActor.h" />
+    <ClInclude Include="FortniteGame\Public\FortAthenaCreativePortal.h" />
     <ClInclude Include="FortniteGame\Public\FortAthenaMutator.h" />
     <ClInclude Include="FortniteGame\Public\FortGameModeAthena.h" />
     <ClInclude Include="FortniteGame\Public\FortGameSessionAthena.h" />
@@ -264,6 +265,7 @@
     <ClInclude Include="FortniteGame\Public\FortPlayerStateAthena.h" />
     <ClInclude Include="FortniteGame\Public\FortPlaylistAthena.h" />
     <ClInclude Include="FortniteGame\Public\FortSafeZoneIndicator.h" />
+    <ClInclude Include="FortniteGame\Public\FortVolume.h" />
     <ClInclude Include="FortniteGame\Public\FortWeapon.h" />
     <ClInclude Include="FortniteGame\Public\GameplayTagContainer.h" />
     <ClInclude Include="FortniteGame\Public\LevelStreamingDynamic.h" />
@@ -298,6 +300,7 @@
     <ClCompile Include="FortniteGame\Private\BattleRoyaleGamePhaseLogic.cpp" />
     <ClCompile Include="FortniteGame\Private\BuildingFoundation.cpp" />
     <ClCompile Include="FortniteGame\Private\BuildingSMActor.cpp" />
+    <ClCompile Include="FortniteGame\Private\FortAthenaCreativePortal.cpp" />
     <ClCompile Include="FortniteGame\Private\FortAthenaMutator.cpp" />
     <ClCompile Include="FortniteGame\Private\FortGameModeAthena.cpp" />
     <ClCompile Include="FortniteGame\Private\FortInventory.cpp" />

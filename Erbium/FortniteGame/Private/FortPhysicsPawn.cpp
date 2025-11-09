@@ -29,8 +29,10 @@ public:
     UCLASS_COMMON_MEMBERS(UPrimitiveComponent);
 
     DEFINE_FUNC(K2_SetWorldLocationAndRotation, void);
+    DEFINE_FUNC(K2_SetWorldTransform, void);
     DEFINE_FUNC(SetPhysicsLinearVelocity, void);
     DEFINE_FUNC(SetPhysicsAngularVelocityInDegrees, void);
+    DEFINE_FUNC(SetPhysicsAngularVelocityInRadians, void);
 };
 
 void AFortPhysicsPawn::ServerMove(UObject* Context, FFrame& Stack)
@@ -86,14 +88,17 @@ void AFortPhysicsPawn::ServerMove(UObject* Context, FFrame& Stack)
 
         if (VersionInfo.FortniteVersion >= 4.24)
         {
-            RealRotation.Yaw = FRotator::UnwindDegrees(RealRotation.Yaw);
+            /*RealRotation.Yaw = FRotator::UnwindDegrees(RealRotation.Yaw);
             RealRotation.Pitch = 0;
-            RealRotation.Roll = 0;
+            RealRotation.Roll = 0;*/
+            
         }
+        
+        FTransform Transform(Translation, RealRotation);
 
-        RootComponent->K2_SetWorldLocationAndRotation(Translation, RealRotation, false, nullptr, true);
-        RootComponent->SetPhysicsLinearVelocity(LinearVelocity, 0, FName(0));
-        RootComponent->SetPhysicsAngularVelocityInDegrees(AngularVelocity, 0, FName(0));
+        RootComponent->K2_SetWorldTransform(Transform, false, nullptr, true);
+        RootComponent->SetPhysicsLinearVelocity(LinearVelocity, 1, FName(0));
+        RootComponent->SetPhysicsAngularVelocityInRadians(AngularVelocity, 1, FName(0));
     }
 }
 

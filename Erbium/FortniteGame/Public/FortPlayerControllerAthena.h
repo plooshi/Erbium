@@ -4,6 +4,7 @@
 #include "FortInventory.h"
 #include "FortPlayerStateAthena.h"
 #include "GameplayTagContainer.h"
+#include "FortVolume.h"
 
 
 class UAthenaPickaxeItemDefinition : public UFortItemDefinition
@@ -146,6 +147,8 @@ public:
     DEFINE_BITFIELD_PROP(bReadyToStartMatch);
     DEFINE_BITFIELD_PROP(bHoldingObject);
     DEFINE_PROP(StrongMyHero, UObject*);
+    DEFINE_PROP(OwnedPortal, AActor*);
+    DEFINE_PROP(CreativePlotLinkedVolume, AFortVolume*);
 
     DEFINE_FUNC(GetViewTarget, AActor*);
     DEFINE_FUNC(GetControlRotation, FRotator);
@@ -172,6 +175,7 @@ public:
     DEFINE_FUNC(GetActorEyesViewPoint, void);
     DEFINE_FUNC(ClientActivateSlot, void);
     DEFINE_FUNC(ServerReturnToMainMenu, void);
+    DEFINE_FUNC(OnRep_CreativePlotLinkedVolume, void);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);

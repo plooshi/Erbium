@@ -19,6 +19,7 @@
 #include "../../Erbium/Public/Misc.h"
 #include "../../Erbium/Public/Events.h"
 #include "../Public/BattleRoyaleGamePhaseLogic.h"
+#include "../Public/FortAthenaCreativePortal.h"
 
 void ShowFoundation(const ABuildingFoundation* Foundation)
 {
@@ -1304,7 +1305,9 @@ void AFortGameModeAthena::HandleStartingNewPlayer_(UObject* Context, FFrame& Sta
     }
 
     if (wcsstr(FConfiguration::Playlist, L"/Game/Athena/Playlists/Creative/Playlist_PlaygroundV2.Playlist_PlaygroundV2"))
-    { }
+    { 
+        AFortAthenaCreativePortal::Create(NewPlayer);
+    }
 
     return callOG(GameMode, Stack.GetCurrentNativeFunction(), HandleStartingNewPlayer, NewPlayer);
 }

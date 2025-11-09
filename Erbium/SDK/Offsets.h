@@ -31,6 +31,7 @@ namespace SDK
 		inline uint64_t StaticFindObject = 0;
 		inline uint64_t StaticLoadObject = 0;
 		inline uint64_t FNameConstructor = 0;
+		inline uint64_t SpawnActor = 0;
 
 		inline uint32_t Offset_Internal = 0;
 		inline uint32_t ElementSize = 0;
@@ -386,6 +387,18 @@ namespace SDK
 					break;
 				}
 			}
+		}
+
+		if (VersionInfo.EngineVersion >= 427)
+			Offsets::SpawnActor = Memcury::Scanner::FindStringRef(L"STAT_SpawnActorTime").ScanFor({ 0x48, 0x8B, 0xC4 }, false, 0, 1, 3000).Get();
+		else
+		{
+			auto sRef = Memcury::Scanner::FindStringRef(L"SpawnActor failed because no class was specified");
+
+			if (VersionInfo.FortniteVersion <= 3.3)
+				Offsets::SpawnActor = sRef.ScanFor({ 0x40, 0x55 }, false, 0, 1, 3000).Get();
+
+			Offsets::SpawnActor = sRef.ScanFor({ 0x4C, 0x8B, 0xDC }, false, 0, 1, 3000).Get();
 		}
 	}
 }

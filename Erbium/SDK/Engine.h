@@ -694,8 +694,73 @@ namespace SDK
 			uint8 _Padding2[0x8];
 		};
 
+		struct FActorSpawnParameters
+		{
+		public:
+			FName Name;
+
+			AActor* Template;
+			AActor* Owner;
+			AActor* Instigator;
+			ULevel* OverrideLevel;
+			UObject* OverrideParentComponent;
+			uint8_t SpawnCollisionHandlingOverride;
+
+		private:
+			uint8 bRemoteOwned : 1;
+		public:
+			uint8 bNoFail : 1;
+			uint8 bDeferConstruction : 1;
+			uint8 bAllowDuringConstructionScript : 1;
+			uint8_t NameMode;
+			uint32_t ObjectFlags;
+			void* CallbackSum_Callable;
+			void* CallbackSum_HeapAllocation;
+		};
+
+		struct FActorSpawnParameters__Legacy
+		{
+			FName Name = FName(0);
+			UObject* Template;
+			UObject* Owner;
+			AActor* Instigator;
+			UObject* OverrideLevel;
+			uint8_t SpawnCollisionHandlingOverride;
+			uint16	bRemoteOwned : 1;
+			uint16	bNoFail : 1;
+			uint16	bDeferConstruction : 1;
+			uint16	bAllowDuringConstructionScript : 1;
+			uint32_t ObjectFlags;
+		};
+
 		static AActor* SpawnActor(const UClass* Class, FTransform Transform, AActor* Owner = nullptr)
 		{
+			if (VersionInfo.EngineVersion >= 5.0)
+			{
+				auto SpawnActorInternal = (AActor * (*)(UWorld*, const UClass*, FTransform*, void*)) Offsets::SpawnActor;
+
+				FActorSpawnParameters SpawnParameters{};
+
+				SpawnParameters.Owner = Owner;
+				SpawnParameters.bDeferConstruction = false;
+				SpawnParameters.SpawnCollisionHandlingOverride = 2;
+				SpawnParameters.NameMode = 3;
+
+				return SpawnActorInternal(GetWorld(), Class, &Transform, &SpawnParameters);
+			}
+			else
+			{
+				auto SpawnActorInternal = (AActor * (*)(UWorld*, const UClass*, FTransform*, void*)) Offsets::SpawnActor;
+
+				FActorSpawnParameters__Legacy SpawnParameters{};
+
+				SpawnParameters.Owner = Owner;
+				SpawnParameters.bDeferConstruction = false;
+				SpawnParameters.SpawnCollisionHandlingOverride = 2;
+
+				return SpawnActorInternal(GetWorld(), Class, &Transform, &SpawnParameters);
+			}
+
 			/*static auto BeginDeferredActorSpawnFromClassFn = UGameplayStatics::GetDefaultObj()->GetFunction("BeginDeferredActorSpawnFromClass");
 			static auto FinishSpawningActorFn = UGameplayStatics::GetDefaultObj()->GetFunction("FinishSpawningActor");
 			GameplayStatics_BeginDeferredActorSpawnFromClass Params{};

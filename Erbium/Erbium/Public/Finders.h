@@ -64,6 +64,7 @@ uint64 FindSetGamePhase();
 uint64 FindPayBuildableClassPlacementCost();
 uint64 FindCanAffordToPlaceBuildableClass();
 uint64 FindCanPlaceBuildableClassInStructuralGrid();
+uint64 FindLoadPlayset(const std::vector<uint8_t>& Bytes = std::vector<uint8_t>({ 0x48, 0x89, 0x5C }), int recursive = 0);
 
 inline std::vector<uint64_t> NullFuncs = {};
 inline std::vector<uint64_t> RetTrueFuncs = {};

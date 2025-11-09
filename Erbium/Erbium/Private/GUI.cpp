@@ -360,6 +360,7 @@ void GUI::Init()
         case 3:
             ImGui::Checkbox("Infinite Materials", &FConfiguration::bInfiniteMats);
             ImGui::Checkbox("Infinite Ammo", &FConfiguration::bInfiniteAmmo);
+            ImGui::Checkbox("Keep Inventory", &FConfiguration::bKeepInventory);
 
             ImGui::SliderInt("Siphon Amount:", &FConfiguration::SiphonAmount, 0, 200);
 

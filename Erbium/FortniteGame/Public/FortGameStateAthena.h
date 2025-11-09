@@ -141,6 +141,15 @@ public:
     DEFINE_STRUCT_PROP(bIsFinishedStreaming, bool);
 };
 
+
+class AFortCreativePortalManager : public AActor
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(AFortCreativePortalManager);
+
+    DEFINE_PROP(AllPortals, TArray<AActor*>);
+};
+
 class AFortGameStateAthena : public AActor
 {
 public:
@@ -175,6 +184,7 @@ public:
     DEFINE_PROP(StructuralSupportSystem, UObject*);
     DEFINE_PROP(bPlaylistDataIsLoaded, bool);
     DEFINE_PROP(VolumeManager, AFortVolumeManager*);
+    DEFINE_PROP(CreativePortalManager, AFortCreativePortalManager*);
 
     DEFINE_FUNC(OnRep_CurrentPlaylistInfo, void);
     DEFINE_FUNC(OnRep_CurrentPlaylistData, void);

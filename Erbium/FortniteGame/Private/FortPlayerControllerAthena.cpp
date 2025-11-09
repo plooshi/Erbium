@@ -49,21 +49,24 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 
 	auto Num = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num();
 
-	UEAllocatedVector<FGuid> GuidsToRemove;
-	for (int i = 0; i < PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
-	{
-		auto& Entry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
-
-		if (Entry.ItemDefinition->bCanBeDropped)
+	if (!FConfiguration::bKeepInventory)
+	{	
+		UEAllocatedVector<FGuid> GuidsToRemove;
+		for (int i = 0; i < PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
 		{
-			//NewPlayer->WorldInventory->Inventorxy.ReplicatedEntries.Remove(i, FFortItemEntry::Size());
-			//i--;
-			GuidsToRemove.push_back(Entry.ItemGuid);
-		}
-	}
+			auto& Entry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
 
-	for (auto& Guid : GuidsToRemove)
-		PlayerController->WorldInventory->Remove(Guid);
+			if (Entry.ItemDefinition->bCanBeDropped)
+			{
+				//NewPlayer->WorldInventory->Inventorxy.ReplicatedEntries.Remove(i, FFortItemEntry::Size());
+				//i--;
+				GuidsToRemove.push_back(Entry.ItemGuid);
+			}
+		}
+
+		for (auto& Guid : GuidsToRemove)
+			PlayerController->WorldInventory->Remove(Guid);
+	}
 
 	if (Num == 0)
 	{
@@ -1060,6 +1063,9 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 		{
 			if (ItemCount >= 5 && AFortInventory::IsPrimaryQuickbar(PickupEntry->ItemDefinition))
 			{
+				if (!MyFortPawn || !MyFortPawn->CurrentWeapon)
+					return;
+
 				if (AFortInventory::IsPrimaryQuickbar(((AFortWeapon*)MyFortPawn->CurrentWeapon)->WeaponData))
 				{
 					auto itemEntry = WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
@@ -2132,22 +2138,24 @@ void AFortPlayerControllerAthena::EnterAircraft(UObject* Object, AActor* Aircraf
 	else
 		PlayerController = (AFortPlayerControllerAthena*)Object;
 
-	UEAllocatedVector<FGuid> GuidsToRemove;
-	for (int i = 0; i < PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
+	if (!FConfiguration::bKeepInventory)
 	{
-		auto& Entry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
-
-		if (Entry.ItemDefinition->bCanBeDropped)
+		UEAllocatedVector<FGuid> GuidsToRemove;
+		for (int i = 0; i < PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
 		{
-			//NewPlayer->WorldInventory->Inventorxy.ReplicatedEntries.Remove(i, FFortItemEntry::Size());
-			//i--;
-			GuidsToRemove.push_back(Entry.ItemGuid);
-		}
-	}
+			auto& Entry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
 
-	for (auto& Guid : GuidsToRemove)
-		PlayerController->WorldInventory->Remove(Guid);
-	PlayerController->WorldInventory->Inventory.MarkArrayDirty();
+			if (Entry.ItemDefinition->bCanBeDropped)
+			{
+				//NewPlayer->WorldInventory->Inventorxy.ReplicatedEntries.Remove(i, FFortItemEntry::Size());
+				//i--;
+				GuidsToRemove.push_back(Entry.ItemGuid);
+			}
+		}
+
+		for (auto& Guid : GuidsToRemove)
+			PlayerController->WorldInventory->Remove(Guid);
+	}
 
 	return EnterAircraftOG(Object, Aircraft);
 }
