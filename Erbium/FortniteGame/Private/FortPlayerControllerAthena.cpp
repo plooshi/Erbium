@@ -554,26 +554,24 @@ void AFortPlayerControllerAthena::ServerBeginEditingBuildingActor(UObject* Conte
 	if (!PlayerController || !PlayerController->MyFortPawn || !Building || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex)
 		return;
 
-
 	AFortPlayerStateAthena* PlayerState = (AFortPlayerStateAthena*)PlayerController->PlayerState;
 	if (!PlayerState)
 		return;
-
+	
+	SetEditingPlayer(Building, PlayerState);
+	
 	auto EditToolEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
 		{
 			return entry.ItemDefinition->Class == UFortEditToolItemDefinition::StaticClass();
 		}, FFortItemEntry::Size());
-
 
 	PlayerController->MyFortPawn->EquipWeaponDefinition((UFortWeaponItemDefinition*)EditToolEntry->ItemDefinition, EditToolEntry->ItemGuid, EditToolEntry->HasTrackerGuid() ? EditToolEntry->TrackerGuid : FGuid(), false);
 
 	if (auto EditTool = PlayerController->MyFortPawn->CurrentWeapon->Cast<AFortWeap_EditingTool>())
 	{
 		EditTool->EditActor = Building;
-		//EditTool->OnRep_EditActor();
+		EditTool->OnRep_EditActor();
 	}
-
-	SetEditingPlayer(Building, PlayerState);
 }
 
 
@@ -598,8 +596,7 @@ void AFortPlayerControllerAthena::ServerEditBuildingActor(UObject* Context, FFra
 		return;
 	}
 
-	if (VersionInfo.FortniteVersion < 11)
-		SetEditingPlayer(Building, nullptr);
+	SetEditingPlayer(Building, nullptr);
 
 	static auto ReplaceBuildingActor = (ABuildingSMActor * (*)(ABuildingSMActor*, unsigned int, TSubclassOf<AActor>, unsigned int, int, bool, AFortPlayerControllerAthena*)) ReplaceBuildingActor_;
 	static auto ReplaceBuildingActor__New = (ABuildingSMActor * (*)(ABuildingSMActor*, unsigned int, TSubclassOf<AActor>&, unsigned int, int, bool, AFortPlayerControllerAthena*)) ReplaceBuildingActor_;
@@ -640,9 +637,6 @@ void AFortPlayerControllerAthena::ServerEditBuildingActor(UObject* Context, FFra
 	
 	if (NewBuild)
 	{
-		if (VersionInfo.FortniteVersion >= 11)
-			SetEditingPlayer(Building, nullptr);
-
 		NewBuild->bPlayerPlaced = true;
 	}
 }
