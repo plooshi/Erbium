@@ -55,7 +55,7 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 		if (FConfiguration::bLateGame)
 			PlayerController->MyFortPawn->SetShield(100.f);
 	}
-	if (!FConfiguration::bKeepInventory)
+	if (!FConfiguration::bKeepInventory || FConfiguration::bLateGame)
 	{	
 		UEAllocatedVector<FGuid> GuidsToRemove;
 		for (int i = 0; i < PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
@@ -104,7 +104,7 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 		for (auto& AbilitySet : AFortGameModeAthena::AbilitySets)
 			PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
 	}
-	else if (FConfiguration::bLateGame && !FConfiguration::bKeepInventory)
+	else if (FConfiguration::bLateGame && (!FConfiguration::bKeepInventory || FConfiguration::bLateGame))
 	{
 		auto Shotgun = LateGame::GetShotgun();
 		auto AssaultRifle = LateGame::GetAssaultRifle();

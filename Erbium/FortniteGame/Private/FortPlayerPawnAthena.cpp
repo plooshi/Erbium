@@ -184,11 +184,19 @@ void AFortPlayerPawnAthena::ServerSendZiplineState(UObject* Context, FFrame& Sta
 		Pawn->LaunchCharacterJump(FVector{ VelocityX >= -750 ? min(VelocityX, 750) : -750, VelocityY >= -750 ? min(VelocityY, 750) : -750, 1200 }, false, false, true, true);
 	}
 
+	auto NewZipline = Pawn->GetActiveZipline();
+
 	static auto ZipLineClass = FindObject<UClass>(L"/Ascender/Gameplay/Ascender/B_Athena_Zipline_Ascender.B_Athena_Zipline_Ascender_C");
 	if (auto Ascender = Zipline->Cast<AFortAscenderZipline>(ZipLineClass))
 	{
 		Ascender->PawnUsingHandle = nullptr;
 		Ascender->PreviousPawnUsingHandle = Pawn;
+		Ascender->OnRep_PawnUsingHandle();
+	}
+	else if (auto Ascender = NewZipline->Cast<AFortAscenderZipline>(ZipLineClass))
+	{
+		Ascender->PawnUsingHandle = Pawn;
+		Ascender->PreviousPawnUsingHandle = nullptr;
 		Ascender->OnRep_PawnUsingHandle();
 	}
 }

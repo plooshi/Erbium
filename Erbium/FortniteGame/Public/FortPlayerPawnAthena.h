@@ -29,6 +29,8 @@ public:
     DEFINE_PROP(PreviousPawnUsingHandle, TWeakObjectPtr<AActor>);
 
     DEFINE_FUNC(OnRep_PawnUsingHandle, void);
+    DEFINE_FUNC(OnZipliningStarted, void);
+    DEFINE_FUNC(OnZipliningStopped, void);
 };
 
 struct FFortGameplayAttributeData
