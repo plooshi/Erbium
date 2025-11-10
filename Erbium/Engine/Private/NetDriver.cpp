@@ -837,7 +837,7 @@ void UNetDriver::PostLoadHook()
 		ClientWorldPackageNameOffset = 0x1820;
 	else if (VersionInfo.FortniteVersion >= 20.40)
 		ClientWorldPackageNameOffset = 0x16b8;
-	else if (VersionInfo.FortniteVersion >= 20.40)
+	else if (VersionInfo.FortniteVersion >= 20)
 		ClientWorldPackageNameOffset = 0x1698;
 
 	if (VersionInfo.FortniteVersion >= 25)
