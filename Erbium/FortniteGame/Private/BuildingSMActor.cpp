@@ -154,5 +154,5 @@ void ABuildingSMActor::PostLoadHook()
 	Utils::Hook(OnDamageServerAddr, OnDamageServer, OnDamageServerOG);
 
 	Utils::ExecHook(L"/Script/FortniteGame.FortDecoTool.ServerSpawnDeco", ServerSpawnDeco, ServerSpawnDecoOG);
-	Utils::ExecHook(L"/Script/FortniteGame.FortDecoTool_ContextTrap.ServerSpawnDeco_Implementation", ServerSpawnDeco_Implementation, ServerSpawnDeco_ImplementationOG);
+	//Utils::ExecHook(L"/Script/FortniteGame.FortDecoTool_ContextTrap.ServerSpawnDeco_Implementation", ServerSpawnDeco_Implementation, ServerSpawnDeco_ImplementationOG);
 }
