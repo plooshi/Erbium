@@ -653,7 +653,7 @@ void AFortPlayerControllerAthena::ServerEndEditingBuildingActor(UObject* Context
 
 	SetEditingPlayer(Building, nullptr);
 
-	if (VersionInfo.EngineVersion >= 4.24)
+	/*if (VersionInfo.EngineVersion >= 4.24)
 	{
 		auto EditToolEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
 			{
@@ -661,9 +661,23 @@ void AFortPlayerControllerAthena::ServerEndEditingBuildingActor(UObject* Context
 			}, FFortItemEntry::Size());
 
 		PlayerController->MyFortPawn->EquipWeaponDefinition((UFortWeaponItemDefinition*)EditToolEntry->ItemDefinition, EditToolEntry->ItemGuid, EditToolEntry->HasTrackerGuid() ? EditToolEntry->TrackerGuid : FGuid(), false);
-	}
+	}*/
 
-	if (auto EditTool = PlayerController->MyFortPawn->CurrentWeapon->Cast<AFortWeap_EditingTool>())
+	auto EditToolEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+		{
+			return entry.ItemDefinition->Class == UFortEditToolItemDefinition::StaticClass();
+		}, FFortItemEntry::Size());
+
+	if (!EditToolEntry)
+		return;
+
+	auto EditToolPtr = PlayerController->Pawn->CurrentWeaponList.Search([&](AActor* Weapon__Uncasted)
+		{ return ((AFortWeapon*)Weapon__Uncasted)->ItemEntryGuid == EditToolEntry->ItemGuid; });
+
+	if (!EditToolPtr)
+		return;
+
+	if (auto EditTool = *(AFortWeap_EditingTool**)EditToolPtr)
 	{
 		EditTool->EditActor = nullptr;
 		EditTool->OnRep_EditActor();

@@ -195,8 +195,8 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 	FFrame FakeStack;
 	for (auto& ActorInfo : ActiveNetworkObjects)
 	{
-		if (/*!ActorInfo->bPendingNetUpdate && */TimeSeconds <= ActorInfo->NextUpdateTime)
-			continue;
+		//if (/*!ActorInfo->bPendingNetUpdate && */TimeSeconds <= ActorInfo->NextUpdateTime)
+		//	continue;
 
 		auto Actor = ActorInfo->Actor;
 
