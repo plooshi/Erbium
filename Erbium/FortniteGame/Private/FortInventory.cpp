@@ -220,19 +220,6 @@ void AFortInventory::Remove(FGuid Guid)
         PlayerController->QuickBars->ServerRemoveItemInternal(Guid, false, true);
     }
 
-    if (VersionInfo.FortniteVersion >= 14.00 && PlayerController->Pawn)
-    {
-        for (auto& Weapon__Uncasted : PlayerController->Pawn->CurrentWeaponList)
-        {
-            auto Weapon = (AFortWeapon*)Weapon__Uncasted;
-
-            if (Weapon->ItemEntryGuid == Guid)
-            {
-                RemoveWeaponAbilities(Weapon);
-                break;
-            }
-        }
-    }
 _Skip:
 
     bRequiresLocalUpdate = true;
