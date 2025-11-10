@@ -858,7 +858,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 	auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 	auto PlayerState = (AFortPlayerStateAthena*)PlayerController->PlayerState;
 
-	if ((!GameState->IsRespawningAllowed(PlayerState) && !FConfiguration::bLateGame) && PlayerController->WorldInventory && PlayerController->Pawn)
+	if ((!GameState->IsRespawningAllowed(PlayerState) || FConfiguration::bLateGame) && PlayerController->WorldInventory && PlayerController->Pawn)
 	{
 		bool bHasMats = false;
 		for (int i = 0; i < PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
