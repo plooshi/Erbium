@@ -397,8 +397,8 @@ namespace SDK
 
 			if (VersionInfo.FortniteVersion <= 3.3)
 				Offsets::SpawnActor = sRef.ScanFor({ 0x40, 0x55 }, false, 0, 1, 3000).Get();
-
-			Offsets::SpawnActor = sRef.ScanFor({ 0x4C, 0x8B, 0xDC }, false, 0, 1, 3000).Get();
+			else 
+				Offsets::SpawnActor = sRef.ScanFor({ 0x4C, 0x8B, 0xDC }, false, 0, 1, 3000).Get();
 		}
 	}
 }
