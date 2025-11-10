@@ -740,69 +740,81 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                 }
             }
         }
+        UObject* BattleBusDef = nullptr;
+        UClass* SupplyDropClass = nullptr;
 
-        const UObject* BattleBusDef = nullptr;
-        const UClass* SupplyDropClass = nullptr;
         if (VersionInfo.FortniteVersion == 18.40)
-            BattleBusDef = FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_HeadbandBus.BBID_HeadbandBus");
+            BattleBusDef = const_cast<UObject*>(FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_HeadbandBus.BBID_HeadbandBus"));
         else if (VersionInfo.FortniteVersion == 1.11 || VersionInfo.FortniteVersion == 7.30 || VersionInfo.FortniteVersion == 11.31 || VersionInfo.FortniteVersion == 15.10 || VersionInfo.FortniteVersion == 19.01 || VersionInfo.FortniteVersion == 23.10 || VersionInfo.FortniteVersion == 28.01)
         {
-            BattleBusDef = FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_WinterBus.BBID_WinterBus");
-            SupplyDropClass = FindObject<UClass>(L"/Game/Athena/SupplyDrops/AthenaSupplyDrop_Holiday.AthenaSupplyDrop_Holiday_C");
+            BattleBusDef = const_cast<UObject*>(FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_WinterBus.BBID_WinterBus"));
+            SupplyDropClass = const_cast<UClass*>(FindObject<UClass>(L"/Game/Athena/SupplyDrops/AthenaSupplyDrop_Holiday.AthenaSupplyDrop_Holiday_C"));
         }
         else if (VersionInfo.FortniteVersion == 5.10 || VersionInfo.FortniteVersion == 9.41 || VersionInfo.FortniteVersion == 14.20 || VersionInfo.FortniteVersion == 18.00)
         {
             if (VersionInfo.FortniteVersion == 5.10)
-                BattleBusDef = FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_BirthdayBus.BBID_BirthdayBus");
+                BattleBusDef = const_cast<UObject*>(FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_BirthdayBus.BBID_BirthdayBus"));
             else if (VersionInfo.FortniteVersion == 9.41)
-                BattleBusDef = FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_BirthdayBus2nd.BBID_BirthdayBus2nd");
+                BattleBusDef = const_cast<UObject*>(FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_BirthdayBus2nd.BBID_BirthdayBus2nd"));
             else if (VersionInfo.FortniteVersion == 14.20)
-                BattleBusDef = FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_BirthdayBus3rd.BBID_BirthdayBus3rd");
+                BattleBusDef = const_cast<UObject*>(FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_BirthdayBus3rd.BBID_BirthdayBus3rd"));
             else
-                BattleBusDef = FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_BirthdayBus4th.BBID_BirthdayBus4th");
-
-            SupplyDropClass = FindObject<UClass>(L"/Game/Athena/SupplyDrops/AthenaSupplyDrop_BDay.AthenaSupplyDrop_BDay_C");
+                BattleBusDef = const_cast<UObject*>(FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_BirthdayBus4th.BBID_BirthdayBus4th"));
+            SupplyDropClass = const_cast<UClass*>(FindObject<UClass>(L"/Game/Athena/SupplyDrops/AthenaSupplyDrop_BDay.AthenaSupplyDrop_BDay_C"));
         }
         else if (VersionInfo.FortniteVersion == 6.20 || VersionInfo.FortniteVersion == 6.21 || VersionInfo.FortniteVersion == 11.10 || VersionInfo.FortniteVersion == 14.40 || VersionInfo.FortniteVersion == 18.21)
-            BattleBusDef = FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_HalloweenBus.BBID_HalloweenBus");
+            BattleBusDef = const_cast<UObject*>(FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_HalloweenBus.BBID_HalloweenBus"));
         else if (VersionInfo.FortniteVersion == 14.30)
-            BattleBusDef = FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_BusUpgrade1.BBID_BusUpgrade1");
+            BattleBusDef = const_cast<UObject*>(FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_BusUpgrade1.BBID_BusUpgrade1"));
         else if (VersionInfo.FortniteVersion == 14.50)
-            BattleBusDef = FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_BusUpgrade2.BBID_BusUpgrade2");
+            BattleBusDef = const_cast<UObject*>(FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_BusUpgrade2.BBID_BusUpgrade2"));
         else if (VersionInfo.FortniteVersion == 14.60)
-            BattleBusDef = FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_BusUpgrade3.BBID_BusUpgrade3");
+            BattleBusDef = const_cast<UObject*>(FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_BusUpgrade3.BBID_BusUpgrade3"));
         else if (VersionInfo.FortniteVersion >= 12.30 && VersionInfo.FortniteVersion <= 12.61)
         {
-            BattleBusDef = FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_DonutBus.BBID_DonutBus");
-            BattleBusDef = FindObject<UClass>(L"/Game/Athena/SupplyDrops/AthenaSupplyDrop_Donut.AthenaSupplyDrop_Donut_C");
+            BattleBusDef = const_cast<UObject*>(FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_DonutBus.BBID_DonutBus"));
+            SupplyDropClass = const_cast<UClass*>(FindObject<UClass>(L"/Game/Athena/SupplyDrops/AthenaSupplyDrop_Donut.AthenaSupplyDrop_Donut_C"));  // Corregido: Usar SupplyDropClass en lugar de sobrescribir BattleBusDef
         }
         else if (VersionInfo.FortniteVersion == 9.30)
-            BattleBusDef = FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_WorldCupBus.BBID_WorldCupBus");
+            BattleBusDef = const_cast<UObject*>(FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_WorldCupBus.BBID_WorldCupBus"));
         else if (VersionInfo.FortniteVersion == 21.00)
-            BattleBusDef = FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_CelebrationBus.BBID_CelebrationBus");
+            BattleBusDef = const_cast<UObject*>(FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_CelebrationBus.BBID_CelebrationBus"));
         else if (std::floor(VersionInfo.FortniteVersion) == 27)
-			BattleBusDef = FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_DefaultBus.BBID_DefaultBus");
+            BattleBusDef = const_cast<UObject*>(FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_DefaultBus.BBID_DefaultBus"));
 
-        if (BattleBusDef)
+ 
+        if (BattleBusDef && GameState)
         {
-            GameState->DefaultBattleBus = BattleBusDef;
+            const_cast<const UObject*&>(GameState->DefaultBattleBus) = BattleBusDef;
 
-            for (auto& Aircraft : Utils::GetAll<AFortAthenaAircraft>())
+            
+            for (auto Aircraft : Utils::GetAll<AFortAthenaAircraft>())
             {
-                Aircraft->DefaultBusSkin = BattleBusDef;
-
-                if (Aircraft->SpawnedCosmeticActor)
+                if (Aircraft) 
                 {
-                    static auto Offset = Aircraft->SpawnedCosmeticActor->GetOffset("ActiveSkin");
+                    const_cast<const UObject*&>(Aircraft->DefaultBusSkin) = BattleBusDef;
 
-                    GetFromOffset<const UObject*>(Aircraft->SpawnedCosmeticActor, Offset) = BattleBusDef;
+                    if (Aircraft->SpawnedCosmeticActor)
+                    {
+                        static int32 ActiveSkinOffset = Aircraft->SpawnedCosmeticActor->GetOffset("ActiveSkin");
+                        if (ActiveSkinOffset != -1)
+                            *(UObject**)(__int64(Aircraft->SpawnedCosmeticActor) + ActiveSkinOffset) = BattleBusDef; 
+                    }
                 }
             }
         }
 
-        if (SupplyDropClass && GameState->MapInfo)
-            for (auto& Info : GameState->MapInfo->SupplyDropInfoList)
-                Info->SupplyDropClass = SupplyDropClass;
+       
+        if (SupplyDropClass && GameState && GameState->MapInfo)
+        {
+            auto& SupplyDropList = GameState->MapInfo->SupplyDropInfoList;
+            for (auto& Info : SupplyDropList)
+            {
+                if (Info && Info->HasSupplyDropClass())
+                    Info->SupplyDropClass = SupplyDropClass;
+            }
+        }
+
 
 
         if (VersionInfo.FortniteVersion >= 3.4 && GameState->MapInfo)
