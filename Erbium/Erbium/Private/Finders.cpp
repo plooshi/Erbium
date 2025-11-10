@@ -1935,7 +1935,7 @@ uint64_t FindEnterAircraft()
 uint64_t FindGetPlayerViewPoint()
 {
     uint64 ftspAddr = 0;
-    if (VersionInfo.FortniteVersion >= 20)
+    if (VersionInfo.FortniteVersion >= 20.40)
         ftspAddr = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC ? 48 8B F9 E8 ? ? ? ? 48 8B 07 48 8B 98 ? ? ? ? E8 ? ? ? ? 48 8B CF").Get();
     else
     {

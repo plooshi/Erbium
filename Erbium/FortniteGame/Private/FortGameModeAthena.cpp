@@ -353,7 +353,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         if (VersionInfo.FortniteVersion >= 4.0)
             SetupPlaylist(GameMode, GameState);
         
-        if (VersionInfo.EngineVersion >= 4.27)
+        if (VersionInfo.EngineVersion >= 4.27 && std::floor(VersionInfo.FortniteVersion) != 20) // on 20 it does some weird stuff
         {
             auto MeshNetworkSubsystem = TUObjectArray::FindFirstObject("MeshNetworkSubsystem");
 
