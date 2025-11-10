@@ -110,15 +110,10 @@ UNetConnection* IsActorOwnedByAndRelevantToConnection(const AActor* Actor, TArra
 	return nullptr;
 }
 
-const UClass* WorldPartitionHLODClass = nullptr;
-
 bool IsActorRelevantToConnection(const AActor* Actor, const TArray<FNetViewer*>& ConnectionViewers)
 {
 	auto IsNetRelevantForIdx = FindIsNetRelevantForVft();
 	if (IsNetRelevantForIdx == 0)
-		return true;
-
-	if (WorldPartitionHLODClass && Actor->IsA(WorldPartitionHLODClass))
 		return true;
 
 	bool (*&IsNetRelevantFor)(const AActor*, const AActor*, const AActor*, const FVector&) = decltype(IsNetRelevantFor)(Actor->Vft[IsNetRelevantForIdx]);
@@ -216,6 +211,9 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 			//RemoveNetworkActor(&NetworkObjectList, Actor);
 			continue;
 		}
+
+		if (!Actor->bReplicates)
+			continue;
 
 		bool bAnyRelevant = false;
 		for (auto& ViewerPair : ViewerMap)
@@ -883,7 +881,6 @@ void UNetDriver::PostLoadHook()
 		else
 		{
 			FindGetNamePool();
-			WorldPartitionHLODClass = FindClass("WorldPartitionHLOD");
 		}
 
 		GetActorLocation = (void(*)(AActor*, FFrame&, FVector*))AActor::GetDefaultObj()->GetFunction("K2_GetActorLocation")->GetNativeFunc();

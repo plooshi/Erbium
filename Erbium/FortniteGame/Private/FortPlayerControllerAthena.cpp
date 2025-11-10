@@ -655,13 +655,15 @@ void AFortPlayerControllerAthena::ServerEndEditingBuildingActor(UObject* Context
 
 	SetEditingPlayer(Building, nullptr);
 
-	auto EditToolEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
-		{
-			return entry.ItemDefinition->Class == UFortEditToolItemDefinition::StaticClass();
-		}, FFortItemEntry::Size());
-
 	if (VersionInfo.EngineVersion >= 4.24)
+	{
+		auto EditToolEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+			{
+				return entry.ItemDefinition->Class == UFortEditToolItemDefinition::StaticClass();
+			}, FFortItemEntry::Size());
+
 		PlayerController->MyFortPawn->EquipWeaponDefinition((UFortWeaponItemDefinition*)EditToolEntry->ItemDefinition, EditToolEntry->ItemGuid, EditToolEntry->HasTrackerGuid() ? EditToolEntry->TrackerGuid : FGuid(), false);
+	}
 
 	if (auto EditTool = PlayerController->MyFortPawn->CurrentWeapon->Cast<AFortWeap_EditingTool>())
 	{
