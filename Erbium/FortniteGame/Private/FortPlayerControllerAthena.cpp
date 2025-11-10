@@ -957,41 +957,6 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 			PlayerController->Pawn->CharacterMovement->ProcessEvent(PlayerController->Pawn->CharacterMovement->GetFunction("DisableMovement"), nullptr);
 		}
 
-
-		if (FConfiguration::SiphonAmount > 0 && VersionInfo.EngineVersion <= 5.0 && PlayerController->Pawn && KillerPlayerState && KillerPlayerState->AbilitySystemComponent && KillerPawn && KillerPawn->Controller != PlayerController)
-		{
-			auto Handle = KillerPlayerState->AbilitySystemComponent->MakeEffectContext();
-			FGameplayTag Tag;
-			static auto Cue = FName(L"GameplayCue.Shield.PotionConsumed");
-			Tag.TagName = Cue;
-			auto PredictionKey = (FPredictionKey*)malloc(FPredictionKey::Size());
-			memset((PBYTE)PredictionKey, 0, FPredictionKey::Size());
-			KillerPlayerState->AbilitySystemComponent->NetMulticast_InvokeGameplayCueAdded(Tag, *PredictionKey, Handle);
-			KillerPlayerState->AbilitySystemComponent->NetMulticast_InvokeGameplayCueExecuted(Tag, *PredictionKey, Handle);
-			free(PredictionKey);
-
-			auto Health = KillerPawn->GetHealth();
-			auto Shield = KillerPawn->GetShield();
-
-			if (Health == 100)
-			{
-				Shield += Shield + FConfiguration::SiphonAmount;
-			}
-			else if (Health + FConfiguration::SiphonAmount > 100)
-			{
-				Health = 100;
-				Shield += (Health + FConfiguration::SiphonAmount) - 100;
-			}
-			else if (Health + FConfiguration::SiphonAmount <= 100)
-			{
-				Health += FConfiguration::SiphonAmount;
-			}
-
-			KillerPawn->SetHealth(Health);
-			KillerPawn->SetShield(Shield);
-			//forgot to add this back
-		}
-
 		if (PlayerController->Pawn && KillerPlayerState && KillerPlayerState->Place == 1)
 		{
 			/*if (PlayerState->Place == 1)
@@ -1023,6 +988,40 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 			}
 		}
 
+	}
+
+	if (FConfiguration::SiphonAmount > 0 && PlayerController->Pawn && KillerPlayerState && KillerPlayerState->AbilitySystemComponent && KillerPawn && KillerPawn->Controller != PlayerController)
+	{
+		auto Handle = KillerPlayerState->AbilitySystemComponent->MakeEffectContext();
+		FGameplayTag Tag;
+		static auto Cue = FName(L"GameplayCue.Shield.PotionConsumed");
+		Tag.TagName = Cue;
+		auto PredictionKey = (FPredictionKey*)malloc(FPredictionKey::Size());
+		memset((PBYTE)PredictionKey, 0, FPredictionKey::Size());
+		KillerPlayerState->AbilitySystemComponent->NetMulticast_InvokeGameplayCueAdded(Tag, *PredictionKey, Handle);
+		KillerPlayerState->AbilitySystemComponent->NetMulticast_InvokeGameplayCueExecuted(Tag, *PredictionKey, Handle);
+		free(PredictionKey);
+
+		auto Health = KillerPawn->GetHealth();
+		auto Shield = KillerPawn->GetShield();
+
+		if (Health == 100)
+		{
+			Shield += Shield + FConfiguration::SiphonAmount;
+		}
+		else if (Health + FConfiguration::SiphonAmount > 100)
+		{
+			Health = 100;
+			Shield += (Health + FConfiguration::SiphonAmount) - 100;
+		}
+		else if (Health + FConfiguration::SiphonAmount <= 100)
+		{
+			Health += FConfiguration::SiphonAmount;
+		}
+
+		KillerPawn->SetHealth(Health);
+		KillerPawn->SetShield(Shield);
+		//forgot to add this back
 	}
 
 	return ClientOnPawnDiedOG(PlayerController, DeathReport);
