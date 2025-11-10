@@ -125,7 +125,7 @@ void ABuildingSMActor::ServerSpawnDeco(UObject* Context, FFrame& Stack)
 {
 	ServerSpawnDecoOG(Context, Stack);
 
-	auto AttachedActor = *(ABuildingSMActor**)(Stack.Locals + 0x18);
+	auto AttachedActor = *(ABuildingSMActor**)(Stack.Locals + FVector::Size() + FRotator::Size());
 
 	printf("AttachedActor %s\n", AttachedActor->Name.ToString().c_str());
 }
@@ -153,6 +153,6 @@ void ABuildingSMActor::PostLoadHook()
 
 	Utils::Hook(OnDamageServerAddr, OnDamageServer, OnDamageServerOG);
 
-	//Utils::ExecHook(L"/Script/FortniteGame.FortDecoTool.ServerSpawnDeco", ServerSpawnDeco, ServerSpawnDecoOG);
-	//Utils::ExecHook(L"/Script/FortniteGame.FortDecoTool_ContextTrap.ServerSpawnDeco_Implementation", ServerSpawnDeco_Implementation, ServerSpawnDeco_ImplementationOG);
+	Utils::ExecHook(L"/Script/FortniteGame.FortDecoTool.ServerSpawnDeco", ServerSpawnDeco, ServerSpawnDecoOG);
+	Utils::ExecHook(L"/Script/FortniteGame.FortDecoTool_ContextTrap.ServerSpawnDeco_Implementation", ServerSpawnDeco_Implementation, ServerSpawnDeco_ImplementationOG);
 }

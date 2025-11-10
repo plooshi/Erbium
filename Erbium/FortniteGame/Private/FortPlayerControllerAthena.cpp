@@ -559,8 +559,6 @@ void AFortPlayerControllerAthena::ServerBeginEditingBuildingActor(UObject* Conte
 	if (!PlayerState)
 		return;
 
-	SetEditingPlayer(Building, PlayerState);
-
 	auto EditToolEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
 		{
 			return entry.ItemDefinition->Class == UFortEditToolItemDefinition::StaticClass();
@@ -572,8 +570,10 @@ void AFortPlayerControllerAthena::ServerBeginEditingBuildingActor(UObject* Conte
 	if (auto EditTool = PlayerController->MyFortPawn->CurrentWeapon->Cast<AFortWeap_EditingTool>())
 	{
 		EditTool->EditActor = Building;
-		EditTool->OnRep_EditActor();
+		//EditTool->OnRep_EditActor();
 	}
+
+	SetEditingPlayer(Building, PlayerState);
 }
 
 
@@ -598,7 +598,8 @@ void AFortPlayerControllerAthena::ServerEditBuildingActor(UObject* Context, FFra
 		return;
 	}
 
-	SetEditingPlayer(Building, nullptr);
+	if (VersionInfo.FortniteVersion < 11)
+		SetEditingPlayer(Building, nullptr);
 
 	static auto ReplaceBuildingActor = (ABuildingSMActor * (*)(ABuildingSMActor*, unsigned int, TSubclassOf<AActor>, unsigned int, int, bool, AFortPlayerControllerAthena*)) ReplaceBuildingActor_;
 	static auto ReplaceBuildingActor__New = (ABuildingSMActor * (*)(ABuildingSMActor*, unsigned int, TSubclassOf<AActor>&, unsigned int, int, bool, AFortPlayerControllerAthena*)) ReplaceBuildingActor_;
@@ -639,6 +640,9 @@ void AFortPlayerControllerAthena::ServerEditBuildingActor(UObject* Context, FFra
 	
 	if (NewBuild)
 	{
+		if (VersionInfo.FortniteVersion >= 11)
+			SetEditingPlayer(Building, nullptr);
+
 		NewBuild->bPlayerPlaced = true;
 	}
 }
@@ -1937,6 +1941,8 @@ public:
 	DEFINE_PROP(GrantedWeaponItem, TWeakObjectPtr<UFortWorldItem>);
 	DEFINE_PROP(GrantedWeapon, TWeakObjectPtr<AFortWeapon>);
 	DEFINE_PROP(OnHeldObjectOwningPawnChanged, TMulticastInlineDelegate<void()>);
+	DEFINE_PROP(OnHeldObjectPickedUp, TMulticastInlineDelegate<void()>);
+	DEFINE_PROP(OnHeldObjectDropped, TMulticastInlineDelegate<void()>);
 
 	DEFINE_FUNC(OnRep_OwningPawn, void);
 };
@@ -1990,10 +1996,13 @@ void SetupOwningPawn(UFortHeldObjectComponent* HeldObjectComponent, AFortPlayerP
 	HeldObject->ForceNetUpdate();
 	if (HeldObjectComponent->HasOnHeldObjectOwningPawnChanged())
 		HeldObjectComponent->OnHeldObjectOwningPawnChanged.Process();
-	if (Pawn)
-		Pawn->OnHeldObjectPickedUp.Process(HeldObject);
-	else
-		PreviousPawn->OnHeldObjectDropped.Process(HeldObject);
+	if (Pawn->HasOnHeldObjectPickedUp())
+	{
+		if (Pawn)
+			Pawn->OnHeldObjectPickedUp.Process(HeldObject);
+		else
+			PreviousPawn->OnHeldObjectDropped.Process(HeldObject);
+	}
 }
 
 void PickupHeldObject(UObject* Context, FFrame& Stack)
@@ -2026,6 +2035,7 @@ void PickupHeldObject(UObject* Context, FFrame& Stack)
 		HeldObjectComponent->GrantedWeapon = Weapon;
 		HeldObjectComponent->GrantedWeaponItem = Item;
 	}
+	HeldObjectComponent->OnHeldObjectPickedUp.Process();
 }
 
 
@@ -2108,6 +2118,7 @@ void DropHeldObject(UObject* Context, FFrame& Stack)
 	}
 
 	SetupOwningPawn(HeldObjectComponent, nullptr);
+	HeldObjectComponent->OnHeldObjectDropped.Process();
 }
 
 

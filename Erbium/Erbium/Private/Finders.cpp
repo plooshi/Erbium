@@ -368,7 +368,7 @@ uint64_t FindSetWorld()
             if (!SetWorld)
                 SetWorld = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC ? 4C 8D B9 ? ? ? ? 48 8B FA").Get();
         }
-        else if (VersionInfo.FortniteVersion >= 22 || std::floor(VersionInfo.FortniteVersion) == 19)
+        else if (VersionInfo.FortniteVersion >= 19)
             SetWorld = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC ? 48 8B FA 48 8B D9 48 8B 91 ? ? ? ? 48 85 D2 75").Get();
         else if (VersionInfo.FortniteVersion > 13.20)
         {
@@ -808,7 +808,7 @@ uint64 FindApplyCharacterCustomization()
         else if (std::floor(VersionInfo.FortniteVersion) == 22)
             return ApplyCharacterCustomization = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8B EC 48 81 EC ? ? ? ? 80 B9").Get();
 
-        auto sRef = Memcury::Scanner::FindStringRef(L"AFortPlayerState::ApplyCharacterCustomization - Failed initialization, using default parts. Player Controller: %s PlayerState: %s, HeroId: %s", false, 0, VersionInfo.FortniteVersion >= 17, VersionInfo.FortniteVersion < 20 && VersionInfo.FortniteVersion != 19.01).Get();
+        auto sRef = Memcury::Scanner::FindStringRef(L"AFortPlayerState::ApplyCharacterCustomization - Failed initialization, using default parts. Player Controller: %s PlayerState: %s, HeroId: %s", false, 0, VersionInfo.FortniteVersion >= 17, VersionInfo.FortniteVersion < 20.40 && VersionInfo.FortniteVersion != 19.01).Get();
 
         if (!sRef)
             return 0;
@@ -1744,9 +1744,7 @@ uint64 FindReplicateActor()
             if (!ReplicateActor)
                 ReplicateActor = Memcury::Scanner::FindPattern("40 55 56 41 54 41 55 41 56 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 4C 8B E9 48 8B 49 68 48").Get();
         }
-        else if (std::floor(VersionInfo.FortniteVersion) == 20)
-            return ReplicateActor = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 10 48 89 70 18 48 89 78 20 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 4C 8D 69 68").Get();
-        else if (VersionInfo.FortniteVersion >= 21)
+        else if (VersionInfo.FortniteVersion >= 20)
         {
             auto sRef = Memcury::Scanner::FindStringRef(L"STAT_NetReplicateActorTime").Get();
 
@@ -1816,6 +1814,9 @@ uint64 FindClientHasInitializedLevelFor()
 
         if (!ClientHasInitializedLevelFor)
             ClientHasInitializedLevelFor = Memcury::Scanner::FindPattern("40 53 48 83 EC ? 48 8B D9 48 8B CA E8 ? ? ? ? 48 8B C8 E8 ? ? ? ? 4C 8D 9B").Get();
+
+        if (!ClientHasInitializedLevelFor)
+            ClientHasInitializedLevelFor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC 20 8B 81 ? ? ? ? 48 8B F9 48 8B 5A ? 3B 81").Get();
     }
 
     return ClientHasInitializedLevelFor;
