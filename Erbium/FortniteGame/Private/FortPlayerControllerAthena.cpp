@@ -1255,7 +1255,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 			UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bPausedZone = false;
 			if (GameMode->HasbSafeZonePaused())
 				GameMode->bSafeZonePaused = false;
-			//UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startsafezone"), nullptr);
+			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startsafezone"), nullptr);
 			PlayerController->ClientMessage(FString(L"Resumed the safe zone."), FName(), 1);
 		}
 		else if (command == "pausesafezone")
@@ -1263,7 +1263,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 			UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bPausedZone = true;
 			if (GameMode->HasbSafeZonePaused())
 				GameMode->bSafeZonePaused = true;
-			//UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"pausesafezone"), nullptr);
+			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"pausesafezone"), nullptr);
 			PlayerController->ClientMessage(FString(L"Paused the safe zone."), FName(), 1);
 		}
 		else if (command == "skipsafezone")
