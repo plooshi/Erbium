@@ -1734,10 +1734,11 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 		}
 		else if (command == "resetbuilds" || command == "reset")
 		{
-			auto Builds = Utils::GetAll<ABuildingSMActor>();
+			auto Builds = Utils::GetAll<AActor>();
 			
 			for (auto& Build : Builds)
-				if (Build->bPlayerPlaced)
+				if (!Build->Name.ToString().contains("Gas") && !Build->bAlwaysRelevant && !Build->bOnlyRelevantToOwner && !Build->IsA<AFortPlayerPawnAthena>())
+				//if (Build->bPlayerPlaced)
 					Build->K2_DestroyActor();
 
 			Builds.Free();
@@ -2062,11 +2063,21 @@ void DropHeldObject(UObject* Context, FFrame& Stack)
 	printf("DropHeldObject\n");
 	auto HeldObjectComponent = (UFortHeldObjectComponent*)Context;
 
-	if (!HeldObjectComponent->OwningPawn)
+	AFortPlayerPawnAthena* OwningPawn = nullptr;
+
+	if (HeldObjectComponent->HasOwningPawn())
+		OwningPawn = HeldObjectComponent->OwningPawn;
+	else
+	{
+		// its a weakobjectptr on older builds
+		static auto OwningPawnOff = HeldObjectComponent->GetOffset("OwningPawn", 0x8000000);
+		OwningPawn = (*(TWeakObjectPtr<AFortPlayerPawnAthena>*)(__int64(HeldObjectComponent) + OwningPawnOff)).Get();
+	}
+	if (!OwningPawn)
 		return;
 
 
-	auto PlayerController = (AFortPlayerControllerAthena*)HeldObjectComponent->OwningPawn->Controller;
+	auto PlayerController = (AFortPlayerControllerAthena*)OwningPawn->Controller;
 
 	/*auto Item = HeldObjectComponent->GrantedWeaponItem.Get();
 

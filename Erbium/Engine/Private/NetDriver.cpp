@@ -195,8 +195,8 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 	FFrame FakeStack;
 	for (auto& ActorInfo : ActiveNetworkObjects)
 	{
-		//if (/*!ActorInfo->bPendingNetUpdate && */TimeSeconds <= ActorInfo->NextUpdateTime)
-		//	continue;
+		if (/*!ActorInfo->bPendingNetUpdate && */TimeSeconds <= ActorInfo->NextUpdateTime)
+			continue;
 
 		auto Actor = ActorInfo->Actor;
 
@@ -208,6 +208,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 		auto Outer = Actor->Outer;
 		if (Actor->bActorIsBeingDestroyed || (TUObjectArray::GetItemByIndex(Actor->Index)->Flags & ((1 << 29) | (1 << 21))) || Actor->RemoteRole == 0 || ((Actor->HasbNetStartup() ? Actor->bNetStartup : false) && Actor->NetDormancy == 4))
 		{
+			ActorInfo->NextUpdateTime = 43857458734643857485478534.f; // never gonna update lol
 			//RemoveNetworkActor(&NetworkObjectList, Actor);
 			continue;
 		}
