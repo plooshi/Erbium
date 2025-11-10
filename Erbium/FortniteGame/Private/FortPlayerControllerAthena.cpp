@@ -49,6 +49,12 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 
 	auto Num = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num();
 
+	auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
+	if (Playlist && Playlist->RespawnType > 0)
+	{
+		if (FConfiguration::bLateGame)
+			PlayerController->MyFortPawn->SetShield(100.f);
+	}
 	if (!FConfiguration::bKeepInventory)
 	{	
 		UEAllocatedVector<FGuid> GuidsToRemove;
@@ -60,6 +66,7 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 			{
 				//NewPlayer->WorldInventory->Inventorxy.ReplicatedEntries.Remove(i, FFortItemEntry::Size());
 				//i--;
+
 				GuidsToRemove.push_back(Entry.ItemGuid);
 			}
 		}
@@ -851,7 +858,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 	auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 	auto PlayerState = (AFortPlayerStateAthena*)PlayerController->PlayerState;
 
-	if (!GameState->IsRespawningAllowed(PlayerState) && PlayerController->WorldInventory && PlayerController->Pawn)
+	if ((!GameState->IsRespawningAllowed(PlayerState) && !FConfiguration::bLateGame) && PlayerController->WorldInventory && PlayerController->Pawn)
 	{
 		bool bHasMats = false;
 		for (int i = 0; i < PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num(); i++)

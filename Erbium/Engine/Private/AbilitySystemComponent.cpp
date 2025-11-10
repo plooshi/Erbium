@@ -9,6 +9,7 @@ FGameplayAbilitySpecHandle UAbilitySystemComponent::GiveAbility(const UObject* A
 {
     if (!this || !Ability)
         return {};
+    printf("GiveAbilitySet[%s]\n", Ability->Name.ToString().c_str());
 
     auto Spec = (FGameplayAbilitySpec*) malloc(FGameplayAbilitySpec::Size());
     memset(PBYTE(Spec), 0, FGameplayAbilitySpec::Size());
@@ -49,6 +50,7 @@ void UAbilitySystemComponent::GiveAbilitySet(const UFortAbilitySet* Set)
         UFortKismetLibrary::EquipFortAbilitySet(ScriptInterface, Set, nullptr);
     else */if (Set)
     {
+        printf("GiveAbilitySet[%s]\n", Set->Name.ToString().c_str());
         for (auto& GameplayAbility : Set->GameplayAbilities)
             GiveAbility(GameplayAbility->GetDefaultObj());
     }
