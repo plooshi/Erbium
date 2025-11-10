@@ -1734,11 +1734,10 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 		}
 		else if (command == "resetbuilds" || command == "reset")
 		{
-			auto Builds = Utils::GetAll<AActor>();
+			auto Builds = Utils::GetAll<ABuildingSMActor>();
 			
 			for (auto& Build : Builds)
-				if (!Build->Name.ToString().contains("Gas") && !Build->bAlwaysRelevant && !Build->bOnlyRelevantToOwner && !Build->IsA<AFortPlayerPawnAthena>())
-				//if (Build->bPlayerPlaced)
+				if (Build->bPlayerPlaced)
 					Build->K2_DestroyActor();
 
 			Builds.Free();
