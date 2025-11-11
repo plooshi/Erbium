@@ -368,8 +368,6 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 		uint8_t Padding[0x18];
 	};
 
-	auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
-
 	FBuildingClassData BuildingClassData;
 	if (VersionInfo.FortniteVersion >= 8.30)
 	{
@@ -419,6 +417,7 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 		Stack.StepCompiledIn(&BuildRot);
 		Stack.StepCompiledIn(&bMirrored);
 
+		auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
 		static auto HasAllPlayerBuildableClasses = GameState->HasAllPlayerBuildableClasses();
 		if (HasAllPlayerBuildableClasses && !GameState->AllPlayerBuildableClasses.Contains(BuildingClassData.BuildingClass))
 		{
@@ -488,8 +487,9 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	if (!Building)
 		return;
 
-	static auto UpgradeLevelOffset = FBuildingClassData::StaticStruct()->GetOffset("UpgradeLevel");
-	Building->CurrentBuildingLevel = VersionInfo.EngineVersion >= 5.3 ? *(uint8*)(__int64(&BuildingClassData) + UpgradeLevelOffset) : *(uint32*)(__int64(&BuildingClassData) + UpgradeLevelOffset);
+	//static auto UpgradeLevelOffset = FBuildingClassData::StaticStruct()->GetOffset("UpgradeLevel");
+	//Building->CurrentBuildingLevel = VersionInfo.EngineVersion >= 5.3 ? *(uint8*)(__int64(&BuildingClassData) + UpgradeLevelOffset) : *(uint32*)(__int64(&BuildingClassData) + UpgradeLevelOffset);
+	//Building->OnRep_CurrentBuildingLevel();
 
 	Building->SetMirrored(bMirrored);
 
