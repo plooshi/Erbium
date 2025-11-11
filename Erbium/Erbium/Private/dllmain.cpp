@@ -55,7 +55,19 @@ void Main()
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"log LogFortUIDirector None"), nullptr);
     }
     if (VersionInfo.EngineVersion >= 5.1)
+    {
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"net.AllowEncryption 0"), nullptr);
+    
+        auto DefaultCurieGlobals = FindClass("CurieGlobals")->GetDefaultObj();
+        
+        if (DefaultCurieGlobals)
+        {
+            uint32 Offset = DefaultCurieGlobals->GetOffset("bEnableCurie");
+            
+            if (Offset != -1)
+                *(bool*)(uintptr_t(DefaultCurieGlobals) + Offset) = false;
+        }
+    }
     if (VersionInfo.EngineVersion >= 5.3 && FConfiguration::bEnableIris)
     {
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"log LogIris None"), nullptr);
