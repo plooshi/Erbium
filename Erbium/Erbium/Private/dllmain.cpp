@@ -57,12 +57,15 @@ void Main()
     if (VersionInfo.EngineVersion >= 5.1)
     {
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"net.AllowEncryption 0"), nullptr);
-        auto CurieGlobals = FindClass("CurieGlobals")->GetDefaultObj();
-        if (CurieGlobals)
+    
+        auto DefaultCurieGlobals = FindClass("CurieGlobals")->GetDefaultObj();
+        
+        if (DefaultCurieGlobals)
         {
-            uint32 Offset = CurieGlobals->GetOffset("bEnableCurie");
+            uint32 Offset = DefaultCurieGlobals->GetOffset("bEnableCurie");
+            
             if (Offset != -1)
-                *reinterpret_cast<bool*>(uintptr_t(CurieGlobals) + Offset) = false;
+                *(bool*)(uintptr_t(DefaultCurieGlobals) + Offset) = false;
         }
     }
     if (VersionInfo.EngineVersion >= 5.3 && FConfiguration::bEnableIris)
