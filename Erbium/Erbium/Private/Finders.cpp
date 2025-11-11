@@ -1265,7 +1265,7 @@ uint64_t FindOnRep_ZiplineState()
 
         if (sRef)
         {
-            for (int i = 0; i < 400; i++)
+            for (int i = 0; i < 0x400; i++)
             {
                 if (*(uint8_t*)(sRef - i) == 0x40 && *(uint8_t*)(sRef - i + 1) == 0x53)
                     return OnRep_ZiplineState = sRef - i;
@@ -2587,10 +2587,10 @@ void FindNullsAndRetTrues()
     }
     else if (VersionInfo.EngineVersion >= 5.3)
     {
-        auto pattern = Memcury::Scanner::FindPattern("48 89 5C ? ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC ? ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 8B F2 4C 8B F1 E8").Get();
+        auto pattern = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 4C 8B FA 48 8B F1 E8 ? ? ? ? 48 8B 0D").Get();
 
         if (!pattern)
-            pattern = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 4C 8B FA 48 8B F1 E8 ? ? ? ? 48 8B 0D").Get();
+            pattern = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 8B F2 4C 8B F1 E8 ? ? ? ? 48 8B 0D").Get();
 
         NullFuncs.push_back(pattern);
     }

@@ -482,14 +482,20 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 		RemoveBuilding->K2_DestroyActor();
 	RemoveBuildings.Free();
 
-	ABuildingSMActor* Building = UWorld::SpawnActor<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, PlayerController);
+	static auto K2_SpawnBuildingActor = ABuildingSMActor::GetDefaultObj()->GetFunction("K2_SpawnBuildingActor");
 
-	if (!Building)
-		return;
+	ABuildingSMActor* Building = nullptr;
+	if (K2_SpawnBuildingActor)
+	{
+		FTransform SpawnTransform(BuildLoc, BuildRot);
+		Building = ABuildingSMActor::K2_SpawnBuildingActor(PlayerController, BuildingClass, SpawnTransform, PlayerController, nullptr, false, false);
+	}
+	else
+		Building = UWorld::SpawnActor<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, PlayerController);
 
-	//static auto UpgradeLevelOffset = FBuildingClassData::StaticStruct()->GetOffset("UpgradeLevel");
-	//Building->CurrentBuildingLevel = VersionInfo.EngineVersion >= 5.3 ? *(uint8*)(__int64(&BuildingClassData) + UpgradeLevelOffset) : *(uint32*)(__int64(&BuildingClassData) + UpgradeLevelOffset);
-	//Building->OnRep_CurrentBuildingLevel();
+	static auto UpgradeLevelOffset = FBuildingClassData::StaticStruct()->GetOffset("UpgradeLevel");
+	Building->CurrentBuildingLevel = VersionInfo.EngineVersion >= 5.3 ? *(uint8*)(__int64(&BuildingClassData) + UpgradeLevelOffset) : *(uint32*)(__int64(&BuildingClassData) + UpgradeLevelOffset);
+	Building->OnRep_CurrentBuildingLevel();
 
 	Building->SetMirrored(bMirrored);
 
@@ -872,7 +878,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 	auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 	auto PlayerState = (AFortPlayerStateAthena*)PlayerController->PlayerState;
 
-	if ((!GameState->IsRespawningAllowed(PlayerState) || (FConfiguration::bLateGame && !FConfiguration::bKeepInventory)) && PlayerController->WorldInventory && PlayerController->Pawn)
+	if (PlayerController->WorldInventory && PlayerController->Pawn && ((PlayerController->Pawn->HasbShouldDropItemsOnDeath() ? PlayerController->Pawn->bShouldDropItemsOnDeath : true) && !FConfiguration::bKeepInventory))
 	{
 		bool bHasMats = false;
 		for (int i = 0; i < PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
@@ -1467,6 +1473,17 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				static auto Commando2 = FindObject(L"/Game/Athena/Heroes/HID_Commando_Athena_01.HID_Commando_Athena_01", nullptr);
 				PlayerState->HeroType = Commando ? Commando : Commando2;
 
+				static auto CharacterPartsOffset = PlayerState->GetOffset("CharacterParts");
+				auto& CharacterParts = GetFromOffset<const UObject * [0x6]>(PlayerState, CharacterPartsOffset);
+
+				static auto Head = FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Heads/F_Med_Head1.F_Med_Head1");
+				static auto Body = FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Bodies/F_Med_Soldier_01.F_Med_Soldier_01");
+				static auto Backpack = FindObject<UObject>(L"/Game/Characters/CharacterParts/Backpacks/NoBackpack.NoBackpack");
+
+				CharacterParts[0] = Head;
+				CharacterParts[1] = Body;
+				CharacterParts[3] = Backpack;
+				
 				if (ApplyCharacterCustomization)
 					((void (*)(AActor*, AFortPlayerPawnAthena*)) ApplyCharacterCustomization)(PlayerState, Pawn);
 
@@ -1474,7 +1491,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 
 				PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
 
-				static auto SmartItemDefClass = FindClass("FortSmartBuildingItemDefinition");
+				static auto SmartItem	DefClass = FindClass("FortSmartBuildingItemDefinition");
 
 				for (int i = 0; i < GameMode->StartingItems.Num(); i++)
 				{
@@ -1913,6 +1930,7 @@ void AFortPlayerControllerAthena::ServerDropAllItems(UObject* Context, FFrame& S
 	Stack.StepCompiledIn(&IgnoreItemDef);
 	Stack.IncrementCode();
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+	printf("ServerDropAllItems[Ignore %s]\n", IgnoreItemDef ? IgnoreItemDef->Name.ToString().c_str() : nullptr);
 
 	auto Loc = PlayerController->MyFortPawn->K2_GetActorLocation();
 	for (int i = 0; i < PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num(); i++)

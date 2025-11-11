@@ -142,7 +142,7 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 	bool foundAmmo = false;
 	for (auto& LootDrop : LootDrops)
 	{
-		if (/*(!AmmoDef || AmmoDef->DropCount) && */LootDrop->ItemDefinition == ItemDefinition)
+		if (/*(!AmmoDef || AmmoDef->DropCount) && */LootDrop->ItemDefinition == ItemDefinition && LootDrop->Count < ItemDefinition->GetMaxStackSize())
 		{
 			LootDrop->Count += LootPackage->Count;
 
@@ -157,6 +157,7 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 
 			//if (Inventory::GetQuickbar(LootDrop.ItemDefinition) == EFortQuickBars::Secondary)
 			found = true;
+			break;
 		}
 
 		/*if (AmmoDef && LootDrop->ItemDefinition == AmmoDef)

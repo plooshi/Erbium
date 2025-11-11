@@ -351,7 +351,7 @@ bool RetFalse()
 
 void Misc::Hook()
 {
-	if (VersionInfo.FortniteVersion >= 25 && VersionInfo.FortniteVersion < 28)
+	if ((VersionInfo.FortniteVersion >= 25 && VersionInfo.FortniteVersion < 28.30) || VersionInfo.FortniteVersion >= 30)
 	{
 		auto AttemptDeriveFromURL = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 4C 8B C1").Get();
 		if (!AttemptDeriveFromURL)

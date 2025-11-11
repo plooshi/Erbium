@@ -87,6 +87,7 @@ public:
     DEFINE_BITFIELD_PROP(bIsPlayingEmote);
     DEFINE_PROP(HealthSet, UFortHealthSet*);
     DEFINE_PROP(CurrentWeaponList, TArray<AActor*>);
+    DEFINE_PROP(bShouldDropItemsOnDeath, bool);
 
     DEFINE_FUNC(BeginSkydiving, void);
     DEFINE_FUNC(GetHealth, float);

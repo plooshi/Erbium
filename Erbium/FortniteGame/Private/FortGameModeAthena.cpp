@@ -20,6 +20,7 @@
 #include "../../Erbium/Public/Events.h"
 #include "../Public/BattleRoyaleGamePhaseLogic.h"
 #include "../Public/FortAthenaCreativePortal.h"
+#include "../Public/FortPhysicsPawn.h"
 
 void ShowFoundation(const ABuildingFoundation* Foundation)
 {
@@ -279,6 +280,22 @@ float Sum = 0;
 float Weight;
 float TotalWeight;
 
+class AFortAthenaLivingWorldStaticPointProvider : public AActor
+{
+public:
+    UCLASS_COMMON_MEMBERS(AFortAthenaLivingWorldStaticPointProvider);
+
+    DEFINE_PROP(FiltersTags, FGameplayTagContainer);
+};
+
+class AFortAthenaVehicleSpawner : public AActor
+{
+public:
+    UCLASS_COMMON_MEMBERS(AFortAthenaVehicleSpawner);
+
+    DEFINE_FUNC(GetVehicleClass, UClass*);
+};
+
 void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Ret)
 {
     Stack.IncrementCode();
@@ -372,16 +389,18 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         auto StartsNum = Starts.Num();
         Starts.Free();
 
-        static bool bHasMapInfo = true;
-
-        if (wcsstr(FConfiguration::Playlist, L"/MoleGame/Playlists/Playlist_MoleGame"))
-            bHasMapInfo = false;
-
-        if (StartsNum == 0 || (bHasMapInfo && !GameState->MapInfo))
+        if (StartsNum == 0)
         {
             *Ret = false;
             return;
         }
+        static auto AllMapInfos = Utils::GetAll<AFortAthenaMapInfo>();
+        if (AllMapInfos.Num() > 0 && !GameState->MapInfo)
+        {
+            *Ret = false;
+            return;
+        }
+        printf("World is ready! %d\n", Utils::GetAll<ABuildingItemCollectorActor>().Num());
 
         if (VersionInfo.FortniteVersion >= 3.5 && VersionInfo.FortniteVersion <= 4.0)
             SetupPlaylist(GameMode, GameState);
@@ -690,7 +709,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
                 }
             }
 
-        if (floor(VersionInfo.FortniteVersion) != 20)
+        /*if (floor(VersionInfo.FortniteVersion) != 20)
         {
             UFortLootPackage::SpawnFloorLootForContainer(FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_Warmup.Tiered_Athena_FloorLoot_Warmup_C"));
             UFortLootPackage::SpawnFloorLootForContainer(FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_01.Tiered_Athena_FloorLoot_01_C"));
@@ -699,7 +718,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         auto ConsumableSpawners = Utils::GetAll<ABGAConsumableSpawner>();
 
         for (auto& Spawner : ConsumableSpawners)
-            UFortLootPackage::SpawnConsumableActor(Spawner);
+            UFortLootPackage::SpawnConsumableActor(Spawner);*/
 
         if (VersionInfo.EngineVersion >= 4.27)
         {
@@ -1026,11 +1045,73 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
         if (!bFinalSetup)
         {
             bFinalSetup = true;
+            
+            UFortLootPackage::SpawnFloorLootForContainer(FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_Warmup.Tiered_Athena_FloorLoot_Warmup_C"));
+            UFortLootPackage::SpawnFloorLootForContainer(FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_01.Tiered_Athena_FloorLoot_01_C"));
 
-            if (floor(VersionInfo.FortniteVersion) == 20)
+            auto ConsumableSpawners = Utils::GetAll<ABGAConsumableSpawner>();
+
+            for (auto& Spawner : ConsumableSpawners)
+                UFortLootPackage::SpawnConsumableActor(Spawner);
+
+            ConsumableSpawners.Free();
+
+            if (VersionInfo.FortniteVersion >= 22)
             {
-                UFortLootPackage::SpawnFloorLootForContainer(FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_Warmup.Tiered_Athena_FloorLoot_Warmup_C"));
-                UFortLootPackage::SpawnFloorLootForContainer(FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_01.Tiered_Athena_FloorLoot_01_C"));
+                auto Spawners = Utils::GetAll<AFortAthenaLivingWorldStaticPointProvider>();
+                UEAllocatedMap<FName, const UClass*> VehicleSpawnerMap =
+                {
+                    { FName(L"Athena.Vehicle.SpawnLocation.Motorcycle.Dirtbike"), FindObject<UClass>(L"/Dirtbike/Vehicle/Motorcycle_DirtBike_Vehicle.Motorcycle_DirtBike_Vehicle_C") },
+                    { FName(L"Athena.Vehicle.SpawnLocation.Motorcycle.Sportbike"), FindObject<UClass>(L"/Sportbike/Vehicle/Motorcycle_Sport_Vehicle.Motorcycle_Sport_Vehicle_C") },
+                    { FName(L"Athena.Vehicle.SpawnLocation.Valet.BasicCar.Taxi"), FindObject<UClass>(L"/Valet/TaxiCab/Valet_TaxiCab_Vehicle.Valet_TaxiCab_Vehicle_C") },
+                    { FName(L"Athena.Vehicle.SpawnLocation.Valet.BasicCar.Modded"), FindObject<UClass>(L"/ModdedBasicCar/Vehicle/Valet_BasicCar_Vehicle_SuperSedan.Valet_BasicCar_Vehicle_SuperSedan_C") },
+                    { FName(L"Athena.Vehicle.SpawnLocation.Valet.BasicTruck.Upgraded"), FindObject<UClass>(L"/Valet/BasicTruck/Valet_BasicTruck_Vehicle_Upgrade.Valet_BasicTruck_Vehicle_Upgrade_C") },
+                    { FName(L"Athena.Vehicle.SpawnLocation.Valet.BigRig.Upgraded"), FindObject<UClass>(L"/Valet/BigRig/Valet_BigRig_Vehicle_Upgrade.Valet_BigRig_Vehicle_Upgrade_C") },
+                    { FName(L"Athena.Vehicle.SpawnLocation.Valet.SportsCar.Upgraded"), FindObject<UClass>(L"/Valet/SportsCar/Valet_SportsCar_Vehicle_Upgrade.Valet_SportsCar_Vehicle_Upgrade_C") },
+                    { FName(L"Athena.Vehicle.SpawnLocation.Valet.BasicCar.Upgraded"), FindObject<UClass>(L"/Valet/BasicCar/Valet_BasicCar_Vehicle_Upgrade.Valet_BasicCar_Vehicle_Upgrade_C") }
+                };
+
+                for (auto& Spawner : Spawners)
+                {
+                    const UClass* VehicleClass = nullptr;
+                    for (int i = 0; i < Spawner->FiltersTags.GameplayTags.Num(); i++)
+                    {
+                        auto& Tag = Spawner->FiltersTags.GameplayTags.Get(i, FGameplayTag::Size());
+
+                        if (VehicleSpawnerMap.contains(Tag.TagName))
+                        {
+                            VehicleClass = VehicleSpawnerMap[Tag.TagName];
+                            break;
+                        }
+                    }
+
+                    if (VehicleClass)
+                    {
+                        auto Vehicle = UWorld::SpawnActor<AFortAthenaVehicle>(VehicleClass, Spawner->K2_GetActorLocation(), Spawner->K2_GetActorRotation());
+
+                        //printf("Spawned a %s\n", Spawner->Name.ToString().c_str());
+                    }
+                    else 
+                    {
+                        for (auto& Tag : Spawner->FiltersTags.GameplayTags)
+                            printf("Fix: Tag: %s\n", Tag.TagName.ToString().c_str());
+                    }
+                }
+                Spawners.Free();
+            }
+            else if (VersionInfo.FortniteVersion >= 4.23 && VersionInfo.FortniteVersion < 20) // its auto on s20 & s21
+            {
+                auto Spawners = Utils::GetAll<AFortAthenaVehicleSpawner>();
+
+                for (auto& Spawner : Spawners)
+                {
+                    auto Vehicle = UWorld::SpawnActor<AFortAthenaVehicle>(Spawner->GetVehicleClass(), Spawner->K2_GetActorLocation(), Spawner->K2_GetActorRotation());
+
+                    if (auto Car = Vehicle->Cast<AFortDagwoodVehicle>())
+                        Car->SetFuel(100.f);
+                }
+
+                Spawners.Free();
             }
 
             if (VersionInfo.FortniteVersion > 3.4)

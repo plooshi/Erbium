@@ -72,3 +72,11 @@ public:
 
     static void ServerUpdateTowhook(UObject*, FFrame&);
 };
+
+class AFortDagwoodVehicle : public AFortAthenaVehicle
+{
+public:
+    UCLASS_COMMON_MEMBERS(AFortDagwoodVehicle);
+
+    DEFINE_FUNC(SetFuel, float);
+};

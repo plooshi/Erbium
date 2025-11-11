@@ -11,14 +11,12 @@
 #include "../Public/GUI.h"
 #include "../../Erbium/Plugins/CrashReporter/Public/CrashReporter.h"
 #include "../../FortniteGame/Public/FortPlayerControllerAthena.h"
-#ifndef CLIENT
 #pragma comment(lib, "libcurl/libcurl.lib")
 #pragma comment(lib, "libcurl/zlib.lib")
 #pragma comment(lib, "Ws2_32.lib")
 #pragma comment(lib, "Wldap32.lib")
 #pragma comment(lib, "Crypt32.lib")
 #pragma comment(lib, "Normaliz.lib")
-#endif
 
 void Main()
 {
@@ -87,8 +85,8 @@ void Main()
     SetConsoleTitleA(GUI::windowTitle);
 
 
-    if constexpr (!FConfiguration::bGUI)
-        Sleep(2000);
+    //if constexpr (!FConfiguration::bGUI)
+    //    Sleep(2000);
 
     printf("Hooking & finding offsets... (this may take a while)\n");
 
