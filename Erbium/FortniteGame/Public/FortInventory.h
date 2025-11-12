@@ -307,6 +307,8 @@ public:
 
     DEFINE_PROP(BlueprintClass, TSoftClassPtr<UClass>);
     DEFINE_BITFIELD_PROP(bReplacesBuildingWhenPlaced);
+    DEFINE_PROP(AutoCreateAttachmentBuildingResourceType, EFortResourceType);
+    DEFINE_PROP(AutoCreateAttachmentBuildingShapes, TArray<TSoftObjectPtr<UObject>>);
 };
 
 class UFortBuildingItemDefinition : public UFortWorldItemDefinition

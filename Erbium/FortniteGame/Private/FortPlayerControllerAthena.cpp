@@ -338,16 +338,6 @@ bool CanBePlacedByPlayer(TSubclassOf<AActor> BuildClass)
 		{ return Class == BuildClass; }) != 0 : true;
 }
 
-struct FBuildingClassData 
-{
-public:
-	USCRIPTSTRUCT_COMMON_MEMBERS(FBuildingClassData);
-
-	TSubclassOf<AActor> BuildingClass;
-	int PreviousBuildingLevel;
-	int UpgradeLevel;
-};
-
 uint64_t CantBuild_ = 0;
 uint64_t CanAffordToPlaceBuildableClass_;
 uint64_t PayBuildableClassPlacementCost_;
@@ -507,7 +497,7 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	if (!PlayerController->bBuildFree && !FConfiguration::bInfiniteMats)
 	{
 		auto PayBuildableClassPlacementCost = (int(*)(AFortPlayerControllerAthena*, FBuildingClassData)) PayBuildableClassPlacementCost_;
-
+		
 		PayBuildableClassPlacementCost(PlayerController, BuildingClassData);
 	}
 

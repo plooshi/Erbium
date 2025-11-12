@@ -114,6 +114,16 @@ public:
     DEFINE_FUNC(OnRep_bActive, void);
 };
 
+struct FBuildingClassData
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FBuildingClassData);
+
+    TSubclassOf<AActor> BuildingClass;
+    int PreviousBuildingLevel;
+    int UpgradeLevel;
+};
+
 inline const UCurveTable* GameData = nullptr;
 class AFortPlayerControllerAthena : public AActor
 {
@@ -149,6 +159,7 @@ public:
     DEFINE_PROP(StrongMyHero, UObject*);
     DEFINE_PROP(OwnedPortal, AActor*);
     DEFINE_PROP(CreativePlotLinkedVolume, AFortVolume*);
+    DEFINE_PROP(CurrentResourceType, EFortResourceType);
 
     DEFINE_FUNC(GetViewTarget, AActor*);
     DEFINE_FUNC(GetControlRotation, FRotator);

@@ -14,6 +14,14 @@ enum class EFortResourceType : uint8
     None = 5
 };
 
+class EFortResourceType__Enum
+{
+public:
+    UENUM_COMMON_MEMBERS(EFortResourceType);
+    
+    DEFINE_ENUM_PROP(None);
+};
+
 struct FTierMeshSets final
 {
 public:
@@ -43,6 +51,7 @@ public:
     DEFINE_FUNC(ServerSpawnDeco, void);
 
     DefUHookOg(ServerSpawnDeco_);
+    DefUHookOg(ServerCreateBuildingAndSpawnDeco);
 };
 
 class UFortContextTrapItemDefinition : public UObject
@@ -88,6 +97,8 @@ public:
     DEFINE_PROP(OnReplacementDestruction, TMulticastInlineDelegate<void(uint8_t, ABuildingSMActor*)>);
     DEFINE_PROP(AttachedBuildingActors, TArray<ABuildingSMActor*>);
     DEFINE_BITFIELD_PROP(bHiddenDueToTrapPlacement);
+    DEFINE_PROP(BuildingType, uint8);
+    DEFINE_PROP(EditModePatternData, UObject*);
 
     FBuildingSMActorClassData* GetClassData() const
     {

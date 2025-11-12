@@ -829,8 +829,8 @@ namespace Memcury
                                 if (bUseFirstResult)
                                     return Scanner(add);
 
-                                /* if (++aa > useRefNum)
-                                    break; */
+                                if (++aa > useRefNum)
+                                    return Scanner(add);
                             }
                         }
                     }
@@ -855,8 +855,8 @@ namespace Memcury
                                 if (bUseFirstResult)
                                     return Scanner(add);
 
-                                /* if (++aa > useRefNum)
-                                    break; */
+                                if (++aa > useRefNum)
+                                    return Scanner(add);
                             }
                         }
                     }
@@ -1047,7 +1047,7 @@ namespace Memcury
                                             {
                                                 add = PE::Address(&scanBytes[i + q]);
 
-                                                if (++aa > useRefNum)
+                                                if ((!bIsInFunc || bUE51) && ++aa > useRefNum)
                                                     goto _out;
                                             }
                                         }
@@ -1061,7 +1061,7 @@ namespace Memcury
                                                 {
                                                     add = PE::Address(&scanBytes[i + q]);
 
-                                                    if (++aa > useRefNum)
+                                                    if ((!bIsInFunc || bUE51) && ++aa > useRefNum)
                                                         goto _out;
                                                 }
                                             }
@@ -1071,7 +1071,7 @@ namespace Memcury
                                                 {
                                                     add = PE::Address(&scanBytes[i + q]);
 
-                                                    if (++aa > useRefNum)
+                                                    if ((!bIsInFunc || bUE51) && ++aa > useRefNum)
                                                         goto _out;
                                                 }
                                             }
@@ -1122,7 +1122,7 @@ namespace Memcury
 
                            auto beginFunc = Scanner(add.Get() - i - sub);
 
-                           auto ref = FindPointerRef(beginFunc.GetAs<void*>());
+                           auto ref = FindPointerRef(beginFunc.GetAs<void*>(), useRefNum);
 
                            if (ref.Get())
                                return ref;
@@ -1613,7 +1613,7 @@ inline uintptr_t FindNameRef(const wchar_t* Name, int skip = 0, bool bWarnString
 
     auto FunctionPtr = StringRef.ScanFor({ 0x48, 0x8D, 0x0D }).RelativeOffset(3).GetAs<void*>();
 
-    auto PtrRef = Memcury::Scanner::FindPointerRef(FunctionPtr);
+    auto PtrRef = Memcury::Scanner::FindPointerRef(FunctionPtr, 55564434);
 
     return PtrRef.Get();
 }

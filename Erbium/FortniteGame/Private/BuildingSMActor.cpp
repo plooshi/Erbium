@@ -121,7 +121,7 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 
 
 	if (ResCount > 0)
-		Controller->ClientReportDamagedResourceBuilding(Actor, ResCount == 0 ? EFortResourceType::None : Actor->ResourceType, ResCount, Actor->GetHealth() - Damage <= 0, Damage == 100.f);
+		Controller->ClientReportDamagedResourceBuilding(Actor, ResCount == 0 ? EFortResourceType(EFortResourceType__Enum::GetNone()) : Actor->ResourceType, ResCount, Actor->GetHealth() - Damage <= 0, Damage == 100.f);
 
 	Actor->ForceNetUpdate();
 	return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
@@ -309,6 +309,200 @@ void AFortDecoTool_ContextTrap::ServerSpawnDeco_Implementation(UObject* Context,
 }
 
 
+uint8 GetBuildingTypeFromBuildingAttachmentType(uint8 BuildingAttachmentType)
+{
+	if (uint8(BuildingAttachmentType) <= 7)
+	{
+		LONG Val = 0xC5;
+		if (BitTest(&Val, uint8(BuildingAttachmentType)))
+			return 1;
+	}
+	if (BuildingAttachmentType == 1)
+		return 0;
+	return 12;
+}
+
+extern uint64_t PayBuildableClassPlacementCost_;
+extern uint64_t CanAffordToPlaceBuildableClass_;
+extern uint64_t CantBuild_;
+void AFortDecoTool::ServerCreateBuildingAndSpawnDeco(UObject* Context, FFrame& Stack)
+{
+	FVector BuildingLocation;
+	FRotator BuildingRotation;
+	FVector Location;
+	FRotator Rotation;
+	uint8_t InBuildingAttachmentType;
+	bool bSpawnDecoOnExtraPiece;
+	FVector BuildingExtraPieceLocation;
+	Stack.StepCompiledIn(&BuildingLocation);
+	Stack.StepCompiledIn(&BuildingRotation);
+	Stack.StepCompiledIn(&Location);
+	Stack.StepCompiledIn(&Rotation);
+	Stack.StepCompiledIn(&InBuildingAttachmentType);
+	Stack.StepCompiledIn(&bSpawnDecoOnExtraPiece);
+	Stack.StepCompiledIn(&BuildingExtraPieceLocation);
+	Stack.IncrementCode();
+	auto Tool = (AFortDecoTool*)Context;
+
+	auto Pawn = (AFortPlayerPawnAthena*)Tool->Owner;
+	if (!Pawn) 
+		return;
+
+	auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
+	if (!PlayerController) 
+		return;
+
+	auto ItemDefinition = (UFortDecoItemDefinition*)Tool->ItemDefinition;
+
+
+	if (auto ContextTrapTool = Tool->Cast<AFortDecoTool_ContextTrap>()) {
+		switch ((int)InBuildingAttachmentType) {
+		case 0:
+		case 6:
+			ItemDefinition = (UFortDecoItemDefinition*)ContextTrapTool->ContextTrapItemDefinition->FloorTrap;
+			break;
+		case 7:
+		case 2:
+			ItemDefinition = (UFortDecoItemDefinition*)ContextTrapTool->ContextTrapItemDefinition->CeilingTrap;
+			break;
+		case 1:
+			ItemDefinition = (UFortDecoItemDefinition*)ContextTrapTool->ContextTrapItemDefinition->WallTrap;
+			break;
+		case 8:
+			ItemDefinition = (UFortDecoItemDefinition*)ContextTrapTool->ContextTrapItemDefinition->StairTrap;
+			break;
+		}
+	}
+
+	TArray<const UObject*> AutoCreateAttachmentBuildingShapes;
+	for (auto& AutoCreateAttachmentBuildingShape : ItemDefinition->AutoCreateAttachmentBuildingShapes)
+	{
+		AutoCreateAttachmentBuildingShapes.Add(AutoCreateAttachmentBuildingShape);
+	}
+
+	auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
+	auto bIgnoreCanAffordCheck = UFortKismetLibrary::DoesItemDefinitionHaveGameplayTag(ItemDefinition, FGameplayTag(FName(L"Trap.ExtraPiece.Cost.Ignore")));
+	TSubclassOf<AActor> Ret{};
+	auto ResourceType = PlayerController->CurrentResourceType;
+
+	if (ItemDefinition->AutoCreateAttachmentBuildingResourceType != EFortResourceType(EFortResourceType__Enum::GetNone()))
+		ResourceType = ItemDefinition->AutoCreateAttachmentBuildingResourceType;
+	auto BuildingType = GetBuildingTypeFromBuildingAttachmentType(InBuildingAttachmentType);
+
+	for (auto Shape : AutoCreateAttachmentBuildingShapes)
+	{
+		for (auto& Class : GameState->AllPlayerBuildableClasses)
+		{
+			auto Default = (ABuildingSMActor*)Class->GetDefaultObj();
+
+			if (Default->ResourceType == ResourceType && Default->BuildingType == BuildingType && Default->EditModePatternData == Shape)
+			{
+				Ret = Class;
+				goto _out;
+			}
+		}
+	}
+_out:
+	auto BuildingClass = Ret;
+
+	FBuildingClassData BuildingClassData;
+	BuildingClassData.BuildingClass = BuildingClass;
+	BuildingClassData.PreviousBuildingLevel = -1;
+
+	static auto UpgradeLevelOffset = FBuildingClassData::StaticStruct()->GetOffset("UpgradeLevel");
+	if (VersionInfo.EngineVersion >= 5.3)
+		*(uint8*)(__int64(&BuildingClassData) + UpgradeLevelOffset) = 0;
+	else
+		*(uint32*)(__int64(&BuildingClassData) + UpgradeLevelOffset) = 0;
+
+	UFortWorldItem* Item = nullptr;
+	if (!FConfiguration::bInfiniteMats)
+	{
+		auto CanAffordToPlaceBuildableClass = (bool(*)(AFortPlayerControllerAthena*, FBuildingClassData)) CanAffordToPlaceBuildableClass_;
+
+		if (CanAffordToPlaceBuildableClass)
+		{
+			if (!CanAffordToPlaceBuildableClass(PlayerController, BuildingClassData))
+				return;
+		}
+		else if (!PlayerController->bBuildFree)
+		{
+			auto Resource = UFortKismetLibrary::K2_GetResourceItemDefinition(((ABuildingSMActor*)BuildingClass->GetDefaultObj())->ResourceType);
+
+			auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* entry)
+				{ return entry->ItemEntry.ItemDefinition == Resource; });
+
+			if (!ItemP)
+				return;
+
+			Item = *ItemP;
+
+			if (Item->ItemEntry.Count < 10)
+				return;
+		}
+	}
+
+	struct _Pad_0xC
+	{
+		uint8_t Padding[0xC];
+	};
+	struct _Pad_0x18
+	{
+		uint8_t Padding[0x18];
+	};
+
+	TArray<ABuildingSMActor*> RemoveBuildings;
+	if (VersionInfo.FortniteVersion >= 27)
+	{
+		char _Unk_OutVar1;
+		auto CantBuild = (__int64 (*)(UWorld*, TSubclassOf<AActor>&, _Pad_0x18, _Pad_0x18, bool, TArray<ABuildingSMActor*> *, char*))CantBuild_;
+
+		if (CantBuild(UWorld::GetWorld(), BuildingClass, *(_Pad_0x18*)&BuildingLocation, *(_Pad_0x18*)&BuildingRotation, false, &RemoveBuildings, &_Unk_OutVar1))
+			return;
+	}
+	else
+	{
+		char _Unk_OutVar1;
+		auto CantBuild = (__int64 (*)(UWorld*, const UClass*, _Pad_0xC, _Pad_0xC, bool, TArray<ABuildingSMActor*> *, char*))CantBuild_;
+		auto CantBuildNew = (__int64 (*)(UWorld*, const UClass*, _Pad_0x18, _Pad_0x18, bool, TArray<ABuildingSMActor*> *, char*))CantBuild_;
+
+		if (VersionInfo.FortniteVersion >= 20.00 ? CantBuildNew(UWorld::GetWorld(), BuildingClass, *(_Pad_0x18*)&BuildingLocation, *(_Pad_0x18*)&BuildingRotation, false, &RemoveBuildings, &_Unk_OutVar1) : CantBuild(UWorld::GetWorld(), BuildingClass, *(_Pad_0xC*)&BuildingLocation, *(_Pad_0xC*)&BuildingRotation, false, &RemoveBuildings, &_Unk_OutVar1))
+			return;
+	}
+
+	for (auto& RemoveBuilding : RemoveBuildings)
+		RemoveBuilding->K2_DestroyActor();
+	RemoveBuildings.Free();
+
+	static auto K2_SpawnBuildingActor = ABuildingSMActor::GetDefaultObj()->GetFunction("K2_SpawnBuildingActor");
+
+	ABuildingSMActor* Building = nullptr;
+	if (K2_SpawnBuildingActor)
+	{
+		FTransform SpawnTransform(BuildingLocation, BuildingRotation);
+		Building = ABuildingSMActor::K2_SpawnBuildingActor(PlayerController, BuildingClass, SpawnTransform, PlayerController, nullptr, false, false);
+	}
+	else
+		Building = UWorld::SpawnActor<ABuildingSMActor>(BuildingClass, BuildingLocation, BuildingRotation, PlayerController);
+
+	Building->bPlayerPlaced = true;
+
+	Building->InitializeKismetSpawnedBuildingActor(Building, PlayerController, true, nullptr, false);
+	//UWorld::FinishSpawnActor(Building, BuildLoc, BuildRot);
+
+	if (!PlayerController->bBuildFree && !FConfiguration::bInfiniteMats)
+	{
+		auto PayBuildableClassPlacementCost = (int(*)(AFortPlayerControllerAthena*, FBuildingClassData)) PayBuildableClassPlacementCost_;
+
+		PayBuildableClassPlacementCost(PlayerController, BuildingClassData);
+	}
+
+	Building->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+	if (Building->HasTeamIndex())
+		Building->TeamIndex = Building->Team;
+	Tool->ServerSpawnDeco(Location, Rotation, Building, InBuildingAttachmentType);
+}
+
 void ABuildingSMActor::PostLoadHook()
 {
 	if (!GetDefaultObj()->HasBuildingResourceAmountOverride())
@@ -327,6 +521,7 @@ void ABuildingSMActor::PostLoadHook()
 	Utils::Hook(OnDamageServerAddr, OnDamageServer, OnDamageServerOG);
 
 	Utils::ExecHook(L"/Script/FortniteGame.FortDecoTool.ServerSpawnDeco", AFortDecoTool::ServerSpawnDeco_, AFortDecoTool::ServerSpawnDeco_OG);
+	Utils::ExecHook(L"/Script/FortniteGame.FortDecoTool.ServerCreateBuildingAndSpawnDeco", AFortDecoTool::ServerCreateBuildingAndSpawnDeco, AFortDecoTool::ServerCreateBuildingAndSpawnDecoOG);
 	if (AFortDecoTool_ContextTrap::StaticClass())
 	{
 		auto Func = AFortDecoTool_ContextTrap::GetDefaultObj()->GetFunction("ServerSpawnDeco_Implementation");
@@ -335,5 +530,12 @@ void ABuildingSMActor::PostLoadHook()
 			Func = AFortDecoTool_ContextTrap::GetDefaultObj()->GetFunction("ServerSpawnDeco");
 
 		Utils::ExecHook(Func, AFortDecoTool_ContextTrap::ServerSpawnDeco_Implementation, AFortDecoTool_ContextTrap::ServerSpawnDeco_ImplementationOG);
+
+		auto Func2 = AFortDecoTool_ContextTrap::GetDefaultObj()->GetFunction("ServerCreateBuildingAndSpawnDeco_Implementation");
+
+		if (!Func2)
+			Func2 = AFortDecoTool_ContextTrap::GetDefaultObj()->GetFunction("ServerCreateBuildingAndSpawnDeco");
+
+		Utils::ExecHook(Func2, AFortDecoTool::ServerCreateBuildingAndSpawnDeco, AFortDecoTool::ServerCreateBuildingAndSpawnDecoOG);
 	}
 }
