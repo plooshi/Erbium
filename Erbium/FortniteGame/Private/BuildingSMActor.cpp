@@ -151,7 +151,26 @@ void AFortDecoTool::ServerSpawnDeco_(UObject* Context, FFrame& Stack)
 	{
 		auto ItemDefinition = (UFortDecoItemDefinition*)DecoTool->ItemDefinition;
 
-		auto NewTrap = UWorld::SpawnActor<ABuildingSMActor>(ItemDefinition->BlueprintClass.Get(), Location, Rotation, AttachedActor);
+		if (auto ContextTrapTool = DecoTool->Cast<AFortDecoTool_ContextTrap>()) {
+			switch ((int)InBuildingAttachmentType) {
+			case 0:
+			case 6:
+				ItemDefinition = (UFortDecoItemDefinition*)ContextTrapTool->ContextTrapItemDefinition->FloorTrap;
+				break;
+			case 7:
+			case 2:
+				ItemDefinition = (UFortDecoItemDefinition*)ContextTrapTool->ContextTrapItemDefinition->CeilingTrap;
+				break;
+			case 1:
+				ItemDefinition = (UFortDecoItemDefinition*)ContextTrapTool->ContextTrapItemDefinition->WallTrap;
+				break;
+			case 8:
+				ItemDefinition = (UFortDecoItemDefinition*)ContextTrapTool->ContextTrapItemDefinition->StairTrap;
+				break;
+			}
+		}
+
+		auto NewTrap = (ABuildingSMActor*)UWorld::SpawnActor(ItemDefinition->BlueprintClass.Get(), Location, Rotation, AttachedActor);
 		AttachedActor->AttachBuildingActorToMe(NewTrap, true);
 		AttachedActor->bHiddenDueToTrapPlacement = ItemDefinition->bReplacesBuildingWhenPlaced;
 		if (ItemDefinition->bReplacesBuildingWhenPlaced)
@@ -183,6 +202,7 @@ void AFortDecoTool::ServerSpawnDeco_(UObject* Context, FFrame& Stack)
 			NewTrap->Team = NewTrap->TeamIndex;
 		}
 	}
+
 	callOG(DecoTool, Stack.GetCurrentNativeFunction(), ServerSpawnDeco, Location, Rotation, AttachedActor, InBuildingAttachmentType);
 
 	if (VersionInfo.FortniteVersion < 18)
@@ -238,7 +258,7 @@ void AFortDecoTool_ContextTrap::ServerSpawnDeco_Implementation(UObject* Context,
 			}
 		}
 
-		auto NewTrap = UWorld::SpawnActor<ABuildingSMActor>(ItemDefinition->BlueprintClass.Get(), Location, Rotation, AttachedActor);
+		auto NewTrap = (ABuildingSMActor*)UWorld::SpawnActor(ItemDefinition->BlueprintClass.Get(), Location, Rotation, AttachedActor);
 		AttachedActor->AttachBuildingActorToMe(NewTrap, true);
 		AttachedActor->bHiddenDueToTrapPlacement = ItemDefinition->bReplacesBuildingWhenPlaced;
 		if (ItemDefinition->bReplacesBuildingWhenPlaced)
