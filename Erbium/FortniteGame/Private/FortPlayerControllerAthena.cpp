@@ -706,17 +706,24 @@ void AFortPlayerControllerAthena::ServerRepairBuildingActor(UObject* Context, FF
 		{
 			return entry->ItemEntry.ItemDefinition == res;
 		});
+	auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([res](FFortItemEntry& entry)
+		{
+			return entry.ItemDefinition == res;
+		}, FFortItemEntry::Size());
 	if (!ItemP)
 		return;
 	auto Item = *ItemP;
-	if ((Item->ItemEntry.Count - Price) < 0)
+	if ((itemEntry->Count - Price) < 0)
 		return;
 
-	Item->ItemEntry.Count -= Price;
-	if (Item->ItemEntry.Count <= 0)
-		PlayerController->WorldInventory->Remove(Item->ItemEntry.ItemGuid);
+	itemEntry->Count -= Price;
+	if (itemEntry->Count <= 0)
+		PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
 	else
-		PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
+	{
+		Item->ItemEntry.Count = itemEntry->Count;
+		PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+	}
 
 	Building->RepairBuilding(PlayerController, Price);
 }
@@ -737,16 +744,21 @@ void AFortPlayerControllerAthena::ServerAttemptInventoryDrop(UObject* Context, F
 
 	auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* entry)
 		{ return entry->ItemEntry.ItemGuid == Guid; });
+	auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+		{ return entry.ItemGuid == Guid; }, FFortItemEntry::Size());
 	if (!ItemP)
 		return;
 	auto Item = *ItemP;
 
-	Item->ItemEntry.Count -= Count;
-	AFortInventory::SpawnPickup(PlayerController->Pawn->K2_GetActorLocation() + PlayerController->Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), Item->ItemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn, Count);
-	if (Item->ItemEntry.Count <= 0 || Count < 0)
+	itemEntry->Count -= Count;
+	AFortInventory::SpawnPickup(PlayerController->Pawn->K2_GetActorLocation() + PlayerController->Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), *itemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn, Count);
+	if (itemEntry->Count <= 0 || Count < 0)
 		PlayerController->WorldInventory->Remove(Guid);
 	else
-		PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
+	{
+		Item->ItemEntry.Count = itemEntry->Count;
+		PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+	}
 }
 
 class UAthenaToyItemDefinition : public UObject
@@ -1146,10 +1158,10 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 				break;
 			}*/
 
-			if (((*item)->ItemEntry.Count += PickupEntry->Count) > MaxStack)
+			if ((itemEntry->Count += PickupEntry->Count) > MaxStack)
 			{
-				auto OriginalCount = (*item)->ItemEntry.Count;
-				(*item)->ItemEntry.Count = MaxStack;
+				auto OriginalCount = itemEntry->Count;
+				itemEntry->Count = MaxStack;
 
 				GiveOrSwapStack(OriginalCount);
 			}
@@ -1178,8 +1190,8 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 
 
 
-			//(*item)->ItemEntry.Count = itemEntry->Count;
-			WorldInventory->UpdateEntry((*item)->ItemEntry);
+			(*item)->ItemEntry.Count = itemEntry->Count;
+			WorldInventory->UpdateEntry(*itemEntry);
 		}
 		else
 		{
@@ -1369,7 +1381,10 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 			auto Pawn = PlayerController->Pawn;
 
 			if (!Pawn)
+			{
 				PlayerController->ClientMessage(FString(L"No pawn to set speed"), FName(), 1);
+				return;
+			}
 
 			static auto SetMovementSpeedFn = Pawn->GetFunction("SetMovementSpeed");
 
@@ -1481,15 +1496,18 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				PlayerState->HeroType = Commando ? Commando : Commando2;
 
 				static auto CharacterPartsOffset = PlayerState->GetOffset("CharacterParts");
-				auto& CharacterParts = GetFromOffset<const UObject * [0x6]>(PlayerState, CharacterPartsOffset);
+				if (CharacterPartsOffset != -1)
+				{
+					auto& CharacterParts = GetFromOffset<const UObject * [0x6]>(PlayerState, CharacterPartsOffset);
 
-				static auto Head = FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Heads/F_Med_Head1.F_Med_Head1");
-				static auto Body = FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Bodies/F_Med_Soldier_01.F_Med_Soldier_01");
-				static auto Backpack = FindObject<UObject>(L"/Game/Characters/CharacterParts/Backpacks/NoBackpack.NoBackpack");
+					static auto Head = FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Heads/F_Med_Head1.F_Med_Head1");
+					static auto Body = FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Bodies/F_Med_Soldier_01.F_Med_Soldier_01");
+					static auto Backpack = FindObject<UObject>(L"/Game/Characters/CharacterParts/Backpacks/NoBackpack.NoBackpack");
 
-				CharacterParts[0] = Head;
-				CharacterParts[1] = Body;
-				CharacterParts[3] = Backpack;
+					CharacterParts[0] = Head;
+					CharacterParts[1] = Body;
+					CharacterParts[3] = Backpack;
+				}
 				
 				if (ApplyCharacterCustomization)
 					((void (*)(AActor*, AFortPlayerPawnAthena*)) ApplyCharacterCustomization)(PlayerState, Pawn);
@@ -1812,7 +1830,6 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 	else if (auto Vehicle = ReceivingActor->Cast<AFortAthenaVehicle>())
 	{
 		ServerAttemptInteract_OG(Context, Stack);
-		return; // delete ltr
 
 		UFortVehicleSeatWeaponComponent* SeatWeaponComponent = (UFortVehicleSeatWeaponComponent*)Vehicle->GetComponentByClass(UFortVehicleSeatWeaponComponent::StaticClass());
 
@@ -1836,9 +1853,9 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 			{
 				printf("Weapon: %s\n", Weapon->Name.ToString().c_str());
 				auto Item = PlayerController->WorldInventory->GiveItem(Weapon, 1, 99999);
-
 				auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
 					{ return entry.ItemDefinition == Weapon; }, FFortItemEntry::Size());
+
 				auto CurrentWeapon = Pawn->CurrentWeapon;
 				PlayerController->ServerExecuteInventoryItem(ItemEntry->ItemGuid);
 				PlayerController->ClientEquipItem(ItemEntry->ItemGuid, true);
@@ -1900,9 +1917,9 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 				StateValue.IntValue = 0;
 			}*/
 
-			Item->ItemEntry.Count -= (int)Cost;
-			if (Item->ItemEntry.Count <= 0)
-				PlayerController->WorldInventory->Remove(Item->ItemEntry.ItemGuid);
+			itemEntry->Count -= (int)Cost;
+			if (itemEntry->Count <= 0)
+				PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
 			else
 			{
 				/*for (int i = 0; i < itemEntry->StateValues.Num(); i++)
@@ -1916,7 +1933,8 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 					break;
 				}*/
 
-				PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
+				Item->ItemEntry.Count = itemEntry->Count;
+				PlayerController->WorldInventory->UpdateEntry(*itemEntry);
 			}
 		}
 

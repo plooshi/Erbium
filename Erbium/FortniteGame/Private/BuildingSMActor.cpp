@@ -23,9 +23,9 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 	auto MaxMat = Resource->GetMaxStackSize();
 
 	static auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
-	auto GameData = Playlist ? Playlist->GameData.Get() : nullptr;
+	static auto GameData = Playlist ? Playlist->ResourceRates.Get() : nullptr;
 	if (!GameData)
-		GameData = FindObject<UCurveTable>(L"/Game/Athena/Balance/DataTables/AthenaGameData.AthenaGameData");
+		GameData = FindObject<UCurveTable>(L"/Game/Athena/Balance/DataTables/AthenaResourceRates.AthenaResourceRates");
 
 	int ResCount = 0;
 	if (Actor->HasBuildingResourceAmountOverride())
@@ -85,11 +85,11 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 			}*/
 
 
-			Item->ItemEntry.Count += ResCount;
-			if (Item->ItemEntry.Count > MaxMat)
+			itemEntry->Count += ResCount;
+			if (itemEntry->Count > MaxMat)
 			{
-				AFortInventory::SpawnPickup(Controller->Pawn->K2_GetActorLocation(), Item->ItemEntry.ItemDefinition, Item->ItemEntry.Count - MaxMat, 0, EFortPickupSourceTypeFlag::GetTossed(), EFortPickupSpawnSource::GetUnset(), Controller->MyFortPawn);
-				Item->ItemEntry.Count = MaxMat;
+				AFortInventory::SpawnPickup(Controller->Pawn->K2_GetActorLocation(), Item->ItemEntry.ItemDefinition, itemEntry->Count - MaxMat, 0, EFortPickupSourceTypeFlag::GetTossed(), EFortPickupSpawnSource::GetUnset(), Controller->MyFortPawn);
+				itemEntry->Count = MaxMat;
 			}
 
 			/*for (int i = 0; i < itemEntry->StateValues.Num(); i++)
@@ -104,8 +104,8 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 			}*/
 
 
-			//Item->ItemEntry.Count = itemEntry->Count;
-			Controller->WorldInventory->UpdateEntry(Item->ItemEntry);
+			Item->ItemEntry.Count = itemEntry->Count;
+			Controller->WorldInventory->UpdateEntry(*itemEntry);
 		}
 		else
 		{

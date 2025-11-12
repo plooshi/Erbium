@@ -57,6 +57,7 @@ public:
 
     DEFINE_FUNC(OnRep_NetTowhookAimDir, void);
     DEFINE_FUNC(OnRep_ReplicatedAttachState, void);
+    DEFINE_FUNC(BreakTowhook, void);
 
     static void ServerUpdateTowhook(UObject*, FFrame&);
 };

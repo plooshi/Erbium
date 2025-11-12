@@ -126,6 +126,85 @@ void AFortSpaghettiVehicle::ServerUpdateTowhook(UObject* Context, FFrame& Stack)
     Vehicle->OnRep_NetTowhookAimDir();
 }
 
+struct FHitResult
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FHitResult);
+
+    DEFINE_STRUCT_PROP(Location, FVector);
+    DEFINE_STRUCT_PROP(ImpactPoint, FVector);
+    DEFINE_STRUCT_PROP(ImpactNormal, FVector);
+    DEFINE_STRUCT_PROP(Normal, FVector);
+    DEFINE_STRUCT_PROP(Component, TWeakObjectPtr<UActorComponent>);
+};
+
+struct FAttachedInfo
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FAttachedInfo);
+
+    DEFINE_STRUCT_PROP(Hit, FHitResult);
+};
+
+class AFortOctopusTowhookAttachableProjectile : public AActor
+{
+public:
+    UCLASS_COMMON_MEMBERS(AFortOctopusTowhookAttachableProjectile);
+
+    DEFINE_PROP(AttachedInfo, FAttachedInfo);
+    DEFINE_PROP(OwningVehicle, AFortOctopusVehicle*);
+
+    DEFINE_FUNC(Kill, void);
+};
+
+class UKismetMathLibrary : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UKismetMathLibrary);
+
+    DEFINE_STATIC_FUNC(InverseTransformLocation, FVector);
+    DEFINE_STATIC_FUNC(InverseTransformDirection, FVector);
+};
+
+uint64_t CanGrappleToComponent_ = 0;
+void (*OnRep_ReplicatedAttachedInfoOG)(AFortOctopusTowhookAttachableProjectile* _this);
+void OnRep_ReplicatedAttachedInfo(AFortOctopusTowhookAttachableProjectile* _this)
+{
+    OnRep_ReplicatedAttachedInfoOG(_this);
+
+    auto OwningVehicle = _this->OwningVehicle;
+    if (!OwningVehicle)
+        return;
+
+    auto Comp = _this->AttachedInfo.Hit.Component.Get();
+    /*if (!Comp)
+    {
+        _this->Kill();
+        return;
+    }*/
+
+    auto CanGrappleToComponent = (bool(*)(AFortOctopusVehicle*, UActorComponent*))CanGrappleToComponent_;
+
+    if (!CanGrappleToComponent(OwningVehicle, Comp))
+    {
+        // game automatically kills for us in OG
+        return;
+    }
+
+    // the old projectile is supposed to die too, i dont know why it doesn't. i'll have to look at this more
+    OwningVehicle->ReplicatedAttachState.Component = Comp;
+    OwningVehicle->ReplicatedAttachState.LocalLocation = UKismetMathLibrary::InverseTransformLocation(Comp->K2_GetComponentToWorld(), _this->AttachedInfo.Hit.Location);
+    OwningVehicle->ReplicatedAttachState.LocalNormal = UKismetMathLibrary::InverseTransformDirection(Comp->K2_GetComponentToWorld(), _this->AttachedInfo.Hit.Normal);
+    OwningVehicle->OnRep_ReplicatedAttachState();
+
+    printf("[Ballers] Comp: %s, Owner %s\n", Comp->Name.ToString().c_str(), Comp->GetOwner()->Name.ToString().c_str());
+    printf("[Ballers] Location: %f %f %f [World] -> ", _this->AttachedInfo.Hit.Location.X, _this->AttachedInfo.Hit.Location.Y, _this->AttachedInfo.Hit.Location.Z);
+    printf("%f %f %f [Local]\n", OwningVehicle->ReplicatedAttachState.LocalLocation.X, OwningVehicle->ReplicatedAttachState.LocalLocation.Y, OwningVehicle->ReplicatedAttachState.LocalLocation.Z);
+    printf("[Ballers] Normal: %f %f %f [World] -> ", _this->AttachedInfo.Hit.Normal.X, _this->AttachedInfo.Hit.Normal.Y, _this->AttachedInfo.Hit.Normal.Z);
+    printf("%f %f %f [Local]\n", OwningVehicle->ReplicatedAttachState.LocalNormal.X, OwningVehicle->ReplicatedAttachState.LocalNormal.Y, OwningVehicle->ReplicatedAttachState.LocalNormal.Z);
+    //printf("CALLED!!!!\n");
+}
+
 void AFortPhysicsPawn::Hook()
 {
     auto DefaultPhysPawn = GetDefaultObj();
@@ -162,4 +241,11 @@ void AFortPhysicsPawn::Hook()
 
     if (DefaultSpaghettiVehicle)
         Utils::ExecHook(DefaultSpaghettiVehicle->GetFunction("ServerUpdateTowhook"), AFortSpaghettiVehicle::ServerUpdateTowhook);
+
+    auto OnRep_ReplicatedAttachedInfoIdx = AFortOctopusTowhookAttachableProjectile::GetDefaultObj()->GetFunction("OnRep_ReplicatedAttachedInfo")->GetVTableIndex();
+
+    auto OnRep_ReplicatedAttachedInfo__Impl = AFortOctopusTowhookAttachableProjectile::GetDefaultObj()->Vft[OnRep_ReplicatedAttachedInfoIdx];
+    CanGrappleToComponent_ = Memcury::Scanner(OnRep_ReplicatedAttachedInfo__Impl).ScanFor({ 0xFF, 0x90 }).ScanFor({ 0x48, 0x8B, 0xFF, 0xE8 }, false, 0, 1, 2048, true).RelativeOffset(4).Get();
+    
+    Utils::Hook<AFortOctopusTowhookAttachableProjectile>(OnRep_ReplicatedAttachedInfoIdx, OnRep_ReplicatedAttachedInfo, OnRep_ReplicatedAttachedInfoOG);
 }

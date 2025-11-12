@@ -116,6 +116,7 @@ public:
     DEFINE_STRUCT_PROP(StateValues, TArray<FFortItemEntryStateValue>);
     DEFINE_STRUCT_PROP(bIsReplicatedCopy, bool);
     DEFINE_STRUCT_PROP(bIsDirty, bool);
+    DEFINE_STRUCT_PROP(WeaponModSlots, TArray<void*>);
 };
 
 class UFortWorldItem : public UObject
@@ -125,6 +126,7 @@ public:
 
     DEFINE_PROP(ItemEntry, FFortItemEntry);
     DEFINE_PROP(OwnerInventory, AActor*);
+    DEFINE_PROP(OwnerInventoryWeak, TWeakObjectPtr<AActor>);
 
     DEFINE_FUNC(SetOwningControllerForTemporaryItem, void);
     DEFINE_FUNC(GetOwningController, AActor*);
@@ -229,6 +231,7 @@ public:
     DEFINE_PROP(EquippedAbilities, TArray<TSoftClassPtr<UClass>>);
     DEFINE_PROP(EquippedAbilitySet, TSoftObjectPtr<class UFortAbilitySet>);
     DEFINE_BITFIELD_PROP(bUsesCustomAmmoType);
+    DEFINE_PROP(WeaponModSlots, TArray<void*>);
     
     DEFINE_FUNC(GetAmmoWorldItemDefinition_BP, UFortItemDefinition*);
 };
@@ -293,6 +296,8 @@ class UFortAmmoItemDefinition : public UFortWorldItemDefinition
 {
 public:
     UCLASS_COMMON_MEMBERS(UFortAmmoItemDefinition);
+
+    DEFINE_PROP(RegenCooldown, FScalableFloat);
 };
 
 class UFortDecoItemDefinition : public UFortWorldItemDefinition

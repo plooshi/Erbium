@@ -77,6 +77,7 @@ public:
     DEFINE_PROP(RespawnType, uint8);
     DEFINE_PROP(bAllowJoinInProgress, bool);
     DEFINE_PROP(GameData, TSoftObjectPtr<UCurveTable>);
+    DEFINE_PROP(ResourceRates, TSoftObjectPtr<UCurveTable>);
     DEFINE_PROP(UIExtensions, TArray<FUIExtension>);
     DEFINE_PROP(GameplayTagContainer, FGameplayTagContainer);
     DEFINE_PROP(bSkipWarmup, bool);

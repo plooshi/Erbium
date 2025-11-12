@@ -14,11 +14,19 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
         return nullptr;
     UFortWorldItem* Item = (UFortWorldItem*)Def->CreateTemporaryItemInstanceBP(Count, Level);
     Item->SetOwningControllerForTemporaryItem(Owner);
+    if (Item->HasOwnerInventory())
+        Item->OwnerInventory = this;
+    else
+        Item->OwnerInventoryWeak = this;
+    Item->ItemEntry.ParentInventory = this;
     Item->ItemEntry.LoadedAmmo = LoadedAmmo;
     if (Item->ItemEntry.HasPhantomReserveAmmo())
         Item->ItemEntry.PhantomReserveAmmo = PhantomReserveAmmo;
-    //if (Item->ItemEntry.HasStateValues()) // dk
-    //    Item->ItemEntry.StateValues = StateValues;
+    if (auto WeaponDef = Def->Cast<UFortWeaponItemDefinition>())
+        if (WeaponDef->HasWeaponModSlots() && FFortItemEntry::HasWeaponModSlots())
+            Item->ItemEntry.WeaponModSlots = WeaponDef->WeaponModSlots;
+    if (Item->ItemEntry.HasStateValues())
+        Item->ItemEntry.StateValues = StateValues;
 
     /*if (Item->ItemEntry.ItemGuid.A == 0 && Item->ItemEntry.ItemGuid.B == 0 && Item->ItemEntry.ItemGuid.C == 0 && Item->ItemEntry.ItemGuid.D == 0)
     {
@@ -496,8 +504,8 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
         }*/
 
 
-        Item->ItemEntry.Count -= max(Count, 0);
-        if (Count < 0 || Item->ItemEntry.Count <= 0 || bForceRemoval)
+        itemEntry->Count -= max(Count, 0);
+        if (Count < 0 || itemEntry->Count <= 0 || bForceRemoval)
         {
             if (Item->ItemEntry.ItemDefinition->HasbPersistInInventoryWhenFinalStackEmpty() && Item->ItemEntry.ItemDefinition->bPersistInInventoryWhenFinalStackEmpty && Count > 0)
             {
@@ -517,7 +525,8 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
                         break;
                     }*/
 
-                    PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
+                    Item->ItemEntry.Count = itemEntry->Count;
+                    PlayerController->WorldInventory->UpdateEntry(*itemEntry);
                 }
                 else
                     PlayerController->WorldInventory->Remove(ItemGuid);
@@ -538,7 +547,8 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
                 break;
             }*/
 
-            PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
+            Item->ItemEntry.Count = itemEntry->Count;
+            PlayerController->WorldInventory->UpdateEntry(*itemEntry);
         }
 
         return true;

@@ -1140,7 +1140,7 @@ namespace Memcury
             return *this;
         }
 
-        inline auto ScanFor(std::vector<uint8_t> opcodesToFind, bool forward = true, int toSkip = 0, int bytesToSkip = 1, int Radius = 2048) -> Scanner
+        inline auto ScanFor(std::vector<uint8_t> opcodesToFind, bool forward = true, int toSkip = 0, int bytesToSkip = 1, int Radius = 2048, bool bIgnoreFF = false) -> Scanner
         {
             const auto scanBytes = _address.GetAs<std::uint8_t*>();
             if (!scanBytes) return *this;
@@ -1155,6 +1155,8 @@ namespace Memcury
                 {
                     auto& currentOpcode = opcodesToFind[k];
 
+                    if (bIgnoreFF && currentOpcode == 0xFF)
+                        continue;
                     // LOG_INFO(LogDev, "[{} 0x{:x}] 0x{:x}", i, __int64(&scanBytes[i]) - __int64(GetModuleHandleW(0)), currentOpcode);
 
                     found = currentOpcode == scanBytes[i + k];

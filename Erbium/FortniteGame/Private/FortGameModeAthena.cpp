@@ -1056,7 +1056,7 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
 
             ConsumableSpawners.Free();
 
-            if (VersionInfo.FortniteVersion >= 22)
+            if (AFortAthenaLivingWorldStaticPointProvider::StaticClass())
             {
                 auto Spawners = Utils::GetAll<AFortAthenaLivingWorldStaticPointProvider>();
                 UEAllocatedMap<FName, const UClass*> VehicleSpawnerMap =
@@ -1099,7 +1099,8 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
                 }
                 Spawners.Free();
             }
-            else if (VersionInfo.FortniteVersion >= 4.23 && VersionInfo.FortniteVersion < 20) // its auto on s20 & s21
+            // not an else here because they still use spawners for boats, and fully on s27
+            if (VersionInfo.FortniteVersion >= 4.23 && std::floor(VersionInfo.FortniteVersion) != 20 && std::floor(VersionInfo.FortniteVersion) != 21) // its auto on s20 & s21
             {
                 auto Spawners = Utils::GetAll<AFortAthenaVehicleSpawner>();
 

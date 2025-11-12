@@ -508,6 +508,7 @@ namespace SDK
 		UCLASS_COMMON_MEMBERS(UActorComponent);
 
 		DEFINE_FUNC(GetOwner, UObject*); // AActor doesnt exist yet
+		DEFINE_FUNC(K2_GetComponentToWorld, FTransform);
 	};
 
 	class AActor : public UObject
@@ -523,7 +524,7 @@ namespace SDK
 		DEFINE_BITFIELD_PROP(bActorIsBeingDestroyed);
 		DEFINE_BITFIELD_PROP(bNetStartup);
 		DEFINE_BITFIELD_PROP(bOnlyRelevantToOwner);
-		DEFINE_PROP(RootComponent, UObject*);
+		DEFINE_PROP(RootComponent, UActorComponent*);
 		DEFINE_PROP(Instigator, AActor*);
 		DEFINE_PROP(NetUpdateFrequency, float);
 		DEFINE_PROP(NetCullDistanceSquared, float);
