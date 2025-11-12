@@ -1120,11 +1120,18 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 	if (MaxStack > 1)
 	{
 		auto item = WorldInventory->Inventory.ItemInstances.Search([PickupEntry, MaxStack](UFortWorldItem* entry)
-			{ return entry->ItemEntry.ItemDefinition == PickupEntry->ItemDefinition && entry->ItemEntry.Count < MaxStack; });
+			{ return entry->ItemEntry.ItemDefinition == PickupEntry->ItemDefinition && entry->ItemEntry.Count <= MaxStack; });
 		auto itemEntry = WorldInventory->Inventory.ReplicatedEntries.Search([PickupEntry, MaxStack](FFortItemEntry& entry)
-			{ return entry.ItemDefinition == PickupEntry->ItemDefinition && entry.Count < MaxStack; }, FFortItemEntry::Size());
+			{ return entry.ItemDefinition == PickupEntry->ItemDefinition && entry.Count <= MaxStack; }, FFortItemEntry::Size());
 
-		if (item)
+		if (itemEntry && itemEntry->Count == MaxStack)
+		{
+			if (AFortInventory::IsPrimaryQuickbar(itemEntry->ItemDefinition))
+				GiveOrSwap();
+			else
+				AFortInventory::SpawnPickup(GetViewTarget()->K2_GetActorLocation(), *PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn);
+		}
+		else if (item)
 		{
 			bool bFound = false;
 			/*for (int i = 0; i < itemEntry->StateValues.Num(); i++)
