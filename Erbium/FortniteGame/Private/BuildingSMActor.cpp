@@ -5,6 +5,7 @@
 #include "../Public/FortWeapon.h"
 #include "../Public/FortKismetLibrary.h"
 #include "../Public/FortPlayerControllerAthena.h"
+#include "../../Erbium/Public/Configuration.h"
 
 
 void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGameplayTagContainer DamageTags, FVector Momentum, __int64 HitInfo, AActor* InstigatedBy, AActor* DamageCauser, __int64 EffectContext)
@@ -21,15 +22,20 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 		return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
 	auto MaxMat = Resource->GetMaxStackSize();
 
+	static auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
+	auto GameData = Playlist ? Playlist->GameData.Get() : nullptr;
+	if (!GameData)
+		GameData = FindObject<UCurveTable>(L"/Game/Athena/Balance/DataTables/AthenaGameData.AthenaGameData");
+
 	int ResCount = 0;
 	if (Actor->HasBuildingResourceAmountOverride())
 	{
 		FCurveTableRowHandle& BuildingResourceAmountOverride = Actor->BuildingResourceAmountOverride;
 
-		if (BuildingResourceAmountOverride.CurveTable && BuildingResourceAmountOverride.RowName.ComparisonIndex > 0)
+		if (BuildingResourceAmountOverride.RowName.ComparisonIndex > 0)
 		{
 			float Out;
-			UDataTableFunctionLibrary::EvaluateCurveTableRow(BuildingResourceAmountOverride.CurveTable, BuildingResourceAmountOverride.RowName, 0.f, nullptr, &Out, FString());
+			UDataTableFunctionLibrary::EvaluateCurveTableRow(GameData, BuildingResourceAmountOverride.RowName, 0.f, nullptr, &Out, FString());
 
 			float RC = Out / (Actor->GetMaxHealth() / Damage);
 
@@ -41,10 +47,10 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 		auto ClassData = Actor->GetClassData();
 		FCurveTableRowHandle& BuildingResourceAmountOverride = ClassData->BuildingResourceAmountOverride;
 
-		if (BuildingResourceAmountOverride.CurveTable && BuildingResourceAmountOverride.RowName.ComparisonIndex > 0)
+		if (BuildingResourceAmountOverride.RowName.ComparisonIndex > 0)
 		{
 			float Out;
-			UDataTableFunctionLibrary::EvaluateCurveTableRow(BuildingResourceAmountOverride.CurveTable, BuildingResourceAmountOverride.RowName, 0.f, nullptr, &Out, FString());
+			UDataTableFunctionLibrary::EvaluateCurveTableRow(GameData, BuildingResourceAmountOverride.RowName, 0.f, nullptr, &Out, FString());
 
 			float RC = Out / (Actor->GetMaxHealth() / Damage);
 
