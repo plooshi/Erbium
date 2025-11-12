@@ -31,7 +31,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::SetGamePhaseStep(EAthen
 }
 
 
-void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::HandleMatchHasStarted(AFortGameModeAthena* GameMode)
+void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::HandleMatchHasStarted(AFortGameMode* GameMode)
 {
 	HandleMatchHasStartedOG(GameMode);
 	auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(GameMode);
@@ -404,7 +404,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
         sprintf_s(version, VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "%.2f" : "%.1f", VersionInfo.FortniteVersion);
 
 		auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
-		auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+		auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
         auto payload = UEAllocatedString("{\"embeds\": [{\"title\": \"Match has started!\", \"fields\": [{\"name\":\"Version\",\"value\":\"") + version + "\"}, {\"name\":\"Playlist\",\"value\":\"" + (Playlist ? Playlist->PlaylistName.ToString() : "Playlist_DefaultSolo") + "\"},{\"name\":\"Players\",\"value\":\"" + std::to_string(GameMode->AlivePlayers.Num()).c_str() + "\"}], \"color\": " + "\"7237230\", \"footer\": {\"text\":\"Erbium\", \"icon_url\":\"https://cdn.discordapp.com/attachments/1341168629378584698/1436803905119064105/L0WnFa.png.png?ex=6910ef69&is=690f9de9&hm=01a0888b46647959b38ee58df322048ab49e2a5a678e52d4502d9c5e3978d805&\"}, \"timestamp\":\"" + iso8601() + "\"}] }";
 
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload.c_str());
@@ -479,7 +479,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 		Aircraft->ReplicatedFlightTimestamp = (float)Time;
 		bAircraftIsLocked = true;
 
-		for (auto& Player__Uncasted : ((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers)
+		for (auto& Player__Uncasted : ((AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers)
 		{
 			auto Player = (AFortPlayerControllerAthena*)Player__Uncasted;
 			auto Pawn = (AFortPlayerPawnAthena*)Player->Pawn;
@@ -531,7 +531,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 			static bool gettingReady = false;
 			if (!bStartAircraft && !gettingReady)
 			{
-				if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && WarmupEarlyCountdownDuration != -1 && WarmupEarlyCountdownDuration < Time)
+				if (((AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && WarmupEarlyCountdownDuration != -1 && WarmupEarlyCountdownDuration < Time)
 				{
 					gettingReady = true;
 
@@ -542,7 +542,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 
 			if (bStartAircraft || gettingReady)
 			{
-				if (bStartAircraft || (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && WarmupCountdownEndTime != -1 && WarmupCountdownEndTime < Time))
+				if (bStartAircraft || (((AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && WarmupCountdownEndTime != -1 && WarmupCountdownEndTime < Time))
 				{
 					StartAircraftPhase();
 
@@ -556,7 +556,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 			static bool busUnlocked = false;
 			if (!busUnlocked)
 			{
-				if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && Aircrafts_GameState[0].Get() && Aircrafts_GameState[0]->DropStartTime < Time)
+				if (((AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && Aircrafts_GameState[0].Get() && Aircrafts_GameState[0]->DropStartTime < Time)
 				{
 					busUnlocked = true;
 
@@ -569,11 +569,11 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 			static bool startedForming = false;
 			if (!startedForming)
 			{
-				if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && Aircrafts_GameState[0].Get() && Aircrafts_GameState[0]->DropEndTime != -1 && Aircrafts_GameState[0]->DropEndTime < Time)
+				if (((AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && Aircrafts_GameState[0].Get() && Aircrafts_GameState[0]->DropEndTime != -1 && Aircrafts_GameState[0]->DropEndTime < Time)
 				{
 					startedForming = true;
 					auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
-					auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+					auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 
 					for (auto& Player__Uncasted : GameMode->AlivePlayers)
 					{
@@ -604,7 +604,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 
 		if (!finishedFlight)
 		{
-			if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && Aircrafts_GameState[0].Get() && Aircrafts_GameState[0]->FlightEndTime != -1 && Aircrafts_GameState[0]->FlightEndTime < Time)
+			if (((AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && Aircrafts_GameState[0].Get() && Aircrafts_GameState[0]->FlightEndTime != -1 && Aircrafts_GameState[0]->FlightEndTime < Time)
 			{
 				finishedFlight = true;
 				auto Aircraft = Aircrafts_GameState[0].Get();
@@ -633,7 +633,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 			static bool formedZone = false;
 			if (!bPausedZone && finishedFlight && !formedZone)
 			{
-				if (((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && SafeZonesStartTime != -1 && SafeZonesStartTime < Time)
+				if (((AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && SafeZonesStartTime != -1 && SafeZonesStartTime < Time)
 				{
 					formedZone = true;
 					auto SafeZoneIndicator = SetupSafeZoneIndicator();
@@ -658,7 +658,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 					bUpdatedPhase = false;
 				}
 
-				auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+				auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 				static auto ZoneEffect = FindObject<UClass>(L"/Game/Athena/SafeZone/GE_OutsideSafeZoneDamage.GE_OutsideSafeZoneDamage_C");
 
 				for (auto& UncastedPlayer : GameMode->AlivePlayers)

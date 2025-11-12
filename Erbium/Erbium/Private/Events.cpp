@@ -1,14 +1,14 @@
 #include "pch.h"
 #include "../Public/Events.h"
 #include <thread>
-#include "../../FortniteGame/Public/FortGameModeAthena.h"
+#include "../../FortniteGame/Public/FortGameMode.h"
 
 void Events::StartEvent()
 {
 	if (VersionInfo.FortniteVersion < 4.4) return; // no other events from what i know of?
 
 
-	auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+	auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 	auto Playlist = VersionInfo.FortniteVersion >= 4.0 ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
 
 	for (auto& Event : EventsArray)

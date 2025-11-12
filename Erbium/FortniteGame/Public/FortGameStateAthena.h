@@ -185,6 +185,7 @@ public:
     DEFINE_PROP(bPlaylistDataIsLoaded, bool);
     DEFINE_PROP(VolumeManager, AFortVolumeManager*);
     DEFINE_PROP(CreativePortalManager, AFortCreativePortalManager*);
+    DEFINE_PROP(MissionManager, AActor*);
 
     DEFINE_FUNC(OnRep_CurrentPlaylistInfo, void);
     DEFINE_FUNC(OnRep_CurrentPlaylistData, void);

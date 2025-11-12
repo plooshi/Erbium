@@ -111,7 +111,7 @@
     <ClInclude Include="FortniteGame\Public\BuildingFoundation.h">
       <Filter>FortniteGame\Public</Filter>
     </ClInclude>
-    <ClInclude Include="FortniteGame\Public\FortGameModeAthena.h">
+    <ClInclude Include="FortniteGame\Public\FortGameMode.h">
       <Filter>FortniteGame\Public</Filter>
     </ClInclude>
     <ClInclude Include="FortniteGame\Public\FortGameSessionAthena.h">
@@ -227,7 +227,7 @@
     <ClCompile Include="pch.cpp">
       <Filter>Erbium\Private</Filter>
     </ClCompile>
-    <ClCompile Include="FortniteGame\Private\FortGameModeAthena.cpp">
+    <ClCompile Include="FortniteGame\Private\FortGameMode.cpp">
       <Filter>FortniteGame\Private</Filter>
     </ClCompile>
     <ClCompile Include="FortniteGame\Private\FortInventory.cpp">

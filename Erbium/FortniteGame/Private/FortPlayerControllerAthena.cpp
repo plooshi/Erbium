@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "../Public/FortPlayerControllerAthena.h"
-#include "../Public/FortGameModeAthena.h"
+#include "../Public/FortGameMode.h"
 #include "../Public/FortWeapon.h"
 #include "../Public/BuildingSMActor.h"
 #include "../Public/FortKismetLibrary.h"
@@ -81,18 +81,26 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 		static bool HasCosmeticLoadoutPC = PlayerController->HasCosmeticLoadoutPC();
 		static bool HasCustomizationLoadout = PlayerController->HasCustomizationLoadout();
 
+		auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 		if (HasCosmeticLoadoutPC && PlayerController->CosmeticLoadoutPC.Pickaxe)
 			PlayerController->WorldInventory->GiveItem(PlayerController->CosmeticLoadoutPC.Pickaxe->WeaponDefinition);
 		else if (HasCustomizationLoadout && PlayerController->CustomizationLoadout.Pickaxe)
 			PlayerController->WorldInventory->GiveItem(PlayerController->CustomizationLoadout.Pickaxe->WeaponDefinition);
-		else
+		else if (GameMode->StartingItems.Num() == 0)
 		{
-			//static auto DefaultPickaxe = FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
+			static auto DefaultPickaxe = FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
+			static auto WallBuild = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Wall.BuildingItemData_Wall");
+			static auto FloorBuild = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Floor.BuildingItemData_Floor");
+			static auto StairBuild = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Stair_W.BuildingItemData_Stair_W");
+			static auto ConeBuild = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_RoofS.BuildingItemData_RoofS");
 
-			//PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
+			PlayerController->WorldInventory->GiveItem(WallBuild);
+			PlayerController->WorldInventory->GiveItem(FloorBuild);
+			PlayerController->WorldInventory->GiveItem(StairBuild);
+			PlayerController->WorldInventory->GiveItem(ConeBuild);
+			PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
 		}
 
-		auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
 		for (int i = 0; i < GameMode->StartingItems.Num(); i++)
 		{
 			auto& StartingItem = GameMode->StartingItems.Get(i, FItemAndCount::Size());
@@ -101,7 +109,7 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 				PlayerController->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
 		}
 
-		for (auto& AbilitySet : AFortGameModeAthena::AbilitySets)
+		for (auto& AbilitySet : AFortGameMode::AbilitySets)
 			PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
 	}
 	else if (FConfiguration::bLateGame && (!FConfiguration::bKeepInventory || FConfiguration::bLateGame))
@@ -144,7 +152,7 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 	Stack.IncrementCode();
 
 	AFortPlayerControllerAthena* PlayerController = nullptr;
-	auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+	auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 	auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 
 	if (VersionInfo.FortniteVersion >= 11.00 || FConfiguration::bLateGame)
@@ -876,7 +884,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 {
 	if (!PlayerController)
 		return ClientOnPawnDiedOG(PlayerController, DeathReport);
-	auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+	auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 	auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 	auto PlayerState = (AFortPlayerStateAthena*)PlayerController->PlayerState;
 
@@ -899,26 +907,29 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 	if (PlayerState->HasPawnDeathLocation())
 		PlayerState->PawnDeathLocation = PlayerController->Pawn ? PlayerController->Pawn->K2_GetActorLocation() : FVector();
 
-	PlayerState->DeathInfo.bDBNO = PlayerController->Pawn ? PlayerController->Pawn->IsDBNO() : false;
-	if (FDeathInfo::HasKiller())
-		PlayerState->DeathInfo.Killer = KillerPlayerState;
-	if (FDeathInfo::HasDeathLocation())
-		PlayerState->DeathInfo.DeathLocation = PlayerState->HasPawnDeathLocation() ? PlayerState->PawnDeathLocation : (PlayerController->Pawn ? PlayerController->Pawn->K2_GetActorLocation() : FVector());
-	if (FDeathInfo::HasDeathTags())
-		PlayerState->DeathInfo.DeathTags = DeathReport.Tags;
-	PlayerState->DeathInfo.DeathCause = ToDeathCause(PlayerController->Pawn, DeathReport.Tags, PlayerState->DeathInfo.bDBNO);
-	//PlayerState->DeathInfo.Downer = KillerPlayerState;
-	if (FDeathInfo::HasFinisherOrDowner())
-		PlayerState->DeathInfo.FinisherOrDowner = KillerPlayerState ? KillerPlayerState : PlayerState;
-	if (FDeathInfo::HasFinisherOrDownerTags())
-		PlayerState->DeathInfo.FinisherOrDownerTags = KillerPawn ? KillerPawn->GameplayTags : PlayerController->Pawn->GameplayTags;
-	if (FDeathInfo::HasVictimTags())
-		PlayerState->DeathInfo.VictimTags = PlayerController->Pawn->GameplayTags;
-	if (FDeathInfo::HasDistance())
-		PlayerState->DeathInfo.Distance = PlayerController->Pawn ? (PlayerState->DeathInfo.DeathCause != /*EDeathCause::FallDamage*/ 1 ? (KillerPawn ? KillerPawn->GetDistanceTo(PlayerController->Pawn) : 0) : (PlayerController->MyFortPawn->HasLastFallDistance() ? PlayerController->MyFortPawn->LastFallDistance : 0)) : 0;
-	if (FDeathInfo::HasbInitialized())
-		PlayerState->DeathInfo.bInitialized = true;
-	PlayerState->OnRep_DeathInfo();
+	if (PlayerState->HasDeathInfo())
+	{
+		PlayerState->DeathInfo.bDBNO = PlayerController->Pawn ? PlayerController->Pawn->IsDBNO() : false;
+		if (FDeathInfo::HasKiller())
+			PlayerState->DeathInfo.Killer = KillerPlayerState;
+		if (FDeathInfo::HasDeathLocation())
+			PlayerState->DeathInfo.DeathLocation = PlayerState->HasPawnDeathLocation() ? PlayerState->PawnDeathLocation : (PlayerController->Pawn ? PlayerController->Pawn->K2_GetActorLocation() : FVector());
+		if (FDeathInfo::HasDeathTags())
+			PlayerState->DeathInfo.DeathTags = DeathReport.Tags;
+		PlayerState->DeathInfo.DeathCause = ToDeathCause(PlayerController->Pawn, DeathReport.Tags, PlayerState->DeathInfo.bDBNO);
+		//PlayerState->DeathInfo.Downer = KillerPlayerState;
+		if (FDeathInfo::HasFinisherOrDowner())
+			PlayerState->DeathInfo.FinisherOrDowner = KillerPlayerState ? KillerPlayerState : PlayerState;
+		if (FDeathInfo::HasFinisherOrDownerTags())
+			PlayerState->DeathInfo.FinisherOrDownerTags = KillerPawn ? KillerPawn->GameplayTags : PlayerController->Pawn->GameplayTags;
+		if (FDeathInfo::HasVictimTags())
+			PlayerState->DeathInfo.VictimTags = PlayerController->Pawn->GameplayTags;
+		if (FDeathInfo::HasDistance())
+			PlayerState->DeathInfo.Distance = PlayerController->Pawn ? (PlayerState->DeathInfo.DeathCause != /*EDeathCause::FallDamage*/ 1 ? (KillerPawn ? KillerPawn->GetDistanceTo(PlayerController->Pawn) : 0) : (PlayerController->MyFortPawn->HasLastFallDistance() ? PlayerController->MyFortPawn->LastFallDistance : 0)) : 0;
+		if (FDeathInfo::HasbInitialized())
+			PlayerState->DeathInfo.bInitialized = true;
+		PlayerState->OnRep_DeathInfo();
+	}
 
 	if (KillerPlayerState && KillerPawn && KillerPawn->Controller && KillerPawn->Controller != PlayerController)
 	{
@@ -941,7 +952,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 			KillerPlayerState->ClientReportTeamKill(KillerPlayerState->TeamKillScore);
 	}
 
-	if (!GameState->IsRespawningAllowed(PlayerState) && (PlayerController->Pawn ? !PlayerController->Pawn->IsDBNO() : true))
+	if (!GameState->IsRespawningAllowed(PlayerState) && (PlayerController->Pawn ? !PlayerController->Pawn->IsDBNO() : true) && PlayerState->HasPlace())
 	{
 		PlayerState->Place = GameState->PlayersLeft;
 		PlayerState->OnRep_Place();
@@ -954,7 +965,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 			DamageCauser = Weapon;
 		if (RemoveFromAlivePlayers_)
 		{
-			((void (*)(AFortGameModeAthena*, AFortPlayerControllerAthena*, AFortPlayerStateAthena*, AFortPlayerPawnAthena*, UFortItemDefinition*, uint8, char))RemoveFromAlivePlayers_)(GameMode, PlayerController, KillerPlayerState == PlayerState ? nullptr : KillerPlayerState, KillerPawn, DamageCauser->IsA<AFortWeapon>() ? DamageCauser->WeaponData : nullptr, PlayerState->DeathInfo.DeathCause, 0);
+			((void (*)(AFortGameMode*, AFortPlayerControllerAthena*, AFortPlayerStateAthena*, AFortPlayerPawnAthena*, UFortItemDefinition*, uint8, char))RemoveFromAlivePlayers_)(GameMode, PlayerController, KillerPlayerState == PlayerState ? nullptr : KillerPlayerState, KillerPawn, DamageCauser->IsA<AFortWeapon>() ? DamageCauser->WeaponData : nullptr, PlayerState->HasDeathInfo() ? PlayerState->DeathInfo.DeathCause : 0, 0);
 		}
 
 		if (VersionInfo.FortniteVersion >= 15)
@@ -1041,7 +1052,7 @@ void AFortPlayerControllerAthena::ServerClientIsReadyToRespawn(UObject* Context,
 
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
 
-	auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+	auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 	auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 	auto PlayerState = (AFortPlayerStateAthena*)PlayerController->PlayerState;
 
@@ -1210,7 +1221,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 	Stack.StepCompiledIn(&Msg);
 	Stack.IncrementCode();
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
-	auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+	auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 
 	auto fullCommand = Msg.ToString();
 
@@ -1314,7 +1325,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 		}
 		else if (command == "startshrinksafezone")
 		{
-			auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+			auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 			if (GameMode->HasSafeZoneIndicator())
 			{
 				if (GameMode->SafeZoneIndicator)
@@ -1416,7 +1427,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 			{
 				auto Transform = PlayerController->Pawn->GetTransform();
 
-				auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+				auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 				auto GameState = GameMode->GameState;
 				//auto PlayerController = (AFortPlayerControllerAthena*)UWorld::SpawnActor(GameMode->PlayerControllerClass, FVector{});
 				auto Pawn = (AFortPlayerPawnAthena*)UWorld::SpawnActor(GameMode->DefaultPawnClass, Transform);
@@ -1439,7 +1450,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				Pawn->SetMaxHealth(100.f);
 				Pawn->SetHealth(100.f);
 
-				PlayerState->TeamIndex = AFortGameModeAthena::PickTeam(GameMode, 0, PlayerController);
+				PlayerState->TeamIndex = AFortGameMode::PickTeam(GameMode, 0, PlayerController);
 				if (PlayerState->HasSquadId())
 					PlayerState->SquadId = PlayerState->TeamIndex - 3;
 				if (PlayerState->HasbIsABot())
@@ -1468,7 +1479,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 					free(Member);
 				}
 
-				for (auto& AbilitySet : AFortGameModeAthena::AbilitySets)
+				for (auto& AbilitySet : AFortGameMode::AbilitySets)
 					PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
 
 				/*PlayerController->WorldInventory = (AFortInventory*)UWorld::SpawnActor(AFortInventory::StaticClass(), FVector{});

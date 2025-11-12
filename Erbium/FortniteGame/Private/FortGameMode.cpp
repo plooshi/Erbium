@@ -1,5 +1,5 @@
 #include "pch.h"
-#include "../Public/FortGameModeAthena.h"
+#include "../Public/FortGameMode.h"
 #include "../Public/LevelStreamingDynamic.h"
 #include "../../Erbium/Public/Finders.h"
 #include "../../Engine/Public/NetDriver.h"
@@ -51,7 +51,7 @@ void ShowFoundation(const ABuildingFoundation* Foundation)
 
 bool bIsLargeTeamGame = false;
 
-void SetupPlaylist(AFortGameModeAthena* GameMode, AFortGameStateAthena* GameState)
+void SetupPlaylist(AFortGameMode* GameMode, AFortGameStateAthena* GameState)
 {
     static auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
 
@@ -296,21 +296,24 @@ public:
     DEFINE_FUNC(GetVehicleClass, UClass*);
 };
 
-void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Ret)
+void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Ret)
 {
     Stack.IncrementCode();
 
-    auto GameMode = Context->Cast<AFortGameModeAthena>();
-    if (!GameMode)
+    static auto FrontendMode = FindClass("FortGameModeFrontend");
+    if (Context->IsA(FrontendMode))
     {
-        *Ret = callOGWithRet(((AFortGameModeAthena*)Context), Stack.GetCurrentNativeFunction(), ReadyToStartMatch);
+        *Ret = callOGWithRet(((AFortGameMode*)Context), Stack.GetCurrentNativeFunction(), ReadyToStartMatch);
         return;
     }
+    auto GameMode = Context->Cast<AFortGameMode>();
 
     auto GameState = GameMode->GameState;
 
-    if (GameMode->WarmupRequiredPlayerCount != 1)
+    static bool setup = false;
+    if (GameMode->HasWarmupRequiredPlayerCount() ? GameMode->WarmupRequiredPlayerCount != 1 : !setup)
     {
+        setup = true;
         // credit mariki
         if (UWorld::GetWorld()->HasServerStreamingLevelsVisibility())
             UWorld::GetWorld()->ServerStreamingLevelsVisibility = UWorld::SpawnActor<AServerStreamingLevelsVisibility>(FVector{}, {});
@@ -365,7 +368,8 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
         free(URL);
 
-        GameMode->WarmupRequiredPlayerCount = 1;
+        if (GameMode->HasWarmupRequiredPlayerCount())
+            GameMode->WarmupRequiredPlayerCount = 1;
 
         if (VersionInfo.FortniteVersion >= 4.0)
             SetupPlaylist(GameMode, GameState);
@@ -377,6 +381,29 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             if (MeshNetworkSubsystem)
                 *(uint8_t*)(__int64(MeshNetworkSubsystem) + MeshNetworkSubsystem->GetOffset("NodeType")) = 2;
         }
+
+        auto AIDirectorClass = GameMode->HasWarmupRequiredPlayerCount() ? FindClass("AthenaAIDirector") : FindObject<UClass>("/Game/AIDirector/AIDirector_Fortnite.AIDirector_Fortnite_C");
+        if (!AIDirectorClass)
+            AIDirectorClass = FindClass("FortAIDirector"); 
+
+        GameMode->AIDirector = UWorld::SpawnActor(AIDirectorClass, FVector{});
+        if (GameMode->AIDirector)
+            GameMode->AIDirector->Call(GameMode->AIDirector->GetFunction("Activate"));
+
+        auto GoalManagerClass = GameMode->HasWarmupRequiredPlayerCount() ? FindClass("FortAIGoalManager") : FindObject<UClass>("/Game/AI/GoalSelection/AIGoalManager.AIGoalManager_C");
+
+        GameMode->AIGoalManager = UWorld::SpawnActor(GoalManagerClass, FVector{});
+
+        auto MissionManagerClass = GameMode->HasWarmupRequiredPlayerCount() ? nullptr : FindObject<UClass>("/Game/Blueprints/MissionManager.MissionManager_C");
+
+        if (MissionManagerClass)
+        {
+            GameState->MissionManager = UWorld::SpawnActor(MissionManagerClass, FVector{});
+            // we need to spawn bluglo manager too
+        }
+
+        if (!GameMode->HasWarmupRequiredPlayerCount())
+            UWorld::SpawnActor(FindClass("FortPlayerStart"), FVector{0, 0, 3000});
 
         *Ret = false;
         return;
@@ -400,7 +427,6 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
             *Ret = false;
             return;
         }
-        printf("World is ready! %d\n", Utils::GetAll<ABuildingItemCollectorActor>().Num());
 
         if (VersionInfo.FortniteVersion >= 3.5 && VersionInfo.FortniteVersion <= 4.0)
             SetupPlaylist(GameMode, GameState);
@@ -598,7 +624,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         TArray<FFortLootTierData*> LootTierDataTempArr;
         auto LootTierData = Playlist ? Playlist->LootTierData.Get() : nullptr;
         if (!LootTierData)
-            LootTierData = FindObject<UDataTable>(L"/Game/Items/Datatables/AthenaLootTierData_Client.AthenaLootTierData_Client");
+            LootTierData = FindObject<UDataTable>(GameMode->HasWarmupRequiredPlayerCount() ? L"/Game/Items/Datatables/AthenaLootTierData_Client.AthenaLootTierData_Client" : L"/Game/Items/Datatables/LootTierData_Client.LootTierData_Client");
         if (LootTierData)
             AddToTierData(LootTierData, LootTierDataTempArr);
 
@@ -608,7 +634,7 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
         UEAllocatedMap<int32, FFortLootPackageData*> LootPackageTempArr;
         auto LootPackages = Playlist ? Playlist->LootPackages.Get() : nullptr;
         if (!LootPackages)
-            LootPackages = FindObject<UDataTable>(L"/Game/Items/Datatables/AthenaLootPackages_Client.AthenaLootPackages_Client");
+            LootPackages = FindObject<UDataTable>(GameMode->HasWarmupRequiredPlayerCount() ? L"/Game/Items/Datatables/AthenaLootPackages_Client.AthenaLootPackages_Client" : L"/Game/Items/Datatables/LootPackages_Client.LootPackages_Client");
         if (LootPackages)
             AddToPackages(LootPackages, LootPackageTempArr);
 
@@ -808,7 +834,8 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 
         if (BattleBusDef)
         {
-            GameState->DefaultBattleBus = BattleBusDef;
+            if (GameState->HasDefaultBattleBus())
+                GameState->DefaultBattleBus = BattleBusDef;
 
             for (auto& Aircraft : Utils::GetAll<AFortAthenaAircraft>())
             {
@@ -969,19 +996,19 @@ void AFortGameModeAthena::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bo
 auto SpawnDefaultPawnForIdx = 0;
 uint64_t ApplyCharacterCustomization;
 
-void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor** Ret)
+void AFortGameMode::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor** Ret)
 {
     AFortPlayerControllerAthena* NewPlayer;
     AActor* StartSpot;
     Stack.StepCompiledIn(&NewPlayer);
     Stack.StepCompiledIn(&StartSpot);
     Stack.IncrementCode();
-    auto GameMode = (AFortGameModeAthena*)Context;
+    auto GameMode = (AFortGameMode*)Context;
     auto GameState = GameMode->GameState;
     auto Num = NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Num();
     // they only stripped it on athena for some reason
     AFortPlayerPawnAthena* Pawn = nullptr;
-    static auto FortGMSpawnDefaultPawnFor = (AFortPlayerPawnAthena * (*)(AFortGameModeAthena*, AFortPlayerControllerAthena*, AActor*)) DefaultObjImpl("FortGameMode")->Vft[SpawnDefaultPawnForIdx];
+    static auto FortGMSpawnDefaultPawnFor = (AFortPlayerPawnAthena * (*)(AFortGameMode*, AFortPlayerControllerAthena*, AActor*)) DefaultObjImpl("FortGameMode")->Vft[SpawnDefaultPawnForIdx];
     Pawn = FortGMSpawnDefaultPawnFor(GameMode, NewPlayer, StartSpot);
 
     //auto Transform = StartSpot->GetTransform();
@@ -990,7 +1017,7 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
 
     if (Num == 0)
     {
-        if (VersionInfo.FortniteVersion <= 1.91 && VersionInfo.FortniteVersion != 1.1 && VersionInfo.FortniteVersion != 1.11)
+        if (VersionInfo.FortniteVersion <= 1.91 && VersionInfo.FortniteVersion != 1.1 && VersionInfo.FortniteVersion != 1.11 && NewPlayer->HasStrongMyHero())
         {
             static auto HeroCharPartsOffset = NewPlayer->StrongMyHero->GetOffset("CharacterParts");
             auto& HeroCharParts = GetFromOffset<TArray<UObject*>>(NewPlayer->StrongMyHero, HeroCharPartsOffset);
@@ -1230,7 +1257,7 @@ void AFortGameModeAthena::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, A
 }
 
 
-void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* GameMode, int NewSafeZonePhase_Inp)
+void AFortGameMode::HandlePostSafeZonePhaseChanged(AFortGameMode* GameMode, int NewSafeZonePhase_Inp)
 {
     if (!GameMode->SafeZoneIndicator)
         return;
@@ -1346,16 +1373,22 @@ void AFortGameModeAthena::HandlePostSafeZonePhaseChanged(AFortGameModeAthena* Ga
         GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = FConfiguration::bLateGame && FConfiguration::bLateGameLongZone ? 676767.f : TimeSeconds + HoldDuration;
         GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
     }
+
+    if (FConfiguration::bLateGame && (SafeZoneLoc.X != 0 || SafeZoneLoc.Y != 0 || SafeZoneLoc.Z != 0))
+    {
+        GameMode->SafeZoneIndicator->NextCenter = SafeZoneLoc;
+        GameMode->SafeZoneIndicator->LastCenter = SafeZoneLoc;
+    }
 }
 
 
 uint64_t NotifyGameMemberAdded_ = 0;
-void AFortGameModeAthena::HandleStartingNewPlayer_(UObject* Context, FFrame& Stack)
+void AFortGameMode::HandleStartingNewPlayer_(UObject* Context, FFrame& Stack)
 {
     AFortPlayerControllerAthena* NewPlayer;
     Stack.StepCompiledIn(&NewPlayer);
     Stack.IncrementCode();
-    auto GameMode = (AFortGameModeAthena*)Context;
+    auto GameMode = (AFortGameMode*)Context;
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
     AFortPlayerStateAthena* PlayerState = (AFortPlayerStateAthena*)NewPlayer->PlayerState;
 
@@ -1411,8 +1444,11 @@ void AFortGameModeAthena::HandleStartingNewPlayer_(UObject* Context, FFrame& Sta
 }
 
 
-uint8_t AFortGameModeAthena::PickTeam(AFortGameModeAthena* GameMode, uint8_t PreferredTeam, AFortPlayerControllerAthena* Controller)
+uint8_t AFortGameMode::PickTeam(AFortGameMode* GameMode, uint8_t PreferredTeam, AFortPlayerControllerAthena* Controller)
 {
+    if (!GameMode->HasWarmupRequiredPlayerCount())
+        return 0;
+
     uint8_t ret = CurrentTeam;
 
     if (bIsLargeTeamGame)
@@ -1435,7 +1471,7 @@ uint8_t AFortGameModeAthena::PickTeam(AFortGameModeAthena* GameMode, uint8_t Pre
     return ret;
 }
 
-bool AFortGameModeAthena::StartAircraftPhase(AFortGameModeAthena* GameMode, char a2)
+bool AFortGameMode::StartAircraftPhase(AFortGameMode* GameMode, char a2)
 {
     auto Ret = StartAircraftPhaseOG(GameMode, a2);
 
@@ -1468,21 +1504,28 @@ bool AFortGameModeAthena::StartAircraftPhase(AFortGameModeAthena* GameMode, char
 
     if (FConfiguration::bLateGame && VersionInfo.FortniteVersion < 25.20)
     {
-        /*if (VersionInfo.FortniteVersion < 16)
-        {
-            GameState->GamePhase = 4;
-            GameState->GamePhaseStep = 7;
-            GameState->OnRep_GamePhase(3);
-        }*/
+        /**/
 
         auto Aircraft = GameState->HasAircrafts() ? GameState->Aircrafts[0] : GameState->Aircraft;
+        FVector Loc;
+        bool bScuffed = false;
         if (GameMode->SafeZoneLocations.Num() < 4)
         {
-            FConfiguration::bLateGame = false;
-            printf("LateGame is not supported on this version!\n");
-            return Ret;
+            bScuffed = true;
+
+            auto Foundations = Utils::GetAll<ABuildingFoundation>();
+            auto Foundation = Foundations[rand() % Foundations.Num()];
+            
+            Foundations.Free();
+            
+            SafeZoneLoc = Loc = Foundation->K2_GetActorLocation();
+
+            //FConfiguration::bLateGame = false;
+            //printf("LateGame is not supported on this version!\n");
+            //return Ret;
         }
-        FVector Loc = GameMode->SafeZoneLocations.Get(FConfiguration::LateGameZone + (VersionInfo.FortniteVersion >= 24 ? 2 : 0) - 1, FVector::Size());
+        else
+            Loc = GameMode->SafeZoneLocations.Get(FConfiguration::LateGameZone + (VersionInfo.FortniteVersion >= 24 ? 2 : 0) - 1, FVector::Size());
         Loc.Z = 17500.f;
         if (GameState->HasDefaultParachuteDeployTraceForGroundDistance())
             GameState->DefaultParachuteDeployTraceForGroundDistance = 2500.f;
@@ -1494,7 +1537,7 @@ bool AFortGameModeAthena::StartAircraftPhase(AFortGameModeAthena* GameMode, char
             Aircraft->FlightInfo.FlightStartLocation = Loc;
 
             Aircraft->FlightInfo.TimeTillFlightEnd = 7.f;
-            Aircraft->FlightInfo.TimeTillDropEnd = 0.f;
+            Aircraft->FlightInfo.TimeTillDropEnd = 7.f;
             Aircraft->FlightInfo.TimeTillDropStart = 0.f;
         }
         else
@@ -1503,27 +1546,32 @@ bool AFortGameModeAthena::StartAircraftPhase(AFortGameModeAthena* GameMode, char
 
             Aircraft->FlightStartLocation = Loc;
 
-            Aircraft->TimeTillFlightEnd = 7.f;
-            Aircraft->TimeTillDropEnd = 0.f;
-            Aircraft->TimeTillDropStart = 0.f;
+            if (Aircraft->HasTimeTillFlightEnd())
+            {
+                Aircraft->TimeTillFlightEnd = 7.f;
+                Aircraft->TimeTillDropEnd = 7.f;
+                Aircraft->TimeTillDropStart = 0.f;
+            }
         }
+        Aircraft->DropStartTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
+        Aircraft->DropEndTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + 7.f;
         Aircraft->FlightStartTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
         Aircraft->FlightEndTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + 7.f;
         //GameState->bAircraftIsLocked = false;
-        //GameState->SafeZonesStartTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + 8.f;
+        //GameState->SafeZonesStartTime = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld()) + 7.6f;
     }
 
     return Ret;
 }
 
 
-void AFortGameModeAthena::OnAircraftExitedDropZone_(UObject* Context, FFrame& Stack)
+void AFortGameMode::OnAircraftExitedDropZone_(UObject* Context, FFrame& Stack)
 {
     AFortAthenaAircraft* Aircraft;
     Stack.StepCompiledIn(&Aircraft);
     Stack.IncrementCode();
 
-    auto GameMode = (AFortGameModeAthena*)Context;
+    auto GameMode = (AFortGameMode*)Context;
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 
     if (FConfiguration::bLateGame)
@@ -1564,7 +1612,7 @@ void AFortGameModeAthena::OnAircraftExitedDropZone_(UObject* Context, FFrame& St
 
 TArray<FFortSafeZonePhaseInfo> Phases;
 
-AFortSafeZoneIndicator* SetupSafeZoneIndicator(AFortGameModeAthena* GameMode)
+AFortSafeZoneIndicator* SetupSafeZoneIndicator(AFortGameMode* GameMode)
 {
     // thanks heliato
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
@@ -1635,7 +1683,7 @@ AFortSafeZoneIndicator* SetupSafeZoneIndicator(AFortGameModeAthena* GameMode)
     return GameMode->SafeZoneIndicator;
 }
 
-void StartNewSafeZonePhase(AFortGameModeAthena* GameMode, int NewSafeZonePhase)
+void StartNewSafeZonePhase(AFortGameMode* GameMode, int NewSafeZonePhase)
 {
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
     float TimeSeconds = (float)UGameplayStatics::GetTimeSeconds(GameState);
@@ -1682,8 +1730,8 @@ void StartNewSafeZonePhase(AFortGameModeAthena* GameMode, int NewSafeZonePhase)
     }
 }
 
-void (*SpawnInitialSafeZoneOG)(AFortGameModeAthena* GameMode);
-void SpawnInitialSafeZone(AFortGameModeAthena* GameMode)
+void (*SpawnInitialSafeZoneOG)(AFortGameMode* GameMode);
+void SpawnInitialSafeZone(AFortGameMode* GameMode)
 {
     //return;
     GameMode->bSafeZoneActive = true;
@@ -1698,8 +1746,8 @@ void SpawnInitialSafeZone(AFortGameModeAthena* GameMode)
     //return SpawnInitialSafeZoneOG(GameMode);
 }
 
-void (*UpdateSafeZonesPhaseOG)(AFortGameModeAthena* GameMode);
-void UpdateSafeZonesPhase(AFortGameModeAthena* GameMode)
+void (*UpdateSafeZonesPhaseOG)(AFortGameMode* GameMode);
+void UpdateSafeZonesPhase(AFortGameMode* GameMode)
 {
     if (GameMode->bSafeZoneActive && UGameplayStatics::GetTimeSeconds(GameMode) >= GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime && !GameMode->bSafeZonePaused)
         StartNewSafeZonePhase(GameMode, GameMode->SafeZoneIndicator->CurrentPhase + 1);
@@ -1727,7 +1775,7 @@ void GetPhaseInfo(UObject* Context, FFrame& Stack, bool* Ret)
     *Ret = false;
 }
 
-void AFortGameModeAthena::Hook()
+void AFortGameMode::Hook()
 {
     Utils::ExecHook(GetDefaultObj()->GetFunction("ReadyToStartMatch"), ReadyToStartMatch_, ReadyToStartMatch_OG);
 
@@ -1753,7 +1801,7 @@ void AFortGameModeAthena::Hook()
     }
 }
 
-void AFortGameModeAthena::PostLoadHook()
+void AFortGameMode::PostLoadHook()
 {
     ApplyCharacterCustomization = FindApplyCharacterCustomization();
     NotifyGameMemberAdded_ = FindNotifyGameMemberAdded();
@@ -1769,7 +1817,7 @@ void AFortGameModeAthena::PostLoadHook()
         Utils::Hook(FindStartAircraftPhase(), StartAircraftPhase, StartAircraftPhaseOG);
         Utils::Hook(FindHandlePostSafeZonePhaseChanged(), HandlePostSafeZonePhaseChanged, HandlePostSafeZonePhaseChangedOG);
     }
-    Utils::ExecHook(GetDefaultObj()->GetFunction("OnAircraftExitedDropZone"), OnAircraftExitedDropZone_, OnAircraftExitedDropZone_OG);
+    Utils::ExecHook(AFortGameModeAthena::GetDefaultObj()->GetFunction("OnAircraftExitedDropZone"), OnAircraftExitedDropZone_, OnAircraftExitedDropZone_OG);
 
     if (VersionInfo.FortniteVersion >= 21.50)
     {

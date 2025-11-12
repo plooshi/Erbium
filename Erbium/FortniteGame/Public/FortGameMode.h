@@ -7,14 +7,15 @@
 #include "FortPlayerPawnAthena.h"
 #include "FortPlayerControllerAthena.h"
 
-class AFortGameModeAthena : public AActor
+class AFortGameMode : public AActor
 {
 public:
     static inline uint8_t CurrentTeam = 3;
     static inline uint8_t PlayersOnCurTeam = 0;
     static inline TArray<const UFortAbilitySet*> AbilitySets;
+    static inline FVector SafeZoneLoc{};
 
-    UCLASS_COMMON_MEMBERS(AFortGameModeAthena);
+    UCLASS_COMMON_MEMBERS(AFortGameMode);
 
     DEFINE_PROP(CurrentPlaylistId, int32);
     DEFINE_PROP(WarmupRequiredPlayerCount, int32);
@@ -46,6 +47,8 @@ public:
     DEFINE_PROP(OnSafeZoneIndicatorSpawned, TMulticastInlineDelegate<void(AFortSafeZoneIndicator*)>);
     DEFINE_PROP(MatchState, FName);
     DEFINE_PROP(bEnableDBNO, bool);
+    DEFINE_PROP(AIDirector, AActor*);
+    DEFINE_PROP(AIGoalManager, AActor*);
 
     DEFINE_FUNC(SpawnDefaultPawnAtTransform, AFortPlayerPawnAthena*);
     DEFINE_FUNC(RestartPlayer, void);
@@ -55,12 +58,18 @@ public:
 
     DefUHookOgRet(bool, ReadyToStartMatch_);
     static void SpawnDefaultPawnFor(UObject*, FFrame&, AActor**);
-    DefHookOg(void, HandlePostSafeZonePhaseChanged, AFortGameModeAthena*, int);
-    DefHookOg(uint8_t, PickTeam, AFortGameModeAthena*, uint8_t, AFortPlayerControllerAthena*);
+    DefHookOg(void, HandlePostSafeZonePhaseChanged, AFortGameMode*, int);
+    DefHookOg(uint8_t, PickTeam, AFortGameMode*, uint8_t, AFortPlayerControllerAthena*);
     DefUHookOg(HandleStartingNewPlayer_);
-    DefHookOg(bool, StartAircraftPhase, AFortGameModeAthena*, char);
+    DefHookOg(bool, StartAircraftPhase, AFortGameMode*, char);
     DefUHookOg(OnAircraftExitedDropZone_);
     
     InitHooks;
     InitPostLoadHooks;
+};
+
+class AFortGameModeAthena : public AFortGameMode
+{
+public:
+    UCLASS_COMMON_MEMBERS(AFortGameModeAthena);
 };

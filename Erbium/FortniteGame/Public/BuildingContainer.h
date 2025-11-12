@@ -36,6 +36,7 @@ public:
     DEFINE_PROP(ChosenRandomUpgrade, int32);
     DEFINE_PROP(ReplicatedLootTier, int32);
     DEFINE_PROP(LootFinalLocation, FVector);
+    DEFINE_BITFIELD_PROP(bDestroyContainerOnSearch);
 
     DEFINE_FUNC(OnRep_bAlreadySearched, void);
     DEFINE_FUNC(BounceContainer, void);

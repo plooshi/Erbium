@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "../Public/NetDriver.h"
 #include "../../Erbium/Public/Finders.h"
-#include "../../FortniteGame/Public/FortGameModeAthena.h"
+#include "../../FortniteGame/Public/FortGameMode.h"
 #include "../../Erbium/Public/GUI.h"
 #include "../../Erbium/Public/Configuration.h"
 #include "../../FortniteGame/Public/BattleRoyaleGamePhaseLogic.h"
@@ -506,7 +506,7 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
     if (GUI::gsStatus == 1 && VersionInfo.FortniteVersion >= 11.00)
     { 
         auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
-		auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+		auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 		auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
 		static auto bSkipAircraft = GameState->CurrentPlaylistInfo.BasePlaylist ? GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft : false;
         if (!bSkipAircraft && GameState->HasWarmupCountdownEndTime() && Driver->ClientConnections.Num() > 0 && GameMode->bWorldIsReady && GameState->WarmupCountdownEndTime <= Time)
@@ -570,7 +570,7 @@ void UNetDriver::TickFlush__RepGraph(UNetDriver* Driver, float DeltaSeconds)
 		if (GUI::gsStatus == 1 && VersionInfo.FortniteVersion >= 11.00)
 		{
 			auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
-			auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+			auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 			auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
 			static auto bSkipAircraft = GameState->CurrentPlaylistInfo.BasePlaylist ? GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft : false;
 			if (!bSkipAircraft && Driver->ClientConnections.Num() > 0 && GameMode->bWorldIsReady && GameState->WarmupCountdownEndTime <= Time)

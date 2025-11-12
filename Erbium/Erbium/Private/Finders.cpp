@@ -846,7 +846,9 @@ uint64 FindHandlePostSafeZonePhaseChanged()
     {
         bInitialized = true;
 
-        if (VersionInfo.EngineVersion <= 4.19)
+        if (VersionInfo.EngineVersion == 4.16)
+            return HandlePostSafeZonePhaseChanged = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 48 83 EC ? 48 8B B9 ? ? ? ? 33 DB 0F 29 74 24").Get();
+        else if (VersionInfo.EngineVersion == 4.19)
             return HandlePostSafeZonePhaseChanged = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 70 48 8B B9 ? ? ? ? 33 DB 0F 29 74 24 ? 48 8B F1 48 85 FF 74 2C E8").Get();
         else if (VersionInfo.EngineVersion == 4.20)
             return HandlePostSafeZonePhaseChanged = Memcury::Scanner::FindPattern("E8 ? ? ? ? EB 31 80 B9 ? ? ? ? ?").RelativeOffset(1).Get(); // 3.5
@@ -2753,5 +2755,20 @@ void FindNullsAndRetTrues()
                 break;
             }
         }
+    }
+
+    if (VersionInfo.EngineVersion < 5.1)
+    {
+        auto CanCreateInCurrentContext = Memcury::Scanner::FindPattern("8B ? E8 ? ? ? ? 84 C0 75 ? 80 3D ? ? ? ? 03 0F 82 ? ? ? ? ? 8B ? 18 ? 8D 54");
+
+        if (!CanCreateInCurrentContext.IsValid())
+            CanCreateInCurrentContext = Memcury::Scanner::FindPattern("8B ? E8 ? ? ? ? 84 C0 75 ? 80 3D ? ? ? ? 03 72 ? ? 8B ? 18 ? 8D 54");
+
+        if (CanCreateInCurrentContext.IsValid())
+            RetTrueFuncs.push_back(CanCreateInCurrentContext.RelativeOffset(3).Get());
+    }
+    else
+    {
+        // ue5.1+ i think, they inlined the VFT call
     }
 }

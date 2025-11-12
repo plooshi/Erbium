@@ -2,7 +2,7 @@
 #include "../../pch.h"
 #include "../../Engine/Public/CurveTable.h"
 #include "FortInventory.h"
-#include "FortGameModeAthena.h"
+#include "FortGameMode.h"
 
 struct FItemsToGive final
 {
@@ -16,7 +16,7 @@ class AFortAthenaMutator : public AActor
 public:
     UCLASS_COMMON_MEMBERS(AFortAthenaMutator);
 
-    DEFINE_PROP(CachedGameMode, AFortGameModeAthena*);
+    DEFINE_PROP(CachedGameMode, AFortGameMode*);
 };
 
 class AFortAthenaMutator_GiveItemsAtGamePhaseStep : public AFortAthenaMutator

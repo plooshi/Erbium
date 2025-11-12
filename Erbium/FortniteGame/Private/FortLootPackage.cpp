@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "../Public/FortLootPackage.h"
 #include "../Public/BuildingContainer.h"
-#include "../Public/FortGameModeAthena.h"
+#include "../Public/FortGameMode.h"
 #include "../../Erbium/Public/Configuration.h"
 #include "../Public/FortKismetLibrary.h"
 
@@ -19,7 +19,7 @@ public:
 
 int GetLevel(const FDataTableCategoryHandle& CategoryHandle)
 {
-	auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+	auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 	auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 
 	if (!CategoryHandle.DataTable)
@@ -310,7 +310,7 @@ bool UFortLootPackage::SpawnLootHook(ABuildingContainer* Container)
 		return false;
 
 	auto RealTierGroup = Container->SearchLootTierGroup;
-	auto GameMode = ((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode);
+	auto GameMode = ((AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode);
 	if (GameMode->HasRedirectAthenaLootTierGroups())
 	{
 		static auto RedirectAthenaLootTierGroupsOff = GameMode->GetOffset("RedirectAthenaLootTierGroups");
@@ -365,6 +365,8 @@ bool UFortLootPackage::SpawnLootHook(ABuildingContainer* Container)
 	Container->OnRep_bAlreadySearched();
 	Container->SearchBounceData.SearchAnimationCount++;
 	Container->BounceContainer();
+	if (Container->bDestroyContainerOnSearch)
+		Container->K2_DestroyActor();
 
 	return true;
 }
@@ -374,7 +376,7 @@ void UFortLootPackage::SpawnLoot(FName& TierGroup, FVector Loc)
 {
 	auto& RealTierGroup = TierGroup;
 
-	auto GameMode = ((AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode);
+	auto GameMode = ((AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode);
 	if (GameMode->HasRedirectAthenaLootTierGroups())
 	{
 		for (const auto& [OldTierGroup, RedirectedTierGroup] : GameMode->RedirectAthenaLootTierGroups)

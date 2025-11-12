@@ -49,6 +49,8 @@ public:
     DEFINE_PROP(CurrentPhase, int);
     DEFINE_PROP(PhaseCount, int);
     DEFINE_PROP(SafeZonePhases, TArray<FFortSafeZonePhaseInfo>);
+    DEFINE_PROP(LastCenter, FVector); // old builds
+    DEFINE_PROP(LastRadius, float);
     DEFINE_PROP(PreviousCenter, FVector);
     DEFINE_PROP(PreviousRadius, float);
     DEFINE_PROP(NextCenter, FVector);

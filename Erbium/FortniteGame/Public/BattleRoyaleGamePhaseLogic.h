@@ -1,6 +1,6 @@
 #pragma once
 #include "../../pch.h"
-#include "FortGameModeAthena.h"
+#include "FortGameMode.h"
 
 enum class EAthenaGamePhase : uint8
 {
@@ -69,7 +69,7 @@ public:
 
 	void SetGamePhase(EAthenaGamePhase GamePhase);
 	void SetGamePhaseStep(EAthenaGamePhaseStep GamePhaseStep);
-	DefHookOg(void, HandleMatchHasStarted, AFortGameModeAthena*);
+	DefHookOg(void, HandleMatchHasStarted, AFortGameMode*);
 	void Tick();
 	AFortSafeZoneIndicator* SetupSafeZoneIndicator();
 	void StartNewSafeZonePhase(int NewSafeZonePhase);

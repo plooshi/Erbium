@@ -252,7 +252,7 @@
     <ClInclude Include="FortniteGame\Public\BuildingSMActor.h" />
     <ClInclude Include="FortniteGame\Public\FortAthenaCreativePortal.h" />
     <ClInclude Include="FortniteGame\Public\FortAthenaMutator.h" />
-    <ClInclude Include="FortniteGame\Public\FortGameModeAthena.h" />
+    <ClInclude Include="FortniteGame\Public\FortGameMode.h" />
     <ClInclude Include="FortniteGame\Public\FortGameSessionAthena.h" />
     <ClInclude Include="FortniteGame\Public\FortGameStateAthena.h" />
     <ClInclude Include="FortniteGame\Public\FortInventory.h" />
@@ -302,7 +302,7 @@
     <ClCompile Include="FortniteGame\Private\BuildingSMActor.cpp" />
     <ClCompile Include="FortniteGame\Private\FortAthenaCreativePortal.cpp" />
     <ClCompile Include="FortniteGame\Private\FortAthenaMutator.cpp" />
-    <ClCompile Include="FortniteGame\Private\FortGameModeAthena.cpp" />
+    <ClCompile Include="FortniteGame\Private\FortGameMode.cpp" />
     <ClCompile Include="FortniteGame\Private\FortInventory.cpp" />
     <ClCompile Include="FortniteGame\Private\FortKismetLibrary.cpp" />
     <ClCompile Include="FortniteGame\Private\FortLootPackage.cpp" />

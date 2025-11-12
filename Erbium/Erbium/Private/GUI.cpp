@@ -290,7 +290,7 @@ void GUI::Init()
             if (ImGui::Button("Pause Safe Zone"))
             {
                 UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bPausedZone = true;
-                auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+                auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
                 if (GameMode->HasbSafeZonePaused())
                     GameMode->bSafeZonePaused = true;
                 UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"pausesafezone"), nullptr);
@@ -299,7 +299,7 @@ void GUI::Init()
             if (ImGui::Button("Resume Safe Zone"))
             {
                 UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bPausedZone = false;
-                auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+                auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
                 if (GameMode->HasbSafeZonePaused())
                     GameMode->bSafeZonePaused = false;
                 UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startsafezone"), nullptr);
@@ -307,7 +307,7 @@ void GUI::Init()
 
             if (ImGui::Button("Skip Safe Zone"))
             {
-                auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+                auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 
                 if (GameMode->HasSafeZoneIndicator())
                 {
@@ -333,7 +333,7 @@ void GUI::Init()
 
             if (ImGui::Button("Start Shrinking Safe Zone"))
             {
-                auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+                auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 
                 if (GameMode->HasSafeZoneIndicator())
                 {
