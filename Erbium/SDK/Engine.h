@@ -533,6 +533,7 @@ namespace SDK
 		DEFINE_BITFIELD_PROP(bNetUseOwnerRelevancy);
 		DEFINE_BITFIELD_PROP(bTearOff);
 		DEFINE_BITFIELD_PROP(bReplicates);
+		DEFINE_BITFIELD_PROP(bActorEnableCollision);
 
 		DEFINE_FUNC(AddComponentByClass, UActorComponent*);
 		DEFINE_FUNC(GetComponentByClass, UActorComponent*);

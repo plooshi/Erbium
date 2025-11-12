@@ -127,18 +127,165 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 	return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
 }
 
-void ABuildingSMActor::ServerSpawnDeco(UObject* Context, FFrame& Stack)
+void AFortDecoTool::ServerSpawnDeco_(UObject* Context, FFrame& Stack)
 {
-	ServerSpawnDecoOG(Context, Stack);
+	FVector Location;
+	FRotator Rotation;
+	ABuildingSMActor* AttachedActor;
+	uint8_t InBuildingAttachmentType;
+	Stack.StepCompiledIn(&Location);
+	Stack.StepCompiledIn(&Rotation);
+	Stack.StepCompiledIn(&AttachedActor);
+	Stack.StepCompiledIn(&InBuildingAttachmentType);
+	Stack.IncrementCode();
+	auto DecoTool = (AFortDecoTool*)Context;
 
-	auto AttachedActor = *(ABuildingSMActor**)(Stack.Locals + FVector::Size() + FRotator::Size());
+	auto Pawn = (AFortPlayerPawnAthena*)DecoTool->Owner;
+	if (!Pawn)
+		return;
+	auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
+	if (!PlayerController)
+		return;
 
-	printf("AttachedActor %s\n", AttachedActor->Name.ToString().c_str());
+	if (VersionInfo.FortniteVersion >= 18) // idk when they stripped it, guessing s18
+	{
+		auto ItemDefinition = (UFortDecoItemDefinition*)DecoTool->ItemDefinition;
+
+		auto NewTrap = UWorld::SpawnActor<ABuildingSMActor>(ItemDefinition->BlueprintClass.Get(), Location, Rotation, AttachedActor);
+		AttachedActor->AttachBuildingActorToMe(NewTrap, true);
+		AttachedActor->bHiddenDueToTrapPlacement = ItemDefinition->bReplacesBuildingWhenPlaced;
+		if (ItemDefinition->bReplacesBuildingWhenPlaced)
+			AttachedActor->bActorEnableCollision = false;
+		AttachedActor->ForceNetUpdate();
+
+		auto Resource = UFortKismetLibrary::GetDefaultObj()->K2_GetResourceItemDefinition(AttachedActor->ResourceType);
+		auto item = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* Item) {
+			return Item->ItemEntry.ItemDefinition == DecoTool->ItemDefinition;
+			});
+		auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) {
+			return entry.ItemDefinition == DecoTool->ItemDefinition;
+			}, FFortItemEntry::Size());
+		if (!itemEntry)
+			return;
+
+		itemEntry->Count--;
+		if (itemEntry->Count <= 0)
+			PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
+		else
+		{
+			(*item)->ItemEntry.Count = itemEntry->Count;
+			PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+		}
+
+		if (NewTrap->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex)
+		{
+			NewTrap->TeamIndex = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+			NewTrap->Team = NewTrap->TeamIndex;
+		}
+	}
+	callOG(DecoTool, Stack.GetCurrentNativeFunction(), ServerSpawnDeco, Location, Rotation, AttachedActor, InBuildingAttachmentType);
+
+	if (VersionInfo.FortniteVersion < 18)
+	{
+		static auto TrapClass = FindClass("BuildingTrap");
+		auto trapPtr = AttachedActor->AttachedBuildingActors.Search([&](ABuildingSMActor*& actor) {
+			return actor->IsA(TrapClass) && actor->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+			});
+
+		auto trap = trapPtr ? *trapPtr : nullptr;
+		if (trap) {
+			trap->TeamIndex = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+			trap->Team = trap->TeamIndex;
+		}
+	}
 }
 
-void ABuildingSMActor::ServerSpawnDeco_Implementation(UObject* Context, FFrame& Stack)
+void AFortDecoTool_ContextTrap::ServerSpawnDeco_Implementation(UObject* Context, FFrame& Stack)
 {
+	auto& Location = *(FVector*)Stack.Locals;
+	auto& Rotation = *(FRotator*)(__int64(Stack.Locals) + FVector::Size());
+	auto& AttachedActor = *(ABuildingSMActor**)(__int64(Stack.Locals) + FVector::Size() + FRotator::Size());
+	auto& InBuildingAttachmentType = *(uint8_t*)(__int64(Stack.Locals) + FVector::Size() + FRotator::Size() + 8);
+	auto DecoTool = (AFortDecoTool_ContextTrap*)Context;
+
+	auto Pawn = (AFortPlayerPawnAthena*)DecoTool->Owner;
+	if (!Pawn)
+		return;
+	auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
+	if (!PlayerController)
+		return;
+
+	if (VersionInfo.FortniteVersion >= 18) // idk when they stripped it, guessing s18
+	{
+		auto ItemDefinition = (UFortDecoItemDefinition*)DecoTool->ItemDefinition;
+
+		if (auto ContextTrapTool = DecoTool->Cast<AFortDecoTool_ContextTrap>()) {
+			switch ((int)InBuildingAttachmentType) {
+			case 0:
+			case 6:
+				ItemDefinition = (UFortDecoItemDefinition*)ContextTrapTool->ContextTrapItemDefinition->FloorTrap;
+				break;
+			case 7:
+			case 2:
+				ItemDefinition = (UFortDecoItemDefinition*)ContextTrapTool->ContextTrapItemDefinition->CeilingTrap;
+				break;
+			case 1:
+				ItemDefinition = (UFortDecoItemDefinition*)ContextTrapTool->ContextTrapItemDefinition->WallTrap;
+				break;
+			case 8:
+				ItemDefinition = (UFortDecoItemDefinition*)ContextTrapTool->ContextTrapItemDefinition->StairTrap;
+				break;
+			}
+		}
+
+		auto NewTrap = UWorld::SpawnActor<ABuildingSMActor>(ItemDefinition->BlueprintClass.Get(), Location, Rotation, AttachedActor);
+		AttachedActor->AttachBuildingActorToMe(NewTrap, true);
+		AttachedActor->bHiddenDueToTrapPlacement = ItemDefinition->bReplacesBuildingWhenPlaced;
+		if (ItemDefinition->bReplacesBuildingWhenPlaced)
+			AttachedActor->bActorEnableCollision = false;
+		AttachedActor->ForceNetUpdate();
+
+		auto Resource = UFortKismetLibrary::GetDefaultObj()->K2_GetResourceItemDefinition(AttachedActor->ResourceType);
+		auto item = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* Item) {
+			return Item->ItemEntry.ItemDefinition == DecoTool->ItemDefinition;
+			});
+		auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) {
+			return entry.ItemDefinition == DecoTool->ItemDefinition;
+			}, FFortItemEntry::Size());
+		if (!itemEntry)
+			return;
+
+		itemEntry->Count--;
+		if (itemEntry->Count <= 0)
+			PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
+		else
+		{
+			(*item)->ItemEntry.Count = itemEntry->Count;
+			PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+		}
+
+		if (NewTrap->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex)
+		{
+			NewTrap->TeamIndex = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+			NewTrap->Team = NewTrap->TeamIndex;
+		}
+	}
+
 	ServerSpawnDeco_ImplementationOG(Context, Stack);
+
+	if (VersionInfo.FortniteVersion < 18)
+	{
+		static auto TrapClass = FindClass("BuildingTrap");
+		auto trapPtr = AttachedActor->AttachedBuildingActors.Search([&](ABuildingSMActor*& actor) {
+			return actor->IsA(TrapClass) && actor->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+			});
+
+		auto trap = trapPtr ? *trapPtr : nullptr;
+		if (trap) {
+			trap->TeamIndex = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+			trap->Team = trap->TeamIndex;
+		}
+	}
 }
 
 
@@ -159,6 +306,14 @@ void ABuildingSMActor::PostLoadHook()
 
 	Utils::Hook(OnDamageServerAddr, OnDamageServer, OnDamageServerOG);
 
-	Utils::ExecHook(L"/Script/FortniteGame.FortDecoTool.ServerSpawnDeco", ServerSpawnDeco, ServerSpawnDecoOG);
-	//Utils::ExecHook(L"/Script/FortniteGame.FortDecoTool_ContextTrap.ServerSpawnDeco_Implementation", ServerSpawnDeco_Implementation, ServerSpawnDeco_ImplementationOG);
+	Utils::ExecHook(L"/Script/FortniteGame.FortDecoTool.ServerSpawnDeco", AFortDecoTool::ServerSpawnDeco_, AFortDecoTool::ServerSpawnDeco_OG);
+	if (AFortDecoTool_ContextTrap::StaticClass())
+	{
+		auto Func = AFortDecoTool_ContextTrap::GetDefaultObj()->GetFunction("ServerSpawnDeco_Implementation");
+
+		if (!Func)
+			Func = AFortDecoTool_ContextTrap::GetDefaultObj()->GetFunction("ServerSpawnDeco");
+
+		Utils::ExecHook(Func, AFortDecoTool_ContextTrap::ServerSpawnDeco_Implementation, AFortDecoTool_ContextTrap::ServerSpawnDeco_ImplementationOG);
+	}
 }

@@ -33,6 +33,39 @@ public:
     DEFINE_STRUCT_PROP(AlternateMeshes, TArray<FTierMeshSets>);
 };
 
+class AFortDecoTool : public AActor
+{
+public:
+    UCLASS_COMMON_MEMBERS(AFortDecoTool);
+
+    DEFINE_PROP(ItemDefinition, UObject*);
+
+    DEFINE_FUNC(ServerSpawnDeco, void);
+
+    DefUHookOg(ServerSpawnDeco_);
+};
+
+class UFortContextTrapItemDefinition : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortContextTrapItemDefinition);
+
+    DEFINE_PROP(FloorTrap, UObject*);
+    DEFINE_PROP(CeilingTrap, UObject*);
+    DEFINE_PROP(WallTrap, UObject*);
+    DEFINE_PROP(StairTrap, UObject*);
+};
+
+class AFortDecoTool_ContextTrap : public AFortDecoTool
+{
+public:
+    UCLASS_COMMON_MEMBERS(AFortDecoTool_ContextTrap);
+
+    DEFINE_PROP(ContextTrapItemDefinition, UFortContextTrapItemDefinition*);
+
+    DefUHookOg(ServerSpawnDeco_Implementation);
+};
+
 class ABuildingSMActor : public AActor
 {
 public:
@@ -53,6 +86,8 @@ public:
     DEFINE_PROP(BuildingReplacementType, uint8_t);
     DEFINE_PROP(ReplacementDestructionReason, uint8_t);
     DEFINE_PROP(OnReplacementDestruction, TMulticastInlineDelegate<void(uint8_t, ABuildingSMActor*)>);
+    DEFINE_PROP(AttachedBuildingActors, TArray<ABuildingSMActor*>);
+    DEFINE_BITFIELD_PROP(bHiddenDueToTrapPlacement);
 
     FBuildingSMActorClassData* GetClassData() const
     {
@@ -71,9 +106,9 @@ public:
     DEFINE_FUNC(SilentDie, void);
     DEFINE_FUNC(OnRep_CurrentBuildingLevel, void);
     DEFINE_STATIC_FUNC(K2_SpawnBuildingActor, ABuildingSMActor*);
+    DEFINE_FUNC(AttachBuildingActorToMe, void);
     
     DefHookOg(void, OnDamageServer, ABuildingSMActor*, float, FGameplayTagContainer, FVector, __int64, AActor*, AActor*, __int64);
-    DefUHookOg(ServerSpawnDeco);
     DefUHookOg(ServerSpawnDeco_Implementation);
 
     InitPostLoadHooks;

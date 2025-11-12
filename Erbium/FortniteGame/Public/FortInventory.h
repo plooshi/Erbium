@@ -304,6 +304,9 @@ class UFortDecoItemDefinition : public UFortWorldItemDefinition
 {
 public:
     UCLASS_COMMON_MEMBERS(UFortDecoItemDefinition);
+
+    DEFINE_PROP(BlueprintClass, TSoftClassPtr<UClass>);
+    DEFINE_BITFIELD_PROP(bReplacesBuildingWhenPlaced);
 };
 
 class UFortBuildingItemDefinition : public UFortWorldItemDefinition
