@@ -846,7 +846,7 @@ uint64 FindHandlePostSafeZonePhaseChanged()
     {
         bInitialized = true;
 
-        if (VersionInfo.EngineVersion == 4.19)
+        if (VersionInfo.EngineVersion <= 4.19)
             return HandlePostSafeZonePhaseChanged = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC 70 48 8B B9 ? ? ? ? 33 DB 0F 29 74 24 ? 48 8B F1 48 85 FF 74 2C E8").Get();
         else if (VersionInfo.EngineVersion == 4.20)
             return HandlePostSafeZonePhaseChanged = Memcury::Scanner::FindPattern("E8 ? ? ? ? EB 31 80 B9 ? ? ? ? ?").RelativeOffset(1).Get(); // 3.5
@@ -864,7 +864,7 @@ uint64 FindHandlePostSafeZonePhaseChanged()
         {
             if (*(uint8_t*)(sRef - i) == 0x40 && (*(uint8_t*)(sRef - i + 1) == 0x53 || *(uint8_t*)(sRef - i + 1) == 0x55))
                 return HandlePostSafeZonePhaseChanged = sRef - i;
-            else if (VersionInfo.FortniteVersion < 8 && *(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x5C)
+            else if ((VersionInfo.FortniteVersion < 8 || std::floor(VersionInfo.FortniteVersion) == 11) && *(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x5C)
                 return HandlePostSafeZonePhaseChanged = sRef - i;
             else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
                 return HandlePostSafeZonePhaseChanged = sRef - i;
