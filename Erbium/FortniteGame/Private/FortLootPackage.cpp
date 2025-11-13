@@ -365,8 +365,8 @@ bool UFortLootPackage::SpawnLootHook(ABuildingContainer* Container)
 	Container->OnRep_bAlreadySearched();
 	Container->SearchBounceData.SearchAnimationCount++;
 	Container->BounceContainer();
-	if (Container->bDestroyContainerOnSearch)
-		Container->K2_DestroyActor();
+	//if (Container->bDestroyContainerOnSearch)
+	//	Container->K2_DestroyActor();
 
 	return true;
 }
