@@ -2755,7 +2755,7 @@ void FindNullsAndRetTrues()
         }
     }
 
-    if (VersionInfo.EngineVersion < 5.1)
+    if (VersionInfo.EngineVersion < 5.0)
     {
         auto CanCreateInCurrentContext = Memcury::Scanner::FindPattern("8B ? E8 ? ? ? ? 84 C0 75 ? 80 3D ? ? ? ? 03 0F 82 ? ? ? ? ? 8B ? 18 ? 8D 54");
 
