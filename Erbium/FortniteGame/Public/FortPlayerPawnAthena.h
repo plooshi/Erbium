@@ -108,6 +108,8 @@ public:
     DEFINE_FUNC(GetActiveZipline, AFortAscenderZipline*);
     DEFINE_FUNC(ServerOnExitVehicle, void);
     DEFINE_FUNC(SetInVortex, void);
+    DEFINE_FUNC(ClientInternalEquipWeapon, void);
+    DEFINE_FUNC(ServerInternalEquipWeapon, void);
 
     DefUHookOg(ServerHandlePickup_);
     DefUHookOg(ServerHandlePickupInfo);

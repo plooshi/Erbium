@@ -22,7 +22,7 @@ namespace SDK
 		inline uint64_t Realloc = 0;
 		inline uint64_t AppendString = 0;
 		inline uint64_t ToString = 0;
-		inline uint64_t ProcessEvent = 0;
+		inline uint64_t ProcessEventVft = 0;
 		inline uint64_t GObjectsChunked = 0;
 		inline uint64_t GObjectsUnchunked = 0;
 		inline uint64_t Step = 0;
@@ -49,6 +49,7 @@ namespace SDK
 	}
 
 	extern void UpdateNumElemsPerChunk();
+	extern void InitializeProcessEventVft(uintptr_t);
 
 	inline void Init()
 	{
@@ -196,8 +197,6 @@ namespace SDK
 		}
 		else
 			addr = Memcury::Scanner::FindStringRef(L"UMeshNetworkComponent::ProcessEvent: Invalid mesh network node type: %s", true, 0, VersionInfo.FortniteVersion >= 19.00).ScanFor({ 0xE8 }, true, VersionInfo.FortniteVersion < 19.00 ? 1 : 3, 0, 2000).RelativeOffset(1).Get();
-
-		Offsets::ProcessEvent = addr;
 
 		if (VersionInfo.EngineVersion >= 4.21)
 		{
@@ -422,5 +421,7 @@ namespace SDK
 			else 
 				Offsets::SpawnActor = sRef.ScanFor({ 0x4C, 0x8B, 0xDC }, false, 0, 1, 3000).Get();
 		}
+
+		InitializeProcessEventVft(addr);
 	}
 }

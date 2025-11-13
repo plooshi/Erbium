@@ -281,8 +281,7 @@ namespace SDK
 
 		void ProcessEvent(class UFunction* Function, void* Params) const
 		{
-			auto& ProcessEventInternal = (void(*&)(const UObject*, class UFunction*, void*)) Offsets::ProcessEvent;
-			ProcessEventInternal(this, Function, Params);
+			((void(*&)(const UObject*, class UFunction*, void*)) Vft[Offsets::ProcessEventVft])(this, Function, Params);
 		}
 
 		template <typename Ret = void, typename... Args>
@@ -1297,5 +1296,17 @@ namespace SDK
 	inline void UpdateNumElemsPerChunk()
 	{
 		TUObjectArrayChunked::NumElementsPerChunk = 0x10400;
+	}
+
+	inline void InitializeProcessEventVft(uintptr_t PEAddr)
+	{
+		auto DefaultObj = UObject::StaticClass()->GetDefaultObj();
+
+		for (int i = 0; i < 0x100; i++)
+			if (__int64(DefaultObj->Vft[i]) == PEAddr)
+			{
+				Offsets::ProcessEventVft = i;
+				break;
+			}
 	}
 }
