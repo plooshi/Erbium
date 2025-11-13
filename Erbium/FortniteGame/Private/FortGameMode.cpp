@@ -748,10 +748,11 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
 
         if (VersionInfo.EngineVersion >= 4.27)
         {
-            GameState->DefaultParachuteDeployTraceForGroundDistance = 10000;
+			if (GameState->HasDefaultParachuteDeployTraceForGroundDistance())
+                GameState->DefaultParachuteDeployTraceForGroundDistance = 10000;
         }
 
-        if (VersionInfo.FortniteVersion >= 18 && VersionInfo.FortniteVersion < 25.20)
+        if (VersionInfo.FortniteVersion >= 18 && VersionInfo.FortniteVersion < 25.20 && (GameMode->HasAthenaGameDataTable() || GameState->HasAthenaGameDataTable()))
         {
             // fix storm damage bug
             UCurveTable* AthenaGameDataTable = GameMode->HasAthenaGameDataTable() ? GameMode->AthenaGameDataTable : GameState->AthenaGameDataTable;
