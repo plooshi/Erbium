@@ -66,9 +66,9 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 				return entry->ItemEntry.ItemDefinition == Resource;
 			});
 		auto itemEntry = Controller->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
-		{
-			return entry.ItemDefinition == Resource;
-		}, FFortItemEntry::Size());
+			{
+				return entry.ItemDefinition == Resource;
+			}, FFortItemEntry::Size());
 
 		if (ItemP)
 		{
@@ -207,18 +207,15 @@ void AFortDecoTool::ServerSpawnDeco_(UObject* Context, FFrame& Stack)
 
 	if (VersionInfo.FortniteVersion < 18)
 	{
-		printf("Okay so\n");
 		static auto TrapClass = FindClass("BuildingTrap");
 		auto trapPtr = AttachedActor->AttachedBuildingActors.Search([&](ABuildingSMActor*& actor) {
-			return actor->IsA(TrapClass) && actor->Team != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+			return actor->IsA(TrapClass) && actor->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
 			});
 
 		auto trap = trapPtr ? *trapPtr : nullptr;
 		if (trap) {
-			printf("found trap\n");
-			trap->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
-			if (trap->HasTeamIndex())
-				trap->TeamIndex = trap->Team;
+			trap->TeamIndex = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+			trap->Team = trap->TeamIndex;
 		}
 	}
 }
@@ -300,14 +297,13 @@ void AFortDecoTool_ContextTrap::ServerSpawnDeco_Implementation(UObject* Context,
 	{
 		static auto TrapClass = FindClass("BuildingTrap");
 		auto trapPtr = AttachedActor->AttachedBuildingActors.Search([&](ABuildingSMActor*& actor) {
-			return actor->IsA(TrapClass) && actor->Team != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+			return actor->IsA(TrapClass) && actor->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
 			});
 
 		auto trap = trapPtr ? *trapPtr : nullptr;
 		if (trap) {
-			trap->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
-			if (trap->HasTeamIndex())
-				trap->TeamIndex = trap->Team;
+			trap->TeamIndex = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+			trap->Team = trap->TeamIndex;
 		}
 	}
 }
@@ -349,11 +345,11 @@ void AFortDecoTool::ServerCreateBuildingAndSpawnDeco(UObject* Context, FFrame& S
 	auto Tool = (AFortDecoTool*)Context;
 
 	auto Pawn = (AFortPlayerPawnAthena*)Tool->Owner;
-	if (!Pawn) 
+	if (!Pawn)
 		return;
 
 	auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
-	if (!PlayerController) 
+	if (!PlayerController)
 		return;
 
 	auto ItemDefinition = (UFortDecoItemDefinition*)Tool->ItemDefinition;
@@ -524,8 +520,8 @@ void ABuildingSMActor::PostLoadHook()
 
 	Utils::Hook(OnDamageServerAddr, OnDamageServer, OnDamageServerOG);
 
-	Utils::ExecHook(AFortDecoTool::StaticClass()->GetFunction("ServerSpawnDeco"), AFortDecoTool::ServerSpawnDeco_, AFortDecoTool::ServerSpawnDeco_OG);
-	Utils::ExecHook(AFortDecoTool::StaticClass()->GetFunction("ServerCreateBuildingAndSpawnDeco"), AFortDecoTool::ServerCreateBuildingAndSpawnDeco, AFortDecoTool::ServerCreateBuildingAndSpawnDecoOG);
+	Utils::ExecHook(L"/Script/FortniteGame.FortDecoTool.ServerSpawnDeco", AFortDecoTool::ServerSpawnDeco_, AFortDecoTool::ServerSpawnDeco_OG);
+	Utils::ExecHook(L"/Script/FortniteGame.FortDecoTool.ServerCreateBuildingAndSpawnDeco", AFortDecoTool::ServerCreateBuildingAndSpawnDeco, AFortDecoTool::ServerCreateBuildingAndSpawnDecoOG);
 	if (AFortDecoTool_ContextTrap::StaticClass())
 	{
 		auto Func = AFortDecoTool_ContextTrap::GetDefaultObj()->GetFunction("ServerSpawnDeco_Implementation");

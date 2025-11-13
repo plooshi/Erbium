@@ -63,7 +63,7 @@ public:
 
     DEFINE_FUNC(CreateTemporaryItemInstanceBP, UFortItem*);
     DEFINE_FUNC(GetWeaponItemDefinition, UFortItemDefinition*);
-    
+
     int32 GetMaxStackSize() const
     {
         static auto Prop = this->GetProperty("MaxStackSize");
@@ -232,7 +232,7 @@ public:
     DEFINE_PROP(EquippedAbilitySet, TSoftObjectPtr<class UFortAbilitySet>);
     DEFINE_BITFIELD_PROP(bUsesCustomAmmoType);
     DEFINE_PROP(WeaponModSlots, TArray<void*>);
-    
+
     DEFINE_FUNC(GetAmmoWorldItemDefinition_BP, UFortItemDefinition*);
 };
 
@@ -332,7 +332,7 @@ public:
     DEFINE_PROP(bRequiresLocalUpdate, bool);
     DEFINE_PROP(bRequiresSaving, bool);
     DEFINE_PROP(InventoryType, uint8_t);
-    
+
     DEFINE_FUNC(HandleInventoryLocalUpdate, void);
 
     UFortWorldItem* GiveItem(const UFortItemDefinition*, int = 1, int = 0, int = 0, bool = true, bool = true, int = 0, TArray<FFortItemEntryStateValue> = {});

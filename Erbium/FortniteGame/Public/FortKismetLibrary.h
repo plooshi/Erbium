@@ -22,21 +22,21 @@ public:
 class UFortKismetLibrary : public UObject
 {
 public:
-    UCLASS_COMMON_MEMBERS(UFortKismetLibrary);
+	UCLASS_COMMON_MEMBERS(UFortKismetLibrary);
 
-    DEFINE_STATIC_FUNC(UpdatePlayerCustomCharacterPartsVisualization, void);
+	DEFINE_STATIC_FUNC(UpdatePlayerCustomCharacterPartsVisualization, void);
 	DEFINE_STATIC_FUNC(TossPickupFromContainer, void);
 	DEFINE_STATIC_FUNC(EquipFortAbilitySet, void);
 	DEFINE_STATIC_FUNC(FindGroundLocationAt, FVector);
 	DEFINE_STATIC_FUNC(UnequipFortAbilitySet, void);
 	DEFINE_STATIC_FUNC(SetTimeOfDay, void);
 	DEFINE_STATIC_FUNC(DoesItemDefinitionHaveGameplayTag, bool);
-    //DEFINE_STATIC_FUNC(K2_GetResourceItemDefinition, UFortItemDefinition*);
+	//DEFINE_STATIC_FUNC(K2_GetResourceItemDefinition, UFortItemDefinition*);
 
 	static const UFortItemDefinition* K2_GetResourceItemDefinition(EFortResourceType Type)
 	{
 		// exec func doesnt exist on rlly old builds
-		
+
 		static auto K2_GetResourceItemDefinition__Ptr = GetDefaultObj()->GetFunction("K2_GetResourceItemDefinition");
 
 		if (K2_GetResourceItemDefinition__Ptr)

@@ -7,7 +7,6 @@ void Events::StartEvent()
 {
 	if (VersionInfo.FortniteVersion < 4.4) return; // no other events from what i know of?
 
-
 	auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 	auto Playlist = VersionInfo.FortniteVersion >= 4.0 ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
 

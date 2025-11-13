@@ -505,7 +505,7 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	if (!PlayerController->bBuildFree && !FConfiguration::bInfiniteMats)
 	{
 		auto PayBuildableClassPlacementCost = (int(*)(AFortPlayerControllerAthena*, FBuildingClassData)) PayBuildableClassPlacementCost_;
-		
+
 		PayBuildableClassPlacementCost(PlayerController, BuildingClassData);
 	}
 

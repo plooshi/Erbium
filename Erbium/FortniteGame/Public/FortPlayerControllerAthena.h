@@ -208,7 +208,7 @@ public:
     static void ServerDropAllItems(UObject*, FFrame&);
     static void SpawnToyInstance(UObject*, FFrame&, AActor**);
     DefHookOg(void, EnterAircraft, UObject*, AActor*);
-    
+
 
     InitPostLoadHooks;
 };

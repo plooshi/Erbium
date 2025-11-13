@@ -18,7 +18,7 @@ class EFortResourceType__Enum
 {
 public:
     UENUM_COMMON_MEMBERS(EFortResourceType);
-    
+
     DEFINE_ENUM_PROP(None);
 };
 
@@ -102,7 +102,7 @@ public:
 
     FBuildingSMActorClassData* GetClassData() const
     {
-        FBuildingSMActorClassData* (*GetSparseClassDataOG)(UObject *, uint8) = decltype(GetSparseClassDataOG)(GetSparseClassData_);
+        FBuildingSMActorClassData* (*GetSparseClassDataOG)(UObject*, uint8) = decltype(GetSparseClassDataOG)(GetSparseClassData_);
 
         return GetSparseClassDataOG(Class, 1);
     }
@@ -118,7 +118,7 @@ public:
     DEFINE_FUNC(OnRep_CurrentBuildingLevel, void);
     DEFINE_STATIC_FUNC(K2_SpawnBuildingActor, ABuildingSMActor*);
     DEFINE_FUNC(AttachBuildingActorToMe, void);
-    
+
     DefHookOg(void, OnDamageServer, ABuildingSMActor*, float, FGameplayTagContainer, FVector, __int64, AActor*, AActor*, __int64);
     DefUHookOg(ServerSpawnDeco_Implementation);
 

@@ -2355,6 +2355,17 @@ uint64_t FindPayBuildableClassPlacementCost()
 {
     auto sRef = Memcury::Scanner::FindStringRef(L"Failed to remove item %s during pay building costs, item duplicated!", false, VersionInfo.FortniteVersion >= 10.30 && std::floor(VersionInfo.FortniteVersion) != 13 && VersionInfo.FortniteVersion < 20, VersionInfo.FortniteVersion >= 18.00);
 
+    if (VersionInfo.FortniteVersion >= 10.00)
+    {
+        auto Addr = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 55 57 41 54 41 56 41 57 48 8B EC 48 81 EC ? ? ? ? 48 8B 1A 33 FF");
+
+        if (!Addr.IsValid())
+            Addr = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 48 89 7C 24 ? 55 41 56 41 57 48 8B EC 48 83 EC ? 48 8B 1A 33 FF");
+
+        if (Addr.IsValid())
+            return Addr.Get();
+    }
+
     if (sRef.IsValid())
     {
         for (int i = 0; i < 2000; i++)
@@ -2366,19 +2377,6 @@ uint64_t FindPayBuildableClassPlacementCost()
             else if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
                 return uint64_t(Ptr);
         }
-    }
-    else if (VersionInfo.FortniteVersion >= 10.00)
-    {
-        auto Addr = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 56 57 41 56 48 83 EC ? 48 8B 1A 33 F6");
-
-        if (!Addr.IsValid())
-            Addr = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 55 57 41 54 41 56 41 57 48 8B EC 48 81 EC ? ? ? ? 48 8B 1A");
-
-        if (!Addr.IsValid())
-            Addr = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 48 89 7C 24 ? 55 41 56 41 57 48 8B EC 48 83 EC ? 48 8B 1A 33 FF");
-
-        if (Addr.IsValid())
-            return Addr.Get();
     }
 
     return Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 56 57 41 56 48 83 EC ? 48 8B 1A 33 F6").Get();
