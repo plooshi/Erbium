@@ -1527,24 +1527,18 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 						PlayerController->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
 				}*/
 
-				static int32 PlayerBotID = 1;
+				static int32 BotNum = 1;
 
-				std::string Name = "Erbium Bot " + std::to_string(PlayerBotID);
-
-				std::wstring WideName(Name.begin(), Name.end());
-				FString BotName = FString(WideName.c_str());
+				std::wstring Name = L"Erbium Bot (#" + std::to_wstring(BotNum) + L")";
+				FString BotName = FString(Name.c_str());
 
 				if (std::floor(VersionInfo.FortniteVersion) < 9)
-				{
 					PlayerController->ServerChangeName(BotName);
-				}
 				else
-				{
 					GameMode->ChangeName(PlayerController, BotName, true);
-				}
 
 				PlayerState->OnRep_PlayerName();
-				PlayerBotID++;
+				BotNum++;
 
 				PlayerController->ClientMessage(FString(L"Spawned a player bot!"), FName(), 1);
 			}
