@@ -763,7 +763,7 @@ namespace SDK
 
 		static AActor* SpawnActor(const UClass* Class, FTransform Transform, AActor* Owner = nullptr)
 		{
-			if (VersionInfo.EngineVersion >= 5.2)
+			/*if (VersionInfo.EngineVersion >= 5.2)
 			{
 				auto SpawnActorInternal = (AActor * (*)(UWorld*, const UClass*, FTransform*, void*)) Offsets::SpawnActor;
 
@@ -800,7 +800,7 @@ namespace SDK
 				SpawnParameters.SpawnCollisionHandlingOverride = 2;
 
 				return SpawnActorInternal(GetWorld(), Class, &Transform, &SpawnParameters);
-			}
+			}*/
 
 			/*static auto BeginDeferredActorSpawnFromClassFn = UGameplayStatics::GetDefaultObj()->GetFunction("BeginDeferredActorSpawnFromClass");
 			static auto FinishSpawningActorFn = UGameplayStatics::GetDefaultObj()->GetFunction("FinishSpawningActor");
