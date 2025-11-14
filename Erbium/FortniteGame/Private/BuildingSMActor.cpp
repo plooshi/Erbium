@@ -520,8 +520,8 @@ void ABuildingSMActor::PostLoadHook()
 
 	Utils::Hook(OnDamageServerAddr, OnDamageServer, OnDamageServerOG);
 
-	Utils::ExecHook(L"/Script/FortniteGame.FortDecoTool.ServerSpawnDeco", AFortDecoTool::ServerSpawnDeco_, AFortDecoTool::ServerSpawnDeco_OG);
-	Utils::ExecHook(L"/Script/FortniteGame.FortDecoTool.ServerCreateBuildingAndSpawnDeco", AFortDecoTool::ServerCreateBuildingAndSpawnDeco, AFortDecoTool::ServerCreateBuildingAndSpawnDecoOG);
+	Utils::ExecHook(AFortDecoTool::GetDefaultObj()->GetFunction("ServerSpawnDeco"), AFortDecoTool::ServerSpawnDeco_, AFortDecoTool::ServerSpawnDeco_OG);
+	Utils::ExecHook(AFortDecoTool::GetDefaultObj()->GetFunction("ServerCreateBuildingAndSpawnDeco"), AFortDecoTool::ServerCreateBuildingAndSpawnDeco, AFortDecoTool::ServerCreateBuildingAndSpawnDecoOG);
 	if (AFortDecoTool_ContextTrap::StaticClass())
 	{
 		auto Func = AFortDecoTool_ContextTrap::GetDefaultObj()->GetFunction("ServerSpawnDeco_Implementation");
