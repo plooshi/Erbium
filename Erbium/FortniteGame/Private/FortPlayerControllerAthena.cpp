@@ -1414,7 +1414,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 			UFortKismetLibrary::SetTimeOfDay(UWorld::GetWorld(), NewTOD);
 			PlayerController->ClientMessage(FString(L"Set time of day!"), FName(), 1);
 		}
-		else if (command == "spawnbot")
+		else if (command == "spawnbot" || command == "bot")
 		{
 			int Count = 1;
 
@@ -1526,6 +1526,25 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 					if (StartingItem.Count && (!SmartItemDefClass || !StartingItem.Item->IsA(SmartItemDefClass)))
 						PlayerController->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
 				}*/
+
+				static int32 PlayerBotID = 1;
+
+				std::string Name = "Erbium Bot " + std::to_string(PlayerBotID);
+
+				std::wstring WideName(Name.begin(), Name.end());
+				FString BotName = FString(WideName.c_str());
+
+				if (std::floor(VersionInfo.FortniteVersion) < 9)
+				{
+					PlayerController->ServerChangeName(BotName);
+				}
+				else
+				{
+					GameMode->ChangeName(PlayerController, BotName, true);
+				}
+
+				PlayerState->OnRep_PlayerName();
+				PlayerBotID++;
 
 				PlayerController->ClientMessage(FString(L"Spawned a player bot!"), FName(), 1);
 			}
@@ -1693,7 +1712,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				}
 			}
 		}
-		else if (command == "giveitem")
+		else if (command == "giveitem" || command == "give")
 		{
 			if (args.size() != 2 && args.size() != 3)
 			{
