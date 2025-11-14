@@ -483,17 +483,17 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	static auto K2_SpawnBuildingActor = ABuildingSMActor::GetDefaultObj()->GetFunction("K2_SpawnBuildingActor");
 
 	ABuildingSMActor* Building = nullptr;
-	if (K2_SpawnBuildingActor)
+	/*if (K2_SpawnBuildingActor)
 	{
 		FTransform SpawnTransform(BuildLoc, BuildRot);
 		Building = ABuildingSMActor::K2_SpawnBuildingActor(PlayerController, BuildingClass, SpawnTransform, PlayerController, nullptr, false, false);
 	}
-	else
+	else*/
 		Building = UWorld::SpawnActor<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, PlayerController);
 
-	static auto UpgradeLevelOffset = FBuildingClassData::StaticStruct()->GetOffset("UpgradeLevel");
+	/*static auto UpgradeLevelOffset = FBuildingClassData::StaticStruct()->GetOffset("UpgradeLevel");
 	Building->CurrentBuildingLevel = VersionInfo.EngineVersion >= 5.3 ? *(uint8*)(__int64(&BuildingClassData) + UpgradeLevelOffset) : *(uint32*)(__int64(&BuildingClassData) + UpgradeLevelOffset);
-	Building->OnRep_CurrentBuildingLevel();
+	Building->OnRep_CurrentBuildingLevel();*/
 
 	Building->SetMirrored(bMirrored);
 
