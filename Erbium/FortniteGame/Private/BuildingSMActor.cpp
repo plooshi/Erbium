@@ -284,7 +284,7 @@ void AFortDecoTool_ContextTrap::ServerSpawnDeco_Implementation(UObject* Context,
 			PlayerController->WorldInventory->UpdateEntry(*itemEntry);
 		}
 
-		if (NewTrap->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex)
+		if (NewTrap && NewTrap->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex)
 		{
 			NewTrap->TeamIndex = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
 			NewTrap->Team = NewTrap->TeamIndex;
