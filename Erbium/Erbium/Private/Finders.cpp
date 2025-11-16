@@ -2492,6 +2492,90 @@ uint64 FindLoadPlayset(const std::vector<uint8_t>& Bytes, int recursive)
     return LoadPlayset;
 }
 
+uint32 FindSpawnDecoVft()
+{
+    auto sRef = Memcury::Scanner::FindStringRef(L"AFortTrapTool::SpawnDeco World is tearing down.  Early-ing out.", false, 0, VersionInfo.FortniteVersion >= 19);
+
+    uint64 SpawnDeco = 0;
+    for (int i = 0; i < 2000; i++)
+    {
+        auto Ptr = (uint8_t*)(sRef.Get() - i);
+
+        if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4)
+        {
+            SpawnDeco = uint64_t(Ptr);
+            break;
+        }
+        else if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
+        {
+            SpawnDeco = uint64_t(Ptr);
+            break;
+        }
+    }
+
+    auto ActorVft = DefaultObjImpl("FortTrapTool")->Vft;
+
+    for (int i = 0; i < 0x500; i++)
+    {
+        if (ActorVft[i] == (void*)SpawnDeco)
+        {
+            return i;
+        }
+    }
+    return 0;
+}
+
+uint32 FindShouldAllowServerSpawnDecoVft()
+{
+    auto sRef = Memcury::Scanner::FindStringRef(L"Tried to place deco item %s %s that isn't actually in player inventory!", false, 0, VersionInfo.FortniteVersion >= 19, false);
+
+    uint64 ShouldAllowServerSpawnDecoPart = 0;
+
+    for (int i = 0; i < 2000; i++)
+    {
+        auto Ptr = (uint8_t*)(sRef.Get() - i);
+
+        if (*Ptr == 0x48 && *(Ptr + 1) == 0x83 && *(Ptr + 2) == 0xEC)
+        {
+            ShouldAllowServerSpawnDecoPart = uint64_t(Ptr);
+            break;
+        }
+        else if (*Ptr == 0x48 && *(Ptr + 1) == 0x81 && *(Ptr + 2) == 0xEC)
+        {
+            ShouldAllowServerSpawnDecoPart = uint64_t(Ptr);
+            break;
+        }
+    }
+
+    uint64 ShouldAllowServerSpawnDeco = 0;
+    for (int i = 0; i < 2000; i++)
+    {
+        auto Ptr = (uint8_t*)(ShouldAllowServerSpawnDecoPart - i);
+
+        if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4)
+        {
+            ShouldAllowServerSpawnDeco = uint64_t(Ptr);
+            break;
+        }
+        else if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
+        {
+            ShouldAllowServerSpawnDeco = uint64_t(Ptr);
+            break;
+        }
+    }
+
+    auto ActorVft = DefaultObjImpl("FortDecoTool")->Vft;
+
+    for (int i = 0; i < 0x500; i++)
+    {
+        if (ActorVft[i] == (void*)ShouldAllowServerSpawnDeco)
+        {
+            return i;
+        }
+    }
+    return 0;
+}
+
 void FindNullsAndRetTrues()
 {
     if (VersionInfo.EngineVersion == 4.16)

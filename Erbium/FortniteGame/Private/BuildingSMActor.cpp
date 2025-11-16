@@ -127,6 +127,8 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 	return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
 }
 
+uint32 SpawnDecoVft = 0;
+uint32 ShouldAllowServerSpawnDecoVft = 0;
 void AFortDecoTool::ServerSpawnDeco_(UObject* Context, FFrame& Stack)
 {
 	FVector Location;
@@ -170,43 +172,26 @@ void AFortDecoTool::ServerSpawnDeco_(UObject* Context, FFrame& Stack)
 			}
 		}
 
-		auto NewTrap = (ABuildingSMActor*)UWorld::SpawnActor(ItemDefinition->BlueprintClass.Get(), Location, Rotation, AttachedActor);
-		AttachedActor->AttachBuildingActorToMe(NewTrap, true);
-		AttachedActor->bHiddenDueToTrapPlacement = ItemDefinition->bReplacesBuildingWhenPlaced;
-		if (ItemDefinition->bReplacesBuildingWhenPlaced)
-			AttachedActor->bActorEnableCollision = false;
-		AttachedActor->ForceNetUpdate();
+		auto ShouldAllowServerSpawnDeco = (bool (*)(AFortDecoTool*, FVector&, FRotator&, ABuildingSMActor*, uint8_t)) DecoTool->Vft[ShouldAllowServerSpawnDecoVft];
 
-		auto Resource = UFortKismetLibrary::GetDefaultObj()->K2_GetResourceItemDefinition(AttachedActor->ResourceType);
-		auto item = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* Item) {
-			return Item->ItemEntry.ItemDefinition == DecoTool->ItemDefinition;
-			});
-		auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) {
-			return entry.ItemDefinition == DecoTool->ItemDefinition;
-			}, FFortItemEntry::Size());
-		if (!itemEntry)
+		if (ShouldAllowServerSpawnDecoVft && !ShouldAllowServerSpawnDeco(DecoTool, Location, Rotation, AttachedActor, InBuildingAttachmentType))
 			return;
 
-		itemEntry->Count--;
-		if (itemEntry->Count <= 0)
-			PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
-		else
-		{
-			(*item)->ItemEntry.Count = itemEntry->Count;
-			PlayerController->WorldInventory->UpdateEntry(*itemEntry);
-		}
+		auto SpawnDeco = (ABuildingSMActor * (*)(AFortDecoTool*, UClass*, FVector&, FRotator&, ABuildingSMActor*, int, uint8_t)) DecoTool->Vft[SpawnDecoVft];
 
-		if (NewTrap->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex)
+		auto NewTrap = SpawnDecoVft ? SpawnDeco(DecoTool, ItemDefinition->BlueprintClass.Get(), Location, Rotation, AttachedActor, 0, InBuildingAttachmentType) : nullptr;
+
+		if (NewTrap && NewTrap->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex)
 		{
 			NewTrap->TeamIndex = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
 			NewTrap->Team = NewTrap->TeamIndex;
 		}
 	}
 
-	callOG(DecoTool, Stack.GetCurrentNativeFunction(), ServerSpawnDeco, Location, Rotation, AttachedActor, InBuildingAttachmentType);
-
 	if (VersionInfo.FortniteVersion < 18)
 	{
+		callOG(DecoTool, Stack.GetCurrentNativeFunction(), ServerSpawnDeco, Location, Rotation, AttachedActor, InBuildingAttachmentType);
+
 		static auto TrapClass = FindClass("BuildingTrap");
 		auto trapPtr = AttachedActor->AttachedBuildingActors.Search([&](ABuildingSMActor*& actor) {
 			return actor->IsA(TrapClass) && actor->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
@@ -258,33 +243,16 @@ void AFortDecoTool_ContextTrap::ServerSpawnDeco_Implementation(UObject* Context,
 			}
 		}
 
-		auto NewTrap = (ABuildingSMActor*)UWorld::SpawnActor(ItemDefinition->BlueprintClass.Get(), Location, Rotation, AttachedActor);
-		AttachedActor->AttachBuildingActorToMe(NewTrap, true);
-		AttachedActor->bHiddenDueToTrapPlacement = ItemDefinition->bReplacesBuildingWhenPlaced;
-		if (ItemDefinition->bReplacesBuildingWhenPlaced)
-			AttachedActor->bActorEnableCollision = false;
-		AttachedActor->ForceNetUpdate();
+		auto ShouldAllowServerSpawnDeco = (bool (*)(AFortDecoTool*, FVector&, FRotator&, ABuildingSMActor*, uint8_t)) DecoTool->Vft[ShouldAllowServerSpawnDecoVft];
 
-		auto Resource = UFortKismetLibrary::GetDefaultObj()->K2_GetResourceItemDefinition(AttachedActor->ResourceType);
-		auto item = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* Item) {
-			return Item->ItemEntry.ItemDefinition == DecoTool->ItemDefinition;
-			});
-		auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) {
-			return entry.ItemDefinition == DecoTool->ItemDefinition;
-			}, FFortItemEntry::Size());
-		if (!itemEntry)
+		if (ShouldAllowServerSpawnDecoVft && !ShouldAllowServerSpawnDeco(DecoTool, Location, Rotation, AttachedActor, InBuildingAttachmentType))
 			return;
 
-		itemEntry->Count--;
-		if (itemEntry->Count <= 0)
-			PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
-		else
-		{
-			(*item)->ItemEntry.Count = itemEntry->Count;
-			PlayerController->WorldInventory->UpdateEntry(*itemEntry);
-		}
+		auto SpawnDeco = (ABuildingSMActor * (*)(AFortDecoTool*, UClass*, FVector&, FRotator&, ABuildingSMActor*, int, uint8_t)) DecoTool->Vft[SpawnDecoVft];
 
-		if (NewTrap->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex)
+		auto NewTrap = SpawnDecoVft ? SpawnDeco(DecoTool, ItemDefinition->BlueprintClass.Get(), Location, Rotation, AttachedActor, 0, InBuildingAttachmentType) : nullptr;
+
+		if (NewTrap && NewTrap->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex)
 		{
 			NewTrap->TeamIndex = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
 			NewTrap->Team = NewTrap->TeamIndex;
@@ -515,13 +483,18 @@ void ABuildingSMActor::PostLoadHook()
 		if (!GetSparseClassData_)
 			GetSparseClassData_ = Memcury::Scanner::FindPattern("48 83 EC ? 48 8B 81 ? ? ? ? 45 33 C0 48 85 C0 75").Get();
 	}
+	if (VersionInfo.FortniteVersion >= 18)
+	{
+		SpawnDecoVft = FindSpawnDecoVft();
+		ShouldAllowServerSpawnDecoVft = FindShouldAllowServerSpawnDecoVft();
+	}
 
 	auto OnDamageServerAddr = FindFunctionCall(L"OnDamageServer", VersionInfo.EngineVersion == 4.16 ? std::vector<uint8_t>{ 0x4C, 0x89, 0x4C } : VersionInfo.EngineVersion == 4.19 || VersionInfo.EngineVersion >= 4.27 ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x40, 0x55 });
 
 	Utils::Hook(OnDamageServerAddr, OnDamageServer, OnDamageServerOG);
 
-	Utils::ExecHook(L"/Script/FortniteGame.FortDecoTool.ServerSpawnDeco", AFortDecoTool::ServerSpawnDeco_, AFortDecoTool::ServerSpawnDeco_OG);
-	Utils::ExecHook(L"/Script/FortniteGame.FortDecoTool.ServerCreateBuildingAndSpawnDeco", AFortDecoTool::ServerCreateBuildingAndSpawnDeco, AFortDecoTool::ServerCreateBuildingAndSpawnDecoOG);
+	Utils::ExecHook(AFortDecoTool::GetDefaultObj()->GetFunction("ServerSpawnDeco"), AFortDecoTool::ServerSpawnDeco_, AFortDecoTool::ServerSpawnDeco_OG);
+	Utils::ExecHook(AFortDecoTool::GetDefaultObj()->GetFunction("ServerCreateBuildingAndSpawnDeco"), AFortDecoTool::ServerCreateBuildingAndSpawnDeco, AFortDecoTool::ServerCreateBuildingAndSpawnDecoOG);
 	if (AFortDecoTool_ContextTrap::StaticClass())
 	{
 		auto Func = AFortDecoTool_ContextTrap::GetDefaultObj()->GetFunction("ServerSpawnDeco_Implementation");
