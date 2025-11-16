@@ -763,7 +763,7 @@ namespace SDK
 
 		static AActor* SpawnActor(const UClass* Class, FTransform Transform, AActor* Owner = nullptr)
 		{
-			if (VersionInfo.EngineVersion >= 5.2)
+			/*if (VersionInfo.EngineVersion >= 5.2)
 			{
 				auto SpawnActorInternal = (AActor * (*)(UWorld*, const UClass*, FTransform*, void*)) Offsets::SpawnActor;
 
@@ -771,7 +771,7 @@ namespace SDK
 
 				SpawnParameters.Owner = Owner;
 				SpawnParameters.bDeferConstruction = false;
-				SpawnParameters.SpawnCollisionHandlingOverride = 2;
+				SpawnParameters.SpawnCollisionHandlingOverride = 1;
 				SpawnParameters.NameMode = 3;
 
 				return SpawnActorInternal(GetWorld(), Class, &Transform, &SpawnParameters);
@@ -784,7 +784,7 @@ namespace SDK
 
 				SpawnParameters.Owner = Owner;
 				SpawnParameters.bDeferConstruction = false;
-				SpawnParameters.SpawnCollisionHandlingOverride = 2;
+				SpawnParameters.SpawnCollisionHandlingOverride = 1;
 				SpawnParameters.NameMode = 3;
 
 				return SpawnActorInternal(GetWorld(), Class, &Transform, &SpawnParameters);
@@ -797,10 +797,10 @@ namespace SDK
 
 				SpawnParameters.Owner = Owner;
 				SpawnParameters.bDeferConstruction = false;
-				SpawnParameters.SpawnCollisionHandlingOverride = 2;
+				SpawnParameters.SpawnCollisionHandlingOverride = 1;
 
 				return SpawnActorInternal(GetWorld(), Class, &Transform, &SpawnParameters);
-			}
+			}*/
 
 			/*static auto BeginDeferredActorSpawnFromClassFn = UGameplayStatics::GetDefaultObj()->GetFunction("BeginDeferredActorSpawnFromClass");
 			static auto FinishSpawningActorFn = UGameplayStatics::GetDefaultObj()->GetFunction("FinishSpawningActor");
@@ -812,7 +812,7 @@ namespace SDK
 			Params.Owner = Owner;
 			
 			UGameplayStatics::GetDefaultObj()->ProcessEvent(BeginDeferredActorSpawnFromClassFn, &Params);*/
-			auto Actor = UGameplayStatics::BeginDeferredActorSpawnFromClass(GetWorld(), Class, Transform, 2, Owner);
+			auto Actor = UGameplayStatics::BeginDeferredActorSpawnFromClass(GetWorld(), Class, Transform, 1, Owner);
 
 			/*GameplayStatics_FinishSpawningActor Params2{};
 			Params2.Actor = Params.ReturnValue;
