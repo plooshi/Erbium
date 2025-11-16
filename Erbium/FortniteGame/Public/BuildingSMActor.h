@@ -39,6 +39,7 @@ public:
 
     DEFINE_STRUCT_PROP(BuildingResourceAmountOverride, FCurveTableRowHandle);
     DEFINE_STRUCT_PROP(AlternateMeshes, TArray<FTierMeshSets>);
+    DEFINE_STRUCT_PROP(EditModePatternData, UObject*);
 };
 
 class AFortDecoTool : public AActor

@@ -193,6 +193,25 @@ void AFortDecoTool::ServerSpawnDeco_(UObject* Context, FFrame& Stack)
 			NewTrap = SpawnDecoVft ? SpawnDeco(DecoTool, ItemDefinition->BlueprintClass.Get(), Location, Rotation, AttachedActor, 0, InBuildingAttachmentType) : nullptr;
 		}
 
+		auto Resource = UFortKismetLibrary::GetDefaultObj()->K2_GetResourceItemDefinition(AttachedActor->ResourceType);
+		auto item = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* Item) {
+			return Item->ItemEntry.ItemDefinition == DecoTool->ItemDefinition;
+			});
+		auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) {
+			return entry.ItemDefinition == DecoTool->ItemDefinition;
+			}, FFortItemEntry::Size());
+		if (!itemEntry)
+			return;
+
+		itemEntry->Count--;
+		if (itemEntry->Count <= 0)
+			PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
+		else
+		{
+			(*item)->ItemEntry.Count = itemEntry->Count;
+			PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+		}
+
 		if (NewTrap && NewTrap->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex)
 		{
 			NewTrap->TeamIndex = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
@@ -274,6 +293,25 @@ void AFortDecoTool_ContextTrap::ServerSpawnDeco_Implementation(UObject* Context,
 			auto SpawnDeco = (ABuildingSMActor * (*)(AFortDecoTool*, UClass*, FVector&, FRotator&, ABuildingSMActor*, int, uint8_t)) DecoTool->Vft[SpawnDecoVft];
 
 			NewTrap = SpawnDecoVft ? SpawnDeco(DecoTool, ItemDefinition->BlueprintClass.Get(), Location, Rotation, AttachedActor, 0, InBuildingAttachmentType) : nullptr;
+		}
+
+		auto Resource = UFortKismetLibrary::GetDefaultObj()->K2_GetResourceItemDefinition(AttachedActor->ResourceType);
+		auto item = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* Item) {
+			return Item->ItemEntry.ItemDefinition == DecoTool->ItemDefinition;
+			});
+		auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) {
+			return entry.ItemDefinition == DecoTool->ItemDefinition;
+			}, FFortItemEntry::Size());
+		if (!itemEntry)
+			return;
+
+		itemEntry->Count--;
+		if (itemEntry->Count <= 0)
+			PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
+		else
+		{
+			(*item)->ItemEntry.Count = itemEntry->Count;
+			PlayerController->WorldInventory->UpdateEntry(*itemEntry);
 		}
 
 		if (NewTrap && NewTrap->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex)
@@ -374,7 +412,7 @@ void AFortDecoTool::ServerCreateBuildingAndSpawnDeco(UObject* Context, FFrame& S
 
 	auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
 	auto bIgnoreCanAffordCheck = UFortKismetLibrary::DoesItemDefinitionHaveGameplayTag(ItemDefinition, FGameplayTag(FName(L"Trap.ExtraPiece.Cost.Ignore")));
-	TSubclassOf<AActor> Ret{};
+	TSubclassOf<AActor> BuildingClass{};
 	auto ResourceType = PlayerController->CurrentResourceType;
 
 	if (ItemDefinition->AutoCreateAttachmentBuildingResourceType != EFortResourceType(EFortResourceType__Enum::GetNone()))
@@ -387,15 +425,25 @@ void AFortDecoTool::ServerCreateBuildingAndSpawnDeco(UObject* Context, FFrame& S
 		{
 			auto Default = (ABuildingSMActor*)Class->GetDefaultObj();
 
-			if (Default->ResourceType == ResourceType && Default->BuildingType == BuildingType && Default->EditModePatternData == Shape)
+			UObject* EditModePatternData = nullptr;
+
+			if (Default->HasEditModePatternData())
+				EditModePatternData = Default->EditModePatternData;
+			else
 			{
-				Ret = Class;
+				auto ClassData = Default->GetClassData();
+
+				EditModePatternData = ClassData->EditModePatternData;
+			}
+
+			if (Default->ResourceType == ResourceType && Default->BuildingType == BuildingType && EditModePatternData == Shape)
+			{
+				BuildingClass = Class;
 				goto _out;
 			}
 		}
 	}
 _out:
-	auto BuildingClass = Ret;
 
 	FBuildingClassData BuildingClassData;
 	BuildingClassData.BuildingClass = BuildingClass;
