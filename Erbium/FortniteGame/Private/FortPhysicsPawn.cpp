@@ -88,7 +88,7 @@ void AFortPhysicsPawn::ServerMove(UObject* Context, FFrame& Stack)
     {
         FRotator RealRotation = Rotation.Rotator();
 
-        if (VersionInfo.FortniteVersion >= 4.24)
+        if (VersionInfo.EngineVersion >= 4.24)
         {
             RealRotation.Yaw = FRotator::UnwindDegrees(RealRotation.Yaw);
             RealRotation.Pitch = 0;
