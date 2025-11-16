@@ -55,6 +55,7 @@ public:
     DEFINE_FUNC(ReadyToStartMatch, bool);
     DEFINE_FUNC(HandleStartingNewPlayer, void);
     DEFINE_FUNC(OnAircraftExitedDropZone, void);
+    DEFINE_FUNC(ChangeName, void);
 
     DefUHookOgRet(bool, ReadyToStartMatch_);
     static void SpawnDefaultPawnFor(UObject*, FFrame&, AActor**);
