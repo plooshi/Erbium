@@ -771,7 +771,7 @@ namespace SDK
 
 				SpawnParameters.Owner = Owner;
 				SpawnParameters.bDeferConstruction = false;
-				SpawnParameters.SpawnCollisionHandlingOverride = 2;
+				SpawnParameters.SpawnCollisionHandlingOverride = 1;
 				SpawnParameters.NameMode = 3;
 
 				return SpawnActorInternal(GetWorld(), Class, &Transform, &SpawnParameters);
@@ -784,7 +784,7 @@ namespace SDK
 
 				SpawnParameters.Owner = Owner;
 				SpawnParameters.bDeferConstruction = false;
-				SpawnParameters.SpawnCollisionHandlingOverride = 2;
+				SpawnParameters.SpawnCollisionHandlingOverride = 1;
 				SpawnParameters.NameMode = 3;
 
 				return SpawnActorInternal(GetWorld(), Class, &Transform, &SpawnParameters);
@@ -797,7 +797,7 @@ namespace SDK
 
 				SpawnParameters.Owner = Owner;
 				SpawnParameters.bDeferConstruction = false;
-				SpawnParameters.SpawnCollisionHandlingOverride = 2;
+				SpawnParameters.SpawnCollisionHandlingOverride = 1;
 
 				return SpawnActorInternal(GetWorld(), Class, &Transform, &SpawnParameters);
 			}*/
@@ -812,7 +812,7 @@ namespace SDK
 			Params.Owner = Owner;
 			
 			UGameplayStatics::GetDefaultObj()->ProcessEvent(BeginDeferredActorSpawnFromClassFn, &Params);*/
-			auto Actor = UGameplayStatics::BeginDeferredActorSpawnFromClass(GetWorld(), Class, Transform, 2, Owner);
+			auto Actor = UGameplayStatics::BeginDeferredActorSpawnFromClass(GetWorld(), Class, Transform, 1, Owner);
 
 			/*GameplayStatics_FinishSpawningActor Params2{};
 			Params2.Actor = Params.ReturnValue;
