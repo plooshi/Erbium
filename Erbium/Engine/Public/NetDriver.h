@@ -186,7 +186,7 @@ public:
     DEFINE_PROP(NetServerMaxTickRate, int32);
     DEFINE_PROP(RelevantTimeout, float);
 
-    DefHookOg(void, TickFlush, UNetDriver*);
+    DefHookOg(void, TickFlush, UNetDriver*, float);
     static void TickFlush__RepGraph(UNetDriver*, float);
     static void TickFlush__Iris(UNetDriver*, float);
     DefHookOg(void, NotifyActorDestroyed, UNetDriver*, AActor*, bool);

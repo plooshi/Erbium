@@ -976,7 +976,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 			PlayerController->Pawn->CharacterMovement->ProcessEvent(PlayerController->Pawn->CharacterMovement->GetFunction("DisableMovement"), nullptr);
 		}
 
-		if (PlayerController->Pawn && KillerPlayerState && KillerPlayerState->Place == 1)
+		if (PlayerController->Pawn && KillerPlayerState && KillerPlayerState != PlayerState && KillerPlayerState->Place == 1)
 		{
 			/*if (PlayerState->Place == 1)
 			{

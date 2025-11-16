@@ -1510,7 +1510,11 @@ bool AFortGameMode::StartAircraftPhase(AFortGameMode* GameMode, char a2)
     {
         /**/
 
-        auto Aircraft = GameState->HasAircrafts() ? GameState->Aircrafts[0] : GameState->Aircraft;
+        auto Aircraft = GameState->HasAircrafts() ?  (GameState->Aircrafts.Num() > 0 ?GameState->Aircrafts[0] : nullptr) : GameState->Aircraft;
+
+        if (!Aircraft)
+            return Ret;
+
         FVector Loc;
         bool bScuffed = false;
         if (GameMode->SafeZoneLocations.Num() < 4)

@@ -492,7 +492,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 	ViewerMap.clear();
 }
 
-void UNetDriver::TickFlush(UNetDriver* Driver)
+void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 {
 	if (VersionInfo.FortniteVersion >= 25.20)
 	{
@@ -501,7 +501,7 @@ void UNetDriver::TickFlush(UNetDriver* Driver)
 	}
 
 	if (Driver->ClientConnections.Num() > 0)
-		ServerReplicateActors(Driver, 0);
+		ServerReplicateActors(Driver, DeltaSeconds);
 
     if (GUI::gsStatus == 1 && VersionInfo.FortniteVersion >= 11.00)
     { 
@@ -553,7 +553,7 @@ void UNetDriver::TickFlush(UNetDriver* Driver)
 		}
 	}
 
-    return TickFlushOG(Driver);
+    return TickFlushOG(Driver, DeltaSeconds);
 }
 
 
@@ -564,7 +564,7 @@ void UNetDriver::TickFlush__RepGraph(UNetDriver* Driver, float DeltaSeconds)
 	{
 		// this is our main netdriver
 		if (Driver->ClientConnections.Num() > 0)
-			((void (*)(UObject*)) ServerReplicateActors_)(Driver->ReplicationDriver);
+			((void (*)(UObject*, float)) ServerReplicateActors_)(Driver->ReplicationDriver, DeltaSeconds);
 
 
 		if (GUI::gsStatus == 1 && VersionInfo.FortniteVersion >= 11.00)
@@ -618,7 +618,7 @@ void UNetDriver::TickFlush__RepGraph(UNetDriver* Driver, float DeltaSeconds)
 		}
 	}
 
-	return TickFlushOG(Driver);
+	return TickFlushOG(Driver, DeltaSeconds);
 }
 
 
@@ -721,7 +721,7 @@ void UNetDriver::TickFlush__Iris(UNetDriver* Driver, float DeltaSeconds)
 		}
 	}
 
-	return TickFlushOG(Driver);
+	return TickFlushOG(Driver, DeltaSeconds);
 }
 
 void (*SetNetDormancyOG)(AActor* Actor, int NewDormancy);

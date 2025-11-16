@@ -41,6 +41,12 @@ public:
     DEFINE_ENUM_PROP(BuildingPiece);
 };
 
+class EFortRarity
+{
+public:
+    UENUM_COMMON_MEMBERS(EFortRarity);
+};
+
 class UFortItemDefinition : public UObject
 {
 public:
@@ -60,6 +66,8 @@ public:
     DEFINE_BITFIELD_PROP(bCanBeDropped);
     DEFINE_BITFIELD_PROP(bForceAutoPickup);
     DEFINE_PROP(ItemType, uint8);
+    DEFINE_PROP(DisplayName, FText);
+    DEFINE_PROP(Rarity, uint8);
 
     DEFINE_FUNC(CreateTemporaryItemInstanceBP, UFortItem*);
     DEFINE_FUNC(GetWeaponItemDefinition, UFortItemDefinition*);
