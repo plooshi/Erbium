@@ -415,7 +415,7 @@ void AFortDecoTool::ServerCreateBuildingAndSpawnDeco(UObject* Context, FFrame& S
 	TSubclassOf<AActor> BuildingClass{};
 	auto ResourceType = PlayerController->CurrentResourceType;
 
-	if (ItemDefinition->AutoCreateAttachmentBuildingResourceType != EFortResourceType(EFortResourceType__Enum::GetNone()))
+	if (ItemDefinition->HasAutoCreateAttachmentBuildingResourceType() && ItemDefinition->AutoCreateAttachmentBuildingResourceType != EFortResourceType(EFortResourceType__Enum::GetNone()))
 		ResourceType = ItemDefinition->AutoCreateAttachmentBuildingResourceType;
 	auto BuildingType = GetBuildingTypeFromBuildingAttachmentType(InBuildingAttachmentType);
 
