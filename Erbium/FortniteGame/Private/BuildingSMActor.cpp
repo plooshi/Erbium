@@ -127,6 +127,8 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 	return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
 }
 
+uint32 SpawnDecoVft = 0;
+uint32 ShouldAllowServerSpawnDecoVft = 0;
 void AFortDecoTool::ServerSpawnDeco_(UObject* Context, FFrame& Stack)
 {
 	FVector Location;
@@ -170,12 +172,26 @@ void AFortDecoTool::ServerSpawnDeco_(UObject* Context, FFrame& Stack)
 			}
 		}
 
-		auto NewTrap = (ABuildingSMActor*)UWorld::SpawnActor(ItemDefinition->BlueprintClass.Get(), Location, Rotation, AttachedActor);
-		AttachedActor->AttachBuildingActorToMe(NewTrap, true);
-		AttachedActor->bHiddenDueToTrapPlacement = ItemDefinition->bReplacesBuildingWhenPlaced;
-		if (ItemDefinition->bReplacesBuildingWhenPlaced)
-			AttachedActor->bActorEnableCollision = false;
-		AttachedActor->ForceNetUpdate();
+		auto ShouldAllowServerSpawnDeco = (bool (*)(AFortDecoTool*, FVector&, FRotator&, ABuildingSMActor*, uint8_t)) DecoTool->Vft[ShouldAllowServerSpawnDecoVft];
+
+		if (ShouldAllowServerSpawnDecoVft && !ShouldAllowServerSpawnDeco(DecoTool, Location, Rotation, AttachedActor, InBuildingAttachmentType))
+			return;
+
+		ABuildingSMActor* NewTrap = nullptr;
+		if (VersionInfo.FortniteVersion >= 27)
+		{
+			auto SpawnDeco = (ABuildingSMActor * (*)(AFortDecoTool*, TSubclassOf<ABuildingSMActor>&, FVector&, FRotator&, ABuildingSMActor*, int, uint8_t)) DecoTool->Vft[SpawnDecoVft];
+
+			TSubclassOf<ABuildingSMActor> SubclassOf;
+			SubclassOf.ClassPtr = ItemDefinition->BlueprintClass.Get();
+			NewTrap = SpawnDecoVft ? SpawnDeco(DecoTool, SubclassOf, Location, Rotation, AttachedActor, 0, InBuildingAttachmentType) : nullptr;
+		}
+		else
+		{
+			auto SpawnDeco = (ABuildingSMActor * (*)(AFortDecoTool*, UClass*, FVector&, FRotator&, ABuildingSMActor*, int, uint8_t)) DecoTool->Vft[SpawnDecoVft];
+
+			NewTrap = SpawnDecoVft ? SpawnDeco(DecoTool, ItemDefinition->BlueprintClass.Get(), Location, Rotation, AttachedActor, 0, InBuildingAttachmentType) : nullptr;
+		}
 
 		auto Resource = UFortKismetLibrary::GetDefaultObj()->K2_GetResourceItemDefinition(AttachedActor->ResourceType);
 		auto item = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* Item) {
@@ -196,17 +212,17 @@ void AFortDecoTool::ServerSpawnDeco_(UObject* Context, FFrame& Stack)
 			PlayerController->WorldInventory->UpdateEntry(*itemEntry);
 		}
 
-		if (NewTrap->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex)
+		if (NewTrap && NewTrap->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex)
 		{
 			NewTrap->TeamIndex = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
 			NewTrap->Team = NewTrap->TeamIndex;
 		}
 	}
 
-	callOG(DecoTool, Stack.GetCurrentNativeFunction(), ServerSpawnDeco, Location, Rotation, AttachedActor, InBuildingAttachmentType);
-
 	if (VersionInfo.FortniteVersion < 18)
 	{
+		callOG(DecoTool, Stack.GetCurrentNativeFunction(), ServerSpawnDeco, Location, Rotation, AttachedActor, InBuildingAttachmentType);
+
 		static auto TrapClass = FindClass("BuildingTrap");
 		auto trapPtr = AttachedActor->AttachedBuildingActors.Search([&](ABuildingSMActor*& actor) {
 			return actor->IsA(TrapClass) && actor->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
@@ -258,12 +274,26 @@ void AFortDecoTool_ContextTrap::ServerSpawnDeco_Implementation(UObject* Context,
 			}
 		}
 
-		auto NewTrap = (ABuildingSMActor*)UWorld::SpawnActor(ItemDefinition->BlueprintClass.Get(), Location, Rotation, AttachedActor);
-		AttachedActor->AttachBuildingActorToMe(NewTrap, true);
-		AttachedActor->bHiddenDueToTrapPlacement = ItemDefinition->bReplacesBuildingWhenPlaced;
-		if (ItemDefinition->bReplacesBuildingWhenPlaced)
-			AttachedActor->bActorEnableCollision = false;
-		AttachedActor->ForceNetUpdate();
+		auto ShouldAllowServerSpawnDeco = (bool (*)(AFortDecoTool*, FVector&, FRotator&, ABuildingSMActor*, uint8_t)) DecoTool->Vft[ShouldAllowServerSpawnDecoVft];
+
+		if (ShouldAllowServerSpawnDecoVft && !ShouldAllowServerSpawnDeco(DecoTool, Location, Rotation, AttachedActor, InBuildingAttachmentType))
+			return;
+
+		ABuildingSMActor* NewTrap = nullptr;
+		if (VersionInfo.FortniteVersion >= 27)
+		{
+			auto SpawnDeco = (ABuildingSMActor * (*)(AFortDecoTool*, TSubclassOf<ABuildingSMActor>&, FVector&, FRotator&, ABuildingSMActor*, int, uint8_t)) DecoTool->Vft[SpawnDecoVft];
+
+			TSubclassOf<ABuildingSMActor> SubclassOf;
+			SubclassOf.ClassPtr = ItemDefinition->BlueprintClass.Get();
+			NewTrap = SpawnDecoVft ? SpawnDeco(DecoTool, SubclassOf, Location, Rotation, AttachedActor, 0, InBuildingAttachmentType) : nullptr;
+		}
+		else
+		{
+			auto SpawnDeco = (ABuildingSMActor * (*)(AFortDecoTool*, UClass*, FVector&, FRotator&, ABuildingSMActor*, int, uint8_t)) DecoTool->Vft[SpawnDecoVft];
+
+			NewTrap = SpawnDecoVft ? SpawnDeco(DecoTool, ItemDefinition->BlueprintClass.Get(), Location, Rotation, AttachedActor, 0, InBuildingAttachmentType) : nullptr;
+		}
 
 		auto Resource = UFortKismetLibrary::GetDefaultObj()->K2_GetResourceItemDefinition(AttachedActor->ResourceType);
 		auto item = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* Item) {
@@ -382,10 +412,10 @@ void AFortDecoTool::ServerCreateBuildingAndSpawnDeco(UObject* Context, FFrame& S
 
 	auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
 	auto bIgnoreCanAffordCheck = UFortKismetLibrary::DoesItemDefinitionHaveGameplayTag(ItemDefinition, FGameplayTag(FName(L"Trap.ExtraPiece.Cost.Ignore")));
-	TSubclassOf<AActor> Ret{};
+	TSubclassOf<AActor> BuildingClass{};
 	auto ResourceType = PlayerController->CurrentResourceType;
 
-	if (ItemDefinition->AutoCreateAttachmentBuildingResourceType != EFortResourceType(EFortResourceType__Enum::GetNone()))
+	if (ItemDefinition->HasAutoCreateAttachmentBuildingResourceType() && ItemDefinition->AutoCreateAttachmentBuildingResourceType != EFortResourceType(EFortResourceType__Enum::GetNone()))
 		ResourceType = ItemDefinition->AutoCreateAttachmentBuildingResourceType;
 	auto BuildingType = GetBuildingTypeFromBuildingAttachmentType(InBuildingAttachmentType);
 
@@ -395,15 +425,25 @@ void AFortDecoTool::ServerCreateBuildingAndSpawnDeco(UObject* Context, FFrame& S
 		{
 			auto Default = (ABuildingSMActor*)Class->GetDefaultObj();
 
-			if (Default->ResourceType == ResourceType && Default->BuildingType == BuildingType && Default->EditModePatternData == Shape)
+			UObject* EditModePatternData = nullptr;
+
+			if (Default->HasEditModePatternData())
+				EditModePatternData = Default->EditModePatternData;
+			else
 			{
-				Ret = Class;
+				auto ClassData = Default->GetClassData();
+
+				EditModePatternData = ClassData->EditModePatternData;
+			}
+
+			if (Default->ResourceType == ResourceType && Default->BuildingType == BuildingType && EditModePatternData == Shape)
+			{
+				BuildingClass = Class;
 				goto _out;
 			}
 		}
 	}
 _out:
-	auto BuildingClass = Ret;
 
 	FBuildingClassData BuildingClassData;
 	BuildingClassData.BuildingClass = BuildingClass;
@@ -514,6 +554,11 @@ void ABuildingSMActor::PostLoadHook()
 
 		if (!GetSparseClassData_)
 			GetSparseClassData_ = Memcury::Scanner::FindPattern("48 83 EC ? 48 8B 81 ? ? ? ? 45 33 C0 48 85 C0 75").Get();
+	}
+	if (VersionInfo.FortniteVersion >= 18)
+	{
+		SpawnDecoVft = FindSpawnDecoVft();
+		ShouldAllowServerSpawnDecoVft = FindShouldAllowServerSpawnDecoVft();
 	}
 
 	auto OnDamageServerAddr = FindFunctionCall(L"OnDamageServer", VersionInfo.EngineVersion == 4.16 ? std::vector<uint8_t>{ 0x4C, 0x89, 0x4C } : VersionInfo.EngineVersion == 4.19 || VersionInfo.EngineVersion >= 4.27 ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x40, 0x55 });
