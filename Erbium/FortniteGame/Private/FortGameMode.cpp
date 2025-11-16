@@ -106,6 +106,13 @@ void SetupPlaylist(AFortGameMode* GameMode, AFortGameStateAthena* GameState)
 
         if (GameMode->GameSession->HasMaxPlayers())
             GameMode->GameSession->MaxPlayers = Playlist->MaxPlayers;
+        else
+        {
+            auto SessionSettings = TUObjectArray::FindFirstObject("GameSessionSettings");
+
+            auto MaxPlayers = SessionSettings->GetOffset("MaxPlayers");
+            GetFromOffset<uint32>(SessionSettings, MaxPlayers) = Playlist->MaxPlayers;
+        }
 
 
         if (GameState->HasAirCraftBehavior() && Playlist->HasAirCraftBehavior())
@@ -228,6 +235,11 @@ void SetupPlaylist(AFortGameMode* GameMode, AFortGameStateAthena* GameState)
     else
     {
         GameState->CurrentPlaylistId = GameMode->CurrentPlaylistId = 0;
+
+        auto SessionSettings = TUObjectArray::FindFirstObject("GameSessionSettings");
+
+        auto MaxPlayers = SessionSettings->GetOffset("MaxPlayers");
+        GetFromOffset<uint32>(SessionSettings, MaxPlayers) = 100;
     }
 }
 

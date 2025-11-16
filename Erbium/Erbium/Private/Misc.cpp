@@ -24,7 +24,8 @@ void* Misc::SendRequestNow(void* Arg1, void* MCPData, int)
 float Misc::GetMaxTickRate(UEngine* Engine, float DeltaTime, bool bAllowFrameRateSmoothing)
 {
 	// improper, DS is supposed to do hitching differently
-	return std::clamp(1.f / DeltaTime, 1.f, FConfiguration::MaxTickRate);
+	return FConfiguration::MaxTickRate;
+	//return std::clamp(1.f / DeltaTime, 1.f, FConfiguration::MaxTickRate);
 }
 
 uint32 Misc::CheckCheckpointHeartBeat()
