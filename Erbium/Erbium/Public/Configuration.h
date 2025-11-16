@@ -15,7 +15,7 @@ struct FConfiguration
     static inline auto bAutoRestart = false;
     static inline auto bKeepInventory = false;
     static inline constexpr auto bEnableIris = true; 
-    static inline constexpr auto bGUI = false;
+    static inline constexpr auto bGUI = true;
     static inline constexpr auto bCustomCrashReporter = false;
     static inline constexpr auto WebhookURL = ""; // fill in if you want status to send to a webhook
 };
