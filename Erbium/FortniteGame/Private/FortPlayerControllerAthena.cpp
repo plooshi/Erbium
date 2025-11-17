@@ -1122,8 +1122,8 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 	FVector FinalLoc = Pawn->K2_GetActorLocation();
 
 	FVector ForwardVector = Pawn->GetActorForwardVector();
-	//ForwardVector.Z = 0.0f;
-	//ForwardVector.Normalize();
+	ForwardVector.Z = 0.0f;
+	ForwardVector.Normalize();
 
 	FinalLoc = FinalLoc + ForwardVector * 450.f;
 	FinalLoc.Z += 50.f;
@@ -1223,7 +1223,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 			}
 
 			// full proper
-			/*for (int i = 0; i < itemEntry->StateValues.Num(); i++)
+			for (int i = 0; i < itemEntry->StateValues.Num(); i++)
 			{
 				auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
 
@@ -1231,6 +1231,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 					continue;
 				
 				StateValue.IntValue = 1;
+				bFound = true;
 				break;
 			}
 
@@ -1238,11 +1239,13 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 			{
 				auto Value = (FFortItemEntryStateValue*)malloc(FFortItemEntryStateValue::Size());
 				memset((PBYTE)Value, 0, FFortItemEntryStateValue::Size());
-				Value->IntValue = true;
+
+				Value->IntValue = 1;
 				Value->StateType = 2;
 				itemEntry->StateValues.Add(*Value, FFortItemEntryStateValue::Size());
+
 				free(Value);
-			}*/
+			}
 
 
 
