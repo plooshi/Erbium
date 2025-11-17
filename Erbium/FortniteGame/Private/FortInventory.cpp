@@ -65,14 +65,14 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
         auto PlayerController = (AFortPlayerControllerAthena*)Owner;
         if (IsPrimaryQuickbar(Def) || Def->ItemType == EFortItemType::GetBuildingPiece() || Def->ItemType == EFortItemType::GetTrap() || Def->ItemType == EFortItemType::GetWeaponHarvest())
         {
-            auto& QuickBar = (IsPrimaryQuickbar(Def) || Def->ItemType == EFortItemType::GetWeaponHarvest()) ? PlayerController->QuickBars->PrimaryQuickBar : PlayerController->QuickBars->SecondaryQuickBar;
+            //auto& QuickBar = (IsPrimaryQuickbar(Def) || Def->ItemType == EFortItemType::GetWeaponHarvest()) ? PlayerController->QuickBars->PrimaryQuickBar : PlayerController->QuickBars->SecondaryQuickBar;
 
             //auto QuickbarSlot = (FQuickBarSlot*)malloc(FQuickBarSlot::Size());
             //memset(QuickbarSlot, 0, FQuickBarSlot::Size());
 
             //QuickbarSlot->bEnabled = true;
 
-            for (int i = 0; i < QuickBar.Slots.Num(); i++)
+            /*for (int i = 0; i < QuickBar.Slots.Num(); i++)
             {
                 auto& Slot = QuickBar.Slots.Get(i, FQuickBarSlot::Size());
 
@@ -81,15 +81,15 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
 
                 Slot.Items.Add(Item->ItemEntry.ItemGuid);
                 break;
-            }
+            }*/
             //QuickBar.Slots.Add(*QuickbarSlot, FQuickBarSlot::Size());
             //free(QuickbarSlot);
 
-            if (IsPrimaryQuickbar(Def))
+            /*if (IsPrimaryQuickbar(Def))
                 PlayerController->QuickBars->OnRep_PrimaryQuickBar();
             else
-                PlayerController->QuickBars->OnRep_SecondaryQuickBar();
-            //((AFortPlayerControllerAthena*)Owner)->QuickBars->ServerAddItemInternal(Item->ItemEntry.ItemGuid, !IsPrimaryQuickbar(Def), -1);
+                PlayerController->QuickBars->OnRep_SecondaryQuickBar();*/
+            ((AFortPlayerControllerAthena*)Owner)->QuickBars->ServerAddItemInternal(Item->ItemEntry.ItemGuid, !(IsPrimaryQuickbar(Def) || Def->ItemType == EFortItemType::GetWeaponHarvest()), -3);
         }
 
         if (Def->ItemType == EFortItemType::GetWeaponHarvest())
@@ -164,7 +164,7 @@ void AFortInventory::Update(FFortItemEntry* Entry)
         }
     }
 _out:
-    Entry->bIsDirty = true;
+    return;
     /*bRequiresLocalUpdate = true;
     HandleInventoryLocalUpdate();
 
@@ -384,6 +384,7 @@ AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entr
 
     auto FinalLocation = Loc;
     
+    printf("SpawnPickup %s\n", Entry.ItemDefinition->Name.ToString().c_str());
     if (FinalLoc.X || FinalLoc.Y || FinalLoc.Z)
         FinalLocation = FinalLoc;
     NewPickup->TossPickup(FinalLocation, Pawn, -1, Toss, true, (uint8)SourceTypeFlag, (uint8)SpawnSource);
@@ -584,6 +585,7 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
 
                     Item->ItemEntry.Count = itemEntry->Count;
                     PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+                    Item->ItemEntry.bIsDirty = true;
                 }
                 else
                     PlayerController->WorldInventory->Remove(ItemGuid);
@@ -606,6 +608,7 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
 
             Item->ItemEntry.Count = itemEntry->Count;
             PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+            Item->ItemEntry.bIsDirty = true;
         }
 
         return true;
@@ -624,6 +627,7 @@ void SetLoadedAmmo(UFortWorldItem* Item, int LoadedAmmo)
     repEnt->LoadedAmmo = LoadedAmmo;
     Item->ItemEntry.LoadedAmmo = LoadedAmmo;
     PlayerController->WorldInventory->UpdateEntry(*repEnt);
+    Item->ItemEntry.bIsDirty = true;
 }
 
 void SetPhantomReserveAmmo(UFortWorldItem* Item, unsigned int PhantomReserveAmmo)
@@ -637,6 +641,7 @@ void SetPhantomReserveAmmo(UFortWorldItem* Item, unsigned int PhantomReserveAmmo
     Item->ItemEntry.PhantomReserveAmmo = PhantomReserveAmmo;
 
     PlayerController->WorldInventory->UpdateEntry(*repEnt);
+    Item->ItemEntry.bIsDirty = true;
 }
 
 

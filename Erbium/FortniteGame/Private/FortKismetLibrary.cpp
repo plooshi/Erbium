@@ -52,6 +52,7 @@ void UFortKismetLibrary::K2_SpawnPickupInWorld(UObject* Object, FFrame& Stack, A
 	if (bHasbPickupOnlyRelevantToOwner)
 		Stack.StepCompiledIn(&bPickupOnlyRelevantToOwner);
 	Stack.IncrementCode();
+	printf("dir %lf %lf %lf\n", Direction.X, Direction.Y, Direction.Z);
 
 	*Ret = AFortInventory::SpawnPickup(Position, ItemDefinition, NumberToSpawn, 0, SourceType, Source, OptionalOwnerPC ? OptionalOwnerPC->MyFortPawn : nullptr, bToss, bRandomRotation);
 }
@@ -145,6 +146,7 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayer(UObject* Context, FFrame& Stack
 	{
 		Item->ItemEntry.Count = itemEntry->Count;
 		PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+		Item->ItemEntry.bIsDirty = true;
 	}
 
 	*Ret = RemoveCount;
@@ -185,6 +187,7 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayerByGuid(UObject* Context, FFrame&
 	{
 		Item->ItemEntry.Count = itemEntry->Count;
 		PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+		Item->ItemEntry.bIsDirty = true;
 	}
 
 	*Ret = RemoveCount;

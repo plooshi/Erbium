@@ -670,18 +670,18 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 
 						if (Pawn->bIsInsideSafeZone != bInZone || Pawn->bIsInAnyStorm != !bInZone)
 						{
-							//printf("Pawn %s new storm status: %s\n", Pawn->Name.ToString().c_str(), bInZone ? "true" : "false");
+							printf("Pawn %s new storm status: %s\n", Pawn->Name.ToString().c_str(), bInZone ? "true" : "false");
 							Pawn->bIsInAnyStorm = !bInZone;
 							Pawn->OnRep_IsInAnyStorm();
 							Pawn->bIsInsideSafeZone = bInZone;
 							Pawn->OnRep_IsInsideSafeZone();
 
-							auto AbilitySystemComponent = Player->PlayerState->AbilitySystemComponent;
+							/*auto AbilitySystemComponent = Player->PlayerState->AbilitySystemComponent;
 							for (int i = 0; i < AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Num(); i++)
 							{
 								auto& Effect = AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Get(i, FActiveGameplayEffect::Size());
 
-								//printf("%s %s\n", Effect.Spec.Def->Name.ToString().c_str(), Effect.Spec.Def->Class->Name.ToString().c_str());
+								printf("%s %s\n", Effect.Spec.Def->Name.ToString().c_str(), Effect.Spec.Def->Class->Name.ToString().c_str());
 								if (Effect.Spec.Def->Class == ZoneEffect)
 								{
 									auto Handle = *(FActiveGameplayEffectHandle*)(__int64(&Effect) + 0xc);
@@ -690,10 +690,10 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 									AbilitySystemComponent->SetActiveGameplayEffectLevel(Handle, SafeZoneIndicator->CurrentPhase);
 
 									AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(Handle, FGameplayTag(FName(L"SetByCaller.StormCampingDamage")), 1);
-									//printf("found\n");
+									printf("found\n");
 									break;
 								}
-							}
+							}*/
 						}
 
 					}
@@ -701,6 +701,12 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 			}
 		}
 	}
+}
+
+bool Test(AFortSafeZoneIndicator* SafeZoneIndicator, FFortSafeZonePhaseInfo* OutSafeZonePhase, int InPhaseToGet)
+{
+	printf("%d %p\n", InPhaseToGet, OutSafeZonePhase);
+	return false;
 }
 
 void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Hook()
@@ -712,4 +718,5 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Hook()
 	SetGamePhase_ = FindSetGamePhase();
 
 	Utils::Hook(FindHandleMatchHasStarted(), HandleMatchHasStarted, HandleMatchHasStartedOG);
+	Utils::Hook(Memcury::Scanner::FindStringRef("AFortSafeZoneIndicator::GetPhaseInfo").ScanFor({ 0x48, 0x83, 0xEC }, false).Get(), Test);
 }

@@ -350,6 +350,12 @@ bool RetFalse()
 	return false;
 }
 
+class AFortTeamMemberPedestal : public AActor
+{
+public:
+	UCLASS_COMMON_MEMBERS(AFortTeamMemberPedestal);
+};
+
 void Misc::Hook()
 {
 	if ((VersionInfo.FortniteVersion >= 25 && VersionInfo.FortniteVersion < 28.30) || VersionInfo.FortniteVersion >= 30)
@@ -360,7 +366,7 @@ void Misc::Hook()
 		if (!AttemptDeriveFromURL)
 			AttemptDeriveFromURL = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 48 8B D1").Get();
 		Utils::Hook(AttemptDeriveFromURL, GetNetMode);
-		Utils::Hook(Memcury::Scanner::FindPattern("48 83 EC ? 48 8B 01 FF 90 ? ? ? ? 84 C0 0F 85").Get(), GetNetMode);
+		//Utils::Hook(Memcury::Scanner::FindPattern("48 83 EC ? 48 8B 01 FF 90 ? ? ? ? 84 C0 0F 85").Get(), GetNetMode);
 		PatchAllNetModes(AttemptDeriveFromURL);
 	}
 	else
@@ -386,8 +392,42 @@ void Misc::Hook()
 
 		Utils::Hook(ApplyHomebaseEffectsOnPlayerSetupAddr, ApplyHomebaseEffectsOnPlayerSetup, ApplyHomebaseEffectsOnPlayerSetupOG);
 	}
-	if (VersionInfo.FortniteVersion >= 26 && VersionInfo.FortniteVersion < 28)
+	/*if (VersionInfo.FortniteVersion >= 26 && VersionInfo.FortniteVersion < 28)
 	{
 		Utils::Hook(Memcury::Scanner::FindPattern("48 89 5C ? ? 57 48 83 EC ? 48 8B D1 48 85 C9 74 ?").Get(), RetFalse);
+	}*/
+
+
+	auto PedestalBeginPlay = Memcury::Scanner::FindStringRef(L"AFortTeamMemberPedestal::BeginPlay - Begun play on pedestal %s", true, 0, VersionInfo.EngineVersion >= 5.0).Get();
+
+	if (PedestalBeginPlay)
+	{
+		uint64_t RealBeginPlay = 0;
+		for (int i = 0; i < 1000; i++)
+		{
+			auto Ptr = (uint8_t*)(PedestalBeginPlay - i);
+
+			if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5c)
+			{
+				RealBeginPlay = (uint64_t)Ptr;
+				break;
+			}
+			else if (*Ptr == 0x40 && *(Ptr + 1) == 0x53 && *(Ptr + 2) == 0x41 && *(Ptr + 3) == 0x56)
+			{
+				RealBeginPlay = (uint64_t)Ptr;
+				break;
+			}
+		}
+
+		auto ActorVft = AFortTeamMemberPedestal::GetDefaultObj()->Vft;
+
+		for (int i = 0; i < 0x500; i++)
+		{
+			if (ActorVft[i] == (void*)RealBeginPlay)
+			{
+				Utils::Hook<AFortTeamMemberPedestal>(uint32_t(i), AActor::GetDefaultObj()->Vft[i]);
+				break;
+			}
+		}
 	}
 }
