@@ -1118,7 +1118,26 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 
 					AFortInventory::SpawnPickup(GetViewTarget()->K2_GetActorLocation(), *itemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn);
 					WorldInventory->Remove(((AFortWeapon*)MyFortPawn->CurrentWeapon)->ItemEntryGuid);
-					WorldInventory->GiveItem(*PickupEntry, PickupEntry->Count, true);
+					auto Item = WorldInventory->GiveItem(*PickupEntry, PickupEntry->Count, true);
+					ServerExecuteInventoryItem(Item->ItemEntry.ItemGuid);
+					if (VersionInfo.FortniteVersion < 3)
+					{
+						auto& QuickBar = (AFortInventory::IsPrimaryQuickbar(Item->ItemEntry.ItemDefinition) || Item->ItemEntry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest()) ? QuickBars->PrimaryQuickBar : QuickBars->SecondaryQuickBar;
+						int i = 0;
+						for (i = 0; i < QuickBar.Slots.Num(); i++)
+						{
+							auto& Slot = QuickBar.Slots.Get(i, FQuickBarSlot::Size());
+
+							for (auto& SlotItem : Slot.Items)
+								if (SlotItem == Item->ItemEntry.ItemGuid)
+								{
+									QuickBars->ServerActivateSlotInternal(!(AFortInventory::IsPrimaryQuickbar(Item->ItemEntry.ItemDefinition) || Item->ItemEntry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest()), i, 0.f, true);
+									break;
+								}
+						}
+					}
+					else
+						ClientEquipItem(Item->ItemEntry.ItemGuid, true);
 				}
 				else
 					AFortInventory::SpawnPickup(GetViewTarget()->K2_GetActorLocation(), *PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn);
