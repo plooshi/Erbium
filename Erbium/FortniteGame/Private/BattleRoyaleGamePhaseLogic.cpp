@@ -703,11 +703,6 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 	}
 }
 
-bool Test(AFortSafeZoneIndicator* SafeZoneIndicator, FFortSafeZonePhaseInfo* OutSafeZonePhase, int InPhaseToGet)
-{
-	printf("%d %p\n", InPhaseToGet, OutSafeZonePhase);
-	return false;
-}
 
 void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Hook()
 {
@@ -718,5 +713,4 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Hook()
 	SetGamePhase_ = FindSetGamePhase();
 
 	Utils::Hook(FindHandleMatchHasStarted(), HandleMatchHasStarted, HandleMatchHasStartedOG);
-	Utils::Hook(Memcury::Scanner::FindStringRef("AFortSafeZoneIndicator::GetPhaseInfo").ScanFor({ 0x48, 0x83, 0xEC }, false).Get(), Test);
 }
