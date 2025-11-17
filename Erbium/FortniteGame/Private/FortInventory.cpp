@@ -384,7 +384,6 @@ AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entr
 
     auto FinalLocation = Loc;
     
-    printf("SpawnPickup %s\n", Entry.ItemDefinition->Name.ToString().c_str());
     if (FinalLoc.X || FinalLoc.Y || FinalLoc.Z)
         FinalLocation = FinalLoc;
     NewPickup->TossPickup(FinalLocation, Pawn, -1, Toss, true, (uint8)SourceTypeFlag, (uint8)SpawnSource);

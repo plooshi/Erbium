@@ -52,7 +52,6 @@ void UFortKismetLibrary::K2_SpawnPickupInWorld(UObject* Object, FFrame& Stack, A
 	if (bHasbPickupOnlyRelevantToOwner)
 		Stack.StepCompiledIn(&bPickupOnlyRelevantToOwner);
 	Stack.IncrementCode();
-	printf("dir %lf %lf %lf\n", Direction.X, Direction.Y, Direction.Z);
 
 	*Ret = AFortInventory::SpawnPickup(Position, ItemDefinition, NumberToSpawn, 0, SourceType, Source, OptionalOwnerPC ? OptionalOwnerPC->MyFortPawn : nullptr, bToss, bRandomRotation);
 }
