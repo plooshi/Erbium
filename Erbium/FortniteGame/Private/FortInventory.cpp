@@ -26,8 +26,14 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
     if (auto WeaponDef = Def->Cast<UFortWeaponItemDefinition>())
         if (WeaponDef->HasWeaponModSlots() && FFortItemEntry::HasWeaponModSlots())
             Item->ItemEntry.WeaponModSlots = WeaponDef->WeaponModSlots;
-    //if (Item->ItemEntry.HasStateValues())
-     //   Item->ItemEntry.StateValues = StateValues;
+    if (Item->ItemEntry.HasStateValues() && StateValues.Num() > 0)
+    {
+        auto NewData = FMemory::Malloc(FFortItemEntryStateValue::Size() * StateValues.Num());
+        memcpy(NewData, StateValues.Data, FFortItemEntryStateValue::Size() * StateValues.Num());
+        Item->ItemEntry.StateValues.NumElements = StateValues.Num();
+        Item->ItemEntry.StateValues.MaxElements = StateValues.Max();
+        Item->ItemEntry.StateValues.Data = (FFortItemEntryStateValue*)NewData;
+    }
 
     if (Item->ItemEntry.ItemGuid.A == 0 && Item->ItemEntry.ItemGuid.B == 0 && Item->ItemEntry.ItemGuid.C == 0 && Item->ItemEntry.ItemGuid.D == 0)
     {
