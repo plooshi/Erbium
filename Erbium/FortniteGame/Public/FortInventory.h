@@ -68,6 +68,7 @@ public:
     DEFINE_PROP(ItemType, uint8);
     DEFINE_PROP(DisplayName, FText);
     DEFINE_PROP(Rarity, uint8);
+    DEFINE_BITFIELD_PROP(bSupportsQuickbarFocus);
 
     DEFINE_FUNC(CreateTemporaryItemInstanceBP, UFortItem*);
     DEFINE_FUNC(GetWeaponItemDefinition, UFortItemDefinition*);

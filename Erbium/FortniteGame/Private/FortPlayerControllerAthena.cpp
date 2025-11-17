@@ -69,6 +69,11 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 
 				GuidsToRemove.push_back(Entry.ItemGuid);
 			}
+			if (VersionInfo.FortniteVersion < 3 && Entry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest())
+			{
+				PlayerController->ServerExecuteInventoryItem(Entry.ItemGuid);
+				PlayerController->QuickBars->ServerActivateSlotInternal(0, 0, 0.f, true);
+			}
 		}
 
 		for (auto& Guid : GuidsToRemove)
@@ -2221,6 +2226,11 @@ void AFortPlayerControllerAthena::EnterAircraft(UObject* Object, AActor* Aircraf
 				//NewPlayer->WorldInventory->Inventorxy.ReplicatedEntries.Remove(i, FFortItemEntry::Size());
 				//i--;
 				GuidsToRemove.push_back(Entry.ItemGuid);
+			}
+			if (VersionInfo.FortniteVersion < 3 && Entry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest())
+			{
+				PlayerController->ServerExecuteInventoryItem(Entry.ItemGuid);
+				PlayerController->QuickBars->ServerActivateSlotInternal(0, 0, 0.f, true);
 			}
 		}
 
