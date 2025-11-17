@@ -39,6 +39,7 @@ public:
     DEFINE_ENUM_PROP(Trap);
     DEFINE_ENUM_PROP(Ammo);
     DEFINE_ENUM_PROP(BuildingPiece);
+    DEFINE_ENUM_PROP(Ingredient);
 };
 
 class EFortRarity
