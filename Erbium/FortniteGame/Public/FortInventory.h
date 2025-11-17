@@ -41,6 +41,12 @@ public:
     DEFINE_ENUM_PROP(BuildingPiece);
 };
 
+class EFortRarity
+{
+public:
+    UENUM_COMMON_MEMBERS(EFortRarity);
+};
+
 class UFortItemDefinition : public UObject
 {
 public:
@@ -60,6 +66,9 @@ public:
     DEFINE_BITFIELD_PROP(bCanBeDropped);
     DEFINE_BITFIELD_PROP(bForceAutoPickup);
     DEFINE_PROP(ItemType, uint8);
+    DEFINE_PROP(DisplayName, FText);
+    DEFINE_PROP(Rarity, uint8);
+    DEFINE_BITFIELD_PROP(bSupportsQuickbarFocus);
 
     DEFINE_FUNC(CreateTemporaryItemInstanceBP, UFortItem*);
     DEFINE_FUNC(GetWeaponItemDefinition, UFortItemDefinition*);
@@ -376,7 +385,7 @@ public:
     UFortWorldItem* GiveItem(FFortItemEntry&, int = -1, bool = true, bool = true);
     void Update(FFortItemEntry*);
     void Remove(FGuid);
-    static AFortPickupAthena* SpawnPickup(FVector, FFortItemEntry&, long long = EFortPickupSourceTypeFlag::GetOther(), long long = EFortPickupSpawnSource::GetUnset(), AFortPlayerPawnAthena* = nullptr, int = -1, bool = true, bool = true, bool = true, const UClass* = nullptr);
+    static AFortPickupAthena* SpawnPickup(FVector, FFortItemEntry&, long long = EFortPickupSourceTypeFlag::GetOther(), long long = EFortPickupSpawnSource::GetUnset(), AFortPlayerPawnAthena* = nullptr, int = -1, bool = true, bool = true, bool = true, const UClass* = nullptr, FVector = {});
     static AFortPickupAthena* SpawnPickup(FVector, const UFortItemDefinition*, int, int, long long = EFortPickupSourceTypeFlag::GetOther(), long long = EFortPickupSpawnSource::GetUnset(), AFortPlayerPawnAthena* = nullptr, bool = true, bool = true, const UClass* = nullptr);
     static AFortPickupAthena* SpawnPickup(ABuildingContainer*, FFortItemEntry&, AFortPlayerPawnAthena* = nullptr, int = -1);
     static FFortItemEntry* MakeItemEntry(const UFortItemDefinition*, int32, int32);

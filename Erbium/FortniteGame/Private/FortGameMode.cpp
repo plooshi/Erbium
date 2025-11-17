@@ -228,6 +228,9 @@ void SetupPlaylist(AFortGameMode* GameMode, AFortGameStateAthena* GameState)
     else
     {
         GameState->CurrentPlaylistId = GameMode->CurrentPlaylistId = 0;
+
+        if (GameMode->GameSession->HasMaxPlayers())
+            GameMode->GameSession->MaxPlayers = 100;
     }
 }
 
@@ -1012,8 +1015,12 @@ void AFortGameMode::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor*
     static auto FortGMSpawnDefaultPawnFor = (AFortPlayerPawnAthena * (*)(AFortGameMode*, AFortPlayerControllerAthena*, AActor*)) DefaultObjImpl("FortGameMode")->Vft[SpawnDefaultPawnForIdx];
     Pawn = FortGMSpawnDefaultPawnFor(GameMode, NewPlayer, StartSpot);
 
-    //auto Transform = StartSpot->GetTransform();
-    //auto Pawn = GameMode->SpawnDefaultPawnAtTransform(NewPlayer, Transform);
+    if (!Pawn)
+    {
+        auto Transform = StartSpot->GetTransform();
+        Transform.Translation.Z += 200.f;
+        Pawn = GameMode->SpawnDefaultPawnAtTransform(NewPlayer, Transform);
+    }
 
 
     if (Num == 0)
@@ -1507,7 +1514,11 @@ bool AFortGameMode::StartAircraftPhase(AFortGameMode* GameMode, char a2)
     {
         /**/
 
-        auto Aircraft = GameState->HasAircrafts() ? GameState->Aircrafts[0] : GameState->Aircraft;
+        auto Aircraft = GameState->HasAircrafts() ?  (GameState->Aircrafts.Num() > 0 ?GameState->Aircrafts[0] : nullptr) : GameState->Aircraft;
+
+        if (!Aircraft)
+            return Ret;
+
         FVector Loc;
         bool bScuffed = false;
         if (GameMode->SafeZoneLocations.Num() < 4)

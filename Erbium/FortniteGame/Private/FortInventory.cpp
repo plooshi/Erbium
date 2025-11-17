@@ -5,6 +5,7 @@
 #include "../Public/FortKismetLibrary.h"
 #include "../../Erbium/Public/Configuration.h"
 #include "../Public/FortWeapon.h"
+#include <ShlObj.h>
 
 uint32_t OnItemInstanceAddedVft;
 
@@ -25,16 +26,22 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
     if (auto WeaponDef = Def->Cast<UFortWeaponItemDefinition>())
         if (WeaponDef->HasWeaponModSlots() && FFortItemEntry::HasWeaponModSlots())
             Item->ItemEntry.WeaponModSlots = WeaponDef->WeaponModSlots;
-    //if (Item->ItemEntry.HasStateValues())
-     //   Item->ItemEntry.StateValues = StateValues;
+    if (Item->ItemEntry.HasStateValues() && StateValues.Num() > 0)
+    {
+        auto NewData = FMemory::Malloc(FFortItemEntryStateValue::Size() * StateValues.Num());
+        memcpy(NewData, StateValues.Data, FFortItemEntryStateValue::Size() * StateValues.Num());
+        Item->ItemEntry.StateValues.NumElements = StateValues.Num();
+        Item->ItemEntry.StateValues.MaxElements = StateValues.Max();
+        Item->ItemEntry.StateValues.Data = (FFortItemEntryStateValue*)NewData;
+    }
 
-    /*if (Item->ItemEntry.ItemGuid.A == 0 && Item->ItemEntry.ItemGuid.B == 0 && Item->ItemEntry.ItemGuid.C == 0 && Item->ItemEntry.ItemGuid.D == 0)
+    if (Item->ItemEntry.ItemGuid.A == 0 && Item->ItemEntry.ItemGuid.B == 0 && Item->ItemEntry.ItemGuid.C == 0 && Item->ItemEntry.ItemGuid.D == 0)
     {
         CoCreateGuid((GUID*)&Item->ItemEntry.ItemGuid);
 
         if (FFortItemEntry::HasTrackerGuid() && Item->ItemEntry.TrackerGuid.A == 0 && Item->ItemEntry.TrackerGuid.B == 0 && Item->ItemEntry.TrackerGuid.C == 0 && Item->ItemEntry.TrackerGuid.D == 0)
             CoCreateGuid((GUID*)&Item->ItemEntry.TrackerGuid);
-    }*/
+    }
 
 
     auto& repEntry = this->Inventory.ReplicatedEntries.Add(Item->ItemEntry, FFortItemEntry::Size());
@@ -54,7 +61,43 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
     }*/
 
     if (VersionInfo.FortniteVersion < 3)
-        ((AFortPlayerControllerAthena*)Owner)->QuickBars->ServerAddItemInternal(Item->ItemEntry.ItemGuid, !IsPrimaryQuickbar(Def), -1);
+    {
+        auto PlayerController = (AFortPlayerControllerAthena*)Owner;
+        if (IsPrimaryQuickbar(Def) || Def->ItemType == EFortItemType::GetBuildingPiece() || Def->ItemType == EFortItemType::GetTrap() || Def->ItemType == EFortItemType::GetWeaponHarvest())
+        {
+            auto& QuickBar = (IsPrimaryQuickbar(Def) || Def->ItemType == EFortItemType::GetWeaponHarvest()) ? PlayerController->QuickBars->PrimaryQuickBar : PlayerController->QuickBars->SecondaryQuickBar;
+
+            //auto QuickbarSlot = (FQuickBarSlot*)malloc(FQuickBarSlot::Size());
+            //memset(QuickbarSlot, 0, FQuickBarSlot::Size());
+
+            //QuickbarSlot->bEnabled = true;
+
+            for (int i = 0; i < QuickBar.Slots.Num(); i++)
+            {
+                auto& Slot = QuickBar.Slots.Get(i, FQuickBarSlot::Size());
+
+                if (Slot.Items.Num() > 0)
+                    continue;
+
+                Slot.Items.Add(Item->ItemEntry.ItemGuid);
+                break;
+            }
+            //QuickBar.Slots.Add(*QuickbarSlot, FQuickBarSlot::Size());
+            //free(QuickbarSlot);
+
+            if (IsPrimaryQuickbar(Def))
+                PlayerController->QuickBars->OnRep_PrimaryQuickBar();
+            else
+                PlayerController->QuickBars->OnRep_SecondaryQuickBar();
+            //((AFortPlayerControllerAthena*)Owner)->QuickBars->ServerAddItemInternal(Item->ItemEntry.ItemGuid, !IsPrimaryQuickbar(Def), -1);
+        }
+
+        if (Def->ItemType == EFortItemType::GetWeaponHarvest())
+        {
+            PlayerController->ServerExecuteInventoryItem(Item->ItemEntry.ItemGuid);
+            PlayerController->QuickBars->ServerActivateSlotInternal(0, 0, 0.f, true);
+        }
+    }
 
     if (updateInventory)
     {
@@ -226,6 +269,16 @@ void AFortInventory::Remove(FGuid Guid)
     _Out:
         PlayerController->QuickBars->EmptySlot(!IsPrimaryQuickbar(EntryDef), i);
         PlayerController->QuickBars->ServerRemoveItemInternal(Guid, false, true);
+        for (int i = 0; i < PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
+        {
+            auto& Entry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
+
+            if (Entry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest())
+            {
+                PlayerController->ServerExecuteInventoryItem(Entry.ItemGuid);
+                PlayerController->QuickBars->ServerActivateSlotInternal(0, 0, 0.f, true);
+            }
+        }
     }
 
 _Skip:
@@ -297,7 +350,7 @@ FFortItemEntry* AFortInventory::MakeItemEntry(const UFortItemDefinition* ItemDef
 }
 
 uint64_t SetPickupItems;
-AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entry, long long SourceTypeFlag, long long SpawnSource, AFortPlayerPawnAthena* Pawn, int OverrideCount, bool Toss, bool RandomRotation, bool bCombine, const UClass* OverrideClass)
+AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entry, long long SourceTypeFlag, long long SpawnSource, AFortPlayerPawnAthena* Pawn, int OverrideCount, bool Toss, bool RandomRotation, bool bCombine, const UClass* OverrideClass, FVector FinalLoc)
 {
     if (!&Entry)
         return nullptr;
@@ -329,7 +382,11 @@ AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entr
     //NewPickup->OnRep_PrimaryPickupItemEntry();
     NewPickup->PawnWhoDroppedPickup = Pawn;
 
-    NewPickup->TossPickup(Loc, Pawn, -1, Toss, true, (uint8)SourceTypeFlag, (uint8)SpawnSource);
+    auto FinalLocation = Loc;
+    
+    if (FinalLoc.X || FinalLoc.Y || FinalLoc.Z)
+        FinalLocation = FinalLoc;
+    NewPickup->TossPickup(FinalLocation, Pawn, -1, Toss, true, (uint8)SourceTypeFlag, (uint8)SpawnSource);
 
     if (VersionInfo.FortniteVersion < 6)
     {

@@ -70,6 +70,11 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 
 				GuidsToRemove.push_back(Entry.ItemGuid);
 			}
+			if (VersionInfo.FortniteVersion < 3 && Entry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest())
+			{
+				PlayerController->ServerExecuteInventoryItem(Entry.ItemGuid);
+				PlayerController->QuickBars->ServerActivateSlotInternal(0, 0, 0.f, true);
+			}
 		}
 
 		for (auto& Guid : GuidsToRemove)
@@ -750,7 +755,23 @@ void AFortPlayerControllerAthena::ServerAttemptInventoryDrop(UObject* Context, F
 	auto Item = *ItemP;
 
 	itemEntry->Count -= Count;
-	AFortInventory::SpawnPickup(PlayerController->Pawn->K2_GetActorLocation() + PlayerController->Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), *itemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn, Count);
+
+	FVector FinalLoc = PlayerController->Pawn->K2_GetActorLocation();
+
+	FVector ForwardVector = PlayerController->Pawn->GetActorForwardVector();
+	//ForwardVector.Z = 0.0f;
+	//ForwardVector.Normalize();
+
+	FinalLoc = FinalLoc + ForwardVector * 450.f;
+	FinalLoc.Z += 50.f;
+
+	const float RandomAngleVariation = ((float)rand() * 0.00109866634f) - 18.f;
+	const float FinalAngle = RandomAngleVariation * 0.017453292519943295f;
+
+	FinalLoc.X += cos(FinalAngle) * 100.f;
+	FinalLoc.Y += sin(FinalAngle) * 100.f;
+
+	AFortInventory::SpawnPickup(PlayerController->Pawn->K2_GetActorLocation() + PlayerController->Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), *itemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn, Count, true, true, true, nullptr, FinalLoc);
 	if (itemEntry->Count <= 0 || Count < 0)
 		PlayerController->WorldInventory->Remove(Guid);
 	else
@@ -977,7 +998,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 			PlayerController->Pawn->CharacterMovement->ProcessEvent(PlayerController->Pawn->CharacterMovement->GetFunction("DisableMovement"), nullptr);
 		}
 
-		if (PlayerController->Pawn && KillerPlayerState && KillerPlayerState->Place == 1)
+		if (PlayerController->Pawn && KillerPlayerState && KillerPlayerState != PlayerState && KillerPlayerState->Place == 1)
 		{
 			/*if (PlayerState->Place == 1)
 			{
@@ -1099,6 +1120,21 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 		}
 
 	//printf("br: %d\n", ItemCount);
+	FVector FinalLoc = Pawn->K2_GetActorLocation();
+
+	FVector ForwardVector = Pawn->GetActorForwardVector();
+	ForwardVector.Z = 0.0f;
+	ForwardVector.Normalize();
+
+	FinalLoc = FinalLoc + ForwardVector * 450.f;
+	FinalLoc.Z += 50.f;
+
+	const float RandomAngleVariation = ((float)rand() * 0.00109866634f) - 18.f;
+	const float FinalAngle = RandomAngleVariation * 0.017453292519943295f;
+
+	FinalLoc.X += cos(FinalAngle) * 100.f;
+	FinalLoc.Y += sin(FinalAngle) * 100.f;
+
 	auto GiveOrSwap = [&]()
 		{
 			if (ItemCount >= 5 && AFortInventory::IsPrimaryQuickbar(PickupEntry->ItemDefinition))
@@ -1112,12 +1148,31 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 						{ return entry.ItemGuid == ((AFortWeapon*)MyFortPawn->CurrentWeapon)->ItemEntryGuid; }, FFortItemEntry::Size());
 
 
-					AFortInventory::SpawnPickup(GetViewTarget()->K2_GetActorLocation(), *itemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn);
+					AFortInventory::SpawnPickup(Pawn->K2_GetActorLocation() + Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), *itemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn, -1, true, true, true, nullptr, FinalLoc);
 					WorldInventory->Remove(((AFortWeapon*)MyFortPawn->CurrentWeapon)->ItemEntryGuid);
-					WorldInventory->GiveItem(*PickupEntry, PickupEntry->Count, true);
+					auto Item = WorldInventory->GiveItem(*PickupEntry, PickupEntry->Count, true);
+					ServerExecuteInventoryItem(Item->ItemEntry.ItemGuid);
+					if (VersionInfo.FortniteVersion < 3)
+					{
+						auto& QuickBar = (AFortInventory::IsPrimaryQuickbar(Item->ItemEntry.ItemDefinition) || Item->ItemEntry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest()) ? QuickBars->PrimaryQuickBar : QuickBars->SecondaryQuickBar;
+						int i = 0;
+						for (i = 0; i < QuickBar.Slots.Num(); i++)
+						{
+							auto& Slot = QuickBar.Slots.Get(i, FQuickBarSlot::Size());
+
+							for (auto& SlotItem : Slot.Items)
+								if (SlotItem == Item->ItemEntry.ItemGuid)
+								{
+									QuickBars->ServerActivateSlotInternal(!(AFortInventory::IsPrimaryQuickbar(Item->ItemEntry.ItemDefinition) || Item->ItemEntry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest()), i, 0.f, true);
+									break;
+								}
+						}
+					}
+					else
+						ClientEquipItem(Item->ItemEntry.ItemGuid, true);
 				}
 				else
-					AFortInventory::SpawnPickup(GetViewTarget()->K2_GetActorLocation(), *PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn);
+					AFortInventory::SpawnPickup(Pawn->K2_GetActorLocation() + Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), *PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn, -1, true, true, true, nullptr, FinalLoc);
 			}
 			else
 				WorldInventory->GiveItem(*PickupEntry, PickupEntry->Count, true);
@@ -1128,7 +1183,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 			if (PickupEntry->ItemDefinition->bAllowMultipleStacks && ItemCount < 5)
 				WorldInventory->GiveItem(*PickupEntry, OriginalCount - MaxStack, true);
 			else
-				AFortInventory::SpawnPickup(GetViewTarget()->K2_GetActorLocation(), *PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn, OriginalCount - MaxStack);
+				AFortInventory::SpawnPickup(Pawn->K2_GetActorLocation() + Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), *PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn, OriginalCount - MaxStack, true, true, true, nullptr, FinalLoc);
 		};
 
 	if (MaxStack > 1)
@@ -1169,7 +1224,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 			}
 
 			// full proper
-			/*for (int i = 0; i < itemEntry->StateValues.Num(); i++)
+			for (int i = 0; i < itemEntry->StateValues.Num(); i++)
 			{
 				auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
 
@@ -1177,6 +1232,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 					continue;
 				
 				StateValue.IntValue = 1;
+				bFound = true;
 				break;
 			}
 
@@ -1184,11 +1240,13 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 			{
 				auto Value = (FFortItemEntryStateValue*)malloc(FFortItemEntryStateValue::Size());
 				memset((PBYTE)Value, 0, FFortItemEntryStateValue::Size());
-				Value->IntValue = true;
+
+				Value->IntValue = 1;
 				Value->StateType = 2;
 				itemEntry->StateValues.Add(*Value, FFortItemEntryStateValue::Size());
+
 				free(Value);
-			}*/
+			}
 
 
 
@@ -2222,6 +2280,11 @@ void AFortPlayerControllerAthena::EnterAircraft(UObject* Object, AActor* Aircraf
 				//NewPlayer->WorldInventory->Inventorxy.ReplicatedEntries.Remove(i, FFortItemEntry::Size());
 				//i--;
 				GuidsToRemove.push_back(Entry.ItemGuid);
+			}
+			if (VersionInfo.FortniteVersion < 3 && Entry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest())
+			{
+				PlayerController->ServerExecuteInventoryItem(Entry.ItemGuid);
+				PlayerController->QuickBars->ServerActivateSlotInternal(0, 0, 0.f, true);
 			}
 		}
 

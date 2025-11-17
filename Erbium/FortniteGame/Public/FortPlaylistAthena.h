@@ -86,4 +86,5 @@ public:
     DEFINE_PROP(bIsLargeTeamGame, bool);
     DEFINE_PROP(ModifierList, TArray<TSoftObjectPtr<UFortGameplayModifierItemDefinition>>);
     DEFINE_PROP(PreloadPersistentLevel, TSoftObjectPtr<UWorld>);
+    DEFINE_PROP(UIDisplayName, FText);
 };

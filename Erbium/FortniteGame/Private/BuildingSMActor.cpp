@@ -92,7 +92,7 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 				itemEntry->Count = MaxMat;
 			}
 
-			/*for (int i = 0; i < itemEntry->StateValues.Num(); i++)
+			for (int i = 0; i < itemEntry->StateValues.Num(); i++)
 			{
 				auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
 
@@ -101,7 +101,7 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 
 				StateValue.IntValue = 0;
 				break;
-			}*/
+			}
 
 
 			Item->ItemEntry.Count = itemEntry->Count;
@@ -225,13 +225,15 @@ void AFortDecoTool::ServerSpawnDeco_(UObject* Context, FFrame& Stack)
 
 		static auto TrapClass = FindClass("BuildingTrap");
 		auto trapPtr = AttachedActor->AttachedBuildingActors.Search([&](ABuildingSMActor*& actor) {
-			return actor->IsA(TrapClass) && actor->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+			return actor->IsA(TrapClass) && actor->Team != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
 			});
 
 		auto trap = trapPtr ? *trapPtr : nullptr;
 		if (trap) {
-			trap->TeamIndex = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
-			trap->Team = trap->TeamIndex;
+			trap->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+
+			if (trap->HasTeamIndex())
+				trap->TeamIndex = trap->Team;
 		}
 	}
 }
@@ -327,13 +329,15 @@ void AFortDecoTool_ContextTrap::ServerSpawnDeco_Implementation(UObject* Context,
 	{
 		static auto TrapClass = FindClass("BuildingTrap");
 		auto trapPtr = AttachedActor->AttachedBuildingActors.Search([&](ABuildingSMActor*& actor) {
-			return actor->IsA(TrapClass) && actor->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+			return actor->IsA(TrapClass) && actor->Team != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
 			});
 
 		auto trap = trapPtr ? *trapPtr : nullptr;
 		if (trap) {
-			trap->TeamIndex = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
-			trap->Team = trap->TeamIndex;
+			trap->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+
+			if (trap->HasTeamIndex())
+				trap->TeamIndex = trap->Team;
 		}
 	}
 }

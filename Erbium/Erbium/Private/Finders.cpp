@@ -1940,24 +1940,20 @@ uint64_t FindEnterAircraft()
 uint64_t FindGetPlayerViewPoint()
 {
     uint64 ftspAddr = 0;
-    if (VersionInfo.FortniteVersion >= 20.40)
-        ftspAddr = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC ? 48 8B F9 E8 ? ? ? ? 48 8B 07 48 8B 98 ? ? ? ? E8 ? ? ? ? 48 8B CF").Get();
-    else
-    {
-        auto ftspRef = Memcury::Scanner::FindStringRef(L"%s failed to spawn a pawn", true, 0, VersionInfo.FortniteVersion >= 19).Get();
 
-        for (int i = 0; i < 1000; i++)
+    auto ftspRef = Memcury::Scanner::FindStringRef(L"%s failed to spawn a pawn", true, 0, VersionInfo.FortniteVersion >= 19).Get();
+
+    for (int i = 0; i < 1000; i++)
+    {
+        if (*(uint8_t*)(ftspRef - i) == 0x40 && *(uint8_t*)(ftspRef - i + 1) == 0x53)
         {
-            if (*(uint8_t*)(ftspRef - i) == 0x40 && *(uint8_t*)(ftspRef - i + 1) == 0x53)
-            {
-                ftspAddr = ftspRef - i;
-                break;
-            }
-            else if (*(uint8_t*)(ftspRef - i) == 0x48 && *(uint8_t*)(ftspRef - i + 1) == 0x89 && *(uint8_t*)(ftspRef - i + 2) == 0x5C)
-            {
-                ftspAddr = ftspRef - i;
-                break;
-            }
+            ftspAddr = ftspRef - i;
+            break;
+        }
+        else if (*(uint8_t*)(ftspRef - i) == 0x48 && *(uint8_t*)(ftspRef - i + 1) == 0x89 && *(uint8_t*)(ftspRef - i + 2) == 0x5C)
+        {
+            ftspAddr = ftspRef - i;
+            break;
         }
     }
 

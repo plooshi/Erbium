@@ -60,6 +60,7 @@ public:
     USCRIPTSTRUCT_COMMON_MEMBERS(FQuickBarSlot);
 
     DEFINE_STRUCT_PROP(Items, TArray<FGuid>);
+    DEFINE_STRUCT_PROP(bEnabled, bool);
 };
 
 struct FQuickBar
@@ -78,9 +79,12 @@ public:
     DEFINE_PROP(PrimaryQuickBar, FQuickBar);
     DEFINE_PROP(SecondaryQuickBar, FQuickBar);
 
+    DEFINE_FUNC(ServerActivateSlotInternal, void);
     DEFINE_FUNC(ServerAddItemInternal, void);
     DEFINE_FUNC(ServerRemoveItemInternal, void);
     DEFINE_FUNC(EmptySlot, void);
+    DEFINE_FUNC(OnRep_PrimaryQuickBar, void);
+    DEFINE_FUNC(OnRep_SecondaryQuickBar, void);
 };
 
 class UFortControllerComponent_Interaction : public UActorComponent
