@@ -1015,8 +1015,12 @@ void AFortGameMode::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor*
     static auto FortGMSpawnDefaultPawnFor = (AFortPlayerPawnAthena * (*)(AFortGameMode*, AFortPlayerControllerAthena*, AActor*)) DefaultObjImpl("FortGameMode")->Vft[SpawnDefaultPawnForIdx];
     Pawn = FortGMSpawnDefaultPawnFor(GameMode, NewPlayer, StartSpot);
 
-    //auto Transform = StartSpot->GetTransform();
-    //auto Pawn = GameMode->SpawnDefaultPawnAtTransform(NewPlayer, Transform);
+    if (!Pawn)
+    {
+        auto Transform = StartSpot->GetTransform();
+        Transform.Translation.Z += 200.f;
+        Pawn = GameMode->SpawnDefaultPawnAtTransform(NewPlayer, Transform);
+    }
 
 
     if (Num == 0)

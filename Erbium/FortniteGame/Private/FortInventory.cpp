@@ -350,7 +350,7 @@ FFortItemEntry* AFortInventory::MakeItemEntry(const UFortItemDefinition* ItemDef
 }
 
 uint64_t SetPickupItems;
-AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entry, long long SourceTypeFlag, long long SpawnSource, AFortPlayerPawnAthena* Pawn, int OverrideCount, bool Toss, bool RandomRotation, bool bCombine, const UClass* OverrideClass)
+AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entry, long long SourceTypeFlag, long long SpawnSource, AFortPlayerPawnAthena* Pawn, int OverrideCount, bool Toss, bool RandomRotation, bool bCombine, const UClass* OverrideClass, FVector FinalLoc)
 {
     if (!&Entry)
         return nullptr;
@@ -382,7 +382,11 @@ AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entr
     //NewPickup->OnRep_PrimaryPickupItemEntry();
     NewPickup->PawnWhoDroppedPickup = Pawn;
 
-    NewPickup->TossPickup(Loc, Pawn, -1, Toss, true, (uint8)SourceTypeFlag, (uint8)SpawnSource);
+    auto FinalLocation = Loc;
+    
+    if (FinalLoc.X || FinalLoc.Y || FinalLoc.Z)
+        FinalLocation = FinalLoc;
+    NewPickup->TossPickup(FinalLocation, Pawn, -1, Toss, true, (uint8)SourceTypeFlag, (uint8)SpawnSource);
 
     if (VersionInfo.FortniteVersion < 6)
     {

@@ -754,7 +754,23 @@ void AFortPlayerControllerAthena::ServerAttemptInventoryDrop(UObject* Context, F
 	auto Item = *ItemP;
 
 	itemEntry->Count -= Count;
-	AFortInventory::SpawnPickup(PlayerController->Pawn->K2_GetActorLocation() + PlayerController->Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), *itemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn, Count);
+
+	FVector FinalLoc = PlayerController->Pawn->K2_GetActorLocation();
+
+	FVector ForwardVector = PlayerController->Pawn->GetActorForwardVector();
+	//ForwardVector.Z = 0.0f;
+	//ForwardVector.Normalize();
+
+	FinalLoc = FinalLoc + ForwardVector * 450.f;
+	FinalLoc.Z += 50.f;
+
+	const float RandomAngleVariation = ((float)rand() * 0.00109866634f) - 18.f;
+	const float FinalAngle = RandomAngleVariation * 0.017453292519943295f;
+
+	FinalLoc.X += cos(FinalAngle) * 100.f;
+	FinalLoc.Y += sin(FinalAngle) * 100.f;
+
+	AFortInventory::SpawnPickup(PlayerController->Pawn->K2_GetActorLocation() + PlayerController->Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), *itemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn, Count, true, true, true, nullptr, FinalLoc);
 	if (itemEntry->Count <= 0 || Count < 0)
 		PlayerController->WorldInventory->Remove(Guid);
 	else
@@ -1103,6 +1119,21 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 		}
 
 	//printf("br: %d\n", ItemCount);
+	FVector FinalLoc = Pawn->K2_GetActorLocation();
+
+	FVector ForwardVector = Pawn->GetActorForwardVector();
+	//ForwardVector.Z = 0.0f;
+	//ForwardVector.Normalize();
+
+	FinalLoc = FinalLoc + ForwardVector * 450.f;
+	FinalLoc.Z += 50.f;
+
+	const float RandomAngleVariation = ((float)rand() * 0.00109866634f) - 18.f;
+	const float FinalAngle = RandomAngleVariation * 0.017453292519943295f;
+
+	FinalLoc.X += cos(FinalAngle) * 100.f;
+	FinalLoc.Y += sin(FinalAngle) * 100.f;
+
 	auto GiveOrSwap = [&]()
 		{
 			if (ItemCount >= 5 && AFortInventory::IsPrimaryQuickbar(PickupEntry->ItemDefinition))
@@ -1116,7 +1147,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 						{ return entry.ItemGuid == ((AFortWeapon*)MyFortPawn->CurrentWeapon)->ItemEntryGuid; }, FFortItemEntry::Size());
 
 
-					AFortInventory::SpawnPickup(GetViewTarget()->K2_GetActorLocation(), *itemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn);
+					AFortInventory::SpawnPickup(Pawn->K2_GetActorLocation() + Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), *itemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn, -1, true, true, true, nullptr, FinalLoc);
 					WorldInventory->Remove(((AFortWeapon*)MyFortPawn->CurrentWeapon)->ItemEntryGuid);
 					auto Item = WorldInventory->GiveItem(*PickupEntry, PickupEntry->Count, true);
 					ServerExecuteInventoryItem(Item->ItemEntry.ItemGuid);
@@ -1140,7 +1171,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 						ClientEquipItem(Item->ItemEntry.ItemGuid, true);
 				}
 				else
-					AFortInventory::SpawnPickup(GetViewTarget()->K2_GetActorLocation(), *PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn);
+					AFortInventory::SpawnPickup(Pawn->K2_GetActorLocation() + Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), *PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn, -1, true, true, true, nullptr, FinalLoc);
 			}
 			else
 				WorldInventory->GiveItem(*PickupEntry, PickupEntry->Count, true);
@@ -1151,7 +1182,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 			if (PickupEntry->ItemDefinition->bAllowMultipleStacks && ItemCount < 5)
 				WorldInventory->GiveItem(*PickupEntry, OriginalCount - MaxStack, true);
 			else
-				AFortInventory::SpawnPickup(GetViewTarget()->K2_GetActorLocation(), *PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn, OriginalCount - MaxStack);
+				AFortInventory::SpawnPickup(Pawn->K2_GetActorLocation() + Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), *PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn, OriginalCount - MaxStack, true, true, true, nullptr, FinalLoc);
 		};
 
 	if (MaxStack > 1)
