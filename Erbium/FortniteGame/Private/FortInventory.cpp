@@ -504,6 +504,7 @@ bool AFortInventory::IsPrimaryQuickbar(const UFortItemDefinition* ItemDefinition
         ItemDefinition->ItemType == EFortItemType::GetTrap() ||
         ItemDefinition->ItemType == EFortItemType::GetBuildingPiece() ||
         ItemDefinition->ItemType == EFortItemType::GetEditTool() ||
+		ItemDefinition->ItemType == EFortItemType::GetIngredient() ||
         (ItemDefinition->HasbForceIntoOverflow() && ItemDefinition->bForceIntoOverflow)
         ? false : true;
 }
