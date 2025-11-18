@@ -24,7 +24,8 @@ void* Misc::SendRequestNow(void* Arg1, void* MCPData, int)
 float Misc::GetMaxTickRate(UEngine* Engine, float DeltaTime, bool bAllowFrameRateSmoothing)
 {
 	// improper, DS is supposed to do hitching differently
-	return std::clamp(1.f / DeltaTime, 1.f, FConfiguration::MaxTickRate);
+	return FConfiguration::MaxTickRate;
+	//return std::clamp(1.f / DeltaTime, 1.f, FConfiguration::MaxTickRate);
 }
 
 uint32 Misc::CheckCheckpointHeartBeat()
@@ -141,10 +142,10 @@ void Misc::InitClient()
 				ShowdownUIExtension.WidgetClass.ObjectID.AssetPathName = FName(L"/Game/UI/Frontend/Showdown/ShowdownScoringHUD.ShowdownScoringHUD_C");
 			else
 			{
-				auto& PackageName = *(FName*)(__int64(&ArenaUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.2 ? 0xC : 0x8));
-				auto& AssetName = *(FName*)(__int64(&ArenaUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.2 ? 0x10 : 0xC));
+				auto& PackageName = *(FName*)(__int64(&ShowdownUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.2 ? 0xC : 0x8));
+				auto& AssetName = *(FName*)(__int64(&ShowdownUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.2 ? 0x10 : 0xC));
 
-				PackageName = FName(L"/Game/UI/Competitive/Arena/ShowdownScoringHUD");
+				PackageName = FName(L"/Game/UI/Frontend/Showdown/ShowdownScoringHUD");
 				AssetName = FName(L"ShowdownScoringHUD_C");
 			}
 
@@ -252,7 +253,7 @@ void PatchAllNetModes(uintptr_t AttemptDeriveFromURL)
 
 				for (auto j = 0; j > -0x100000; j--) // so we find everything. no func is actually 1mb
 				{
-					if ((scanBytes[i + j] & 0xF8) == 0x48 && ((scanBytes[i + j + 1] & 0xFC) == 0x80 || (scanBytes[i + j + 1] & 0xF8) == 0x38) && (scanBytes[i + j + 2] & 0xF0) != 0xC0 && scanBytes[i + j + 2] != 0x65 && scanBytes[i + j + 3] == 0x38)
+					if ((scanBytes[i + j] & 0xF8) == 0x48 && ((scanBytes[i + j + 1] & 0xFC) == 0x80 || (scanBytes[i + j + 1] & 0xF8) == 0x38) && (scanBytes[i + j + 2] & 0xF0) != 0xC0 && (scanBytes[i + j + 2] & 0xF0) != 0xE0 && scanBytes[i + j + 2] != 0x65 && scanBytes[i + j + 2] != 0xBB && scanBytes[i + j + 3] == 0x38 && ((scanBytes[i + j + 1] & 0xFC) != 0x80 || scanBytes[i + j + 4] == 0x0))
 					{
 						// now, scan for if (NetDriver) return NM_Client;
 
@@ -271,9 +272,14 @@ void PatchAllNetModes(uintptr_t AttemptDeriveFromURL)
 									Utils::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
 								else if ((scanBytes[i + j + 1] & 0xFC) == 0x80)
 								{
-									Utils::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
-									Utils::Patch<uint8_t>(__int64(&scanBytes[i + j + 4]), 0x90);
+									DWORD og;
+									VirtualProtect(&scanBytes[i + j], 5, PAGE_EXECUTE_READWRITE, &og);
+									*(uint32*)(&scanBytes[i + j]) = 0x90909090;
+									*(uint8*)(&scanBytes[i + j + 4]) = 0x90;
+									VirtualProtect(&scanBytes[i + j], 5, og, &og);
 								}
+								FlushInstructionCache(GetCurrentProcess(), &scanBytes[i + j], 5);
+								FlushInstructionCache(GetCurrentProcess(), &scanBytes[i + j + k], 2);
 								found = true;
 								break;
 							}
@@ -281,7 +287,7 @@ void PatchAllNetModes(uintptr_t AttemptDeriveFromURL)
 							{
 								auto Scuffness = __int64(&scanBytes[i + j + k]);
 								Scuffness = (Scuffness + 2) + *(int8_t*)(Scuffness + 1);
-								\
+								
 								if (*(uint32_t*)(Scuffness + 3) != 0xF0 && (*(uint8_t*)(Scuffness + 2) != 0xC || *(uint8_t*)(Scuffness + 3) != 0xB) && *(uint8_t*)(Scuffness + 2) != 0x09)
 									continue;
 
@@ -290,9 +296,14 @@ void PatchAllNetModes(uintptr_t AttemptDeriveFromURL)
 									Utils::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
 								else if ((scanBytes[i + j + 1] & 0xFC) == 0x80)
 								{
-									Utils::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
-									Utils::Patch<uint8_t>(__int64(&scanBytes[i + j + 4]), 0x90);
+									DWORD og;
+									VirtualProtect(&scanBytes[i + j], 5, PAGE_EXECUTE_READWRITE, &og);
+									*(uint32*)(&scanBytes[i + j]) = 0x90909090;
+									*(uint8*)(&scanBytes[i + j + 4]) = 0x90;
+									VirtualProtect(&scanBytes[i + j], 5, og, &og);
 								}
+								FlushInstructionCache(GetCurrentProcess(), &scanBytes[i + j], 5);
+								FlushInstructionCache(GetCurrentProcess(), &scanBytes[i + j + k], 1);
 								found = true;
 								break;
 							}
@@ -303,15 +314,23 @@ void PatchAllNetModes(uintptr_t AttemptDeriveFromURL)
 								if (*(uint32_t*)Scuffness != 0xF0 && (scanBytes[i + j + k + 8] != 0xC || scanBytes[i + j + k + 9] != 0xB) && scanBytes[i + j + k + 8] != 0x09)
 									continue;
 
-								Utils::Patch<uint32_t>(__int64(&scanBytes[i + j + k]), 0x90909090);
-								Utils::Patch<uint16_t>(__int64(&scanBytes[i + j + k + 4]), 0x9090);
+								DWORD og;
+								VirtualProtect(&scanBytes[i + j + k], 6, PAGE_EXECUTE_READWRITE, &og);
+								*(uint32*)(&scanBytes[i + j + k]) = 0x90909090;
+								*(uint16*)(&scanBytes[i + j + k + 4]) = 0x9090;
+								VirtualProtect(&scanBytes[i + j + k], 6, og, &og);
 								if ((scanBytes[i + j + 1] & 0xF8) == 0x38)
 									Utils::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
 								else if ((scanBytes[i + j + 1] & 0xFC) == 0x80)
 								{
-									Utils::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
-									Utils::Patch<uint8_t>(__int64(&scanBytes[i + j + 4]), 0x90);
+									DWORD og;
+									VirtualProtect(&scanBytes[i + j], 5, PAGE_EXECUTE_READWRITE, &og);
+									*(uint32*)(&scanBytes[i + j]) = 0x90909090;
+									*(uint8*)(&scanBytes[i + j + 4]) = 0x90;
+									VirtualProtect(&scanBytes[i + j], 5, og, &og);
 								}
+								FlushInstructionCache(GetCurrentProcess(), &scanBytes[i + j], 5);
+								FlushInstructionCache(GetCurrentProcess(), &scanBytes[i + j + k], 6);
 								found = true;
 								break;
 							}
@@ -328,9 +347,14 @@ void PatchAllNetModes(uintptr_t AttemptDeriveFromURL)
 									Utils::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
 								else if ((scanBytes[i + j + 1] & 0xFC) == 0x80)
 								{
-									Utils::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
-									Utils::Patch<uint8_t>(__int64(&scanBytes[i + j + 4]), 0x90);
+									DWORD og;
+									VirtualProtect(&scanBytes[i + j], 5, PAGE_EXECUTE_READWRITE, &og);
+									*(uint32*)(&scanBytes[i + j]) = 0x90909090;
+									*(uint8*)(&scanBytes[i + j + 4]) = 0x90;
+									VirtualProtect(&scanBytes[i + j], 5, og, &og);
 								}
+								FlushInstructionCache(GetCurrentProcess(), &scanBytes[i + j], 5);
+								FlushInstructionCache(GetCurrentProcess(), &scanBytes[i + j + k], 2);
 								found = true;
 								break;
 							}
@@ -349,9 +373,15 @@ bool RetFalse()
 	return false;
 }
 
+class AFortTeamMemberPedestal : public AActor
+{
+public:
+	UCLASS_COMMON_MEMBERS(AFortTeamMemberPedestal);
+};
+
 void Misc::Hook()
 {
-	if ((VersionInfo.FortniteVersion >= 25 && VersionInfo.FortniteVersion < 28.30) || VersionInfo.FortniteVersion >= 30)
+	if (VersionInfo.FortniteVersion == 23.00 || (VersionInfo.FortniteVersion >= 25 && VersionInfo.FortniteVersion < 28.30) || VersionInfo.FortniteVersion >= 30)
 	{
 		auto AttemptDeriveFromURL = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 4C 8B C1").Get();
 		if (!AttemptDeriveFromURL)
@@ -359,7 +389,7 @@ void Misc::Hook()
 		if (!AttemptDeriveFromURL)
 			AttemptDeriveFromURL = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 48 8B D1").Get();
 		Utils::Hook(AttemptDeriveFromURL, GetNetMode);
-		Utils::Hook(Memcury::Scanner::FindPattern("48 83 EC ? 48 8B 01 FF 90 ? ? ? ? 84 C0 0F 85").Get(), GetNetMode);
+		//Utils::Hook(Memcury::Scanner::FindPattern("48 83 EC ? 48 8B 01 FF 90 ? ? ? ? 84 C0 0F 85").Get(), GetNetMode);
 		PatchAllNetModes(AttemptDeriveFromURL);
 	}
 	else
@@ -385,8 +415,42 @@ void Misc::Hook()
 
 		Utils::Hook(ApplyHomebaseEffectsOnPlayerSetupAddr, ApplyHomebaseEffectsOnPlayerSetup, ApplyHomebaseEffectsOnPlayerSetupOG);
 	}
-	if (VersionInfo.FortniteVersion >= 26 && VersionInfo.FortniteVersion < 28)
+	if (VersionInfo.FortniteVersion >= 25 && VersionInfo.FortniteVersion < 28)
 	{
 		Utils::Hook(Memcury::Scanner::FindPattern("48 89 5C ? ? 57 48 83 EC ? 48 8B D1 48 85 C9 74 ?").Get(), RetFalse);
+	}
+
+
+	auto PedestalBeginPlay = Memcury::Scanner::FindStringRef(L"AFortTeamMemberPedestal::BeginPlay - Begun play on pedestal %s", true, 0, VersionInfo.EngineVersion >= 5.0).Get();
+
+	if (PedestalBeginPlay)
+	{
+		uint64_t RealBeginPlay = 0;
+		for (int i = 0; i < 1000; i++)
+		{
+			auto Ptr = (uint8_t*)(PedestalBeginPlay - i);
+
+			if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5c)
+			{
+				RealBeginPlay = (uint64_t)Ptr;
+				break;
+			}
+			else if (*Ptr == 0x40 && *(Ptr + 1) == 0x53 && *(Ptr + 2) == 0x41 && *(Ptr + 3) == 0x56)
+			{
+				RealBeginPlay = (uint64_t)Ptr;
+				break;
+			}
+		}
+
+		auto ActorVft = AFortTeamMemberPedestal::GetDefaultObj()->Vft;
+
+		for (int i = 0; i < 0x500; i++)
+		{
+			if (ActorVft[i] == (void*)RealBeginPlay)
+			{
+				Utils::Hook<AFortTeamMemberPedestal>(uint32_t(i), AActor::GetDefaultObj()->Vft[i]);
+				break;
+			}
+		}
 	}
 }

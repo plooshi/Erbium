@@ -147,7 +147,26 @@ bool AFortPlayerPawnAthena::FinishedTargetSpline(void* _Pickup)
 		AFortInventory::SpawnPickup(PlayerController->GetViewTarget()->K2_GetActorLocation(), *entry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn);
 		// SwapEntry(PC, *entry, Pickup->PrimaryPickupItemEntry);
 		PlayerController->WorldInventory->Remove(entry->ItemGuid);
-		PlayerController->WorldInventory->GiveItem(Pickup->PrimaryPickupItemEntry);
+		auto Item = PlayerController->WorldInventory->GiveItem(Pickup->PrimaryPickupItemEntry);
+		PlayerController->ServerExecuteInventoryItem(Item->ItemEntry.ItemGuid);
+		if (VersionInfo.FortniteVersion < 3)
+		{
+			auto& QuickBar = (AFortInventory::IsPrimaryQuickbar(Item->ItemEntry.ItemDefinition) || Item->ItemEntry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest()) ? PlayerController->QuickBars->PrimaryQuickBar : PlayerController->QuickBars->SecondaryQuickBar;
+			int i = 0;
+			for (i = 0; i < QuickBar.Slots.Num(); i++)
+			{
+				auto& Slot = QuickBar.Slots.Get(i, FQuickBarSlot::Size());
+
+				for (auto& SlotItem : Slot.Items)
+					if (SlotItem == Item->ItemEntry.ItemGuid)
+					{
+						PlayerController->QuickBars->ServerActivateSlotInternal(!(AFortInventory::IsPrimaryQuickbar(Item->ItemEntry.ItemDefinition) || Item->ItemEntry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest()), i, 0.f, true);
+						break;
+					}
+			}
+		}
+		else
+			PlayerController->ClientEquipItem(Item->ItemEntry.ItemGuid, true);
 		PlayerController->SwappingItemDefinition = nullptr;
 	}
 	else
@@ -315,14 +334,16 @@ void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack
 	Stack.StepCompiledIn(&ExitForceBehavior);
 	Stack.StepCompiledIn(&bDestroyVehicleWhenForced);
 	Stack.IncrementCode();
-
 	auto Pawn = (AFortPlayerPawnAthena*)Context;
-	auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
 	static auto GetVehicleFunc = Pawn->GetFunction("GetVehicle");
 	if (!GetVehicleFunc)
 		GetVehicleFunc = Pawn->GetFunction("BP_GetVehicle");
-
 	auto Vehicle = Pawn->Call<AFortAthenaVehicle*>(GetVehicleFunc);
+
+	callOG(Pawn, Stack.GetCurrentNativeFunction(), ServerOnExitVehicle, ExitForceBehavior, bDestroyVehicleWhenForced);
+
+	auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
+
 
 	auto SeatIdx = Vehicle->FindSeatIndex(PlayerController->MyFortPawn);
 
@@ -371,8 +392,6 @@ void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack
 		}
 		printf("3");
 	}
-
-	return callOG(Pawn, Stack.GetCurrentNativeFunction(), ServerOnExitVehicle, ExitForceBehavior, bDestroyVehicleWhenForced);
 }
 
 void AFortPlayerPawnAthena::PostLoadHook()

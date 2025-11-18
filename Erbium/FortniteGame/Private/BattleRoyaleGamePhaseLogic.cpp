@@ -429,7 +429,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 
 	if (GameState->MapInfo->FlightInfos.Num() > 0)
 	{
-		TArray<AFortAthenaAircraft*> Aircrafts;
+		//TArray<TWeakObjectPtr<AFortAthenaAircraft>> Aircrafts;
 		auto& FlightInfo = GameState->MapInfo->FlightInfos[0];
 
 		if (FConfiguration::bLateGame)
@@ -507,9 +507,10 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 			Player->ClientGotoState(FName(L"Spectating"));
 		}
 
-		Aircrafts.Add(Aircraft);
-		SetAircrafts(Aircrafts);
-		OnRep_Aircrafts();
+		Aircrafts_GameMode.Add(Aircraft);
+		Aircrafts_GameState.Add(Aircraft);
+		//SetAircrafts(Aircrafts);
+		//OnRep_Aircrafts();
 	}
 
 	SetGamePhase(EAthenaGamePhase::Aircraft);
@@ -517,6 +518,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 }
 
 uint64_t Reset_ = 0;
+uint64_t IsInsideSafeZone = 0;
 void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 {
 	auto Time = UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
@@ -649,6 +651,13 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 				if (!bPausedZone && !bUpdatedPhase && SafeZoneIndicator->SafeZoneStartShrinkTime < Time)
 				{
 					bUpdatedPhase = true;
+
+					auto& SafeZoneState = *(uint8_t*)(__int64(&SafeZoneIndicator->FutureReplicator) - 0x4);
+					SafeZoneState = 3;
+
+					SafeZoneIndicator->OnSafeZoneStateChange(3, false);
+					SafeZoneIndicator->SafezoneStateChangedDelegate.Process(SafeZoneIndicator, 3);
+
 					SetGamePhaseStep(EAthenaGamePhaseStep::StormShrinking);
 				}
 				else if (!bPausedZone && SafeZoneIndicator->SafeZoneFinishShrinkTime < Time)
@@ -666,22 +675,25 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 					auto Player = (AFortPlayerControllerAthena*)UncastedPlayer;
 					if (auto Pawn = Player->MyFortPawn)
 					{
-						bool bInZone = IsInCurrentSafeZone(Player->MyFortPawn->K2_GetActorLocation(), true);
+						bool bInZone = IsInCurrentSafeZone(Player->MyFortPawn->K2_GetActorLocation(), false);
+
+						if (!IsInCurrentSafeZone__Ptr)
+							bInZone = true; // ill do this later (25.20)
 
 						if (Pawn->bIsInsideSafeZone != bInZone || Pawn->bIsInAnyStorm != !bInZone)
 						{
-							//printf("Pawn %s new storm status: %s\n", Pawn->Name.ToString().c_str(), bInZone ? "true" : "false");
+							printf("Pawn %s new storm status: %s\n", Pawn->Name.ToString().c_str(), bInZone ? "true" : "false");
 							Pawn->bIsInAnyStorm = !bInZone;
 							Pawn->OnRep_IsInAnyStorm();
 							Pawn->bIsInsideSafeZone = bInZone;
 							Pawn->OnRep_IsInsideSafeZone();
 
-							auto AbilitySystemComponent = Player->PlayerState->AbilitySystemComponent;
+							/*auto AbilitySystemComponent = Player->PlayerState->AbilitySystemComponent;
 							for (int i = 0; i < AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Num(); i++)
 							{
 								auto& Effect = AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Get(i, FActiveGameplayEffect::Size());
 
-								//printf("%s %s\n", Effect.Spec.Def->Name.ToString().c_str(), Effect.Spec.Def->Class->Name.ToString().c_str());
+								printf("%s %s\n", Effect.Spec.Def->Name.ToString().c_str(), Effect.Spec.Def->Class->Name.ToString().c_str());
 								if (Effect.Spec.Def->Class == ZoneEffect)
 								{
 									auto Handle = *(FActiveGameplayEffectHandle*)(__int64(&Effect) + 0xc);
@@ -690,10 +702,10 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 									AbilitySystemComponent->SetActiveGameplayEffectLevel(Handle, SafeZoneIndicator->CurrentPhase);
 
 									AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(Handle, FGameplayTag(FName(L"SetByCaller.StormCampingDamage")), 1);
-									//printf("found\n");
+									printf("found\n");
 									break;
 								}
-							}
+							}*/
 						}
 
 					}
@@ -702,6 +714,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 		}
 	}
 }
+
 
 void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Hook()
 {

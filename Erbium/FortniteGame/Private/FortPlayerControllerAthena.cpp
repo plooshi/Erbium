@@ -15,6 +15,12 @@
 
 void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena* PlayerController, FVector& Loc, FRotator& Rot)
 {
+	if (auto Pawn = PlayerController->MyFortPawn)
+	{
+		Loc = Pawn->K2_GetActorLocation();
+		Rot = PlayerController->GetControlRotation();
+		return;
+	}
 	static auto SFName = FName(L"Spectating");
 	if (PlayerController->StateName == SFName)
 	{
@@ -30,7 +36,7 @@ void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena
 			Loc = ViewTarget->K2_GetActorLocation();
 			//if (auto TargetPawn = ViewTarget->Cast<AFortPlayerPawnAthena>())
 			//	Loc.Z += TargetPawn->BaseEyeHeight;
-			Rot = PlayerController->GetControlRotation();
+			Rot = ViewTarget->K2_GetActorRotation();
 		}
 		else
 			return GetPlayerViewPointOG(PlayerController, Loc, Rot);
@@ -68,6 +74,11 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 				//i--;
 
 				GuidsToRemove.push_back(Entry.ItemGuid);
+			}
+			if (VersionInfo.FortniteVersion < 3 && Entry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest())
+			{
+				PlayerController->ServerExecuteInventoryItem(Entry.ItemGuid);
+				PlayerController->QuickBars->ServerActivateSlotInternal(0, 0, 0.f, true);
 			}
 		}
 
@@ -168,9 +179,6 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 
 		if (PlayerController->MyFortPawn)
 		{
-			PlayerController->MyFortPawn->BeginSkydiving(true);
-			PlayerController->MyFortPawn->SetHealth(100.f);
-			
 			if (VersionInfo.FortniteVersion >= 25.20)
 			{
 				static auto Effect = FindObject<UClass>(L"/Game/Athena/SafeZone/GE_OutsideSafeZoneDamage.GE_OutsideSafeZoneDamage_C");
@@ -192,10 +200,11 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 
 				if (!Found)
 				{
+					printf("yo\n");
 					auto EffectHandle = FGameplayEffectContextHandle();
-					auto SpecHandle = AbilitySystemComponent->BP_ApplyGameplayEffectToSelf(Effect, 0, EffectHandle);
+					auto SpecHandle = AbilitySystemComponent->BP_ApplyGameplayEffectToSelf(Effect, 0.f, EffectHandle);
 
-					AbilitySystemComponent->SetActiveGameplayEffectLevel(SpecHandle, 0);
+					//AbilitySystemComponent->SetActiveGameplayEffectLevel(SpecHandle, 1);
 
 					AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(SpecHandle,
 						FGameplayTag(FName(L"SetByCaller.StormCampingDamage")), 1);
@@ -207,6 +216,9 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 				PlayerController->MyFortPawn->OnRep_IsInsideSafeZone();
 			}
 
+			PlayerController->MyFortPawn->BeginSkydiving(true);
+			PlayerController->MyFortPawn->SetHealth(100.f);
+			
 			if (FConfiguration::bLateGame)
 			{
 				PlayerController->MyFortPawn->SetShield(100.f);
@@ -555,7 +567,7 @@ void AFortPlayerControllerAthena::ServerBeginEditingBuildingActor(UObject* Conte
 	Stack.StepCompiledIn(&Building);
 	Stack.IncrementCode();
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
-	if (!PlayerController || !PlayerController->MyFortPawn || !Building || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex)
+	if (!PlayerController || !PlayerController->MyFortPawn || !Building/* || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex*/)
 		return;
 
 	AFortPlayerStateAthena* PlayerState = (AFortPlayerStateAthena*)PlayerController->PlayerState;
@@ -595,7 +607,7 @@ void AFortPlayerControllerAthena::ServerEditBuildingActor(UObject* Context, FFra
 	Stack.IncrementCode();
 
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
-	if (!PlayerController || !Building || !NewClass || !Building->IsA<ABuildingSMActor>() || !CanBePlacedByPlayer(NewClass) || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex || Building->bDestroyed)
+	if (!PlayerController || !Building || !NewClass || !Building->IsA<ABuildingSMActor>() || !CanBePlacedByPlayer(NewClass)/* || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex*/ || Building->bDestroyed)
 	{
 		return;
 	}
@@ -652,7 +664,7 @@ void AFortPlayerControllerAthena::ServerEndEditingBuildingActor(UObject* Context
 	Stack.IncrementCode();
 
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
-	if (!PlayerController || !PlayerController->MyFortPawn || !Building || Building->EditingPlayer != PlayerController->PlayerState || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex || Building->bDestroyed)
+	if (!PlayerController || !PlayerController->MyFortPawn || !Building || Building->EditingPlayer != PlayerController->PlayerState/* || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex*/ || Building->bDestroyed)
 		return;
 
 	SetEditingPlayer(Building, nullptr);
@@ -721,6 +733,7 @@ void AFortPlayerControllerAthena::ServerRepairBuildingActor(UObject* Context, FF
 	{
 		Item->ItemEntry.Count = itemEntry->Count;
 		PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+		Item->ItemEntry.bIsDirty = true;
 	}
 
 	Building->RepairBuilding(PlayerController, Price);
@@ -749,13 +762,30 @@ void AFortPlayerControllerAthena::ServerAttemptInventoryDrop(UObject* Context, F
 	auto Item = *ItemP;
 
 	itemEntry->Count -= Count;
-	AFortInventory::SpawnPickup(PlayerController->Pawn->K2_GetActorLocation() + PlayerController->Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), *itemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn, Count);
+
+	FVector FinalLoc = PlayerController->Pawn->K2_GetActorLocation();
+
+	FVector ForwardVector = PlayerController->Pawn->GetActorForwardVector();
+	//ForwardVector.Z = 0.0f;
+	//ForwardVector.Normalize();
+
+	FinalLoc = FinalLoc + ForwardVector * 450.f;
+	FinalLoc.Z += 20.f;
+
+	const float RandomAngleVariation = ((float)rand() * 0.00109866634f) - 18.f;
+	const float FinalAngle = (RandomAngleVariation + 360.f / ((float)rand() * 0.00015259254737998596f)) * 0.017453292519943295f;
+
+	FinalLoc.X += cos(FinalAngle) * 100.f;
+	FinalLoc.Y += sin(FinalAngle) * 100.f;
+
+	AFortInventory::SpawnPickup(PlayerController->Pawn->K2_GetActorLocation() + PlayerController->Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), *itemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn, Count, true, true, true, nullptr, FinalLoc);
 	if (itemEntry->Count <= 0 || Count < 0)
 		PlayerController->WorldInventory->Remove(Guid);
 	else
 	{
 		Item->ItemEntry.Count = itemEntry->Count;
 		PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+		Item->ItemEntry.bIsDirty = true;
 	}
 }
 
@@ -952,7 +982,21 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 			KillerPlayerState->ClientReportTeamKill(KillerPlayerState->TeamKillScore);
 	}
 
-	if (!GameState->IsRespawningAllowed(PlayerState) && (PlayerController->Pawn ? !PlayerController->Pawn->IsDBNO() : true) && PlayerState->HasPlace())
+	static auto IsRespawningAllowedFunc = GameState->GetFunction("IsRespawningAllowed");
+
+	bool bRespawnAllowed = false;
+
+	if (!IsRespawningAllowedFunc)
+	{
+		auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
+
+		// respawn except storm needs to be fixed
+		bRespawnAllowed = Playlist->RespawnType > 0;
+	}
+	else
+		bRespawnAllowed = GameState->Call<bool>(IsRespawningAllowedFunc, PlayerState);
+
+	if (!bRespawnAllowed && (PlayerController->Pawn ? !PlayerController->Pawn->IsDBNO() : true) && PlayerState->HasPlace())
 	{
 		PlayerState->Place = GameState->PlayersLeft;
 		PlayerState->OnRep_Place();
@@ -960,7 +1004,16 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 		AFortWeapon* DamageCauser = nullptr;
 		static auto ProjectileBaseClass = FindClass("FortProjectileBase");
 		if (DeathReport.DamageCauser ? DeathReport.DamageCauser->IsA(ProjectileBaseClass) : false)
-			DamageCauser = (AFortWeapon*)DeathReport.DamageCauser->Owner;
+		{
+			auto Owner = DeathReport.DamageCauser->Owner;
+
+			if (Owner->Cast<AFortWeapon>())
+				DamageCauser = (AFortWeapon*)Owner;
+			else if (auto Controller = Owner->Cast<AFortPlayerControllerAthena>())
+				DamageCauser = (AFortWeapon*)Controller->Pawn->CurrentWeapon;
+			else if (auto Pawn = Owner->Cast<AFortPlayerPawnAthena>())
+				DamageCauser = (AFortWeapon*)Pawn->CurrentWeapon;
+		}
 		else if (auto Weapon = DeathReport.DamageCauser ? DeathReport.DamageCauser->Cast<AFortWeapon>() : nullptr)
 			DamageCauser = Weapon;
 		if (RemoveFromAlivePlayers_)
@@ -976,7 +1029,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 			PlayerController->Pawn->CharacterMovement->ProcessEvent(PlayerController->Pawn->CharacterMovement->GetFunction("DisableMovement"), nullptr);
 		}
 
-		if (PlayerController->Pawn && KillerPlayerState && KillerPlayerState->Place == 1)
+		if (PlayerController->Pawn && KillerPlayerState && KillerPlayerState != PlayerState && KillerPlayerState->Place == 1)
 		{
 			/*if (PlayerState->Place == 1)
 			{
@@ -1098,6 +1151,21 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 		}
 
 	//printf("br: %d\n", ItemCount);
+	FVector FinalLoc = Pawn->K2_GetActorLocation();
+
+	FVector ForwardVector = Pawn->GetActorForwardVector();
+	ForwardVector.Z = 0.0f;
+	ForwardVector.Normalize();
+
+	FinalLoc = FinalLoc + ForwardVector * 450.f;
+	FinalLoc.Z += 50.f;
+
+	const float RandomAngleVariation = ((float)rand() * 0.00109866634f) - 18.f;
+	const float FinalAngle = RandomAngleVariation * 0.017453292519943295f;
+
+	FinalLoc.X += cos(FinalAngle) * 100.f;
+	FinalLoc.Y += sin(FinalAngle) * 100.f;
+
 	auto GiveOrSwap = [&]()
 		{
 			if (ItemCount >= 5 && AFortInventory::IsPrimaryQuickbar(PickupEntry->ItemDefinition))
@@ -1111,12 +1179,31 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 						{ return entry.ItemGuid == ((AFortWeapon*)MyFortPawn->CurrentWeapon)->ItemEntryGuid; }, FFortItemEntry::Size());
 
 
-					AFortInventory::SpawnPickup(GetViewTarget()->K2_GetActorLocation(), *itemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn);
+					AFortInventory::SpawnPickup(Pawn->K2_GetActorLocation() + Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), *itemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn, -1, true, true, true, nullptr, FinalLoc);
 					WorldInventory->Remove(((AFortWeapon*)MyFortPawn->CurrentWeapon)->ItemEntryGuid);
-					WorldInventory->GiveItem(*PickupEntry, PickupEntry->Count, true);
+					auto Item = WorldInventory->GiveItem(*PickupEntry, PickupEntry->Count, true);
+					ServerExecuteInventoryItem(Item->ItemEntry.ItemGuid);
+					if (VersionInfo.FortniteVersion < 3)
+					{
+						auto& QuickBar = (AFortInventory::IsPrimaryQuickbar(Item->ItemEntry.ItemDefinition) || Item->ItemEntry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest()) ? QuickBars->PrimaryQuickBar : QuickBars->SecondaryQuickBar;
+						int i = 0;
+						for (i = 0; i < QuickBar.Slots.Num(); i++)
+						{
+							auto& Slot = QuickBar.Slots.Get(i, FQuickBarSlot::Size());
+
+							for (auto& SlotItem : Slot.Items)
+								if (SlotItem == Item->ItemEntry.ItemGuid)
+								{
+									QuickBars->ServerActivateSlotInternal(!(AFortInventory::IsPrimaryQuickbar(Item->ItemEntry.ItemDefinition) || Item->ItemEntry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest()), i, 0.f, true);
+									break;
+								}
+						}
+					}
+					else
+						ClientEquipItem(Item->ItemEntry.ItemGuid, true);
 				}
 				else
-					AFortInventory::SpawnPickup(GetViewTarget()->K2_GetActorLocation(), *PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn);
+					AFortInventory::SpawnPickup(Pawn->K2_GetActorLocation() + Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), *PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn, -1, true, true, true, nullptr, FinalLoc);
 			}
 			else
 				WorldInventory->GiveItem(*PickupEntry, PickupEntry->Count, true);
@@ -1127,7 +1214,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 			if (PickupEntry->ItemDefinition->bAllowMultipleStacks && ItemCount < 5)
 				WorldInventory->GiveItem(*PickupEntry, OriginalCount - MaxStack, true);
 			else
-				AFortInventory::SpawnPickup(GetViewTarget()->K2_GetActorLocation(), *PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn, OriginalCount - MaxStack);
+				AFortInventory::SpawnPickup(Pawn->K2_GetActorLocation() + Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), *PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn, OriginalCount - MaxStack, true, true, true, nullptr, FinalLoc);
 		};
 
 	if (MaxStack > 1)
@@ -1168,7 +1255,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 			}
 
 			// full proper
-			/*for (int i = 0; i < itemEntry->StateValues.Num(); i++)
+			for (int i = 0; i < itemEntry->StateValues.Num(); i++)
 			{
 				auto& StateValue = itemEntry->StateValues.Get(i, FFortItemEntryStateValue::Size());
 
@@ -1176,6 +1263,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 					continue;
 				
 				StateValue.IntValue = 1;
+				bFound = true;
 				break;
 			}
 
@@ -1183,11 +1271,13 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 			{
 				auto Value = (FFortItemEntryStateValue*)malloc(FFortItemEntryStateValue::Size());
 				memset((PBYTE)Value, 0, FFortItemEntryStateValue::Size());
-				Value->IntValue = true;
+
+				Value->IntValue = 1;
 				Value->StateType = 2;
 				itemEntry->StateValues.Add(*Value, FFortItemEntryStateValue::Size());
+
 				free(Value);
-			}*/
+			}
 
 
 
@@ -1949,6 +2039,7 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 
 				Item->ItemEntry.Count = itemEntry->Count;
 				PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+				Item->ItemEntry.bIsDirty = true;
 			}
 		}
 
@@ -2234,6 +2325,11 @@ void AFortPlayerControllerAthena::EnterAircraft(UObject* Object, AActor* Aircraf
 				//NewPlayer->WorldInventory->Inventorxy.ReplicatedEntries.Remove(i, FFortItemEntry::Size());
 				//i--;
 				GuidsToRemove.push_back(Entry.ItemGuid);
+			}
+			if (VersionInfo.FortniteVersion < 3 && Entry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest())
+			{
+				PlayerController->ServerExecuteInventoryItem(Entry.ItemGuid);
+				PlayerController->QuickBars->ServerActivateSlotInternal(0, 0, 0.f, true);
 			}
 		}
 
