@@ -1391,6 +1391,7 @@ void AFortGameMode::HandlePostSafeZonePhaseChanged(AFortGameMode* GameMode, int 
 
 
 uint64_t NotifyGameMemberAdded_ = 0;
+int16_t WorldPlayerId = 0;
 void AFortGameMode::HandleStartingNewPlayer_(UObject* Context, FFrame& Stack)
 {
     AFortPlayerControllerAthena* NewPlayer;
@@ -1442,6 +1443,8 @@ void AFortGameMode::HandleStartingNewPlayer_(UObject* Context, FFrame& Stack)
         NewPlayer->WorldInventory = UWorld::SpawnActor<AFortInventory>(NewPlayer->WorldInventoryClass, FVector{});
         NewPlayer->WorldInventory->SetOwner(NewPlayer);
     }
+
+    PlayerState->WorldPlayerId = WorldPlayerId;
 
     if (wcsstr(FConfiguration::Playlist, L"/Game/Athena/Playlists/Creative/Playlist_PlaygroundV2.Playlist_PlaygroundV2"))
     { 
@@ -1739,6 +1742,12 @@ void StartNewSafeZonePhase(AFortGameMode* GameMode, int NewSafeZonePhase)
         GameMode->SafeZoneIndicator->OnRep_CurrentPhase();
 
         GameMode->SafeZoneIndicator->OnSafeZonePhaseChanged.Process();
+
+        auto& SafeZoneState = *(uint8_t*)(__int64(&GameMode->SafeZoneIndicator->FutureReplicator) - 0x4);
+        SafeZoneState = 2;
+
+        GameMode->SafeZoneIndicator->OnSafeZoneStateChange(2, false);
+        GameMode->SafeZoneIndicator->SafezoneStateChangedDelegate.Process(GameMode->SafeZoneIndicator, 2);
     }
 }
 

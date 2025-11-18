@@ -145,6 +145,7 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayer(UObject* Context, FFrame& Stack
 	{
 		Item->ItemEntry.Count = itemEntry->Count;
 		PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+		Item->ItemEntry.bIsDirty = true;
 	}
 
 	*Ret = RemoveCount;
@@ -185,6 +186,7 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayerByGuid(UObject* Context, FFrame&
 	{
 		Item->ItemEntry.Count = itemEntry->Count;
 		PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+		Item->ItemEntry.bIsDirty = true;
 	}
 
 	*Ret = RemoveCount;

@@ -106,6 +106,7 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 
 			Item->ItemEntry.Count = itemEntry->Count;
 			Controller->WorldInventory->UpdateEntry(*itemEntry);
+			Item->ItemEntry.bIsDirty = true;
 		}
 		else
 		{
@@ -210,13 +211,14 @@ void AFortDecoTool::ServerSpawnDeco_(UObject* Context, FFrame& Stack)
 		{
 			(*item)->ItemEntry.Count = itemEntry->Count;
 			PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+			(*item)->ItemEntry.bIsDirty = true;
 		}
 
-		if (NewTrap && NewTrap->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex)
+		/*if (NewTrap && NewTrap->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex)
 		{
 			NewTrap->TeamIndex = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
 			NewTrap->Team = NewTrap->TeamIndex;
-		}
+		}*/
 	}
 
 	if (VersionInfo.FortniteVersion < 18)
@@ -229,12 +231,12 @@ void AFortDecoTool::ServerSpawnDeco_(UObject* Context, FFrame& Stack)
 			});
 
 		auto trap = trapPtr ? *trapPtr : nullptr;
-		if (trap) {
+		/**if (trap) {
 			trap->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
 
 			if (trap->HasTeamIndex())
 				trap->TeamIndex = trap->Team;
-		}
+		}*/
 	}
 }
 
@@ -314,13 +316,14 @@ void AFortDecoTool_ContextTrap::ServerSpawnDeco_Implementation(UObject* Context,
 		{
 			(*item)->ItemEntry.Count = itemEntry->Count;
 			PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+			(*item)->ItemEntry.bIsDirty = true;
 		}
 
-		if (NewTrap && NewTrap->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex)
+		/*if (NewTrap && NewTrap->TeamIndex != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex)
 		{
 			NewTrap->TeamIndex = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
 			NewTrap->Team = NewTrap->TeamIndex;
-		}
+		}*/
 	}
 
 	ServerSpawnDeco_ImplementationOG(Context, Stack);
@@ -541,9 +544,9 @@ _out:
 		PayBuildableClassPlacementCost(PlayerController, BuildingClassData);
 	}
 
-	Building->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+	/*Building->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
 	if (Building->HasTeamIndex())
-		Building->TeamIndex = Building->Team;
+		Building->TeamIndex = Building->Team;*/
 	Tool->ServerSpawnDeco(Location, Rotation, Building, InBuildingAttachmentType);
 }
 

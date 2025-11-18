@@ -16,6 +16,12 @@
 
 void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena* PlayerController, FVector& Loc, FRotator& Rot)
 {
+	if (auto Pawn = PlayerController->MyFortPawn)
+	{
+		Loc = Pawn->K2_GetActorLocation();
+		Rot = PlayerController->GetControlRotation();
+		return;
+	}
 	static auto SFName = FName(L"Spectating");
 	if (PlayerController->StateName == SFName)
 	{
@@ -31,7 +37,7 @@ void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena
 			Loc = ViewTarget->K2_GetActorLocation();
 			//if (auto TargetPawn = ViewTarget->Cast<AFortPlayerPawnAthena>())
 			//	Loc.Z += TargetPawn->BaseEyeHeight;
-			Rot = PlayerController->GetControlRotation();
+			Rot = ViewTarget->K2_GetActorRotation();
 		}
 		else
 			return GetPlayerViewPointOG(PlayerController, Loc, Rot);
@@ -174,9 +180,6 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 
 		if (PlayerController->MyFortPawn)
 		{
-			PlayerController->MyFortPawn->BeginSkydiving(true);
-			PlayerController->MyFortPawn->SetHealth(100.f);
-			
 			if (VersionInfo.FortniteVersion >= 25.20)
 			{
 				static auto Effect = FindObject<UClass>(L"/Game/Athena/SafeZone/GE_OutsideSafeZoneDamage.GE_OutsideSafeZoneDamage_C");
@@ -198,10 +201,11 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 
 				if (!Found)
 				{
+					printf("yo\n");
 					auto EffectHandle = FGameplayEffectContextHandle();
-					auto SpecHandle = AbilitySystemComponent->BP_ApplyGameplayEffectToSelf(Effect, 0, EffectHandle);
+					auto SpecHandle = AbilitySystemComponent->BP_ApplyGameplayEffectToSelf(Effect, 0.f, EffectHandle);
 
-					AbilitySystemComponent->SetActiveGameplayEffectLevel(SpecHandle, 0);
+					//AbilitySystemComponent->SetActiveGameplayEffectLevel(SpecHandle, 1);
 
 					AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(SpecHandle,
 						FGameplayTag(FName(L"SetByCaller.StormCampingDamage")), 1);
@@ -213,6 +217,9 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 				PlayerController->MyFortPawn->OnRep_IsInsideSafeZone();
 			}
 
+			PlayerController->MyFortPawn->BeginSkydiving(true);
+			PlayerController->MyFortPawn->SetHealth(100.f);
+			
 			if (FConfiguration::bLateGame)
 			{
 				PlayerController->MyFortPawn->SetShield(100.f);
@@ -561,7 +568,7 @@ void AFortPlayerControllerAthena::ServerBeginEditingBuildingActor(UObject* Conte
 	Stack.StepCompiledIn(&Building);
 	Stack.IncrementCode();
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
-	if (!PlayerController || !PlayerController->MyFortPawn || !Building || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex)
+	if (!PlayerController || !PlayerController->MyFortPawn || !Building/* || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex*/)
 		return;
 
 	AFortPlayerStateAthena* PlayerState = (AFortPlayerStateAthena*)PlayerController->PlayerState;
@@ -601,7 +608,7 @@ void AFortPlayerControllerAthena::ServerEditBuildingActor(UObject* Context, FFra
 	Stack.IncrementCode();
 
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
-	if (!PlayerController || !Building || !NewClass || !Building->IsA<ABuildingSMActor>() || !CanBePlacedByPlayer(NewClass) || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex || Building->bDestroyed)
+	if (!PlayerController || !Building || !NewClass || !Building->IsA<ABuildingSMActor>() || !CanBePlacedByPlayer(NewClass)/* || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex*/ || Building->bDestroyed)
 	{
 		return;
 	}
@@ -658,7 +665,7 @@ void AFortPlayerControllerAthena::ServerEndEditingBuildingActor(UObject* Context
 	Stack.IncrementCode();
 
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
-	if (!PlayerController || !PlayerController->MyFortPawn || !Building || Building->EditingPlayer != PlayerController->PlayerState || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex || Building->bDestroyed)
+	if (!PlayerController || !PlayerController->MyFortPawn || !Building || Building->EditingPlayer != PlayerController->PlayerState/* || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex*/ || Building->bDestroyed)
 		return;
 
 	SetEditingPlayer(Building, nullptr);
@@ -727,6 +734,7 @@ void AFortPlayerControllerAthena::ServerRepairBuildingActor(UObject* Context, FF
 	{
 		Item->ItemEntry.Count = itemEntry->Count;
 		PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+		Item->ItemEntry.bIsDirty = true;
 	}
 
 	Building->RepairBuilding(PlayerController, Price);
@@ -763,10 +771,10 @@ void AFortPlayerControllerAthena::ServerAttemptInventoryDrop(UObject* Context, F
 	//ForwardVector.Normalize();
 
 	FinalLoc = FinalLoc + ForwardVector * 450.f;
-	FinalLoc.Z += 50.f;
+	FinalLoc.Z += 20.f;
 
 	const float RandomAngleVariation = ((float)rand() * 0.00109866634f) - 18.f;
-	const float FinalAngle = RandomAngleVariation * 0.017453292519943295f;
+	const float FinalAngle = (RandomAngleVariation + 360.f / ((float)rand() * 0.00015259254737998596f)) * 0.017453292519943295f;
 
 	FinalLoc.X += cos(FinalAngle) * 100.f;
 	FinalLoc.Y += sin(FinalAngle) * 100.f;
@@ -778,6 +786,7 @@ void AFortPlayerControllerAthena::ServerAttemptInventoryDrop(UObject* Context, F
 	{
 		Item->ItemEntry.Count = itemEntry->Count;
 		PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+		Item->ItemEntry.bIsDirty = true;
 	}
 }
 
@@ -974,7 +983,21 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 			KillerPlayerState->ClientReportTeamKill(KillerPlayerState->TeamKillScore);
 	}
 
-	if (!GameState->IsRespawningAllowed(PlayerState) && (PlayerController->Pawn ? !PlayerController->Pawn->IsDBNO() : true) && PlayerState->HasPlace())
+	static auto IsRespawningAllowedFunc = GameState->GetFunction("IsRespawningAllowed");
+
+	bool bRespawnAllowed = false;
+
+	if (!IsRespawningAllowedFunc)
+	{
+		auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
+
+		// respawn except storm needs to be fixed
+		bRespawnAllowed = Playlist->RespawnType > 0;
+	}
+	else
+		bRespawnAllowed = GameState->Call<bool>(IsRespawningAllowedFunc, PlayerState);
+
+	if (!bRespawnAllowed && (PlayerController->Pawn ? !PlayerController->Pawn->IsDBNO() : true) && PlayerState->HasPlace())
 	{
 		PlayerState->Place = GameState->PlayersLeft;
 		PlayerState->OnRep_Place();
@@ -982,7 +1005,16 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 		AFortWeapon* DamageCauser = nullptr;
 		static auto ProjectileBaseClass = FindClass("FortProjectileBase");
 		if (DeathReport.DamageCauser ? DeathReport.DamageCauser->IsA(ProjectileBaseClass) : false)
-			DamageCauser = (AFortWeapon*)DeathReport.DamageCauser->Owner;
+		{
+			auto Owner = DeathReport.DamageCauser->Owner;
+
+			if (Owner->Cast<AFortWeapon>())
+				DamageCauser = (AFortWeapon*)Owner;
+			else if (auto Controller = Owner->Cast<AFortPlayerControllerAthena>())
+				DamageCauser = (AFortWeapon*)Controller->Pawn->CurrentWeapon;
+			else if (auto Pawn = Owner->Cast<AFortPlayerPawnAthena>())
+				DamageCauser = (AFortWeapon*)Pawn->CurrentWeapon;
+		}
 		else if (auto Weapon = DeathReport.DamageCauser ? DeathReport.DamageCauser->Cast<AFortWeapon>() : nullptr)
 			DamageCauser = Weapon;
 		if (RemoveFromAlivePlayers_)
@@ -1995,6 +2027,7 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 
 				Item->ItemEntry.Count = itemEntry->Count;
 				PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+				Item->ItemEntry.bIsDirty = true;
 			}
 		}
 
