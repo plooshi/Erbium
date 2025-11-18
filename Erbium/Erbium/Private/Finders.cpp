@@ -2588,6 +2588,7 @@ void FindNullsAndRetTrues()
         NullFuncs.push_back(Memcury::Scanner::FindPattern("E8 ? ? ? ? F0 FF 0D ? ? ? ? 0F B6 C3").RelativeOffset(1).Get());
     else if (VersionInfo.EngineVersion == 4.20)
     {
+        NullFuncs.push_back(Memcury::Scanner::FindStringRef(L"Widget Class %s - Running Initialize On Archetype, %s.").ScanFor(std::vector<uint8_t>{ 0x48, 0x89, 0x54 }, false).Get());
         if (VersionInfo.FortniteVersion > 3.2)
         {
             //if (VersionInfo.FortniteVersion == 4.1) 
