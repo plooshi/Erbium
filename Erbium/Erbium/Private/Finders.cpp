@@ -1983,7 +1983,7 @@ uint64_t FindGetPlayerViewPoint()
 
 uint32_t FindOnItemInstanceAddedVft()
 {
-    uint32_t OnItemInstanceAddedVft = 0;
+    static uint32_t OnItemInstanceAddedVft = 0;
     static bool bInitialized = false;
 
     if (!bInitialized)
@@ -2010,8 +2010,7 @@ uint32_t FindOnItemInstanceAddedVft()
             }
         }
 
-        auto ItemDefObj = UFortWorldItem::GetDefaultObj();
-
+        auto ItemDefObj = UFortItem::GetDefaultObj();
 
         for (int i = 0; i < 0x400; i++)
             if (uint64_t(ItemDefObj->Vft[i]) == OnItemInstanceAdded)

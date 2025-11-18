@@ -48,11 +48,8 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
     repEntry.bIsReplicatedCopy = true;
     this->Inventory.ItemInstances.Add(Item);
 
-    auto OnItemInstanceAddedVft = FindOnItemInstanceAddedVft();
     if (OnItemInstanceAddedVft)
-    {
         ((bool(*)(const UFortWorldItem*, const IInterface*)) Item->Vft[OnItemInstanceAddedVft])(Item, Owner->GetInterface(IFortInventoryOwnerInterface::StaticClass()));
-    }
 
     /*if (Item->ItemEntry.ItemDefinition->bForceFocusWhenAdded)
     {
