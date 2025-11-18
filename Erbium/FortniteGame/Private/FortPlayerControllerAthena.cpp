@@ -764,10 +764,10 @@ void AFortPlayerControllerAthena::ServerAttemptInventoryDrop(UObject* Context, F
 	//ForwardVector.Normalize();
 
 	FinalLoc = FinalLoc + ForwardVector * 450.f;
-	FinalLoc.Z += 50.f;
+	FinalLoc.Z += 20.f;
 
 	const float RandomAngleVariation = ((float)rand() * 0.00109866634f) - 18.f;
-	const float FinalAngle = RandomAngleVariation * 0.017453292519943295f;
+	const float FinalAngle = (RandomAngleVariation + 360.f / ((float)rand() * 0.00015259254737998596f)) * 0.017453292519943295f;
 
 	FinalLoc.X += cos(FinalAngle) * 100.f;
 	FinalLoc.Y += sin(FinalAngle) * 100.f;
