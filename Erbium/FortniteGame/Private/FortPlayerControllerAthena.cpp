@@ -976,7 +976,21 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 			KillerPlayerState->ClientReportTeamKill(KillerPlayerState->TeamKillScore);
 	}
 
-	if (!GameState->IsRespawningAllowed(PlayerState) && (PlayerController->Pawn ? !PlayerController->Pawn->IsDBNO() : true) && PlayerState->HasPlace())
+	static auto IsRespawningAllowedFunc = GameState->GetFunction("IsRespawningAllowed");
+
+	bool bRespawnAllowed = false;
+
+	if (!IsRespawningAllowedFunc)
+	{
+		auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
+
+		// respawn except storm needs to be fixed
+		bRespawnAllowed = Playlist->RespawnType > 0;
+	}
+	else
+		bRespawnAllowed = GameState->Call<bool>(IsRespawningAllowedFunc);
+
+	if (!bRespawnAllowed && (PlayerController->Pawn ? !PlayerController->Pawn->IsDBNO() : true) && PlayerState->HasPlace())
 	{
 		PlayerState->Place = GameState->PlayersLeft;
 		PlayerState->OnRep_Place();
