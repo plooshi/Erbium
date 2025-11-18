@@ -1742,6 +1742,12 @@ void StartNewSafeZonePhase(AFortGameMode* GameMode, int NewSafeZonePhase)
         GameMode->SafeZoneIndicator->OnRep_CurrentPhase();
 
         GameMode->SafeZoneIndicator->OnSafeZonePhaseChanged.Process();
+
+        auto& SafeZoneState = *(uint8_t*)(__int64(&GameMode->SafeZoneIndicator->FutureReplicator) - 0x4);
+        SafeZoneState = 2;
+
+        GameMode->SafeZoneIndicator->OnSafeZoneStateChange(2, false);
+        GameMode->SafeZoneIndicator->SafezoneStateChangedDelegate.Process(GameMode->SafeZoneIndicator, 2);
     }
 }
 

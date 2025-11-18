@@ -2267,6 +2267,9 @@ uint64 FindInitializeFlightPath()
         bInitialized = true;
 
         InitializeFlightPath = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 48 81 EC ? ? ? ? 48 8B E9 41 8A D9").Get();
+        
+        if (!InitializeFlightPath)
+            InitializeFlightPath = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 48 81 EC ? ? ? ? 48 8B E9 41 0F B6 D9").Get();
     }
 
     return InitializeFlightPath;
