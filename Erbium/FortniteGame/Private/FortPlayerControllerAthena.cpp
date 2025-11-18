@@ -15,6 +15,12 @@
 
 void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena* PlayerController, FVector& Loc, FRotator& Rot)
 {
+	if (auto Pawn = PlayerController->MyFortPawn)
+	{
+		Loc = Pawn->K2_GetActorLocation();
+		Rot = PlayerController->GetControlRotation();
+		return;
+	}
 	static auto SFName = FName(L"Spectating");
 	if (PlayerController->StateName == SFName)
 	{
@@ -30,7 +36,7 @@ void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena
 			Loc = ViewTarget->K2_GetActorLocation();
 			//if (auto TargetPawn = ViewTarget->Cast<AFortPlayerPawnAthena>())
 			//	Loc.Z += TargetPawn->BaseEyeHeight;
-			Rot = PlayerController->GetControlRotation();
+			Rot = ViewTarget->K2_GetActorRotation();
 		}
 		else
 			return GetPlayerViewPointOG(PlayerController, Loc, Rot);
@@ -988,7 +994,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 		bRespawnAllowed = Playlist->RespawnType > 0;
 	}
 	else
-		bRespawnAllowed = GameState->Call<bool>(IsRespawningAllowedFunc);
+		bRespawnAllowed = GameState->Call<bool>(IsRespawningAllowedFunc, PlayerState);
 
 	if (!bRespawnAllowed && (PlayerController->Pawn ? !PlayerController->Pawn->IsDBNO() : true) && PlayerState->HasPlace())
 	{
