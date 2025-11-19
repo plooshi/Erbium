@@ -42,13 +42,13 @@ public:
 
 void UAbilitySystemComponent::GiveAbilitySet(const UFortAbilitySet* Set)
 {
-    /*TScriptInterface<class IAbilitySystemInterface> ScriptInterface;
+    TScriptInterface<class IAbilitySystemInterface> ScriptInterface;
     ScriptInterface.ObjectPointer = this->GetOwner();
     ScriptInterface.InterfacePointer = ScriptInterface.ObjectPointer->GetInterface(IAbilitySystemInterface::StaticClass());
 
     if (ScriptInterface.ObjectPointer && ScriptInterface.InterfacePointer)
         UFortKismetLibrary::EquipFortAbilitySet(ScriptInterface, Set, nullptr);
-    else */if (Set)
+    else if (Set)
     {
         //printf("GiveAbilitySet[%s]\n", Set->Name.ToString().c_str());
         for (auto& GameplayAbility : Set->GameplayAbilities)
@@ -77,7 +77,7 @@ void UAbilitySystemComponent::InternalServerTryActivateAbility(UAbilitySystemCom
     if (!Spec)
         return AbilitySystemComponent->ClientActivateAbilityFailed(Handle, PredictionKey->Current);
 
-    Spec->InputPressed |= 1; // it's a bitfield, so we cant just set it to true
+    Spec->InputPressed = true;
 
     UFortGameplayAbility* InstancedAbility = nullptr;
     auto InternalTryActivateAbility = (bool (*)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle, _Pad_0x10, UFortGameplayAbility**, void*, void*)) InternalTryActivateAbility_;
@@ -86,7 +86,7 @@ void UAbilitySystemComponent::InternalServerTryActivateAbility(UAbilitySystemCom
     if (!(FPredictionKey::Size() == 0x18 ? InternalTryActivateAbilityNew(AbilitySystemComponent, Handle, *(_Pad_0x18*)PredictionKey, &InstancedAbility, nullptr, TriggerEventData) : InternalTryActivateAbility(AbilitySystemComponent, Handle, *(_Pad_0x10*)PredictionKey, &InstancedAbility, nullptr, TriggerEventData)))
     {
         AbilitySystemComponent->ClientActivateAbilityFailed(Handle, PredictionKey->Current);
-        Spec->InputPressed &= ~1;
+        Spec->InputPressed = false;
         AbilitySystemComponent->ActivatableAbilities.MarkItemDirty(*Spec);
     }
 }

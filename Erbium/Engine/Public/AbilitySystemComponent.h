@@ -41,7 +41,7 @@ public:
     DEFINE_STRUCT_PROP(Level, int32);
     DEFINE_STRUCT_PROP(InputID, int32);
     DEFINE_STRUCT_NEWOBJ_PROP(SourceObject, UObject);
-    DEFINE_STRUCT_PROP(InputPressed, uint8);
+    DEFINE_STRUCT_BITFIELD_PROP(InputPressed);
 };
 
 struct FGameplayAbilitySpecContainer : public FFastArraySerializer

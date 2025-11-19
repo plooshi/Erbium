@@ -314,15 +314,15 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryItem_(UObject* Context, 
 
 			Weapon->ProcessEvent(OnRep_DefaultMetadata, nullptr);
 		}
+	}
 
-		if (ItemDefinition->IsA(UFortDecoItemDefinition::StaticClass()))
-		{
-			auto DecoTool = (AFortDecoTool*)Weapon;
-			DecoTool->ItemDefinition = ItemDefinition;
+	if (ItemDefinition->IsA(UFortDecoItemDefinition::StaticClass()))
+	{
+		auto DecoTool = (AFortDecoTool*)Weapon;
+		DecoTool->ItemDefinition = ItemDefinition;
 
-			if (auto ContextTrapTool = Weapon->Cast<AFortDecoTool_ContextTrap>())
-				ContextTrapTool->ContextTrapItemDefinition = (UFortContextTrapItemDefinition*)ItemDefinition;
-		}
+		if (auto ContextTrapTool = Weapon->Cast<AFortDecoTool_ContextTrap>())
+			ContextTrapTool->ContextTrapItemDefinition = (UFortContextTrapItemDefinition*)ItemDefinition;
 	}
 }
 
