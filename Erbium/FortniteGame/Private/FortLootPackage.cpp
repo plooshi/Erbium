@@ -340,7 +340,7 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 }
 
 
-bool UFortLootPackage::SpawnLootHook(ABuildingContainer* Container)
+bool UFortLootPackage::SpawnLootHook(ABuildingContainer* Container, TArray<AFortPickupAthena*>* OutSpawnedPickups)
 {
 	if (Container->bAlreadySearched)
 		return false;
@@ -393,7 +393,11 @@ bool UFortLootPackage::SpawnLootHook(ABuildingContainer* Container)
 
 	for (auto& LootDrop : UFortLootPackage::ChooseLootForContainer(RealTierGroup))
 	{
-		AFortInventory::SpawnPickup(Container, *LootDrop);
+		auto pickup = AFortInventory::SpawnPickup(Container, *LootDrop);
+
+		if (OutSpawnedPickups && pickup)
+			OutSpawnedPickups->Add(pickup);
+
 		free(LootDrop);
 	}
 
