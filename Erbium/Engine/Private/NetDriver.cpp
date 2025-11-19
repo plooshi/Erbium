@@ -509,12 +509,12 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 		auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 		auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
 		static auto bSkipAircraft = GameState->CurrentPlaylistInfo.BasePlaylist ? GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft : false;
-        if (!bSkipAircraft && GameState->HasWarmupCountdownEndTime() && Driver->ClientConnections.Num() > 0 && GameMode->bWorldIsReady && GameState->WarmupCountdownEndTime <= Time)
+		if (!bSkipAircraft && GameMode->MatchState == FName(L"InProgress") && GameState->WarmupCountdownEndTime <= Time)
         {
             UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
         }
 	}
-	else if (GUI::gsStatus == 2 && FConfiguration::bAutoRestart)
+	else if (GUI::gsStatus == 2 && (FConfiguration::bAutoRestart || (FConfiguration::WebhookURL && *FConfiguration::WebhookURL)))
 	{
 		auto WorldNetDriver = UWorld::GetWorld()->NetDriver;
 		if (Driver == WorldNetDriver && Driver->ClientConnections.Num() == 0)
@@ -556,10 +556,9 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
     return TickFlushOG(Driver, DeltaSeconds);
 }
 
-
+uint64_t ServerReplicateActors_;
 void UNetDriver::TickFlush__RepGraph(UNetDriver* Driver, float DeltaSeconds)
 {
-	static auto ServerReplicateActors_ = FindServerReplicateActors();
 	if (Driver->ReplicationDriver)
 	{
 		// this is our main netdriver
@@ -573,12 +572,12 @@ void UNetDriver::TickFlush__RepGraph(UNetDriver* Driver, float DeltaSeconds)
 			auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 			auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
 			static auto bSkipAircraft = GameState->CurrentPlaylistInfo.BasePlaylist ? GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft : false;
-			if (!bSkipAircraft && Driver->ClientConnections.Num() > 0 && GameMode->bWorldIsReady && GameState->WarmupCountdownEndTime <= Time)
+			if (!bSkipAircraft && GameMode->MatchState == FName(L"InProgress") && GameState->WarmupCountdownEndTime <= Time)
 			{
 				UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
 			}
 		}
-		else if (GUI::gsStatus == 2)
+		else if (GUI::gsStatus == 2 && (FConfiguration::bAutoRestart || (FConfiguration::WebhookURL && *FConfiguration::WebhookURL)))
 		{
 			auto WorldNetDriver = UWorld::GetWorld()->NetDriver;
 			if (Driver == WorldNetDriver && Driver->ClientConnections.Num() == 0)
@@ -682,7 +681,7 @@ void UNetDriver::TickFlush__Iris(UNetDriver* Driver, float DeltaSeconds)
 		}
 	}
 
-	if (GUI::gsStatus == 2 && FConfiguration::bAutoRestart)
+	if (GUI::gsStatus == 2 && (FConfiguration::bAutoRestart || (FConfiguration::WebhookURL && *FConfiguration::WebhookURL)))
 	{
 		auto WorldNetDriver = UWorld::GetWorld()->NetDriver;
 		if (Driver == WorldNetDriver && Driver->ClientConnections.Num() == 0)
@@ -903,6 +902,8 @@ void UNetDriver::PostLoadHook()
 	}
 	else
 	{
+		ServerReplicateActors_ = FindServerReplicateActors();
+
 		Utils::Hook(FindTickFlush(), TickFlush__RepGraph, TickFlushOG);
 	}
 

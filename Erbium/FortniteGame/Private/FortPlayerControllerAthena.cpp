@@ -15,13 +15,16 @@
 
 void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena* PlayerController, FVector& Loc, FRotator& Rot)
 {
+	// seems like this didnt exist on older builds
 	if (auto Pawn = PlayerController->MyFortPawn)
 	{
 		Loc = Pawn->K2_GetActorLocation();
 		Rot = PlayerController->GetControlRotation();
 		return;
 	}
-	static auto SFName = FName(L"Spectating");
+
+	return GetPlayerViewPointOG(PlayerController, Loc, Rot);
+	/*static auto SFName = FName(L"Spectating");
 	if (PlayerController->StateName == SFName)
 	{
 		Loc = PlayerController->LastSpectatorSyncLocation;
@@ -40,7 +43,7 @@ void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena
 		}
 		else
 			return GetPlayerViewPointOG(PlayerController, Loc, Rot);
-	}
+	}*/
 }
 
 void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, FFrame& Stack)
@@ -280,18 +283,6 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryItem_(UObject* Context, 
 
 	if (ItemDefinition->IsA(UFortGadgetItemDefinition::StaticClass()))
 		ItemDefinition = ItemDefinition->GetWeaponItemDefinition();
-	else if (ItemDefinition->IsA(UFortDecoItemDefinition::StaticClass()))
-	{
-		PlayerController->MyFortPawn->PickUpActor(nullptr, ItemDefinition);
-		((AFortWeapon*)PlayerController->MyFortPawn->CurrentWeapon)->ItemEntryGuid = ItemGuid;
-
-		static auto ContextTrapClass = FindClass("FortDecoTool_ContextTrap");
-
-		if (PlayerController->MyFortPawn->CurrentWeapon->IsA(ContextTrapClass))
-			((AFortWeapon*)PlayerController->MyFortPawn->CurrentWeapon)->ContextTrapItemDefinition = ItemDefinition;
-
-		return;
-	}
 
 	auto Weapon = PlayerController->MyFortPawn->EquipWeaponDefinition(ItemDefinition, ItemGuid, entry->HasTrackerGuid() ? entry->TrackerGuid : FGuid(), false);
 	if (VersionInfo.FortniteVersion <= 2.5)
@@ -322,6 +313,15 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryItem_(UObject* Context, 
 				GetFromOffset<const UObject*>(Weapon, DefaultMetadataOffset) = FloorMetadata;
 
 			Weapon->ProcessEvent(OnRep_DefaultMetadata, nullptr);
+		}
+
+		if (ItemDefinition->IsA(UFortDecoItemDefinition::StaticClass()))
+		{
+			auto DecoTool = (AFortDecoTool*)Weapon;
+			DecoTool->ItemDefinition = ItemDefinition;
+
+			if (auto ContextTrapTool = Weapon->Cast<AFortDecoTool_ContextTrap>())
+				ContextTrapTool->ContextTrapItemDefinition = (UFortContextTrapItemDefinition*)ItemDefinition;
 		}
 	}
 }
@@ -495,17 +495,17 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	static auto K2_SpawnBuildingActor = ABuildingSMActor::GetDefaultObj()->GetFunction("K2_SpawnBuildingActor");
 
 	ABuildingSMActor* Building = nullptr;
-	/*if (K2_SpawnBuildingActor)
+	if (K2_SpawnBuildingActor)
 	{
 		FTransform SpawnTransform(BuildLoc, BuildRot);
 		Building = ABuildingSMActor::K2_SpawnBuildingActor(PlayerController, BuildingClass, SpawnTransform, PlayerController, nullptr, false, false);
 	}
-	else*/
+	else
 		Building = UWorld::SpawnActor<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, PlayerController);
 
-	/*static auto UpgradeLevelOffset = FBuildingClassData::StaticStruct()->GetOffset("UpgradeLevel");
+	 static auto UpgradeLevelOffset = FBuildingClassData::StaticStruct()->GetOffset("UpgradeLevel");
 	Building->CurrentBuildingLevel = VersionInfo.EngineVersion >= 5.3 ? *(uint8*)(__int64(&BuildingClassData) + UpgradeLevelOffset) : *(uint32*)(__int64(&BuildingClassData) + UpgradeLevelOffset);
-	Building->OnRep_CurrentBuildingLevel();*/
+	Building->OnRep_CurrentBuildingLevel();
 
 	Building->SetMirrored(bMirrored);
 
@@ -542,6 +542,7 @@ void SetEditingPlayer(ABuildingSMActor* _this, AFortPlayerStateAthena* NewEditin
 				if (auto PlayerController = Handle->Cast<AFortPlayerControllerAthena>())
 				{
 					_this->EditingPlayer = NewEditingPlayer;
+					_this->OnRep_EditingPlayer();
 					return;
 				}
 		}
@@ -550,13 +551,17 @@ void SetEditingPlayer(ABuildingSMActor* _this, AFortPlayerStateAthena* NewEditin
 			if (!NewEditingPlayer)
 			{
 				_this->EditingPlayer = NewEditingPlayer;
+				_this->OnRep_EditingPlayer();
 				return;
 			}
 
 			auto Handle = NewEditingPlayer->Owner;
 
 			if (auto PlayerController = Handle->Cast<AFortPlayerControllerAthena>())
+			{
 				_this->EditingPlayer = NewEditingPlayer;
+				_this->OnRep_EditingPlayer();
+			}
 		}
 	}
 }
@@ -576,12 +581,15 @@ void AFortPlayerControllerAthena::ServerBeginEditingBuildingActor(UObject* Conte
 	
 	SetEditingPlayer(Building, PlayerState);
 	
-	auto EditToolEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
-		{
-			return entry.ItemDefinition->Class == UFortEditToolItemDefinition::StaticClass();
-		}, FFortItemEntry::Size());
+	if (!PlayerController->MyFortPawn->CurrentWeapon->IsA<AFortWeap_EditingTool>())
+	{
+		auto EditToolEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+			{
+				return entry.ItemDefinition->Class == UFortEditToolItemDefinition::StaticClass();
+			}, FFortItemEntry::Size());
 
-	PlayerController->MyFortPawn->EquipWeaponDefinition((UFortWeaponItemDefinition*)EditToolEntry->ItemDefinition, EditToolEntry->ItemGuid, EditToolEntry->HasTrackerGuid() ? EditToolEntry->TrackerGuid : FGuid(), false);
+		PlayerController->MyFortPawn->EquipWeaponDefinition((UFortWeaponItemDefinition*)EditToolEntry->ItemDefinition, EditToolEntry->ItemGuid, EditToolEntry->HasTrackerGuid() ? EditToolEntry->TrackerGuid : FGuid(), false);
+	}
 
 	if (auto EditTool = PlayerController->MyFortPawn->CurrentWeapon->Cast<AFortWeap_EditingTool>())
 	{
@@ -991,7 +999,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 		auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
 
 		// respawn except storm needs to be fixed
-		bRespawnAllowed = Playlist->RespawnType > 0;
+		bRespawnAllowed = Playlist ? Playlist->RespawnType > 0 : false;
 	}
 	else
 		bRespawnAllowed = GameState->Call<bool>(IsRespawningAllowedFunc, PlayerState);

@@ -119,6 +119,7 @@ public:
     DEFINE_FUNC(OnRep_CurrentBuildingLevel, void);
     DEFINE_STATIC_FUNC(K2_SpawnBuildingActor, ABuildingSMActor*);
     DEFINE_FUNC(AttachBuildingActorToMe, void);
+    DEFINE_FUNC(OnRep_EditingPlayer, void);
 
     DefHookOg(void, OnDamageServer, ABuildingSMActor*, float, FGameplayTagContainer, FVector, __int64, AActor*, AActor*, __int64);
     DefUHookOg(ServerSpawnDeco_Implementation);

@@ -76,14 +76,14 @@ void SetupPlaylist(AFortGameMode* GameMode, AFortGameStateAthena* GameState)
             if (Playlist->HasbForceRespawnLocationInsideOfVolume())
                 Playlist->bForceRespawnLocationInsideOfVolume = true;
         }
-        if (Playlist->HasGarbageCollectionFrequency())
+        /*if (Playlist->HasGarbageCollectionFrequency())
             Playlist->GarbageCollectionFrequency = 9999999999999999.f; // easier than hooking collectgarbage
         if (GameMode->HasPlaylistHotfixOriginalGCFrequency())
             GameMode->PlaylistHotfixOriginalGCFrequency = 9999999999999999.f;
         if (GameMode->HasbDisableGCOnServerDuringMatch())
             GameMode->bDisableGCOnServerDuringMatch = true;
         if (GameMode->HasbPlaylistHotfixChangedGCDisabling())
-            GameMode->bPlaylistHotfixChangedGCDisabling = true;
+            GameMode->bPlaylistHotfixChangedGCDisabling = true;*/
         if (GameState->HasCurrentPlaylistInfo())
         {
             //if (VersionInfo.EngineVersion >= 4.27)
@@ -317,9 +317,6 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
     if (GameMode->HasWarmupRequiredPlayerCount() ? GameMode->WarmupRequiredPlayerCount != 1 : !setup)
     {
         setup = true;
-        // credit mariki
-        if (UWorld::GetWorld()->HasServerStreamingLevelsVisibility())
-            UWorld::GetWorld()->ServerStreamingLevelsVisibility = UWorld::SpawnActor<AServerStreamingLevelsVisibility>(FVector{}, {});
 
         // if u listen before setting playlist it behaves the same as using proper listening iirc
         auto World = UWorld::GetWorld();
@@ -419,17 +416,21 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
         auto StartsNum = Starts.Num();
         Starts.Free();
 
-        if (StartsNum == 0)
+        if (StartsNum == 0 || !Misc::bHookedAll)
         {
             *Ret = false;
             return;
         }
+
         static auto AllMapInfos = Utils::GetAll<AFortAthenaMapInfo>();
         if (AllMapInfos.Num() > 0 && !GameState->MapInfo)
         {
             *Ret = false;
             return;
         }
+        AllMapInfos.Free();
+
+        
 
         if (VersionInfo.FortniteVersion >= 3.5 && VersionInfo.FortniteVersion <= 4.0)
             SetupPlaylist(GameMode, GameState);
@@ -880,9 +881,9 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                 { return acc + p.second; });
         }
 
-        GameMode->DefaultPawnClass = FindObject<UClass>(L"/Game/Athena/PlayerPawn_Athena.PlayerPawn_Athena_C");
+        //GameMode->DefaultPawnClass = FindObject<UClass>(L"/Game/Athena/PlayerPawn_Athena.PlayerPawn_Athena_C");
 
-        if (VersionInfo.EngineVersion == 4.16)
+        /*if (VersionInfo.EngineVersion == 4.16)
         {
             auto sRef = Memcury::Scanner::FindStringRef(L"CollectGarbageInternal() is flushing async loading").Get();
             uint64_t CollectGarbage = 0;
@@ -912,7 +913,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
 
                 Utils::Patch<uint8_t>(CollectGarbage, 0xC3);
             }
-        }
+        }*/
 
         if (GameState->HasAllPlayerBuildableClassesIndexLookup())
             for (auto& [Class, Handle] : GameState->AllPlayerBuildableClassesIndexLookup)
@@ -1425,8 +1426,8 @@ void AFortGameMode::HandleStartingNewPlayer_(UObject* Context, FFrame& Stack)
         Member->SquadId = PlayerState->SquadId;
         Member->MemberUniqueId = PlayerState->HasUniqueID() ? PlayerState->UniqueID : PlayerState->UniqueId;
 
-        GameState->GameMemberInfoArray.Members.Add(*Member, FGameMemberInfo::Size());
-        GameState->GameMemberInfoArray.MarkItemDirty(*Member);
+        auto& NewMember = GameState->GameMemberInfoArray.Members.Add(*Member, FGameMemberInfo::Size());
+        GameState->GameMemberInfoArray.MarkItemDirty(NewMember);
         
         auto NotifyGameMemberAdded = (void(*)(AFortGameStateAthena*, uint8_t, uint8_t, FUniqueNetIdRepl*)) NotifyGameMemberAdded_;
         if (NotifyGameMemberAdded)
@@ -1440,8 +1441,8 @@ void AFortGameMode::HandleStartingNewPlayer_(UObject* Context, FFrame& Stack)
 
     if (!NewPlayer->WorldInventory)
     {
-        NewPlayer->WorldInventory = UWorld::SpawnActor<AFortInventory>(NewPlayer->WorldInventoryClass, FVector{});
-        NewPlayer->WorldInventory->SetOwner(NewPlayer);
+        NewPlayer->WorldInventory = UWorld::SpawnActor<AFortInventory>(NewPlayer->WorldInventoryClass, FVector{}, FRotator{}, NewPlayer);
+        NewPlayer->WorldInventory->InventoryType = 0;
     }
 
     PlayerState->WorldPlayerId = WorldPlayerId;

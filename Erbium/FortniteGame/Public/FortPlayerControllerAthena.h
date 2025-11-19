@@ -192,6 +192,7 @@ public:
     DEFINE_FUNC(ServerReturnToMainMenu, void);
     DEFINE_FUNC(OnRep_CreativePlotLinkedVolume, void);
 
+
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);
     DefHookOg(void, ServerAttemptAircraftJump_, UObject*, FFrame&);

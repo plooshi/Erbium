@@ -2,6 +2,7 @@
 #include "../Public/BuildingSMActor.h"
 #include "../../Engine/Public/DataTableFunctionLibrary.h"
 #include "../Public/FortGameStateAthena.h"
+#include "../Public/FortGameMode.h"
 #include "../Public/FortWeapon.h"
 #include "../Public/FortKismetLibrary.h"
 #include "../Public/FortPlayerControllerAthena.h"
@@ -11,6 +12,7 @@
 void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGameplayTagContainer DamageTags, FVector Momentum, __int64 HitInfo, AActor* InstigatedBy, AActor* DamageCauser, __int64 EffectContext)
 {
 	auto GameState = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState);
+	auto GameMode = ((AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode);
 
 	if (!InstigatedBy || !Actor->IsA<ABuildingSMActor>() || Actor->bPlayerPlaced || Actor->GetHealth() == 1 || (Actor->HasbAllowResourceDrop() && !Actor->bAllowResourceDrop))
 		return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
@@ -25,7 +27,7 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 	static auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
 	static auto GameData = Playlist ? Playlist->ResourceRates.Get() : nullptr;
 	if (!GameData)
-		GameData = FindObject<UCurveTable>(L"/Game/Athena/Balance/DataTables/AthenaResourceRates.AthenaResourceRates");
+		GameData = FindObject<UCurveTable>(GameMode->HasWarmupRequiredPlayerCount() ? L"/Game/Athena/Balance/DataTables/AthenaResourceRates.AthenaResourceRates" : L"/Game/Balance/DataTables/ResourceRates.ResourceRates");
 
 	int ResCount = 0;
 	if (Actor->HasBuildingResourceAmountOverride())
@@ -34,7 +36,7 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 
 		if (BuildingResourceAmountOverride.RowName.ComparisonIndex > 0)
 		{
-			float Out;
+			float Out = 0.f;
 			UDataTableFunctionLibrary::EvaluateCurveTableRow(GameData, BuildingResourceAmountOverride.RowName, 0.f, nullptr, &Out, FString());
 
 			float RC = Out / (Actor->GetMaxHealth() / Damage);
@@ -49,7 +51,7 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 
 		if (BuildingResourceAmountOverride.RowName.ComparisonIndex > 0)
 		{
-			float Out;
+			float Out = 0.f;
 			UDataTableFunctionLibrary::EvaluateCurveTableRow(GameData, BuildingResourceAmountOverride.RowName, 0.f, nullptr, &Out, FString());
 
 			float RC = Out / (Actor->GetMaxHealth() / Damage);

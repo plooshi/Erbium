@@ -53,10 +53,10 @@ public:
 
     inline float Evaluate(float i = 0.f)
     {
-        if (!Curve.CurveTable)
+        if (!Curve.CurveTable || !Curve.RowName.IsValid())
             return Value;
 
-        float Out;
+        float Out = 0.f;
         UDataTableFunctionLibrary::EvaluateCurveTableRow(Curve.CurveTable, Curve.RowName, i, nullptr, &Out, FString());
         return Out;
     }

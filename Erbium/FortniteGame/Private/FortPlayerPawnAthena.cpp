@@ -340,8 +340,6 @@ void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack
 		GetVehicleFunc = Pawn->GetFunction("BP_GetVehicle");
 	auto Vehicle = Pawn->Call<AFortAthenaVehicle*>(GetVehicleFunc);
 
-	callOG(Pawn, Stack.GetCurrentNativeFunction(), ServerOnExitVehicle, ExitForceBehavior, bDestroyVehicleWhenForced);
-
 	auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
 
 
@@ -392,6 +390,7 @@ void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack
 		}
 		printf("3");
 	}
+	callOG(Pawn, Stack.GetCurrentNativeFunction(), ServerOnExitVehicle, ExitForceBehavior, bDestroyVehicleWhenForced);
 }
 
 void AFortPlayerPawnAthena::PostLoadHook()

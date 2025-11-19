@@ -74,8 +74,8 @@ void AFortPhysicsPawn::ServerMove(UObject* Context, FFrame& Stack)
     auto Pawn = (AFortPhysicsPawn*)Context;
 
 
-    if (VersionInfo.EngineVersion < 4.24)
-    {
+   if (VersionInfo.EngineVersion < 4.24)
+   {
         Rotation.X -= 2.5f;
         Rotation.Y /= 0.3f;
         Rotation.Z -= -2.0f;
@@ -97,7 +97,7 @@ void AFortPhysicsPawn::ServerMove(UObject* Context, FFrame& Stack)
         
         RootComponent->K2_SetWorldLocationAndRotation(Translation, RealRotation, false, nullptr, true);
         RootComponent->SetPhysicsLinearVelocity(LinearVelocity, 0, FName(0));
-        RootComponent->SetPhysicsAngularVelocityInDegrees(AngularVelocity, 0, FName(0));
+        RootComponent->SetPhysicsAngularVelocityInRadians(AngularVelocity, 0, FName(0));
     }
 }
 
