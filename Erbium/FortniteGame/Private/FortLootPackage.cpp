@@ -295,9 +295,45 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 			printf("Min: %d, Max: %d, Weight: %d\n", LootTierData->LootPackageCategoryMinArray[CurrentCategory], LootTierData->LootPackageCategoryMaxArray[CurrentCategory], LootTierData->LootPackageCategoryWeightArray[CurrentCategory]);
 		for (int j = 0; j < LootTierData->LootPackageCategoryMinArray[CurrentCategory]; j++)
 			SetupLDSForPackage(LootDrops, LootTierData->LootPackage, CurrentCategory, TierGroup, WorldLevel);
-
-		CurrentCategory++;
 		SpawnedItems += LootTierData->LootPackageCategoryMinArray[CurrentCategory];
+		CurrentCategory++;
+	}
+
+	while (SpawnedItems < DropCount)
+	{
+		float TotalWeight = 0.0f;
+		int SelectedCategory = -1;
+
+		for (int i = 0; i < LootTierData->LootPackageCategoryWeightArray.Num(); i++)
+		{
+			if (LootTierData->LootPackageCategoryWeightArray[i] > 0)
+				TotalWeight += LootTierData->LootPackageCategoryWeightArray[i];
+		}
+
+		if (TotalWeight <= 0.0f)
+			break;
+
+		float RandomValue = ((float)rand() / 32767.0f) * TotalWeight;
+		float CurrentWeight = 0.0f;
+
+		for (int i = 0; i < LootTierData->LootPackageCategoryWeightArray.Num(); i++)
+		{
+			if (LootTierData->LootPackageCategoryWeightArray[i] > 0)
+			{
+				CurrentWeight += LootTierData->LootPackageCategoryWeightArray[i];
+				if (RandomValue <= CurrentWeight)
+				{
+					SelectedCategory = i;
+					break;
+				}
+			}
+		}
+
+		if (SelectedCategory == -1)
+			break;
+
+		SetupLDSForPackage(LootDrops, LootTierData->LootPackage, SelectedCategory, TierGroup, WorldLevel);
+		SpawnedItems++;
 	}
 
 	return LootDrops;
