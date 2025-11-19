@@ -273,7 +273,7 @@
     }*/                                                                                                                                                              \
                                                                                                                                                                      \
     template <typename... Args>                                                                                                                                      \
-    static __VA_ARGS__ Name(Args... Params)                                                                                                                          \
+    static __VA_ARGS__ Name(Args&&... Params)                                                                                                                        \
     {                                                                                                                                                                \
         auto DefaultObj = GetDefaultObj();                                                                                                                           \
         if (!Name##__Initialized)                                                                                                                                    \

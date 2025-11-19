@@ -376,7 +376,7 @@ namespace SDK
 
 		for (const UStruct* Clss = this; Clss; Clss = (const UStruct*)Clss->GetSuper())
 		{
-			if (VersionInfo.EngineVersion >= 4.25)
+			if (VersionInfo.FortniteVersion >= 12.10)
 			{
 				for (const UField* Prop = Clss->GetChildProperties(); Prop; Prop = Prop->FField_GetNext())
 				{
@@ -552,7 +552,7 @@ namespace SDK
 		{
 			Params p{};
 
-			if (VersionInfo.EngineVersion >= 4.25)
+			if (VersionInfo.FortniteVersion >= 12.10)
 				for (const UField* _Pr = GetChildProperties(); _Pr; _Pr = _Pr->FField_GetNext())
 					p.NameOffsetMap.push_back({ GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags), GetFromOffset<uint32>(_Pr, Offsets::ElementSize) });
 			else
@@ -568,7 +568,7 @@ namespace SDK
 		{
 			ParamsNamed p{};
 
-			if (VersionInfo.EngineVersion >= 4.25)
+			if (VersionInfo.FortniteVersion >= 12.10)
 				for (const UField* _Pr = GetChildProperties(); _Pr; _Pr = _Pr->FField_GetNext())
 					p.NameOffsetMap.push_back({ _Pr->FField_GetName().ToSDKString(), GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags), GetFromOffset<uint32>(_Pr, Offsets::ElementSize) });
 			else

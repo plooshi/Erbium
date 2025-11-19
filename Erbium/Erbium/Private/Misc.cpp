@@ -453,4 +453,13 @@ void Misc::Hook()
 			}
 		}
 	}
+	
+	if (VersionInfo.EngineVersion >= 5.1)
+	{
+		auto pattern = Memcury::Scanner::FindPattern("48 8B 01 FF 90 ? ? ? ? 48 8B 8B ? ? ? ? 48 85 C9 74 ? 48 8B 01 FF 90 ? ? ? ? 48 8D 8B");
+
+		auto patchPoint = pattern.ScanFor({ 0x48, 0x89, 0x5C }, false).ScanFor({ 0x83, 0xF8, 0x02 }).Get();
+
+		Utils::Patch<uint8_t>(patchPoint + 2, 0x1);
+	}
 }

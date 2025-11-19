@@ -77,11 +77,9 @@ public:
     int32 GetMaxStackSize() const
     {
         static auto Prop = this->GetProperty("MaxStackSize");
-        static auto ElementSizeOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x3c : (VersionInfo.EngineVersion >= 5.2 ? 0x2c : 0x34);
-        static auto OffsetOff = VersionInfo.EngineVersion >= 4.25 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);
 
-        static auto MaxStackSizeSize = GetFromOffset<int32>(Prop, ElementSizeOff); // tuff variable name
-        static auto MaxStackSizeOffset = GetFromOffset<int32>(Prop, OffsetOff);
+        static auto MaxStackSizeSize = GetFromOffset<int32>(Prop, Offsets::ElementSize); // tuff variable name
+        static auto MaxStackSizeOffset = GetFromOffset<int32>(Prop, Offsets::Offset_Internal);
 
         if (MaxStackSizeSize == 4) // sizeof(int32)
             return GetFromOffset<int32>(this, MaxStackSizeOffset);
