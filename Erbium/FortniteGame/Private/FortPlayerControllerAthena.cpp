@@ -24,27 +24,29 @@ void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena
 		return;
 	}
 
-	return GetPlayerViewPointOG(PlayerController, Loc, Rot);
-	/*static auto SFName = FName(L"Spectating");
-	if (PlayerController->StateName == SFName)
-	{
-		Loc = PlayerController->LastSpectatorSyncLocation;
-		Rot = PlayerController->LastSpectatorSyncRotation;
-	}
+	if (GetPlayerViewPointOG)
+		GetPlayerViewPointOG(PlayerController, Loc, Rot);
 	else
 	{
-		auto ViewTarget = PlayerController->GetViewTarget();
-
-		if (ViewTarget)
+		static auto SFName = FName(L"Spectating");
+		if (PlayerController->StateName == SFName)
 		{
-			Loc = ViewTarget->K2_GetActorLocation();
-			//if (auto TargetPawn = ViewTarget->Cast<AFortPlayerPawnAthena>())
-			//	Loc.Z += TargetPawn->BaseEyeHeight;
-			Rot = ViewTarget->K2_GetActorRotation();
+			Loc = PlayerController->LastSpectatorSyncLocation;
+			Rot = PlayerController->LastSpectatorSyncRotation;
 		}
 		else
-			return GetPlayerViewPointOG(PlayerController, Loc, Rot);
-	}*/
+		{
+			auto ViewTarget = PlayerController->GetViewTarget();
+
+			if (ViewTarget)
+			{
+				Loc = ViewTarget->K2_GetActorLocation();
+				//if (auto TargetPawn = ViewTarget->Cast<AFortPlayerPawnAthena>())
+				//	Loc.Z += TargetPawn->BaseEyeHeight;
+				Rot = ViewTarget->K2_GetActorRotation();
+			}
+		}
+	}
 }
 
 void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, FFrame& Stack)
@@ -90,6 +92,9 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 			PlayerController->WorldInventory->Remove(Guid);
 	}
 
+	for (auto& AbilitySet : AFortGameMode::AbilitySets)
+		PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
+
 	if (Num == 0)
 	{
 		static auto SmartItemDefClass = FindClass("FortSmartBuildingItemDefinition");
@@ -123,9 +128,6 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 			if (StartingItem.Count && (!SmartItemDefClass || !StartingItem.Item->IsA(SmartItemDefClass)))
 				PlayerController->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
 		}
-
-		for (auto& AbilitySet : AFortGameMode::AbilitySets)
-			PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
 	}
 	else if (FConfiguration::bLateGame && (!FConfiguration::bKeepInventory || FConfiguration::bLateGame))
 	{
@@ -315,15 +317,15 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryItem_(UObject* Context, 
 
 			Weapon->ProcessEvent(OnRep_DefaultMetadata, nullptr);
 		}
+	}
 
-		if (ItemDefinition->IsA(UFortDecoItemDefinition::StaticClass()))
-		{
-			auto DecoTool = (AFortDecoTool*)Weapon;
-			DecoTool->ItemDefinition = ItemDefinition;
+	if (ItemDefinition->IsA(UFortDecoItemDefinition::StaticClass()))
+	{
+		auto DecoTool = (AFortDecoTool*)Weapon;
+		DecoTool->ItemDefinition = ItemDefinition;
 
-			if (auto ContextTrapTool = Weapon->Cast<AFortDecoTool_ContextTrap>())
-				ContextTrapTool->ContextTrapItemDefinition = (UFortContextTrapItemDefinition*)ItemDefinition;
-		}
+		if (auto ContextTrapTool = Weapon->Cast<AFortDecoTool_ContextTrap>())
+			ContextTrapTool->ContextTrapItemDefinition = (UFortContextTrapItemDefinition*)ItemDefinition;
 	}
 }
 
@@ -948,6 +950,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 
 	if (PlayerState->HasDeathInfo())
 	{
+		memset(&PlayerState->DeathInfo, 0, FDeathInfo::Size());
 		PlayerState->DeathInfo.bDBNO = PlayerController->Pawn ? PlayerController->Pawn->IsDBNO() : false;
 		if (FDeathInfo::HasKiller())
 			PlayerState->DeathInfo.Killer = KillerPlayerState;

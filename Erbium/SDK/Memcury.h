@@ -905,14 +905,12 @@ namespace Memcury
             DWORD i = 0x0;
             if (HasAVX2)
             { 
-                __m256i t = _mm256_set1_epi8(0x48);
-                __m256i s = _mm256_set1_epi8((char)0xfb);
+                __m256i t = _mm256_set1_epi8((char)0x8d);
                 // scan only text section
                 for (; i < textSection.GetSectionSize() - (textSection.GetSectionSize() % 32); i += 32)
                 {
                     auto bytes = _mm256_load_si256((const __m256i*)(scanBytes + i));
-                    __m256i masked = _mm256_and_si256(bytes, s);
-                    int offset = _mm256_movemask_epi8(_mm256_cmpeq_epi8(masked, t));
+                    int offset = _mm256_movemask_epi8(_mm256_cmpeq_epi8(bytes, t));
 
                     if (offset == 0)
                         continue;
@@ -922,9 +920,10 @@ namespace Memcury
                         int c = offset & (1 << q);
                         if (c)
                         {
-                            if (scanBytes[i + q + 1] == ASM::LEA)
+                            //if (scanBytes[i + q + 1] == ASM::LEA)
+                            if ((scanBytes[i + q - 1] & 0xFB) == 0x48)
                             {
-                                auto stringAdd = PE::Address(&scanBytes[i + q]).RelativeOffset(3);
+                                auto stringAdd = PE::Address(&scanBytes[i + q]).RelativeOffset(2);
 
                                 // Check if the string is in the .rdata section
                                 if (rdataSection.isInSection(stringAdd))
@@ -995,14 +994,12 @@ namespace Memcury
             }
             else
             {
-                __m128i t = _mm_set1_epi8(0x48);
-                __m128i s = _mm_set1_epi8((char)0xfb);
+                __m128i t = _mm_set1_epi8((char)0x8d);
                 // scan only text section
                 for (; i < textSection.GetSectionSize() - (textSection.GetSectionSize() % 16); i += 16)
                 {
                     auto bytes = _mm_load_si128((const __m128i*)(scanBytes + i));
-                    __m128i masked = _mm_and_si128(bytes, s);
-                    int offset = _mm_movemask_epi8(_mm_cmpeq_epi8(masked, t));
+                    int offset = _mm_movemask_epi8(_mm_cmpeq_epi8(bytes, t));
 
                     if (offset == 0)
                         continue;
@@ -1012,9 +1009,9 @@ namespace Memcury
                         int c = offset & (1 << q);
                         if (c)
                         {
-                            if (scanBytes[i + q + 1] == ASM::LEA)
+                            if ((scanBytes[i + q - 1] & 0xFB) == 0x48)
                             {
-                                auto stringAdd = PE::Address(&scanBytes[i + q]).RelativeOffset(3);
+                                auto stringAdd = PE::Address(&scanBytes[i + q]).RelativeOffset(2);
 
                                 // Check if the string is in the .rdata section
                                 if (rdataSection.isInSection(stringAdd))

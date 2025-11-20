@@ -191,6 +191,7 @@ public:
     DEFINE_FUNC(ClientActivateSlot, void);
     DEFINE_FUNC(ServerReturnToMainMenu, void);
     DEFINE_FUNC(OnRep_CreativePlotLinkedVolume, void);
+    DEFINE_FUNC(ClientRemoveItemAbilitySet, void);
 
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);

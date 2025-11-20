@@ -1250,6 +1250,88 @@ uint64_t FindRemoveInventoryItem()
     return RemoveInventoryItem;
 }
 
+uint64_t FindRemoveInventoryStateValue()
+{
+    static uint64_t RemoveInventoryStateValue = 0;
+    static bool bInitialized = false;
+
+    if (!bInitialized)
+    {
+        bInitialized = true;
+
+        std::vector<uint8_t> funcStart = VersionInfo.EngineVersion == 4.16 ? std::vector<uint8_t>{ 0x44, 0x88, 0x4C } : (VersionInfo.FortniteVersion >= 16 && (VersionInfo.FortniteVersion < 20 || VersionInfo.FortniteVersion >= 22) ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
+
+        auto sRef = FindNameRef(L"ServerRemoveInventoryStateValue", 0, false);
+        for (int i = 0; i < 2000; i++)
+        {
+            if (VersionInfo.EngineVersion == 4.16)
+            {
+                if (*(uint8_t*)(sRef - i) == 0x44 && *(uint8_t*)(sRef - i + 1) == 0x88 && *(uint8_t*)(sRef - i + 2) == 0x4C)
+                {
+                    RemoveInventoryStateValue = sRef - i;
+                    break;
+                }
+            }
+            else
+            {
+                if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x5C)
+                {
+                    RemoveInventoryStateValue = sRef - i;
+                    break;
+                }
+                else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
+                {
+                    RemoveInventoryStateValue = sRef - i;
+                    break;
+                }
+            }
+        }
+    }
+
+    return RemoveInventoryStateValue;
+}
+
+uint64_t FindSetInventoryStateValue()
+{
+    static uint64_t SetInventoryStateValue = 0;
+    static bool bInitialized = false;
+
+    if (!bInitialized)
+    {
+        bInitialized = true;
+
+        std::vector<uint8_t> funcStart = VersionInfo.EngineVersion == 4.16 ? std::vector<uint8_t>{ 0x44, 0x88, 0x4C } : (VersionInfo.FortniteVersion >= 16 && (VersionInfo.FortniteVersion < 20 || VersionInfo.FortniteVersion >= 22) ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
+
+        auto sRef = FindNameRef(L"ServerSetInventoryStateValue", 0, false);
+        for (int i = 0; i < 2000; i++)
+        {
+            if (VersionInfo.EngineVersion == 4.16)
+            {
+                if (*(uint8_t*)(sRef - i) == 0x44 && *(uint8_t*)(sRef - i + 1) == 0x88 && *(uint8_t*)(sRef - i + 2) == 0x4C)
+                {
+                    SetInventoryStateValue = sRef - i;
+                    break;
+                }
+            }
+            else
+            {
+                if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x5C)
+                {
+                    SetInventoryStateValue = sRef - i;
+                    break;
+                }
+                else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
+                {
+                    SetInventoryStateValue = sRef - i;
+                    break;
+                }
+            }
+        }
+    }
+
+    return SetInventoryStateValue;
+}
+
 uint64_t FindOnRep_ZiplineState()
 {
     static uint64_t OnRep_ZiplineState = 0;

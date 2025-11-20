@@ -26,6 +26,8 @@ uint64 FindReplaceBuildingActor();
 uint64 FindKickPlayer();
 uint64 FindEncryptionPatch();
 uint64 FindRemoveInventoryItem();
+uint64 FindRemoveInventoryStateValue();
+uint64 FindSetInventoryStateValue();
 uint64 FindOnRep_ZiplineState();
 uint64 FindGiveAbilityAndActivateOnce();
 uint64 FindGameSessionPatch();

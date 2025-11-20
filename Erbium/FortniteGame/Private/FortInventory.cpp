@@ -214,6 +214,21 @@ void AFortInventory::RemoveWeaponAbilities(AActor* Weapon__Uncasted)
         }
         Weapon->EquippedAbilityHandles.ResetNum();
     }
+
+    if (Weapon->WeaponData->EquippedAbilitySet)
+    {
+        bool bRemoved = false;
+        for (auto& [Key, Value] : *(TMap<FGuid, FFortAbilitySetHandle>*)& PlayerController->AppliedInGameModifierAbilitySetHandles)
+            if (Key == Weapon->ItemEntryGuid)
+            {
+                UFortKismetLibrary::UnequipFortAbilitySet(Value);
+                bRemoved = true;
+                break;
+            }
+
+        if (bRemoved)
+            PlayerController->ClientRemoveItemAbilitySet(Weapon->WeaponData->EquippedAbilitySet, Weapon->ItemEntryGuid);
+    }
     if (Weapon->EquippedAbilitySetHandles.Num())
     {
         for (int i = 0; i < Weapon->EquippedAbilitySetHandles.Num(); i++)
@@ -543,6 +558,8 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
     auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
         { return entry.ItemGuid == ItemGuid; }, FFortItemEntry::Size());
 
+    printf("K2_RemoveItemFromPlayerByGuid %s %d\n", itemEntry->ItemDefinition->Name.ToString().c_str(), Count);
+
     if (ItemP)
     {
 
@@ -659,6 +676,16 @@ void SpawnPickup_(UObject* Object, FFrame& Stack, AFortPickupAthena** Ret)
     *Ret = AFortInventory::SpawnPickup(Position, ItemDefinition, NumberToSpawn, ItemDefinition->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)ItemDefinition)->ClipSize : 0, EFortPickupSourceTypeFlag::GetOther(), EFortPickupSpawnSource::GetSupplyDrop());
 }
 
+void RemoveInventoryStateValue()
+{
+    printf("Sup\n");
+}
+
+void SetInventoryStateValue()
+{
+    printf("Sup2\n");
+}
+
 void AFortInventory::PostLoadHook()
 {
     SetPickupItems = FindSetPickupItems();
@@ -666,6 +693,9 @@ void AFortInventory::PostLoadHook()
     ClearAbility_ = FindClearAbility();
 
     Utils::Hook(FindRemoveInventoryItem(), RemoveInventoryItem);
+    // need to see if these are used
+    //Utils::Hook(FindRemoveInventoryStateValue(), RemoveInventoryStateValue);
+    //Utils::Hook(FindSetInventoryStateValue(), SetInventoryStateValue);
 
     auto SetOwningInventory = Memcury::Scanner::FindPattern("48 85 D2 74 ? 80 BA ? ? ? ? ? 75 ? 48 89 91").Get();
     if (!SetOwningInventory)

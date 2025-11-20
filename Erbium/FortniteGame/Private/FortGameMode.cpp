@@ -76,14 +76,17 @@ void SetupPlaylist(AFortGameMode* GameMode, AFortGameStateAthena* GameState)
             if (Playlist->HasbForceRespawnLocationInsideOfVolume())
                 Playlist->bForceRespawnLocationInsideOfVolume = true;
         }
-        /*if (Playlist->HasGarbageCollectionFrequency())
-            Playlist->GarbageCollectionFrequency = 9999999999999999.f; // easier than hooking collectgarbage
-        if (GameMode->HasPlaylistHotfixOriginalGCFrequency())
-            GameMode->PlaylistHotfixOriginalGCFrequency = 9999999999999999.f;
-        if (GameMode->HasbDisableGCOnServerDuringMatch())
-            GameMode->bDisableGCOnServerDuringMatch = true;
-        if (GameMode->HasbPlaylistHotfixChangedGCDisabling())
-            GameMode->bPlaylistHotfixChangedGCDisabling = true;*/
+        if (VersionInfo.FortniteVersion >= 19)
+        {
+            if (Playlist->HasGarbageCollectionFrequency())
+                Playlist->GarbageCollectionFrequency = 9999999999999999.f; // easier than hooking collectgarbage
+            if (GameMode->HasPlaylistHotfixOriginalGCFrequency())
+                GameMode->PlaylistHotfixOriginalGCFrequency = 9999999999999999.f;
+            if (GameMode->HasbDisableGCOnServerDuringMatch())
+                GameMode->bDisableGCOnServerDuringMatch = true;
+            if (GameMode->HasbPlaylistHotfixChangedGCDisabling())
+                GameMode->bPlaylistHotfixChangedGCDisabling = true;
+        }
         if (GameState->HasCurrentPlaylistInfo())
         {
             //if (VersionInfo.EngineVersion >= 4.27)

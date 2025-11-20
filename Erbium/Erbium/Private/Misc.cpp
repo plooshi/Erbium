@@ -381,7 +381,7 @@ public:
 
 void Misc::Hook()
 {
-	if (VersionInfo.FortniteVersion == 23.00 || (VersionInfo.FortniteVersion >= 25 && VersionInfo.FortniteVersion < 28.30) || VersionInfo.FortniteVersion >= 30)
+	if (VersionInfo.FortniteVersion == 23.00 || VersionInfo.FortniteVersion >= 25 || VersionInfo.FortniteVersion >= 30)
 	{
 		auto AttemptDeriveFromURL = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 4C 8B C1").Get();
 		if (!AttemptDeriveFromURL)
@@ -454,7 +454,7 @@ void Misc::Hook()
 		}
 	}
 	
-	if (VersionInfo.EngineVersion >= 5.1)
+	if (VersionInfo.FortniteVersion >= 23)
 	{
 		auto pattern = Memcury::Scanner::FindPattern("48 8B 01 FF 90 ? ? ? ? 48 8B 8B ? ? ? ? 48 85 C9 74 ? 48 8B 01 FF 90 ? ? ? ? 48 8D 8B");
 
