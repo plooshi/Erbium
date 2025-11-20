@@ -229,7 +229,7 @@ void AFortDecoTool::ServerSpawnDeco_(UObject* Context, FFrame& Stack)
 
 		static auto TrapClass = FindClass("BuildingTrap");
 		auto trapPtr = AttachedActor->AttachedBuildingActors.Search([&](ABuildingSMActor*& actor) {
-			return actor->IsA(TrapClass) && actor->Team != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+		return actor->IsA(TrapClass) && actor->HasTeamIndex() && actor->Team != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
 			});
 
 		auto trap = trapPtr ? *trapPtr : nullptr;
@@ -334,7 +334,7 @@ void AFortDecoTool_ContextTrap::ServerSpawnDeco_Implementation(UObject* Context,
 	{
 		static auto TrapClass = FindClass("BuildingTrap");
 		auto trapPtr = AttachedActor->AttachedBuildingActors.Search([&](ABuildingSMActor*& actor) {
-			return actor->IsA(TrapClass) && actor->Team != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+			return actor->IsA(TrapClass) && actor->HasTeamIndex() && actor->Team != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
 			});
 
 		auto trap = trapPtr ? *trapPtr : nullptr;
