@@ -454,7 +454,7 @@ void Misc::Hook()
 		}
 	}
 	
-	if (VersionInfo.EngineVersion >= 5.1)
+	if (VersionInfo.FortniteVersion >= 23)
 	{
 		auto pattern = Memcury::Scanner::FindPattern("48 8B 01 FF 90 ? ? ? ? 48 8B 8B ? ? ? ? 48 85 C9 74 ? 48 8B 01 FF 90 ? ? ? ? 48 8D 8B");
 

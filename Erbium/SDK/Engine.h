@@ -812,7 +812,7 @@ namespace SDK
 			Params.Owner = Owner;
 			
 			UGameplayStatics::GetDefaultObj()->ProcessEvent(BeginDeferredActorSpawnFromClassFn, &Params);*/
-			auto Actor = UGameplayStatics::BeginDeferredActorSpawnFromClass(GetWorld(), Class, Transform, 1, Owner);
+			auto Actor = UGameplayStatics::BeginDeferredActorSpawnFromClass(GetWorld(), Class, Transform, 2, Owner);
 
 			/*GameplayStatics_FinishSpawningActor Params2{};
 			Params2.Actor = Params.ReturnValue;
