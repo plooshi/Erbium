@@ -2732,6 +2732,16 @@ void FindNullsAndRetTrues()
         }
     }
 
+    if (VersionInfo.FortniteVersion <= 4.20)
+    {
+        auto pattern = Memcury::Scanner::FindPattern("40 55 53 57 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 8B 01 41 0F B6 ?").Get();
+
+        if (!pattern)
+            pattern = Memcury::Scanner::FindPattern("40 55 53 57 41 54 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 8B 01 41 0F B6 ?").Get();
+
+        NullFuncs.push_back(pattern);
+    }
+
     if (VersionInfo.FortniteVersion == 2.5)
         NullFuncs.push_back(Memcury::Scanner::FindPattern("40 55 56 41 56 48 8B EC 48 81 EC ? ? ? ? 48 8B 01 4C 8B F2").Get());
     else if (VersionInfo.EngineVersion == 5.0)
