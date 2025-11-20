@@ -34,17 +34,17 @@ FGameplayAbilitySpecHandle UAbilitySystemComponent::GiveAbility(const UObject* A
     return OutHandle;
 }
 
-class IAbilitySystemInterface : public IInterface
+class IFortAbilitySystemInterface : public IInterface
 {
 public:
-    UCLASS_COMMON_MEMBERS(IAbilitySystemInterface);
+    UCLASS_COMMON_MEMBERS(IFortAbilitySystemInterface);
 };
 
 void UAbilitySystemComponent::GiveAbilitySet(const UFortAbilitySet* Set)
 {
-    TScriptInterface<class IAbilitySystemInterface> ScriptInterface;
+    TScriptInterface<class IFortAbilitySystemInterface> ScriptInterface;
     ScriptInterface.ObjectPointer = this->GetOwner();
-    ScriptInterface.InterfacePointer = ScriptInterface.ObjectPointer->GetInterface(IAbilitySystemInterface::StaticClass());
+    ScriptInterface.InterfacePointer = ScriptInterface.ObjectPointer->GetInterface(IFortAbilitySystemInterface::StaticClass());
 
     if (ScriptInterface.ObjectPointer && ScriptInterface.InterfacePointer)
         UFortKismetLibrary::EquipFortAbilitySet(ScriptInterface, Set, nullptr);

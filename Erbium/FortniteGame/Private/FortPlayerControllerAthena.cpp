@@ -949,6 +949,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 
 	if (PlayerState->HasDeathInfo())
 	{
+		memset(&PlayerState->DeathInfo, 0, FDeathInfo::Size());
 		PlayerState->DeathInfo.bDBNO = PlayerController->Pawn ? PlayerController->Pawn->IsDBNO() : false;
 		if (FDeathInfo::HasKiller())
 			PlayerState->DeathInfo.Killer = KillerPlayerState;
