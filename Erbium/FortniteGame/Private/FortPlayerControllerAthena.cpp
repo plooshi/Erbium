@@ -23,27 +23,29 @@ void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena
 		return;
 	}
 
-	return GetPlayerViewPointOG(PlayerController, Loc, Rot);
-	/*static auto SFName = FName(L"Spectating");
-	if (PlayerController->StateName == SFName)
-	{
-		Loc = PlayerController->LastSpectatorSyncLocation;
-		Rot = PlayerController->LastSpectatorSyncRotation;
-	}
+	if (GetPlayerViewPointOG)
+		GetPlayerViewPointOG(PlayerController, Loc, Rot);
 	else
 	{
-		auto ViewTarget = PlayerController->GetViewTarget();
-
-		if (ViewTarget)
+		static auto SFName = FName(L"Spectating");
+		if (PlayerController->StateName == SFName)
 		{
-			Loc = ViewTarget->K2_GetActorLocation();
-			//if (auto TargetPawn = ViewTarget->Cast<AFortPlayerPawnAthena>())
-			//	Loc.Z += TargetPawn->BaseEyeHeight;
-			Rot = ViewTarget->K2_GetActorRotation();
+			Loc = PlayerController->LastSpectatorSyncLocation;
+			Rot = PlayerController->LastSpectatorSyncRotation;
 		}
 		else
-			return GetPlayerViewPointOG(PlayerController, Loc, Rot);
-	}*/
+		{
+			auto ViewTarget = PlayerController->GetViewTarget();
+
+			if (ViewTarget)
+			{
+				Loc = ViewTarget->K2_GetActorLocation();
+				//if (auto TargetPawn = ViewTarget->Cast<AFortPlayerPawnAthena>())
+				//	Loc.Z += TargetPawn->BaseEyeHeight;
+				Rot = ViewTarget->K2_GetActorRotation();
+			}
+		}
+	}
 }
 
 void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, FFrame& Stack)
