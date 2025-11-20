@@ -76,7 +76,7 @@ void SetupPlaylist(AFortGameMode* GameMode, AFortGameStateAthena* GameState)
             if (Playlist->HasbForceRespawnLocationInsideOfVolume())
                 Playlist->bForceRespawnLocationInsideOfVolume = true;
         }
-        if (VersionInfo.FortniteVersion >= 19)
+        if (VersionInfo.FortniteVersion >= 16)
         {
             if (Playlist->HasGarbageCollectionFrequency())
                 Playlist->GarbageCollectionFrequency = 9999999999999999.f; // easier than hooking collectgarbage
