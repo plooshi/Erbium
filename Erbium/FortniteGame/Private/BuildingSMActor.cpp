@@ -227,13 +227,13 @@ void AFortDecoTool::ServerSpawnDeco_(UObject* Context, FFrame& Stack)
 	{
 		callOG(DecoTool, Stack.GetCurrentNativeFunction(), ServerSpawnDeco, Location, Rotation, AttachedActor, InBuildingAttachmentType);
 
-		static auto TrapClass = FindClass("BuildingTrap");
+		/*static auto TrapClass = FindClass("BuildingTrap");
 		auto trapPtr = AttachedActor->AttachedBuildingActors.Search([&](ABuildingSMActor*& actor) {
 			return actor->IsA(TrapClass) && actor->Team != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
 			});
 
 		auto trap = trapPtr ? *trapPtr : nullptr;
-		/**if (trap) {
+		*if (trap) {
 			trap->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
 
 			if (trap->HasTeamIndex())
@@ -328,11 +328,11 @@ void AFortDecoTool_ContextTrap::ServerSpawnDeco_Implementation(UObject* Context,
 		}*/
 	}
 
-	ServerSpawnDeco_ImplementationOG(Context, Stack);
-
 	if (VersionInfo.FortniteVersion < 18)
 	{
-		static auto TrapClass = FindClass("BuildingTrap");
+		ServerSpawnDeco_ImplementationOG(Context, Stack);
+		
+		/*static auto TrapClass = FindClass("BuildingTrap");
 		auto trapPtr = AttachedActor->AttachedBuildingActors.Search([&](ABuildingSMActor*& actor) {
 			return actor->IsA(TrapClass) && actor->Team != ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
 			});
@@ -343,7 +343,7 @@ void AFortDecoTool_ContextTrap::ServerSpawnDeco_Implementation(UObject* Context,
 
 			if (trap->HasTeamIndex())
 				trap->TeamIndex = trap->Team;
-		}
+		}*/
 	}
 }
 
