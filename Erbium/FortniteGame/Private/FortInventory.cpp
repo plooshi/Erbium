@@ -214,6 +214,21 @@ void AFortInventory::RemoveWeaponAbilities(AActor* Weapon__Uncasted)
         }
         Weapon->EquippedAbilityHandles.ResetNum();
     }
+
+    if (Weapon->WeaponData->EquippedAbilitySet)
+    {
+        bool bRemoved = false;
+        for (auto& [Key, Value] : *(TMap<FGuid, FFortAbilitySetHandle>*)& PlayerController->AppliedInGameModifierAbilitySetHandles)
+            if (Key == Weapon->ItemEntryGuid)
+            {
+                UFortKismetLibrary::UnequipFortAbilitySet(Value);
+                bRemoved = true;
+                break;
+            }
+
+        if (bRemoved)
+            PlayerController->ClientRemoveItemAbilitySet(Weapon->WeaponData->EquippedAbilitySet, Weapon->ItemEntryGuid);
+    }
     if (Weapon->EquippedAbilitySetHandles.Num())
     {
         for (int i = 0; i < Weapon->EquippedAbilitySetHandles.Num(); i++)

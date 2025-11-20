@@ -89,6 +89,9 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 			PlayerController->WorldInventory->Remove(Guid);
 	}
 
+	for (auto& AbilitySet : AFortGameMode::AbilitySets)
+		PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
+
 	if (Num == 0)
 	{
 		static auto SmartItemDefClass = FindClass("FortSmartBuildingItemDefinition");
@@ -122,9 +125,6 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 			if (StartingItem.Count && (!SmartItemDefClass || !StartingItem.Item->IsA(SmartItemDefClass)))
 				PlayerController->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
 		}
-
-		for (auto& AbilitySet : AFortGameMode::AbilitySets)
-			PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
 	}
 	else if (FConfiguration::bLateGame && (!FConfiguration::bKeepInventory || FConfiguration::bLateGame))
 	{
