@@ -525,7 +525,9 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 		PayBuildableClassPlacementCost(PlayerController, BuildingClassData);
 	}
 
-	Building->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+	if (((AFortPlayerStateAthena*)PlayerController->PlayerState)->HasTeamIndex()) 
+		Building->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+	
 	if (Building->HasTeamIndex())
 		Building->TeamIndex = Building->Team;
 }
