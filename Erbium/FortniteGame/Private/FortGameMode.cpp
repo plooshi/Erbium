@@ -886,7 +886,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
 
         //GameMode->DefaultPawnClass = FindObject<UClass>(L"/Game/Athena/PlayerPawn_Athena.PlayerPawn_Athena_C");
 
-        /*if (VersionInfo.EngineVersion == 4.16)
+        if (VersionInfo.EngineVersion == 4.16)
         {
             auto sRef = Memcury::Scanner::FindStringRef(L"CollectGarbageInternal() is flushing async loading").Get();
             uint64_t CollectGarbage = 0;
@@ -916,7 +916,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
 
                 Utils::Patch<uint8_t>(CollectGarbage, 0xC3);
             }
-        }*/
+        }
 
         if (GameState->HasAllPlayerBuildableClassesIndexLookup())
             for (auto& [Class, Handle] : GameState->AllPlayerBuildableClassesIndexLookup)
