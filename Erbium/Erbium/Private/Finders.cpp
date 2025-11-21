@@ -1170,13 +1170,13 @@ uint64_t FindEncryptionPatch()
         auto EncryptionPatchPoint = Memcury::Scanner::FindPattern("83 BD ? ? ? ? 01 7F 18 49 8D 4D D8 48 8B D6 E8 ? ? ? ? 48", false).Get();
 
         if (!EncryptionPatchPoint)
+            EncryptionPatchPoint = Memcury::Scanner::FindPattern("83 BD ? ? ? ? ? 7F 18 49 8D 4D D8 48 8B D7 E8").Get();
+        
+        if (!EncryptionPatchPoint)
             EncryptionPatchPoint = Memcury::Scanner::FindPattern("83 7D 88 01 7F 0D 48 8B CE E8", false).Get();
 
         if (!EncryptionPatchPoint)
             EncryptionPatchPoint = Memcury::Scanner::FindPattern("83 7C 24 ?? 01 7F 0D 48 8B CF E8", false).Get();
-
-        if (!EncryptionPatchPoint)
-            EncryptionPatchPoint = Memcury::Scanner::FindPattern("83 BD ? ? ? ? ? 7F 18 49 8D 4D D8 48 8B D7 E8").Get();
 
         if (!EncryptionPatchPoint)
             EncryptionPatchPoint = Memcury::Scanner::FindPattern("83 7C 24 ? ? 7F 0D 49 8B CE").Get();
