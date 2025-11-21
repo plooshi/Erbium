@@ -112,12 +112,14 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 			static auto FloorBuild = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Floor.BuildingItemData_Floor");
 			static auto StairBuild = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Stair_W.BuildingItemData_Stair_W");
 			static auto ConeBuild = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_RoofS.BuildingItemData_RoofS");
+			static auto EditTool = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/EditTool.EditTool");
 
 			PlayerController->WorldInventory->GiveItem(WallBuild);
 			PlayerController->WorldInventory->GiveItem(FloorBuild);
 			PlayerController->WorldInventory->GiveItem(StairBuild);
 			PlayerController->WorldInventory->GiveItem(ConeBuild);
 			PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
+			PlayerController->WorldInventory->GiveItem(EditTool);
 		}
 
 		for (int i = 0; i < GameMode->StartingItems.Num(); i++)
