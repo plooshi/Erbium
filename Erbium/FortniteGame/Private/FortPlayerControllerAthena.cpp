@@ -66,7 +66,7 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 		if (FConfiguration::bLateGame)
 			PlayerController->MyFortPawn->SetShield(100.f);
 	}
-	if (!FConfiguration::bKeepInventory || FConfiguration::bLateGame)
+	if ((!FConfiguration::bKeepInventory || FConfiguration::bLateGame) && PlayerController->WorldInventory)
 	{	
 		UEAllocatedVector<FGuid> GuidsToRemove;
 		for (int i = 0; i < PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num(); i++)
@@ -961,6 +961,8 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 			PlayerState->DeathInfo.DeathLocation = PlayerState->HasPawnDeathLocation() ? PlayerState->PawnDeathLocation : (PlayerController->Pawn ? PlayerController->Pawn->K2_GetActorLocation() : FVector());
 		if (FDeathInfo::HasDeathTags())
 			PlayerState->DeathInfo.DeathTags = DeathReport.Tags;
+		if (FDeathInfo::HasDeathClassSlot())
+			PlayerState->DeathInfo.DeathClassSlot = -1;
 		PlayerState->DeathInfo.DeathCause = ToDeathCause(PlayerController->Pawn, DeathReport.Tags, PlayerState->DeathInfo.bDBNO);
 		//PlayerState->DeathInfo.Downer = KillerPlayerState;
 		if (FDeathInfo::HasFinisherOrDowner())
@@ -1146,6 +1148,12 @@ void AFortPlayerControllerAthena::ServerClientIsReadyToRespawn(UObject* Context,
 		PlayerState->RespawnData.bClientIsReady = true;
 	}
 }
+
+struct FCustomCharacterParts
+{
+public:
+	USCRIPTSTRUCT_COMMON_MEMBERS(FCustomCharacterParts);
+};
 
 void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 {
@@ -1554,7 +1562,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				Pawn->PlayerState = PlayerState;
 				Pawn->OnRep_PlayerState();
 
-				//Pawn->SetMaxHealth(100.f);
+				Pawn->SetMaxHealth(100.f);
 				//Pawn->SetHealth(100.f);
 
 				PlayerState->TeamIndex = AFortGameMode::PickTeam(GameMode, 0, PlayerController);
@@ -1603,10 +1611,30 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				static auto Commando2 = FindObject(L"/Game/Athena/Heroes/HID_Commando_Athena_01.HID_Commando_Athena_01", nullptr);
 				PlayerState->HeroType = Commando ? Commando : Commando2;
 
-				static auto CharacterPartsOffset = PlayerState->GetOffset("CharacterParts");
-				if (CharacterPartsOffset != -1)
+
+				static auto CharacterPartsOffset = PlayerState->GetOffset("CharacterParts", 0x100000);
+
+				if (CharacterPartsOffset == -1)
 				{
-					auto& CharacterParts = GetFromOffset<const UObject * [0x6]>(PlayerState, CharacterPartsOffset);
+					static auto CharacterPartsOff = PlayerState->GetOffset("CharacterParts");
+					if (CharacterPartsOff == -1)
+						CharacterPartsOff = PlayerState->GetOffset("LocalCharacterParts");
+					auto& CharacterParts = GetFromOffset<const UObject * [0x6]>(PlayerState, CharacterPartsOff);
+
+					static auto Head = FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Heads/F_Med_Head1.F_Med_Head1");
+					static auto Body = FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Bodies/F_Med_Soldier_01.F_Med_Soldier_01");
+					static auto Backpack = FindObject<UObject>(L"/Game/Characters/CharacterParts/Backpacks/NoBackpack.NoBackpack");
+
+					CharacterParts[0] = Head;
+					CharacterParts[1] = Body;
+					CharacterParts[3] = Backpack;
+				}
+				else
+				{
+					static auto CharacterPartsOff = PlayerState->GetOffset("CharacterParts");
+					auto& CustomCharacterParts = GetFromOffset<FCustomCharacterParts>(PlayerState, CharacterPartsOff);
+					static auto PartsOffset = FCustomCharacterParts::StaticStruct()->GetOffset("Parts");
+					auto& CharacterParts = GetFromOffset<const UObject * [0x6]>(&CustomCharacterParts, PartsOffset);
 
 					static auto Head = FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Heads/F_Med_Head1.F_Med_Head1");
 					static auto Body = FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Bodies/F_Med_Soldier_01.F_Med_Soldier_01");
@@ -2317,7 +2345,7 @@ void AFortPlayerControllerAthena::EnterAircraft(UObject* Object, AActor* Aircraf
 	else
 		PlayerController = (AFortPlayerControllerAthena*)Object;
 
-	if (!FConfiguration::bKeepInventory)
+	if (!FConfiguration::bKeepInventory && PlayerController->WorldInventory)
 	{
 		UEAllocatedVector<FGuid> GuidsToRemove;
 		for (int i = 0; i < PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num(); i++)

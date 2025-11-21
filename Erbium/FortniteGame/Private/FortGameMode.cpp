@@ -884,7 +884,8 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                 { return acc + p.second; });
         }
 
-        //GameMode->DefaultPawnClass = FindObject<UClass>(L"/Game/Athena/PlayerPawn_Athena.PlayerPawn_Athena_C");
+        MessageBoxA(nullptr, GameMode->DefaultPawnClass->Name.ToString().c_str(), "fr", MB_OK);
+        GameMode->DefaultPawnClass = FindObject<UClass>(L"/Game/Athena/PlayerPawn_Athena.PlayerPawn_Athena_C");
 
         if (VersionInfo.EngineVersion == 4.16)
         {
@@ -1751,7 +1752,8 @@ void StartNewSafeZonePhase(AFortGameMode* GameMode, int NewSafeZonePhase)
         SafeZoneState = 2;
 
         GameMode->SafeZoneIndicator->OnSafeZoneStateChange(2, false);
-        GameMode->SafeZoneIndicator->SafezoneStateChangedDelegate.Process(GameMode->SafeZoneIndicator, 2);
+        if (GameMode->SafeZoneIndicator->HasSafezoneStateChangedDelegate())
+            GameMode->SafeZoneIndicator->SafezoneStateChangedDelegate.Process(GameMode->SafeZoneIndicator, 2);
     }
 }
 

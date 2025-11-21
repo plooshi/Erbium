@@ -133,8 +133,6 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayer(UObject* Context, FFrame& Stack
 	}
 	auto Item = *ItemP;
 
-	printf("K2_RemoveItemFromPlayer %s %d\n", ItemDefinition->Name.ToString().c_str());
-
 	auto RemoveCount = max(AmountToRemove, 0);
 	itemEntry->Count -= RemoveCount;
 	
@@ -175,8 +173,6 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayerByGuid(UObject* Context, FFrame&
 		return;
 	}
 	auto Item = *ItemP;
-
-	printf("K2_RemoveItemFromPlayerByGuid %s %d\n", itemEntry->ItemDefinition->Name.ToString().c_str());
 
 	auto RemoveCount = max(AmountToRemove, 0);
 	itemEntry->Count -= RemoveCount;

@@ -20,6 +20,7 @@ public:
     DEFINE_STRUCT_PROP(DeathLocation, FVector);
     DEFINE_STRUCT_PROP(DeathTags, FGameplayTagContainer);
     DEFINE_STRUCT_PROP(DeathCause, uint8);
+    DEFINE_STRUCT_PROP(DeathClassSlot, uint8);
     DEFINE_STRUCT_PROP(Downer, AActor*);
     DEFINE_STRUCT_PROP(FinisherOrDowner, AActor*);
     DEFINE_STRUCT_PROP(Distance, float);
