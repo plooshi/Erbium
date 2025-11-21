@@ -1633,7 +1633,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 						PlayerController->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
 				}*/
 
-				CallerController->ClientMessage(FString(L"Spawned a player bot!"), FName(), 1.f);
+				//CallerController->ClientMessage(FString(L"Spawned a player bot!"), FName(), 1.f); // todo: fix
 			}
 		}
 		else if (command == "startevent")
