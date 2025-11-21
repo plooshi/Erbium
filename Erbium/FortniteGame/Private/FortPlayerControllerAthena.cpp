@@ -1526,7 +1526,8 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 
 			if (args.size() >= 2)
 			{
-				Count = std::stoi(args[1].c_str(), nullptr);
+				try { Count = std::stoi(args[1].c_str(), nullptr); }
+				catch (...) {}
 			}
 
 			for (int i = 0; i < Count; i++)
