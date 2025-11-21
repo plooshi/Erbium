@@ -1170,13 +1170,13 @@ uint64_t FindEncryptionPatch()
         auto EncryptionPatchPoint = Memcury::Scanner::FindPattern("83 BD ? ? ? ? 01 7F 18 49 8D 4D D8 48 8B D6 E8 ? ? ? ? 48", false).Get();
 
         if (!EncryptionPatchPoint)
+            EncryptionPatchPoint = Memcury::Scanner::FindPattern("83 BD ? ? ? ? ? 7F 18 49 8D 4D D8 48 8B D7 E8").Get();
+        
+        if (!EncryptionPatchPoint)
             EncryptionPatchPoint = Memcury::Scanner::FindPattern("83 7D 88 01 7F 0D 48 8B CE E8", false).Get();
 
         if (!EncryptionPatchPoint)
             EncryptionPatchPoint = Memcury::Scanner::FindPattern("83 7C 24 ?? 01 7F 0D 48 8B CF E8", false).Get();
-
-        if (!EncryptionPatchPoint)
-            EncryptionPatchPoint = Memcury::Scanner::FindPattern("83 BD ? ? ? ? ? 7F 18 49 8D 4D D8 48 8B D7 E8").Get();
 
         if (!EncryptionPatchPoint)
             EncryptionPatchPoint = Memcury::Scanner::FindPattern("83 7C 24 ? ? 7F 0D 49 8B CE").Get();
@@ -2732,7 +2732,7 @@ void FindNullsAndRetTrues()
         }
     }
 
-    if (VersionInfo.FortniteVersion <= 4.20)
+    if (VersionInfo.EngineVersion <= 4.20)
     {
         auto pattern = Memcury::Scanner::FindPattern("40 55 53 57 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 8B 01 41 0F B6 ?").Get();
 
@@ -2740,6 +2740,9 @@ void FindNullsAndRetTrues()
             pattern = Memcury::Scanner::FindPattern("40 55 53 57 41 54 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 8B 01 41 0F B6 ?").Get();
 
         NullFuncs.push_back(pattern);
+
+        if (VersionInfo.EngineVersion == 4.20)
+            NullFuncs.push_back(Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 56 48 83 EC ? 48 8B 01 41 0F B6 F0").Get());
     }
 
     if (VersionInfo.FortniteVersion == 2.5)

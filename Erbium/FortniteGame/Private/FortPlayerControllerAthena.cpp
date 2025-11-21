@@ -525,7 +525,9 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 		PayBuildableClassPlacementCost(PlayerController, BuildingClassData);
 	}
 
-	Building->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+	if (((AFortPlayerStateAthena*)PlayerController->PlayerState)->HasTeamIndex()) 
+		Building->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+	
 	if (Building->HasTeamIndex())
 		Building->TeamIndex = Building->Team;
 }
@@ -1551,8 +1553,8 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				Pawn->PlayerState = PlayerState;
 				Pawn->OnRep_PlayerState();
 
-				Pawn->SetMaxHealth(100.f);
-				Pawn->SetHealth(100.f);
+				//Pawn->SetMaxHealth(100.f);
+				//Pawn->SetHealth(100.f);
 
 				PlayerState->TeamIndex = AFortGameMode::PickTeam(GameMode, 0, PlayerController);
 				if (PlayerState->HasSquadId())
