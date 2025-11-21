@@ -215,7 +215,7 @@ void AFortInventory::RemoveWeaponAbilities(AActor* Weapon__Uncasted)
         Weapon->EquippedAbilityHandles.ResetNum();
     }
 
-    if (Weapon->WeaponData->EquippedAbilitySet)
+    /*if (Weapon->WeaponData->EquippedAbilitySet)
     {
         bool bRemoved = false;
         for (auto& [Key, Value] : *(TMap<FGuid, FFortAbilitySetHandle>*)& PlayerController->AppliedInGameModifierAbilitySetHandles)
@@ -228,7 +228,7 @@ void AFortInventory::RemoveWeaponAbilities(AActor* Weapon__Uncasted)
 
         if (bRemoved)
             PlayerController->ClientRemoveItemAbilitySet(Weapon->WeaponData->EquippedAbilitySet, Weapon->ItemEntryGuid);
-    }
+    }*/
     if (Weapon->EquippedAbilitySetHandles.Num())
     {
         for (int i = 0; i < Weapon->EquippedAbilitySetHandles.Num(); i++)
