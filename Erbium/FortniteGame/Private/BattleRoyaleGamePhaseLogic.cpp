@@ -645,7 +645,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 			}
 
 			static bool bUpdatedPhase = false;
-			if (formedZone)
+			if (formedZone && SafeZoneIndicator)
 			{
 				bool bStartedNewPhase = false;
 				if (!bPausedZone && !bUpdatedPhase && SafeZoneIndicator->SafeZoneStartShrinkTime < Time)
@@ -683,29 +683,33 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 						if (Pawn->bIsInsideSafeZone != bInZone || Pawn->bIsInAnyStorm != !bInZone)
 						{
 							printf("Pawn %s new storm status: %s\n", Pawn->Name.ToString().c_str(), bInZone ? "true" : "false");
-							/*Pawn->bIsInAnyStorm = !bInZone;
+							Pawn->bIsInAnyStorm = !bInZone;
 							Pawn->OnRep_IsInAnyStorm();
 							Pawn->bIsInsideSafeZone = bInZone;
-							Pawn->OnRep_IsInsideSafeZone();*/
+							Pawn->OnRep_IsInsideSafeZone();
 
-							/*auto AbilitySystemComponent = Player->PlayerState->AbilitySystemComponent;
-							for (int i = 0; i < AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Num(); i++)
+							auto AbilitySystemComponent = Player->PlayerState->AbilitySystemComponent;
+							if (AbilitySystemComponent)
 							{
-								auto& Effect = AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Get(i, FActiveGameplayEffect::Size());
-
-								printf("%s %s\n", Effect.Spec.Def->Name.ToString().c_str(), Effect.Spec.Def->Class->Name.ToString().c_str());
-								if (Effect.Spec.Def->Class == ZoneEffect)
+								for (int i = 0; i < AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Num(); i++)
 								{
-									auto Handle = *(FActiveGameplayEffectHandle*)(__int64(&Effect) + 0xc);
+									auto& Effect = AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Get(i, FActiveGameplayEffect::Size());
 
+									printf("%s %s\n", Effect.Spec.Def->Name.ToString().c_str(), Effect.Spec.Def->Class->Name.ToString().c_str());
+									if (Effect.Spec.Def->Class == ZoneEffect)
+									{
+										auto Handle = *(FActiveGameplayEffectHandle*)(__int64(&Effect) + 0xc);
 
-									AbilitySystemComponent->SetActiveGameplayEffectLevel(Handle, SafeZoneIndicator->CurrentPhase);
+										AbilitySystemComponent->SetActiveGameplayEffectLevel(Handle, SafeZoneIndicator->CurrentPhase);
 
-									AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(Handle, FGameplayTag(FName(L"SetByCaller.StormCampingDamage")), 1.f);
-									printf("found\n");
-									break;
+										// 1.f should be max(InStormDamageIncrementValue, 1.f)
+										AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(Handle, FGameplayTag(FName(L"SetByCaller.StormCampingDamage")), 1.f);
+										AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(Handle, FGameplayTag(FName(L"SetByCaller.StormShieldDamage")), 1.f);
+										printf("found\n");
+										break;
+									}
 								}
-							}*/
+							}
 						}
 
 					}
