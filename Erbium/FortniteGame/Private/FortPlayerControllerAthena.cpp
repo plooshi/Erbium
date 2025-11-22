@@ -2509,7 +2509,7 @@ void AFortPlayerControllerAthena::ServerGiveCreativeItem(UObject* Context, FFram
 	Stack.IncrementCode();
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
 
-	PlayerController->WorldInventory->GiveItem(*CreativeItem);
+	PlayerController->InternalPickup(CreativeItem);
 	free(CreativeItem);
 }
 
