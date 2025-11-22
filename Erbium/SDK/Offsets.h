@@ -173,7 +173,7 @@ namespace SDK
 			}
 		}
 
-		if (!Offsets::AppendString || VersionInfo.FortniteVersion >= 26) // i dk what ver they inlined it on
+		if (!Offsets::AppendString || VersionInfo.EngineVersion > 5.3) // i dk what ver they inlined it on
 		{
 			Offsets::ToString = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 45 33 ED 48 8B FA 4C 89 2A").Get();
 
@@ -366,9 +366,9 @@ namespace SDK
 		Offsets::FFrame_CurrentNativeFunction = VersionInfo.FortniteVersion >= 20.40 ? 0x90 : 0x88;
 		Offsets::FFrame_Next = VersionInfo.EngineVersion >= 5.2 ? 0x18 : (VersionInfo.FortniteVersion >= 12.10 ? 0x20 : 0x28);
 
-		if (VersionInfo.FortniteVersion <= 6.31)
+		if (VersionInfo.EngineVersion < 4.22)
 			Offsets::ExecFunction = 0xB0;
-		else if (VersionInfo.FortniteVersion > 7.00 && VersionInfo.FortniteVersion < 12.00)
+		else if (VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.25)
 			Offsets::ExecFunction = 0xC0;
 		else if (VersionInfo.FortniteVersion >= 12.00 && VersionInfo.FortniteVersion < 12.10)
 			Offsets::ExecFunction = 0xC8;

@@ -218,7 +218,7 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 					//AbilitySystemComponent->SetActiveGameplayEffectLevel(SpecHandle, 1);
 
 					AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(SpecHandle,
-						FGameplayTag(FName(L"SetByCaller.StormCampingDamage")), 1);
+						FGameplayTag(FName(L"SetByCaller.StormCampingDamage")), 1.f);
 				}
 
 				PlayerController->MyFortPawn->bIsInAnyStorm = false;

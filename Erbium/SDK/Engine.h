@@ -20,12 +20,12 @@ namespace SDK
 
 		int32& GetCachedItems()
 		{
-			return GetFromOffset<int32>(this, VersionInfo.FortniteVersion >= 8.30 ? 0xf8 : 0xa8);
+			return GetFromOffset<int32>(this, VersionInfo.EngineVersion >= 4.23 ? 0xf8 : 0xa8);
 		}
 
 		int32& GetCachedItemsToConsiderForWriting()
 		{
-			return GetFromOffset<int32>(this, VersionInfo.FortniteVersion >= 8.30 ? 0xfc : 0xac);
+			return GetFromOffset<int32>(this, VersionInfo.EngineVersion >= 4.23 ? 0xfc : 0xac);
 		}
 
 		/** This must be called if you add or change an item in the array */
