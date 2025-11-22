@@ -12,6 +12,7 @@
 #include "../Public/FortPhysicsPawn.h"
 #include "../Public/BattleRoyaleGamePhaseLogic.h"
 #include "../../Erbium/Public/GUI.h"
+#include <FortniteGame/Public/FortAthenaCreativePortal.h>
 
 void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena* PlayerController, FVector& Loc, FRotator& Rot)
 {
@@ -129,6 +130,9 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 			if (StartingItem.Count && (!SmartItemDefClass || !StartingItem.Item->IsA(SmartItemDefClass)))
 				PlayerController->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
 		}
+
+		if (wcsstr(FConfiguration::Playlist, L"/Game/Athena/Playlists/Creative/Playlist_PlaygroundV2.Playlist_PlaygroundV2"))
+			AFortAthenaCreativePortal::Create(PlayerController);
 	}
 	else if (FConfiguration::bLateGame && (!FConfiguration::bKeepInventory || FConfiguration::bLateGame))
 	{
@@ -2392,6 +2396,21 @@ void AFortPlayerControllerAthena::EnterAircraft(UObject* Object, AActor* Aircraf
 	return EnterAircraftOG(Object, Aircraft);
 }
 
+void AFortPlayerControllerAthena::ServerTeleportToPlaygroundLobbyIsland(UObject* Context, FFrame& Stack)
+{
+	Stack.IncrementCode();
+	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+	auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+
+	if (PlayerController->WarmupPlayerStart)
+		PlayerController->Pawn->K2_TeleportTo(PlayerController->WarmupPlayerStart->K2_GetActorLocation(), PlayerController->Pawn->K2_GetActorRotation());
+	else
+	{
+		AActor* Actor = GameMode->ChoosePlayerStart(PlayerController);
+		PlayerController->Pawn->K2_TeleportTo(Actor->K2_GetActorLocation(), Actor->K2_GetActorRotation());
+	}
+}
+
 void AFortPlayerControllerAthena::PostLoadHook()
 {
 	if (VersionInfo.FortniteVersion >= 27)
@@ -2500,4 +2519,6 @@ void AFortPlayerControllerAthena::PostLoadHook()
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("SpawnToyInstance"), SpawnToyInstance);
 	Utils::Hook(FindEnterAircraft(), EnterAircraft, EnterAircraftOG);
+
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerTeleportToPlaygroundLobbyIsland"), ServerTeleportToPlaygroundLobbyIsland);
 }

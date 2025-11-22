@@ -2534,7 +2534,14 @@ uint64 FindLoadPlayset(const std::vector<uint8_t>& Bytes, int recursive)
         bInitialized = true;
 
         if (VersionInfo.EngineVersion >= 5.0)
-            return LoadPlayset = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 4C 8B B1 ? ? ? ? 45").Get();
+        {
+            LoadPlayset = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 4C 8B B1 ? ? ? ? 45").Get();
+
+            if (!LoadPlayset)
+                LoadPlayset = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 4C 8B A9").Get();
+
+            return LoadPlayset;
+        }
 
         if (recursive >= 2)
             return 0;

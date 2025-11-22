@@ -164,6 +164,7 @@ public:
     DEFINE_PROP(OwnedPortal, AActor*);
     DEFINE_PROP(CreativePlotLinkedVolume, AFortVolume*);
     DEFINE_PROP(CurrentResourceType, EFortResourceType);
+    DEFINE_PROP(WarmupPlayerStart, AActor*);
 
     DEFINE_FUNC(GetViewTarget, AActor*);
     DEFINE_FUNC(GetControlRotation, FRotator);
@@ -214,6 +215,7 @@ public:
     static void ServerDropAllItems(UObject*, FFrame&);
     static void SpawnToyInstance(UObject*, FFrame&, AActor**);
     DefHookOg(void, EnterAircraft, UObject*, AActor*);
+    static void ServerTeleportToPlaygroundLobbyIsland(UObject*, FFrame&);
 
 
     InitPostLoadHooks;

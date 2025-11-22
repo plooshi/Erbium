@@ -639,7 +639,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 				{
 					formedZone = true;
 					auto SafeZoneIndicator = SetupSafeZoneIndicator();
-					StartNewSafeZonePhase(FConfiguration::bLateGame ? FConfiguration::LateGameZone : 1);
+					StartNewSafeZonePhase(FConfiguration::bLateGame ? FConfiguration::LateGameZone + 1 : 1);
 					return;
 				}
 			}

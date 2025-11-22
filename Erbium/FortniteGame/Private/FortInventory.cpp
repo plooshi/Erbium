@@ -557,8 +557,6 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
     auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
         { return entry.ItemGuid == ItemGuid; }, FFortItemEntry::Size());
 
-    printf("K2_RemoveItemFromPlayerByGuid %s %d\n", itemEntry->ItemDefinition->Name.ToString().c_str(), Count);
-
     if (ItemP)
     {
 

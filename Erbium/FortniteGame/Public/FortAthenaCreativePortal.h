@@ -19,6 +19,11 @@ public:
     DEFINE_FUNC(OnRep_PortalOpen, void);
     DEFINE_FUNC(OnRep_PlayersReady, void);
     DEFINE_FUNC(OnRep_PublishedPortal, void);
+    DEFINE_FUNC(OnRep_IslandInfo, void);
+    DEFINE_FUNC(SetCurrentPlayset, void);
 
     static AFortAthenaCreativePortal* Create(AFortPlayerControllerAthena* Player);
+    static void TeleportPlayerToLinkedVolume(UObject*, FFrame&);
+
+    InitHooks;
 };

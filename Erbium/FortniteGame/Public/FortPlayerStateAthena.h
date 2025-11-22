@@ -6,8 +6,9 @@
 struct FUniqueNetIdRepl
 {
 public:
-    uint8 _Padding[0x18];
-    TArray<uint8> ReplicationBytes;
+    USCRIPTSTRUCT_COMMON_MEMBERS(FUniqueNetIdRepl);
+
+    DEFINE_STRUCT_PROP(ReplicationBytes, TArray<uint8>);
 };
 
 struct FDeathInfo
