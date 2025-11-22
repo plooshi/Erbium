@@ -167,6 +167,7 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 	}
 }
 
+uint32 ServerAttemptAircraftJumpVft;
 void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, FFrame& Stack)
 {
 	FRotator Rotation;
@@ -229,42 +230,42 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 
 			PlayerController->MyFortPawn->BeginSkydiving(true);
 			PlayerController->MyFortPawn->SetHealth(100.f);
-			
-			if (FConfiguration::bLateGame)
-			{
-				PlayerController->MyFortPawn->SetShield(100.f);
-				auto Aircraft = GameState->HasAircrafts() ? GameState->Aircrafts[0] : (GameState->HasAircraft() ? GameState->Aircraft : nullptr);
-				if (!Aircraft) // gamephaselogic builds
-				{
-					auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
-
-					Aircraft = GamePhaseLogic->Aircrafts_GameState[0].Get();
-				}
-
-				FVector AircraftLocation = Aircraft->K2_GetActorLocation();
-
-				float Angle = (float)rand() / 5215.03002625f;
-				float Radius = (float)(rand() % 1000);
-
-				float OffsetX = cosf(Angle) * Radius;
-				float OffsetY = sinf(Angle) * Radius;
-
-				FVector Offset;
-				Offset.X = OffsetX;
-				Offset.Y = OffsetY;
-				Offset.Z = 0.0f;
-
-				FVector NewLoc = AircraftLocation + Offset;
-
-				PlayerController->MyFortPawn->K2_SetActorLocation(NewLoc, false, nullptr, true);
-			}
 		}
 	}
 	else
 	{
-		static auto ServerAttemptAircraftJumpOG = (void(*)(AFortPlayerControllerAthena*, FRotator&)) ((AFortPlayerControllerAthena*)Context)->Vft[((AFortPlayerControllerAthena*)Context)->GetFunction("ServerAttemptAircraftJump")->GetVTableIndex()];
+		static auto ServerAttemptAircraftJumpOG = (void(*)(AFortPlayerControllerAthena*, FRotator&)) ((AFortPlayerControllerAthena*)Context)->Vft[ServerAttemptAircraftJumpVft];
 
 		ServerAttemptAircraftJumpOG((AFortPlayerControllerAthena*)Context, Rotation);
+	}
+	
+	if (FConfiguration::bLateGame)
+	{
+		PlayerController->MyFortPawn->SetShield(100.f);
+		auto Aircraft = GameState->HasAircrafts() ? GameState->Aircrafts[0] : (GameState->HasAircraft() ? GameState->Aircraft : nullptr);
+		if (!Aircraft) // gamephaselogic builds
+		{
+			auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
+
+			Aircraft = GamePhaseLogic->Aircrafts_GameState[0].Get();
+		}
+
+		FVector AircraftLocation = Aircraft->K2_GetActorLocation();
+
+		float Angle = (float)rand() / 5215.03002625f;
+		float Radius = (float)(rand() % 1000);
+
+		float OffsetX = cosf(Angle) * Radius;
+		float OffsetY = sinf(Angle) * Radius;
+
+		FVector Offset;
+		Offset.X = OffsetX;
+		Offset.Y = OffsetY;
+		Offset.Z = 0.0f;
+
+		FVector NewLoc = AircraftLocation + Offset;
+
+		PlayerController->MyFortPawn->K2_SetActorLocation(NewLoc, false, nullptr, true);
 	}
 }
 
@@ -2508,7 +2509,7 @@ void AFortPlayerControllerAthena::ServerGiveCreativeItem(UObject* Context, FFram
 	Stack.IncrementCode();
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
 
-	PlayerController->WorldInventory->GiveItem(*CreativeItem);
+	PlayerController->InternalPickup(CreativeItem);
 	free(CreativeItem);
 }
 
@@ -2547,6 +2548,9 @@ void AFortPlayerControllerAthena::PostLoadHook()
 
 	//if (VersionInfo.FortniteVersion >= 11)
 	//{
+	if (VersionInfo.FortniteVersion < 11)
+		ServerAttemptAircraftJumpVft = GetDefaultObj()->GetFunction("ServerAttemptAircraftJump")->GetVTableIndex();
+	
 	auto ServerAttemptAircraftJumpPC = GetDefaultObj()->GetFunction("ServerAttemptAircraftJump");
 	if (!ServerAttemptAircraftJumpPC)
 		Utils::ExecHook(DefaultObjImpl("FortControllerComponent_Aircraft")->GetFunction("ServerAttemptAircraftJump"), ServerAttemptAircraftJump_, ServerAttemptAircraftJump_OG);
