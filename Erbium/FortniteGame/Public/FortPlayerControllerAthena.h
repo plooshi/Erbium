@@ -216,6 +216,7 @@ public:
     static void SpawnToyInstance(UObject*, FFrame&, AActor**);
     DefHookOg(void, EnterAircraft, UObject*, AActor*);
     static void ServerTeleportToPlaygroundLobbyIsland(UObject*, FFrame&);
+    static void ServerCraftSchematic(UObject*, FFrame&);
 
 
     InitPostLoadHooks;

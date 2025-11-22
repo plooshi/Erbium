@@ -38,3 +38,8 @@ public:
     DEFINE_STRUCT_PROP(ColumnName, FName);
     DEFINE_STRUCT_PROP(RowContents, FName);
 };
+
+struct alignas(0x08) FTableRowBase
+{
+public:
+};

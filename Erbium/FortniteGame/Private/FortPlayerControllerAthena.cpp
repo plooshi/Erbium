@@ -2411,6 +2411,93 @@ void AFortPlayerControllerAthena::ServerTeleportToPlaygroundLobbyIsland(UObject*
 	}
 }
 
+inline std::string CleanupString(std::string& s)
+{
+	if (s.rfind("Schematic:", 0) == 0)
+	{
+		s.erase(0, 10);
+	}
+	return s;
+}
+
+void AFortPlayerControllerAthena::ServerCraftSchematic(UObject* Context, FFrame& Stack)
+{
+	FString ItemId;
+	int32 PostCraftSlot;
+	bool bIsQuickCrafted;
+	Stack.StepCompiledIn(&ItemId);
+	Stack.StepCompiledIn(&PostCraftSlot);
+	Stack.StepCompiledIn(&bIsQuickCrafted);
+	Stack.IncrementCode();
+
+	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+	auto SchematicStr = ItemId.ToString();
+	std::string SchematicStdStr = SchematicStr.c_str();
+
+	printf("CraftShit: ItemId='%s'\n", SchematicStdStr.c_str());
+
+	auto CleanedSchematic = CleanupString(SchematicStdStr);
+
+	printf("clean schematic broo: '%s'\n", CleanedSchematic.c_str());
+
+	auto Schematic = TUObjectArray::FindObject<UFortSchematicItemDefinition>(CleanedSchematic.c_str());
+	if (Schematic)
+	{
+		printf("schematic found : %s\n", Schematic->Name.ToString().c_str());
+
+		auto ResultItemDef = Schematic->GetResultWorldItemDefinition();
+
+		printf("item: %s\n", ResultItemDef->Name.ToString().c_str());
+
+		auto FoundItemDef = TUObjectArray::FindObject<UFortItemDefinition>(ResultItemDef->Name.ToString().c_str());
+		if (FoundItemDef) {
+			auto ExistingEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& Entry)
+				{
+					return Entry.ItemDefinition == FoundItemDef;
+				}, FFortItemEntry::Size());
+
+			if (ExistingEntry)
+			{
+				ExistingEntry->Count += Schematic->GetQuantityProduced();
+				PlayerController->WorldInventory->UpdateEntry(*ExistingEntry);
+			}
+			else
+			{
+				PlayerController->WorldInventory->GiveItem(FoundItemDef, Schematic->GetQuantityProduced(), 0, 0, false);
+			}
+
+			auto RecipeTable = Schematic->CraftingRecipe.DataTable;
+			auto RowIterator = Schematic->CraftingRecipe.DataTable->RowMap.Find(Schematic->CraftingRecipe.RowName, [](const FName& Left, const FName& Right) {return Left == Right; });
+			auto RowPair = Schematic->CraftingRecipe.DataTable->RowMap[RowIterator.GetIndex()];
+			auto RecipeData = reinterpret_cast<FRecipe*>(RowPair.Value());
+			auto CostCount = RecipeData->RecipeCosts.Num();
+
+			printf("num costs: %d\n", CostCount);
+
+			for (int i = 0; i < RecipeData->RecipeCosts.Num(); i++)
+			{
+				auto& Cost = RecipeData->RecipeCosts.Get(i, FFortItemQuantityPair::Size());
+				auto CostItemDef = Cost.ItemDefinition.Get();
+				auto ItemEntry = AFortInventory::MakeItemEntry(CostItemDef, Cost.Quantity, 0);
+
+				FFortItemEntry* InventoryEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& Entry)
+					{
+						return Entry.ItemDefinition == CostItemDef;
+					}, FFortItemEntry::Size());
+
+				if (InventoryEntry)
+				{
+					auto NewCount = InventoryEntry->Count - Cost.Quantity;
+					if (NewCount < 0)
+						NewCount = 0;
+					InventoryEntry->Count = NewCount;
+					PlayerController->WorldInventory->UpdateEntry(*InventoryEntry);
+				}
+			}
+		}
+	}
+}
+
 void AFortPlayerControllerAthena::PostLoadHook()
 {
 	if (VersionInfo.FortniteVersion >= 27)
@@ -2521,4 +2608,6 @@ void AFortPlayerControllerAthena::PostLoadHook()
 	Utils::Hook(FindEnterAircraft(), EnterAircraft, EnterAircraftOG);
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerTeleportToPlaygroundLobbyIsland"), ServerTeleportToPlaygroundLobbyIsland);
+
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCraftSchematic"), ServerCraftSchematic);
 }
