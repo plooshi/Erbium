@@ -229,35 +229,6 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 
 			PlayerController->MyFortPawn->BeginSkydiving(true);
 			PlayerController->MyFortPawn->SetHealth(100.f);
-			
-			if (FConfiguration::bLateGame)
-			{
-				PlayerController->MyFortPawn->SetShield(100.f);
-				auto Aircraft = GameState->HasAircrafts() ? GameState->Aircrafts[0] : (GameState->HasAircraft() ? GameState->Aircraft : nullptr);
-				if (!Aircraft) // gamephaselogic builds
-				{
-					auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
-
-					Aircraft = GamePhaseLogic->Aircrafts_GameState[0].Get();
-				}
-
-				FVector AircraftLocation = Aircraft->K2_GetActorLocation();
-
-				float Angle = (float)rand() / 5215.03002625f;
-				float Radius = (float)(rand() % 1000);
-
-				float OffsetX = cosf(Angle) * Radius;
-				float OffsetY = sinf(Angle) * Radius;
-
-				FVector Offset;
-				Offset.X = OffsetX;
-				Offset.Y = OffsetY;
-				Offset.Z = 0.0f;
-
-				FVector NewLoc = AircraftLocation + Offset;
-
-				PlayerController->MyFortPawn->K2_SetActorLocation(NewLoc, false, nullptr, true);
-			}
 		}
 	}
 	else
@@ -265,6 +236,35 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 		static auto ServerAttemptAircraftJumpOG = (void(*)(AFortPlayerControllerAthena*, FRotator&)) ((AFortPlayerControllerAthena*)Context)->Vft[((AFortPlayerControllerAthena*)Context)->GetFunction("ServerAttemptAircraftJump")->GetVTableIndex()];
 
 		ServerAttemptAircraftJumpOG((AFortPlayerControllerAthena*)Context, Rotation);
+	}
+	
+	if (FConfiguration::bLateGame)
+	{
+		PlayerController->MyFortPawn->SetShield(100.f);
+		auto Aircraft = GameState->HasAircrafts() ? GameState->Aircrafts[0] : (GameState->HasAircraft() ? GameState->Aircraft : nullptr);
+		if (!Aircraft) // gamephaselogic builds
+		{
+			auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
+
+			Aircraft = GamePhaseLogic->Aircrafts_GameState[0].Get();
+		}
+
+		FVector AircraftLocation = Aircraft->K2_GetActorLocation();
+
+		float Angle = (float)rand() / 5215.03002625f;
+		float Radius = (float)(rand() % 1000);
+
+		float OffsetX = cosf(Angle) * Radius;
+		float OffsetY = sinf(Angle) * Radius;
+
+		FVector Offset;
+		Offset.X = OffsetX;
+		Offset.Y = OffsetY;
+		Offset.Z = 0.0f;
+
+		FVector NewLoc = AircraftLocation + Offset;
+
+		PlayerController->MyFortPawn->K2_SetActorLocation(NewLoc, false, nullptr, true);
 	}
 }
 
