@@ -217,6 +217,7 @@ public:
     DefHookOg(void, EnterAircraft, UObject*, AActor*);
     static void ServerTeleportToPlaygroundLobbyIsland(UObject*, FFrame&);
     static void ServerCraftSchematic(UObject*, FFrame&);
+    static void ServerGiveCreativeItem(UObject*, FFrame&);
 
 
     InitPostLoadHooks;

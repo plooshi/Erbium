@@ -2498,6 +2498,20 @@ void AFortPlayerControllerAthena::ServerCraftSchematic(UObject* Context, FFrame&
 	}
 }
 
+void AFortPlayerControllerAthena::ServerGiveCreativeItem(UObject* Context, FFrame& Stack)
+{
+	auto CreativeItem = (FFortItemEntry*)malloc(FFortItemEntry::Size());
+	memset(CreativeItem, 0, FFortItemEntry::Size());
+	FGuid ItemToRemoveGuid{};
+	Stack.StepCompiledIn(CreativeItem);
+	Stack.StepCompiledIn(&ItemToRemoveGuid);
+	Stack.IncrementCode();
+	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+
+	PlayerController->WorldInventory->GiveItem(*CreativeItem);
+	free(CreativeItem);
+}
+
 void AFortPlayerControllerAthena::PostLoadHook()
 {
 	if (VersionInfo.FortniteVersion >= 27)
@@ -2610,4 +2624,5 @@ void AFortPlayerControllerAthena::PostLoadHook()
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerTeleportToPlaygroundLobbyIsland"), ServerTeleportToPlaygroundLobbyIsland);
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCraftSchematic"), ServerCraftSchematic);
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerGiveCreativeItem"), ServerGiveCreativeItem);
 }

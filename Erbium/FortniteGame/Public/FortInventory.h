@@ -157,6 +157,9 @@ public:
     DEFINE_STRUCT_PROP(bIsReplicatedCopy, bool);
     DEFINE_STRUCT_PROP(bIsDirty, bool);
     DEFINE_STRUCT_PROP(WeaponModSlots, TArray<void*>);
+    DEFINE_STRUCT_PROP(PickupVariantIndex, int32);
+    DEFINE_STRUCT_PROP(OrderIndex, int16);
+    DEFINE_STRUCT_PROP(ItemVariantDataMappingIndex, int32);
 };
 
 class UFortWorldItem : public UObject

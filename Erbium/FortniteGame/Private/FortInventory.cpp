@@ -357,6 +357,15 @@ FFortItemEntry* AFortInventory::MakeItemEntry(const UFortItemDefinition* ItemDef
                 ItemEntry->PhantomReserveAmmo = (Stats->InitialClips - 1) * Stats->ClipSize;
         }
     }
+    if (auto WeaponDef = ItemDef->Cast<UFortWeaponItemDefinition>())
+        if (WeaponDef->HasWeaponModSlots() && FFortItemEntry::HasWeaponModSlots())
+            ItemEntry->WeaponModSlots = WeaponDef->WeaponModSlots;
+    if (ItemEntry->HasPickupVariantIndex())
+        ItemEntry->PickupVariantIndex = -1;
+    if (ItemEntry->HasItemVariantDataMappingIndex())
+        ItemEntry->ItemVariantDataMappingIndex = -1;
+    if (ItemEntry->HasOrderIndex())
+        ItemEntry->OrderIndex = -1;
 
     return ItemEntry;
 }

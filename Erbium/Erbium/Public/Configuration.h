@@ -2,7 +2,7 @@
 
 struct FConfiguration
 {
-    static inline auto Playlist = L"/Game/Athena/Playlists/Creative/Playlist_PlaygroundV2.Playlist_PlaygroundV2";
+    static inline auto Playlist = L"/Game/Athena/Playlists/Playlist_DefaultSolo.Playlist_DefaultSolo";
     static inline auto MaxTickRate = 30.f;
     static inline auto bLateGame = false;
     static inline auto LateGameZone = 3; // starting zone
@@ -15,7 +15,7 @@ struct FConfiguration
     static inline auto bAutoRestart = false;
     static inline auto bKeepInventory = false;
     static inline constexpr auto bEnableIris = true; 
-    static inline constexpr auto bGUI = false;
+    static inline constexpr auto bGUI = true;
     static inline constexpr auto bCustomCrashReporter = true;
     static inline constexpr auto WebhookURL = ""; // fill in if you want status to send to a webhook
 };
