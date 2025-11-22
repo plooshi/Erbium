@@ -683,10 +683,10 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 						if (Pawn->bIsInsideSafeZone != bInZone || Pawn->bIsInAnyStorm != !bInZone)
 						{
 							printf("Pawn %s new storm status: %s\n", Pawn->Name.ToString().c_str(), bInZone ? "true" : "false");
-							Pawn->bIsInAnyStorm = !bInZone;
+							/*Pawn->bIsInAnyStorm = !bInZone;
 							Pawn->OnRep_IsInAnyStorm();
 							Pawn->bIsInsideSafeZone = bInZone;
-							Pawn->OnRep_IsInsideSafeZone();
+							Pawn->OnRep_IsInsideSafeZone();*/
 
 							/*auto AbilitySystemComponent = Player->PlayerState->AbilitySystemComponent;
 							for (int i = 0; i < AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Num(); i++)
