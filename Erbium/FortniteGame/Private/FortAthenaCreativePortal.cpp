@@ -116,5 +116,8 @@ void AFortAthenaCreativePortal::TeleportPlayerToLinkedVolume(UObject* Context, F
 
 void AFortAthenaCreativePortal::Hook()
 {
+	if (!GetDefaultObj())
+		return;
+	
 	Utils::ExecHook(GetDefaultObj()->GetFunction("TeleportPlayerToLinkedVolume"), TeleportPlayerToLinkedVolume);
 }
