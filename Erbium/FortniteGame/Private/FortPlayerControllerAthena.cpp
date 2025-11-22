@@ -1328,6 +1328,8 @@ std::map<std::string, std::vector<FVector>> Waypoints;
 
 extern uint64_t ApplyCharacterCustomization;
 extern uint64_t NotifyGameMemberAdded_;
+
+int32 PlayerBotID = 0;
 void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 {
 	FString Msg;
@@ -1647,6 +1649,24 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				
 				if (ApplyCharacterCustomization)
 					((void (*)(AActor*, AFortPlayerPawnAthena*)) ApplyCharacterCustomization)(PlayerState, Pawn);
+
+				PlayerBotID++;
+				std::string Name = "Erbium Bot (#" + std::to_string(PlayerBotID) + ")";
+
+				std::wstring WideName(Name.begin(), Name.end());
+
+				FString BotName = FString(WideName.c_str());
+
+				if (std::floor(VersionInfo.FortniteVersion) < 9)
+				{
+					PlayerController->ServerChangeName(BotName);
+				}
+				else
+				{
+					GameMode->ChangeName(PlayerController, BotName, true);
+				}
+
+				PlayerState->OnRep_PlayerName();
 
 				/*static auto DefaultPickaxe = FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
 
