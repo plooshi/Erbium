@@ -1185,7 +1185,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 	ForwardVector.Normalize();
 
 	FinalLoc = FinalLoc + ForwardVector * 450.f;
-	FinalLoc.Z += 50.f;
+	FinalLoc.Z += 20.f;
 
 	const float RandomAngleVariation = ((float)rand() * 0.00109866634f) - 18.f;
 	const float FinalAngle = RandomAngleVariation * 0.017453292519943295f;
