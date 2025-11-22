@@ -381,7 +381,7 @@ public:
 
 void Misc::Hook()
 {
-	if (VersionInfo.FortniteVersion == 23.00 || VersionInfo.FortniteVersion >= 25 || VersionInfo.FortniteVersion >= 30)
+	if (VersionInfo.FortniteVersion == 23.00 || (VersionInfo.FortniteVersion >= 25 && VersionInfo.FortniteVersion < 28.30) || VersionInfo.FortniteVersion >= 30)
 	{
 		auto AttemptDeriveFromURL = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 4C 8B C1").Get();
 		if (!AttemptDeriveFromURL)
@@ -389,8 +389,20 @@ void Misc::Hook()
 		if (!AttemptDeriveFromURL)
 			AttemptDeriveFromURL = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 48 8B D1").Get();
 		Utils::Hook(AttemptDeriveFromURL, GetNetMode);
-		//Utils::Hook(Memcury::Scanner::FindPattern("48 83 EC ? 48 8B 01 FF 90 ? ? ? ? 84 C0 0F 85").Get(), GetNetMode);
 		PatchAllNetModes(AttemptDeriveFromURL);
+	}
+	else if (VersionInfo.FortniteVersion >= 28)
+	{
+		auto AttemptDeriveFromURL = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 4C 8B C1").Get();
+		if (!AttemptDeriveFromURL)
+			AttemptDeriveFromURL = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 4C 8B D1").Get();
+		if (!AttemptDeriveFromURL)
+			AttemptDeriveFromURL = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 48 8B D1").Get();
+
+		Utils::Hook(AttemptDeriveFromURL, GetNetMode);
+		PatchAllNetModes(AttemptDeriveFromURL);
+
+		Utils::Hook(FindGetNetMode(), GetNetMode);
 	}
 	else
 		Utils::Hook(FindGetNetMode(), GetNetMode);
