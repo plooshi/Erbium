@@ -167,6 +167,7 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 	}
 }
 
+uint32 ServerAttemptAircraftJumpVft;
 void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, FFrame& Stack)
 {
 	FRotator Rotation;
@@ -233,7 +234,7 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 	}
 	else
 	{
-		static auto ServerAttemptAircraftJumpOG = (void(*)(AFortPlayerControllerAthena*, FRotator&)) ((AFortPlayerControllerAthena*)Context)->Vft[((AFortPlayerControllerAthena*)Context)->GetFunction("ServerAttemptAircraftJump")->GetVTableIndex()];
+		static auto ServerAttemptAircraftJumpOG = (void(*)(AFortPlayerControllerAthena*, FRotator&)) ((AFortPlayerControllerAthena*)Context)->Vft[ServerAttemptAircraftJumpVft];
 
 		ServerAttemptAircraftJumpOG((AFortPlayerControllerAthena*)Context, Rotation);
 	}
@@ -2547,6 +2548,9 @@ void AFortPlayerControllerAthena::PostLoadHook()
 
 	//if (VersionInfo.FortniteVersion >= 11)
 	//{
+	if (VersionInfo.FortniteVersion < 11)
+		ServerAttemptAircraftJumpVft = GetDefaultObj()->GetFunction("ServerAttemptAircraftJump")->GetVTableIndex();
+	
 	auto ServerAttemptAircraftJumpPC = GetDefaultObj()->GetFunction("ServerAttemptAircraftJump");
 	if (!ServerAttemptAircraftJumpPC)
 		Utils::ExecHook(DefaultObjImpl("FortControllerComponent_Aircraft")->GetFunction("ServerAttemptAircraftJump"), ServerAttemptAircraftJump_, ServerAttemptAircraftJump_OG);
