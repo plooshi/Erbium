@@ -954,7 +954,7 @@ namespace Memcury
 
                                             if (leaT == string)
                                             {
-                                                add = PE::Address(&scanBytes[i + q]);
+                                                add = PE::Address(&scanBytes[i + q - 1]);
 
                                                 if (++aa > useRefNum)
                                                     goto _out;
@@ -968,7 +968,7 @@ namespace Memcury
                                             {
                                                 if (memcmp(string, lea, slen) == 0)
                                                 {
-                                                    add = PE::Address(&scanBytes[i + q]);
+                                                    add = PE::Address(&scanBytes[i + q - 1]);
 
                                                     if (++aa > useRefNum)
                                                         goto _out;
@@ -978,7 +978,7 @@ namespace Memcury
                                             {
                                                 if (memcmp(string, lea, slen) == 0)
                                                 {
-                                                    add = PE::Address(&scanBytes[i + q]);
+                                                    add = PE::Address(&scanBytes[i + q - 1]);
 
                                                     if (++aa > useRefNum)
                                                         goto _out;

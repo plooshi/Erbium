@@ -500,6 +500,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
         }
 
         auto AbilitySet = VersionInfo.FortniteVersion >= 8.30 ? FindObject<UFortAbilitySet>(L"/Game/Abilities/Player/Generic/Traits/DefaultPlayer/GAS_AthenaPlayer.GAS_AthenaPlayer") : FindObject<UFortAbilitySet>(L"/Game/Abilities/Player/Generic/Traits/DefaultPlayer/GAS_DefaultPlayer.GAS_DefaultPlayer");
+        AbilitySet->AddToRoot();
         AbilitySets.Add(AbilitySet);
 
         if (VersionInfo.FortniteVersion >= 20)
@@ -508,13 +509,30 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
 
             if (!TacticalSprintAbility)
                 TacticalSprintAbility = FindObject<UFortAbilitySet>(L"/TacticalSprint/Gameplay/AS_TacticalSprint.AS_TacticalSprint");
+            TacticalSprintAbility->AddToRoot();
             AbilitySets.Add(TacticalSprintAbility);
-            AbilitySets.Add(FindObject<UFortAbilitySet>(L"/Ascender/Gameplay/Ascender/AS_Ascender.AS_Ascender"));
-            AbilitySets.Add(FindObject<UFortAbilitySet>(L"/DoorBashContent/Gameplay/AS_DoorBash.AS_DoorBash"));
-            AbilitySets.Add(FindObject<UFortAbilitySet>(L"/HillScramble/Gameplay/AS_HillScramble.AS_HillScramble"));
-            AbilitySets.Add(FindObject<UFortAbilitySet>(L"/SlideImpulse/Gameplay/AS_SlideImpulse.AS_SlideImpulse"));
+            
+            auto AscenderAbility = FindObject<UFortAbilitySet>(L"/Ascender/Gameplay/Ascender/AS_Ascender.AS_Ascender");
+            AscenderAbility->AddToRoot();
+            AbilitySets.Add(AscenderAbility);
+
+            auto DoorBashAbility = FindObject<UFortAbilitySet>(L"/DoorBashContent/Gameplay/AS_DoorBash.AS_DoorBash");
+            DoorBashAbility->AddToRoot();
+            AbilitySets.Add(DoorBashAbility);
+
+            auto HillScrambleAbility = FindObject<UFortAbilitySet>(L"/HillScramble/Gameplay/AS_HillScramble.AS_HillScramble");
+            HillScrambleAbility->AddToRoot();
+            AbilitySets.Add(HillScrambleAbility);
+
+            auto SlideImpulseAbility = FindObject<UFortAbilitySet>(L"/SlideImpulse/Gameplay/AS_SlideImpulse.AS_SlideImpulse");
+            SlideImpulseAbility->AddToRoot();
+            AbilitySets.Add(SlideImpulseAbility);
+
             if (std::floor(VersionInfo.FortniteVersion) == 21)
-                AbilitySets.Add(FindObject<UFortAbilitySet>(L"/RealitySeedGameplay/Environment/Foliage/GAS_Athena_RealitySapling.GAS_Athena_RealitySapling"));
+            {
+                auto RealitySaplingAbility = FindObject<UFortAbilitySet>(L"/RealitySeedGameplay/Environment/Foliage/GAS_Athena_RealitySapling.GAS_Athena_RealitySapling");
+                AbilitySets.Add(RealitySaplingAbility);
+            }
         }
 
         for (auto& Set : AbilitySets)
