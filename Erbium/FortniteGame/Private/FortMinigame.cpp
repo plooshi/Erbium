@@ -1,9 +1,8 @@
 #include "pch.h"
 #include "../Public/FortMinigame.h"
+#include "../Public/FortPlayerControllerAthena.h"
+#include "../Public/FortPlayerStateAthena.h"
 #include <thread>
-
-#include "FortniteGame/Public/FortPlayerControllerAthena.h"
-#include "FortniteGame/Public/FortPlayerStateAthena.h"
 
 void AFortMinigame::SetState(AFortMinigame* Minigame, uint8 NewState)
 {
@@ -48,12 +47,12 @@ void AFortMinigame::SetState(AFortMinigame* Minigame, uint8 NewState)
             Minigame->OnClientFinishTeleportingForMinigame(&Pawn);
         }
                 
+        // this can crash btw!
         std::thread([Minigame, NewState]()
-{
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-    SetStateOG(Minigame, NewState);
-}).detach();
-                
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            SetStateOG(Minigame, NewState);
+        }).detach();    
     }
     else if (NewState == EFortMinigameState::GetPostGameReset())
     {
@@ -71,7 +70,7 @@ void AFortMinigame::SetState(AFortMinigame* Minigame, uint8 NewState)
             Minigame->OnPlayerPawnPossessedDuringTransition(&Pawn);
         }
                 
-        Minigame->CurrentState = EFortMinigameState::GetPreGame();
+        Minigame->CurrentState = (uint8_t)EFortMinigameState::GetPreGame();
     }
     
     if (NewState != EFortMinigameState::GetWaitingForCameras() && NewState != EFortMinigameState::GetPostGameReset())

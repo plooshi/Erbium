@@ -69,8 +69,8 @@ uint64 FindCanPlaceBuildableClassInStructuralGrid();
 uint64 FindLoadPlayset(const std::vector<uint8_t>& Bytes = std::vector<uint8_t>({ 0x48, 0x89, 0x5C }), int recursive = 0);
 uint32 FindSpawnDecoVft();
 uint32 FindShouldAllowServerSpawnDecoVft();
-uint32 FindSetState();
-uint32 FindMinigameSettingsBuilding__BeginPlay();
+uint64 FindSetState();
+uint64 FindMinigameSettingsBuilding__BeginPlay();
 
 inline std::vector<uint64_t> NullFuncs = {};
 inline std::vector<uint64_t> RetTrueFuncs = {};
