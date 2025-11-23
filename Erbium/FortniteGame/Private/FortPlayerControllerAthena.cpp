@@ -185,12 +185,22 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 		auto Heal = LateGame::GetHeal();
 		auto HealSlot2 = LateGame::GetHeal();
 
-		int ShotgunClipSize = Shotgun.Item->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)Shotgun.Item)->ClipSize : 0;
-		int AssaultRifleClipSize = AssaultRifle.Item->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)AssaultRifle.Item)->ClipSize : 0;
-		int SniperClipSize = Sniper.Item->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)Sniper.Item)->ClipSize : 0;
-		// for grappler
-		int HealClipSize = Heal.Item->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)Heal.Item)->ClipSize : 0;
-		int HealSlot2ClipSize = HealSlot2.Item->IsA<UFortWeaponItemDefinition>() ? AFortInventory::GetStats((UFortWeaponItemDefinition*)HealSlot2.Item)->ClipSize : 0;
+		int ShotgunClipSize = 0;
+		int AssaultRifleClipSize = 0;
+		int SniperClipSize = 0;
+		int HealClipSize = 0;
+		int HealSlot2ClipSize = 0;
+		
+		if (auto Weapon = Shotgun.Item->IsA<UFortGadgetItemDefinition>() ? ((UFortGadgetItemDefinition*)Shotgun.Item)->GetWeaponItemDefinition() : Shotgun.Item->Cast<UFortWeaponItemDefinition>())
+			ShotgunClipSize = AFortInventory::GetStats(Weapon)->ClipSize;
+		if (auto Weapon = AssaultRifle.Item->IsA<UFortGadgetItemDefinition>() ? ((UFortGadgetItemDefinition*)AssaultRifle.Item)->GetWeaponItemDefinition() : AssaultRifle.Item->Cast<UFortWeaponItemDefinition>())
+			AssaultRifleClipSize = AFortInventory::GetStats(Weapon)->ClipSize;
+		if (auto Weapon = Sniper.Item->IsA<UFortGadgetItemDefinition>() ? ((UFortGadgetItemDefinition*)Sniper.Item)->GetWeaponItemDefinition() : Sniper.Item->Cast<UFortWeaponItemDefinition>())
+			SniperClipSize = AFortInventory::GetStats(Weapon)->ClipSize;
+		if (auto Weapon = Heal.Item->IsA<UFortGadgetItemDefinition>() ? ((UFortGadgetItemDefinition*)Heal.Item)->GetWeaponItemDefinition() : Heal.Item->Cast<UFortWeaponItemDefinition>())
+			HealClipSize = AFortInventory::GetStats(Weapon)->ClipSize;
+		if (auto Weapon = HealSlot2.Item->IsA<UFortGadgetItemDefinition>() ? ((UFortGadgetItemDefinition*)HealSlot2.Item)->GetWeaponItemDefinition() : HealSlot2.Item->Cast<UFortWeaponItemDefinition>())
+			HealSlot2ClipSize = AFortInventory::GetStats(Weapon)->ClipSize;
 
 		PlayerController->WorldInventory->GiveItem(LateGame::GetResource(EFortResourceType::Wood), 500);
 		PlayerController->WorldInventory->GiveItem(LateGame::GetResource(EFortResourceType::Stone), 500);
@@ -295,9 +305,8 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryItem_(UObject* Context, 
 
 	UFortItemDefinition* ItemDefinition = (UFortItemDefinition*)entry->ItemDefinition;
 
-
-	if (ItemDefinition->IsA(UFortGadgetItemDefinition::StaticClass()))
-		ItemDefinition = ItemDefinition->GetWeaponItemDefinition();
+	if (auto Gadget = ItemDefinition->Cast<UFortGadgetItemDefinition>())
+		ItemDefinition = Gadget->GetWeaponItemDefinition();
 
 	auto Weapon = PlayerController->MyFortPawn->EquipWeaponDefinition(ItemDefinition, ItemGuid, entry->HasTrackerGuid() ? entry->TrackerGuid : FGuid(), false);
 	if (VersionInfo.FortniteVersion <= 2.5)

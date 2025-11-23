@@ -81,7 +81,6 @@ public:
     DEFINE_BITFIELD_PROP(bSupportsQuickbarFocus);
 
     DEFINE_FUNC(CreateTemporaryItemInstanceBP, UFortItem*);
-    DEFINE_FUNC(GetWeaponItemDefinition, UFortItemDefinition*);
     DEFINE_FUNC(GetItemComponentByClass, UObject*);
 
     UFortItemComponent_Pickup* GetPickupComponent() const
@@ -342,6 +341,8 @@ class UFortGadgetItemDefinition : public UFortWorldItemDefinition
 {
 public:
     UCLASS_COMMON_MEMBERS(UFortGadgetItemDefinition);
+
+    DEFINE_FUNC(GetWeaponItemDefinition, UFortWeaponItemDefinition*);
 };
 
 class UFortResourceItemDefinition : public UFortWorldItemDefinition
