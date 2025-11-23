@@ -84,8 +84,8 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 			}
 			if (VersionInfo.FortniteVersion < 3 && Entry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest())
 			{
-				PlayerController->ServerExecuteInventoryItem(Entry.ItemGuid);
-				PlayerController->QuickBars->ServerActivateSlotInternal(0, 0, 0.f, true);
+				//PlayerController->ServerExecuteInventoryItem(Entry.ItemGuid);
+				//PlayerController->QuickBars->ServerActivateSlotInternal(0, 0, 0.f, true);
 			}
 		}
 
@@ -2391,8 +2391,8 @@ void AFortPlayerControllerAthena::EnterAircraft(UObject* Object, AActor* Aircraf
 			}
 			if (VersionInfo.FortniteVersion < 3 && Entry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest())
 			{
-				PlayerController->ServerExecuteInventoryItem(Entry.ItemGuid);
-				PlayerController->QuickBars->ServerActivateSlotInternal(0, 0, 0.f, true);
+				//PlayerController->ServerExecuteInventoryItem(Entry.ItemGuid);
+				//PlayerController->QuickBars->ServerActivateSlotInternal(0, 0, 0.f, true);
 			}
 		}
 
