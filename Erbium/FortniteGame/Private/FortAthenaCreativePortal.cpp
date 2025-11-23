@@ -85,16 +85,19 @@ AFortAthenaCreativePortal* AFortAthenaCreativePortal::Create(AFortPlayerControll
 	LevelStreamComponent->bAutoLoadLevel = true;
 	LevelStreamComponent->bAutoActivate = true;
 	
-	auto SpawnActorInternal = (AActor * (*)(UWorld*, const UClass*, FTransform*, void*)) Offsets::SpawnActor;
+	if (VersionInfo.FortniteVersion >= 5 && VersionInfo.FortniteVersion <= 25.00)
+	{
+		auto SpawnActorInternal = (AActor * (*)(UWorld*, const UClass*, FTransform*, void*)) Offsets::SpawnActor;
 
-	UWorld::FActorSpawnParameters SpawnParameters{};
-	SpawnParameters.Owner = Portal->LinkedVolume;
-	SpawnParameters.bDeferConstruction = false;
-	SpawnParameters.SpawnCollisionHandlingOverride = 1;
-	SpawnParameters.NameMode = 3;
+		UWorld::FActorSpawnParameters SpawnParameters{};
+		SpawnParameters.Owner = Portal->LinkedVolume;
+		SpawnParameters.bDeferConstruction = false;
+		SpawnParameters.SpawnCollisionHandlingOverride = 1;
+		SpawnParameters.NameMode = 3;
 
-	FTransform Transform{};
-	SpawnActorInternal(UWorld::GetWorld(), AMinigameSettingsMachine_C::StaticClass(), &Transform, &SpawnParameters);
+		FTransform Transform{};
+		SpawnActorInternal(UWorld::GetWorld(), AMinigameSettingsMachine_C::StaticClass(), &Transform, &SpawnParameters);
+	}
 	
 	auto LoadPlayset = (void (*)(UPlaysetLevelStreamComponent*)) FindLoadPlayset();
 	LoadPlayset(LevelStreamComponent);
