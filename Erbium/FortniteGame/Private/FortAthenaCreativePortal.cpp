@@ -2,6 +2,14 @@
 #include "../Public/FortAthenaCreativePortal.h"
 #include "../Public/FortGameStateAthena.h"
 
+void AFortMinigameSettingsBuilding::BeginPlay(AFortMinigameSettingsBuilding* Settings)
+{
+	if (Settings->HasSettingsVolume()) 
+		Settings->SettingsVolume = Settings->GetOwner();
+	
+	return BeginPlayOG(Settings);
+}
+
 AFortAthenaCreativePortal* AFortAthenaCreativePortal::Create(AFortPlayerControllerAthena* PlayerController)
 {
 	auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
@@ -76,7 +84,21 @@ AFortAthenaCreativePortal* AFortAthenaCreativePortal::Create(AFortPlayerControll
 	//LevelStreamComponent->OnRep_ClientPlaysetData();
 	LevelStreamComponent->bAutoLoadLevel = true;
 	LevelStreamComponent->bAutoActivate = true;
+	
+	if (VersionInfo.FortniteVersion >= 5 && VersionInfo.FortniteVersion <= 25.00)
+	{
+		auto SpawnActorInternal = (AActor * (*)(UWorld*, const UClass*, FTransform*, void*)) Offsets::SpawnActor;
 
+		UWorld::FActorSpawnParameters SpawnParameters{};
+		SpawnParameters.Owner = Portal->LinkedVolume;
+		SpawnParameters.bDeferConstruction = false;
+		SpawnParameters.SpawnCollisionHandlingOverride = 1;
+		SpawnParameters.NameMode = 3;
+
+		FTransform Transform{};
+		SpawnActorInternal(UWorld::GetWorld(), AMinigameSettingsMachine_C::StaticClass(), &Transform, &SpawnParameters);
+	}
+	
 	auto LoadPlayset = (void (*)(UPlaysetLevelStreamComponent*)) FindLoadPlayset();
 	LoadPlayset(LevelStreamComponent);
 
@@ -113,11 +135,18 @@ void AFortAthenaCreativePortal::TeleportPlayerToLinkedVolume(UObject* Context, F
 	PlayerPawn->BeginSkydiving(false);
 }
 
-
 void AFortAthenaCreativePortal::Hook()
 {
 	if (!GetDefaultObj())
 		return;
 	
 	Utils::ExecHook(GetDefaultObj()->GetFunction("TeleportPlayerToLinkedVolume"), TeleportPlayerToLinkedVolume);
+}
+
+void AFortMinigameSettingsBuilding::Hook()
+{
+	if (!GetDefaultObj())
+		return;
+	
+	Utils::Hook(FindMinigameSettingsBuilding__BeginPlay(), BeginPlay, BeginPlayOG);
 }

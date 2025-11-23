@@ -2972,3 +2972,14 @@ void FindNullsAndRetTrues()
         // ue5.1+ i think, they inlined the VFT call
     }
 }
+
+uint32 FindSetState() // yea yea ik its not very uni ploosh u can fix - andr1ww
+{
+    if (VersionInfo.FortniteVersion <= 9.10) return Memcury::Scanner::FindPattern("4C 8B DC 55 53 56 57 41 56 49 8D 6B ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 33 F6 0F B6 FA").Get();
+    return Memcury::Scanner::FindPattern("40 55 53 56 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 33 F6").Get();
+}
+
+uint32 FindMinigameSettingsBuilding__BeginPlay()
+{
+    return Memcury::Scanner::FindPattern("40 55 57 41 56 41 57 48 8B EC 48 83 EC ? 80 3D").Get();
+}

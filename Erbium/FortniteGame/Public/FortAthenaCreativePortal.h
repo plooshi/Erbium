@@ -2,6 +2,24 @@
 #include "../../pch.h"
 #include "FortPlayerControllerAthena.h"
 
+class AFortMinigameSettingsBuilding : public AActor
+{
+public:
+    UCLASS_COMMON_MEMBERS(AFortMinigameSettingsBuilding);
+    
+    DEFINE_PROP(SettingsVolume, AActor*);
+    
+    DefHookOg(void, BeginPlay, AFortMinigameSettingsBuilding* Settings);
+    
+    InitHooks;
+};
+
+class AMinigameSettingsMachine_C : public AFortMinigameSettingsBuilding
+{
+public:
+    UCLASS_COMMON_MEMBERS(AMinigameSettingsMachine_C)
+};
+
 class AFortAthenaCreativePortal : public AActor
 {
 public:
