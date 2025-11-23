@@ -252,7 +252,7 @@ void AFortPlayerPawnAthena::OnCapsuleBeginOverlap_(UObject* Context, FFrame& Sta
 
 	if (Pickup && Pickup->PawnWhoDroppedPickup != Pawn)
 	{
-		if ((!itemEntry && ((Pickup->PrimaryPickupItemEntry.ItemDefinition->HasbForceAutoPickup() && Pickup->PrimaryPickupItemEntry.ItemDefinition->bForceAutoPickup) || !AFortInventory::IsPrimaryQuickbar(Pickup->PrimaryPickupItemEntry.ItemDefinition))) || (itemEntry && itemEntry->Count < MaxStack))
+		if ((!itemEntry && ((Pickup->PrimaryPickupItemEntry.ItemDefinition->HasbForceAutoPickup() && (Pickup->PrimaryPickupItemEntry.ItemDefinition->HasbForceAutoPickup() ? Pickup->PrimaryPickupItemEntry.ItemDefinition->bForceAutoPickup : (Pickup->PrimaryPickupItemEntry.ItemDefinition->GetPickupComponent() ? Pickup->PrimaryPickupItemEntry.ItemDefinition->GetPickupComponent()->bForceAutoPickup : false))) || !AFortInventory::IsPrimaryQuickbar(Pickup->PrimaryPickupItemEntry.ItemDefinition))) || (itemEntry && itemEntry->Count < MaxStack))
 			Pawn->ServerHandlePickup(Pickup, 0.4f, FVector(), true);
 	}
 
@@ -328,11 +328,19 @@ void AFortPlayerPawnAthena::Athena_MedConsumable_Triggered(UObject* Context, FFr
 
 void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack)
 {
+	struct FVehicleExitData { uint8_t Pad[0x30]; };
+
+	FVehicleExitData VehicleExitData;
 	uint8_t ExitForceBehavior;
 	bool bDestroyVehicleWhenForced;
+	if (VersionInfo.FortniteVersion >= 29)
+		Stack.StepCompiledIn(&VehicleExitData);
+	else
+	{
+		Stack.StepCompiledIn(&ExitForceBehavior);
+		Stack.StepCompiledIn(&bDestroyVehicleWhenForced);
+	}
 
-	Stack.StepCompiledIn(&ExitForceBehavior);
-	Stack.StepCompiledIn(&bDestroyVehicleWhenForced);
 	Stack.IncrementCode();
 	auto Pawn = (AFortPlayerPawnAthena*)Context;
 	static auto GetVehicleFunc = Pawn->GetFunction("GetVehicle");
@@ -390,7 +398,10 @@ void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack
 		}
 		printf("3");
 	}
-	callOG(Pawn, Stack.GetCurrentNativeFunction(), ServerOnExitVehicle, ExitForceBehavior, bDestroyVehicleWhenForced);
+	if (VersionInfo.FortniteVersion >= 29)
+		callOG(Pawn, Stack.GetCurrentNativeFunction(), ServerOnExitVehicle, VehicleExitData);
+	else
+		callOG(Pawn, Stack.GetCurrentNativeFunction(), ServerOnExitVehicle, ExitForceBehavior, bDestroyVehicleWhenForced);
 }
 
 void AFortPlayerPawnAthena::PostLoadHook()

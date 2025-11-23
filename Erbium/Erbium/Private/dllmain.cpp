@@ -11,6 +11,7 @@
 #include "../Public/GUI.h"
 #include "../../Erbium/Plugins/CrashReporter/Public/CrashReporter.h"
 #include "../../FortniteGame/Public/FortPlayerControllerAthena.h"
+#include "../../Engine/Public/NetDriver.h"
 #pragma comment(lib, "libcurl/libcurl.lib")
 #pragma comment(lib, "libcurl/zlib.lib")
 #pragma comment(lib, "Ws2_32.lib")
@@ -68,11 +69,38 @@ void Main()
     }
     if (VersionInfo.EngineVersion >= 5.3 && FConfiguration::bEnableIris)
     {
-        UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"log LogIris None"), nullptr);
+        /*UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"log LogIris None"), nullptr);
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"log LogIrisRpc None"), nullptr);
-        UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"log LogIrisBridge None"), nullptr);
+        UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"log LogIrisBridge None"), nullptr);*/
         auto IrisBool = Memcury::Scanner::FindPattern("83 3D ? ? ? ? ? 0F 8E ? ? ? ? 49 8B B9").RelativeOffset(2, 1).Get();
-        *(uint32_t*)IrisBool = true;
+        if (IrisBool)
+            *(uint32_t*)IrisBool = true;
+        else
+        {
+            IrisBool = Memcury::Scanner::FindPattern("44 39 25 ? ? ? ? 0F 9F C0 45 84 FF").RelativeOffset(3).Get(); 
+
+            if (IrisBool)
+                *(uint32_t*)IrisBool = true;
+        }
+
+#ifndef CLIENT
+        if (VersionInfo.FortniteVersion >= 29)
+        {
+            auto ReplicationBridgeConfig = UObjectReplicationBridgeConfig::GetDefaultObj();
+
+            auto FortInventoryName = FName(L"/Script/FortniteGame.FortInventory");
+            for (int i = 0; i < ReplicationBridgeConfig->FilterConfigs.Num(); i++)
+            {
+                auto& FilterConfig = ReplicationBridgeConfig->FilterConfigs.Get(i, FObjectReplicationBridgeFilterConfig::Size());
+
+                if (FilterConfig.ClassName == FortInventoryName)
+                {
+                    FilterConfig.DynamicFilterName = FName(0);
+                    break;
+                }
+            }
+        }
+#endif
         //UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"net.Iris.UseIrisReplication 1"), nullptr);
     }
     if (VersionInfo.EngineVersion >= 5.4)

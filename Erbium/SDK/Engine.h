@@ -600,6 +600,7 @@ namespace SDK
 		UCLASS_COMMON_MEMBERS(ULocalPlayer);
 
 		DEFINE_PROP(PlayerController, UObject*);
+		DEFINE_PROP(ViewportClient, UObject*);
 	};
 
 	class UGameInstance : public UObject

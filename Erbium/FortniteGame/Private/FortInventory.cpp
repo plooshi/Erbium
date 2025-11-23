@@ -17,7 +17,7 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
     Item->SetOwningControllerForTemporaryItem(Owner);
     if (Item->HasOwnerInventory())
         Item->OwnerInventory = this;
-    else
+    else if (Item->HasOwnerInventoryWeak())
         Item->OwnerInventoryWeak = this;
     Item->ItemEntry.ParentInventory = this;
     Item->ItemEntry.LoadedAmmo = LoadedAmmo;
@@ -707,6 +707,8 @@ void AFortInventory::PostLoadHook()
     auto SetOwningInventory = Memcury::Scanner::FindPattern("48 85 D2 74 ? 80 BA ? ? ? ? ? 75 ? 48 89 91").Get();
     if (!SetOwningInventory)
         SetOwningInventory = Memcury::Scanner::FindPattern("48 83 EC ? 48 85 D2 74 ? 80 BA ? ? ? ? ? 75 ? 48 81 C1").Get();
+    if (!SetOwningInventory)
+        SetOwningInventory = Memcury::Scanner::FindPattern("48 85 D2 74 ? 48 89 5C 24 ? 57 48 83 EC ? 48 8B F9 48 8B DA 48 8B CA E8 ? ? ? ? 83 F8 ? 75").Get();
 
     if (SetOwningInventory)
     {

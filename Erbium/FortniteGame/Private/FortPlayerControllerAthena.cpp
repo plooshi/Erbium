@@ -49,6 +49,7 @@ void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena
 	}
 }
 
+extern uint64_t ApplyCharacterCustomization;
 void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, FFrame& Stack)
 {
 	AActor* Pawn;
@@ -74,7 +75,7 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 		{
 			auto& Entry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
 
-			if (Entry.ItemDefinition->bCanBeDropped)
+			if (Entry.ItemDefinition->HasbCanBeDropped() ? Entry.ItemDefinition->bCanBeDropped : (Entry.ItemDefinition->GetPickupComponent() ? Entry.ItemDefinition->GetPickupComponent()->bCanBeDroppedFromInventory : true))
 			{
 				//NewPlayer->WorldInventory->Inventorxy.ReplicatedEntries.Remove(i, FFortItemEntry::Size());
 				//i--;
@@ -94,6 +95,42 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 
 	for (auto& AbilitySet : AFortGameMode::AbilitySets)
 		PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
+
+	if (VersionInfo.FortniteVersion >= 25.20)
+	{
+		static auto Effect = FindObject<UClass>(L"/Game/Athena/SafeZone/GE_OutsideSafeZoneDamage.GE_OutsideSafeZoneDamage_C");
+
+		bool Found = false;
+		auto AbilitySystemComponent = PlayerController->PlayerState->AbilitySystemComponent;
+
+		for (int i = 0; i < AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Num(); i++)
+		{
+			auto& ActiveEffect = AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Get(i, FActiveGameplayEffect::Size());
+
+			if (ActiveEffect.Spec.Def)
+				if (ActiveEffect.Spec.Def->IsA(Effect))
+				{
+					Found = true;
+					break;
+				}
+		}
+
+		if (!Found)
+		{
+			auto EffectHandle = FGameplayEffectContextHandle();
+			auto SpecHandle = AbilitySystemComponent->BP_ApplyGameplayEffectToSelf(Effect, 0.f, EffectHandle);
+
+			//AbilitySystemComponent->SetActiveGameplayEffectLevel(SpecHandle, 1);
+
+			AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(SpecHandle,
+				FGameplayTag(FName(L"SetByCaller.StormCampingDamage")), 1.f);
+		}
+
+		PlayerController->MyFortPawn->bIsInAnyStorm = false;
+		PlayerController->MyFortPawn->OnRep_IsInAnyStorm();
+		PlayerController->MyFortPawn->bIsInsideSafeZone = true;
+		PlayerController->MyFortPawn->OnRep_IsInsideSafeZone();
+	}
 
 	if (Num == 0)
 	{
@@ -129,6 +166,12 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 
 			if (StartingItem.Count && (!SmartItemDefClass || !StartingItem.Item->IsA(SmartItemDefClass)))
 				PlayerController->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
+		}
+
+		UFortKismetLibrary::UpdatePlayerCustomCharacterPartsVisualization(PlayerController->PlayerState);
+		if (!UFortKismetLibrary::UpdatePlayerCustomCharacterPartsVisualization__Ptr)
+		{
+			((void (*)(AActor*, AActor*)) ApplyCharacterCustomization)(PlayerController->PlayerState, Pawn);
 		}
 
 		if (wcsstr(FConfiguration::Playlist, L"/Game/Athena/Playlists/Creative/Playlist_PlaygroundV2.Playlist_PlaygroundV2"))
@@ -191,42 +234,6 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 
 		if (PlayerController->MyFortPawn)
 		{
-			if (VersionInfo.FortniteVersion >= 25.20)
-			{
-				static auto Effect = FindObject<UClass>(L"/Game/Athena/SafeZone/GE_OutsideSafeZoneDamage.GE_OutsideSafeZoneDamage_C");
-
-				bool Found = false;
-				auto AbilitySystemComponent = PlayerController->PlayerState->AbilitySystemComponent;
-
-				for (int i = 0; i < AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Num(); i++)
-				{
-					auto& ActiveEffect = AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Get(i, FActiveGameplayEffect::Size());
-
-					if (ActiveEffect.Spec.Def)
-						if (ActiveEffect.Spec.Def->IsA(Effect))
-						{
-							Found = true;
-							break;
-						}
-				}
-
-				if (!Found)
-				{
-					auto EffectHandle = FGameplayEffectContextHandle();
-					auto SpecHandle = AbilitySystemComponent->BP_ApplyGameplayEffectToSelf(Effect, 0.f, EffectHandle);
-
-					//AbilitySystemComponent->SetActiveGameplayEffectLevel(SpecHandle, 1);
-
-					AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(SpecHandle,
-						FGameplayTag(FName(L"SetByCaller.StormCampingDamage")), 1.f);
-				}
-
-				PlayerController->MyFortPawn->bIsInAnyStorm = false;
-				PlayerController->MyFortPawn->OnRep_IsInAnyStorm();
-				PlayerController->MyFortPawn->bIsInsideSafeZone = true;
-				PlayerController->MyFortPawn->OnRep_IsInsideSafeZone();
-			}
-
 			PlayerController->MyFortPawn->BeginSkydiving(true);
 			PlayerController->MyFortPawn->SetHealth(100.f);
 		}
@@ -943,7 +950,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 		{
 			auto& entry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
 
-			if (entry.ItemDefinition->bCanBeDropped)
+			if (entry.ItemDefinition->HasbCanBeDropped() ? entry.ItemDefinition->bCanBeDropped : (entry.ItemDefinition->GetPickupComponent() ? entry.ItemDefinition->GetPickupComponent()->bCanBeDroppedFromInventory : true))
 				AFortInventory::SpawnPickup(PlayerController->Pawn->K2_GetActorLocation(), entry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetPlayerElimination(), PlayerController->MyFortPawn);
 		}
 	}
@@ -2123,7 +2130,7 @@ void AFortPlayerControllerAthena::ServerDropAllItems(UObject* Context, FFrame& S
 	{
 		auto& Entry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
 
-		if (Entry.ItemDefinition != IgnoreItemDef && Entry.ItemDefinition->bCanBeDropped)
+		if (Entry.ItemDefinition != IgnoreItemDef && (Entry.ItemDefinition->HasbCanBeDropped() ? Entry.ItemDefinition->bCanBeDropped : (Entry.ItemDefinition->GetPickupComponent() ? Entry.ItemDefinition->GetPickupComponent()->bCanBeDroppedFromInventory : true)))
 		{
 			AFortInventory::SpawnPickup(Loc, Entry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn);
 			PlayerController->WorldInventory->Remove(Entry.ItemGuid);
@@ -2376,7 +2383,7 @@ void AFortPlayerControllerAthena::EnterAircraft(UObject* Object, AActor* Aircraf
 		{
 			auto& Entry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Get(i, FFortItemEntry::Size());
 
-			if (Entry.ItemDefinition->bCanBeDropped)
+			if (Entry.ItemDefinition->HasbCanBeDropped() ? Entry.ItemDefinition->bCanBeDropped : (Entry.ItemDefinition->GetPickupComponent() ? Entry.ItemDefinition->GetPickupComponent()->bCanBeDroppedFromInventory : true))
 			{
 				//NewPlayer->WorldInventory->Inventorxy.ReplicatedEntries.Remove(i, FFortItemEntry::Size());
 				//i--;

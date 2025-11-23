@@ -48,6 +48,15 @@ public:
     UENUM_COMMON_MEMBERS(EFortRarity);
 };
 
+class UFortItemComponent_Pickup : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortItemComponent_Pickup);
+
+    DEFINE_BITFIELD_PROP(bCanBeDroppedFromInventory);
+    DEFINE_BITFIELD_PROP(bForceAutoPickup);
+};
+
 class UFortItemDefinition : public UObject
 {
 public:
@@ -73,6 +82,12 @@ public:
 
     DEFINE_FUNC(CreateTemporaryItemInstanceBP, UFortItem*);
     DEFINE_FUNC(GetWeaponItemDefinition, UFortItemDefinition*);
+    DEFINE_FUNC(GetItemComponentByClass, UObject*);
+
+    UFortItemComponent_Pickup* GetPickupComponent() const
+    {
+        return (UFortItemComponent_Pickup*)GetItemComponentByClass(UFortItemComponent_Pickup::StaticClass());
+    }
 
     int32 GetMaxStackSize() const
     {

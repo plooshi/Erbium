@@ -513,7 +513,8 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
             AbilitySets.Add(FindObject<UFortAbilitySet>(L"/DoorBashContent/Gameplay/AS_DoorBash.AS_DoorBash"));
             AbilitySets.Add(FindObject<UFortAbilitySet>(L"/HillScramble/Gameplay/AS_HillScramble.AS_HillScramble"));
             AbilitySets.Add(FindObject<UFortAbilitySet>(L"/SlideImpulse/Gameplay/AS_SlideImpulse.AS_SlideImpulse"));
-            AbilitySets.Add(FindObject<UFortAbilitySet>(L"/RealitySeedGameplay/Environment/Foliage/GAS_Athena_RealitySapling.GAS_Athena_RealitySapling"));
+            if (std::floor(VersionInfo.FortniteVersion) == 21)
+                AbilitySets.Add(FindObject<UFortAbilitySet>(L"/RealitySeedGameplay/Environment/Foliage/GAS_Athena_RealitySapling.GAS_Athena_RealitySapling"));
         }
 
         for (auto& Set : AbilitySets)
@@ -554,8 +555,9 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                 {
                     if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
                         for (auto& ParentTable : CompositeTable->ParentTables)
-                            for (auto& [Key, Val] : *(TMap<int32, FFortLootTierData*>*) (__int64(ParentTable) + 0x30))
-                                TempArr.Add(Val);
+                            if (ParentTable)
+                                for (auto& [Key, Val] : *(TMap<int32, FFortLootTierData*>*) (__int64(ParentTable) + 0x30))
+                                    TempArr.Add(Val);
 
                     for (auto& [Key, Val] : *(TMap<int32, FFortLootTierData*>*) (__int64(Table) + 0x30))
                     {
@@ -577,8 +579,9 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                 {
                     if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
                         for (auto& ParentTable : CompositeTable->ParentTables)
-                            for (auto& [Key, Val] : (TMap<FName, FFortLootTierData*>) ParentTable->RowMap)
-                                TempArr.Add(Val);
+                            if (ParentTable)
+                                for (auto& [Key, Val] : (TMap<FName, FFortLootTierData*>) ParentTable->RowMap)
+                                    TempArr.Add(Val);
 
                     for (auto& [Key, Val] : (TMap<FName, FFortLootTierData*>) Table->RowMap)
                     {
@@ -608,8 +611,9 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                 {
                     if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
                         for (auto& ParentTable : CompositeTable->ParentTables)
-                            for (auto& [Key, Val] : *(TMap<int32, FFortLootPackageData*>*) (__int64(ParentTable) + 0x30))
-                                TempArr[Key] = Val;
+                            if (ParentTable)
+                                for (auto& [Key, Val] : *(TMap<int32, FFortLootPackageData*>*) (__int64(ParentTable) + 0x30))
+                                    TempArr[Key] = Val;
 
                     for (auto& [Key, Val] : *(TMap<int32, FFortLootPackageData*>*) (__int64(Table) + 0x30))
                         TempArr[Key] = Val;
@@ -618,8 +622,9 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                 {
                     if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
                         for (auto& ParentTable : CompositeTable->ParentTables)
-                            for (auto& [Key, Val] : (TMap<FName, FFortLootPackageData*>) ParentTable->RowMap)
-                                TempArr[Key.ComparisonIndex] = Val;
+                            if (ParentTable)
+                                for (auto& [Key, Val] : (TMap<FName, FFortLootPackageData*>) ParentTable->RowMap)
+                                    TempArr[Key.ComparisonIndex] = Val;
 
                     for (auto& [Key, Val] : (TMap<FName, FFortLootPackageData*>) Table->RowMap)
                     {
@@ -790,6 +795,35 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                     NewKey->Time = 1.f;
                     NewKey->Value = 0.01f;
                     Row->Keys.AddAt(*NewKey, 1, FSimpleCurveKey::Size());
+                }
+            }
+        }
+
+        if (VersionInfo.FortniteVersion >= 27)
+        {
+            // fix grind rails
+            auto GameData = FindObject<UCurveTable>("/GrindRail/DataTables/GrindRailGameData.GrindRailGameData");
+
+            if (GameData)
+            {
+                static FName UseGrindingMME = FName(L"Default.GrindRails.UseGrindingMME");
+
+                for (const auto& [RowName, RowPtr] : GameData->RowMap)
+                {
+                    if (RowName != UseGrindingMME)
+                        continue;
+
+                    FSimpleCurve* Row = (FSimpleCurve*)RowPtr;
+
+                    if (!Row)
+                        continue;
+
+                    for (int i = 0; i < Row->Keys.Num(); i++)
+                    {
+                        auto& Key = Row->Keys.Get(i, FSimpleCurveKey::Size());
+
+                        Key.Value = 0.f;
+                    }
                 }
             }
         }
@@ -1055,14 +1089,6 @@ void AFortGameMode::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor*
                 CharacterParts[1] = Body;
                 CharacterParts[3] = Backpack;
             }
-        }
-
-
-        if (ApplyCharacterCustomization)
-            ((void (*)(AActor*, AFortPlayerPawnAthena*)) ApplyCharacterCustomization)(NewPlayer->PlayerState, Pawn);
-        else
-        {
-            //UFortKismetLibrary::UpdatePlayerCustomCharacterPartsVisualization(NewPlayer->PlayerState);
         }
 
         if (NewPlayer->HasXPComponent())
@@ -1460,7 +1486,9 @@ uint8_t AFortGameMode::PickTeam(AFortGameMode* GameMode, uint8_t PreferredTeam, 
         return 0;
 
     uint8_t ret = CurrentTeam;
+    auto Playlist = VersionInfo.FortniteVersion >= 4.0 ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
 
+    printf("Picked team %d %d\n", ret, Playlist ? Playlist->MaxSquadSize : 1);
     if (bIsLargeTeamGame)
     {
         if (CurrentTeam == 4)
@@ -1799,27 +1827,6 @@ void GetPhaseInfo(UObject* Context, FFrame& Stack, bool* Ret)
 void AFortGameMode::Hook()
 {
     Utils::ExecHook(GetDefaultObj()->GetFunction("ReadyToStartMatch"), ReadyToStartMatch_, ReadyToStartMatch_OG);
-
-    if (VersionInfo.EngineVersion >= 5.1)
-    {
-        auto sRef = Memcury::Scanner::FindStringRef(L"STAT_LoadMap").Get();
-
-        uint64_t LoadMapAddr = 0;
-        for (int i = 0; i < 3000; i++)
-        {
-            if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x5C)
-            {
-                LoadMapAddr = sRef - i;
-                break;
-            }
-
-            if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
-            {
-                LoadMapAddr = sRef - i;
-                break;
-            }
-        }
-    }
 }
 
 void AFortGameMode::PostLoadHook()

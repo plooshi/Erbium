@@ -128,6 +128,12 @@ public:
     int UpgradeLevel;
 };
 
+class IFortInventoryInterface : public IInterface
+{
+public:
+    UCLASS_COMMON_MEMBERS(IFortInventoryInterface);
+};
+
 inline const UCurveTable* GameData = nullptr;
 class AFortPlayerControllerAthena : public AActor
 {
@@ -141,7 +147,45 @@ public:
     DEFINE_PROP(PlayerState, AFortPlayerStateAthena*);
     DEFINE_PROP(MyFortPawn, AFortPlayerPawnAthena*);
     DEFINE_PROP(Pawn, AFortPlayerPawnAthena*);
-    DEFINE_PROP(WorldInventory, AFortInventory*);
+
+    static inline uint32_t WorldInventory__Offset = 0;
+    static inline bool WorldInventory__Initialized = false;
+
+    AFortInventory* GetWorldInventory()
+    {
+        if (!WorldInventory__Initialized)
+        {
+            WorldInventory__Initialized = true;
+            WorldInventory__Offset = GetOffset("WorldInventory");
+        }
+
+        // on s29 its also still at 0x0
+        return *(AFortInventory**)(__int64(this) + WorldInventory__Offset);
+    }
+
+    AFortInventory* SetWorldInventory(AFortInventory* NewInventory)
+    {
+        if (!WorldInventory__Initialized)
+        {
+            WorldInventory__Initialized = true;
+            WorldInventory__Offset = GetOffset("WorldInventory");
+        }
+
+        if (VersionInfo.FortniteVersion >= 29)
+        {
+            auto& ScriptInterface = *(TScriptInterface<IFortInventoryInterface>*)(__int64(this) + WorldInventory__Offset);
+
+            ScriptInterface.ObjectPointer = NewInventory;
+            ScriptInterface.InterfacePointer = NewInventory->GetInterface(IFortInventoryInterface::StaticClass());
+
+            return NewInventory;
+        }
+        else
+            return *(AFortInventory**)(__int64(this) + WorldInventory__Offset) = NewInventory;
+    }
+    __declspec(property(get = GetWorldInventory, put = SetWorldInventory))
+    AFortInventory* WorldInventory;
+
     DEFINE_PROP(CosmeticLoadoutPC, FFortAthenaLoadout);
     DEFINE_PROP(CustomizationLoadout, FFortAthenaLoadout);
     DEFINE_BITFIELD_PROP(bBuildFree);
