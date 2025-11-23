@@ -46,7 +46,7 @@ void UAbilitySystemComponent::GiveAbilitySet(const UFortAbilitySet* Set)
     ScriptInterface.ObjectPointer = this->GetOwner();
     ScriptInterface.InterfacePointer = ScriptInterface.ObjectPointer->GetInterface(IFortAbilitySystemInterface::StaticClass());
 
-    if (ScriptInterface.ObjectPointer && ScriptInterface.InterfacePointer)
+    if (VersionInfo.EngineVersion >= 4.19 && ScriptInterface.ObjectPointer && ScriptInterface.InterfacePointer)
         UFortKismetLibrary::EquipFortAbilitySet(ScriptInterface, Set, nullptr);
     else if (Set)
     {
