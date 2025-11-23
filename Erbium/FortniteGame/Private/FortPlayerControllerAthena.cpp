@@ -169,7 +169,7 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 		}
 
 		UFortKismetLibrary::UpdatePlayerCustomCharacterPartsVisualization(PlayerController->PlayerState);
-		if (!UFortKismetLibrary::UpdatePlayerCustomCharacterPartsVisualization__Ptr)
+		if (!UFortKismetLibrary::UpdatePlayerCustomCharacterPartsVisualization__Ptr && ApplyCharacterCustomization)
 		{
 			((void (*)(AActor*, AActor*)) ApplyCharacterCustomization)(PlayerController->PlayerState, Pawn);
 		}
