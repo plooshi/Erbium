@@ -1113,6 +1113,9 @@ uint64_t FindKickPlayer()
         if (!pattern)
             pattern = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 45 33 E4 48 8B F2 41 8B FC").Get();
 
+        if (!pattern)
+            pattern = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 45 33 E4 48 8B FA 41 8B DC").Get();
+
         return pattern;
     }
     else if (VersionInfo.EngineVersion >= 5.0)
