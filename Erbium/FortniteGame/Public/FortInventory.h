@@ -99,8 +99,10 @@ public:
             return GetFromOffset<int32>(this, MaxStackSizeOffset);
 
         // scalablefloat
-        auto& ScalableFloat = GetFromOffset<FScalableFloat>(this, MaxStackSizeOffset);
-        return (int32)ScalableFloat.Evaluate();
+        static auto GetMaxStackSizeFn = GetFunction("GetMaxStackSize");
+        return Call<int32>(GetMaxStackSizeFn, nullptr);
+        //auto& ScalableFloat = GetFromOffset<FScalableFloat>(this, MaxStackSizeOffset);
+        //return (int32)ScalableFloat.Evaluate();
     }
 };
 
