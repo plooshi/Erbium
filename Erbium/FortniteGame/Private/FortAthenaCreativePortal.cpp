@@ -89,7 +89,8 @@ AFortAthenaCreativePortal* AFortAthenaCreativePortal::Create(AFortPlayerControll
 		UWorld::SpawnActor<AMinigameSettingsMachine_C>(FVector{}, {}, Portal->LinkedVolume);
 	
 	auto LoadPlayset = (void (*)(UPlaysetLevelStreamComponent*)) FindLoadPlayset();
-	LoadPlayset(LevelStreamComponent);
+	if (LoadPlayset)
+		LoadPlayset(LevelStreamComponent);
 
 	PlayerController->CreativePlotLinkedVolume = Portal->LinkedVolume;
 	PlayerController->OnRep_CreativePlotLinkedVolume();
