@@ -61,9 +61,12 @@ void SetupPlaylist(AFortGameMode* GameMode, AFortGameStateAthena* GameState)
         {
             if (Playlist->HasbRespawnInAir())
                 Playlist->bRespawnInAir = true;
-            Playlist->RespawnHeight.Curve.CurveTable = nullptr;
-            Playlist->RespawnHeight.Curve.RowName = FName();
-            Playlist->RespawnHeight.Value = 20000;
+            if (Playlist->HasRespawnHeight())
+            {
+                Playlist->RespawnHeight.Curve.CurveTable = nullptr;
+                Playlist->RespawnHeight.Curve.RowName = FName();
+                Playlist->RespawnHeight.Value = 20000;
+            }
             if (Playlist->HasRespawnTime())
             {
                 Playlist->RespawnTime.Curve.CurveTable = nullptr;
@@ -1585,7 +1588,7 @@ bool AFortGameMode::StartAircraftPhase(AFortGameMode* GameMode, char a2)
             //return Ret;
         }
         else
-            Loc = GameMode->SafeZoneLocations.Get(FConfiguration::LateGameZone + (VersionInfo.FortniteVersion >= 24 ? 2 : 0) - 1, FVector::Size());
+            Loc = GameMode->SafeZoneLocations.Get(FConfiguration::LateGameZone + (VersionInfo.FortniteVersion >= 24 ? 3 : 0) - 1, FVector::Size());
         Loc.Z = 17500.f;
         if (GameState->HasDefaultParachuteDeployTraceForGroundDistance())
             GameState->DefaultParachuteDeployTraceForGroundDistance = 2500.f;
@@ -1807,7 +1810,7 @@ void SpawnInitialSafeZone(AFortGameMode* GameMode)
     SafeZoneIndicator->OnSafeZonePhaseChanged.Bind(GameMode, FName(L"HandlePostSafeZonePhaseChanged"));
     GameMode->OnSafeZoneIndicatorSpawned.Process(SafeZoneIndicator);
 
-    StartNewSafeZonePhase(GameMode, FConfiguration::bLateGame ? (FConfiguration::LateGameZone + (VersionInfo.FortniteVersion >= 24 ? 2 : 0)) : 1);
+    StartNewSafeZonePhase(GameMode, FConfiguration::bLateGame ? (FConfiguration::LateGameZone + (VersionInfo.FortniteVersion >= 24 ? 3 : 0)) : 1);
 
 
     //return SpawnInitialSafeZoneOG(GameMode);

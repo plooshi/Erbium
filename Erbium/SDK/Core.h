@@ -501,7 +501,7 @@ namespace SDK
 			auto Addr = ValidateRef.Get();
 
 			if (!Addr)
-				Addr = __int64(GetNativeFunc());
+				Addr = Memcury::Scanner(GetNativeFunc()).ScanFor({ 0x0F, 0x95 }).Get();
 
 			if (Addr)
 				for (int i = 0; i < 2000; i++)

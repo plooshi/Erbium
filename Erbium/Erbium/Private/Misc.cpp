@@ -165,14 +165,23 @@ void Misc::InitClient()
 
 				if (FConfiguration::bForceRespawns)
 				{
-					Playlist->bRespawnInAir = true;
-					Playlist->RespawnHeight.Curve.CurveTable = nullptr;
-					Playlist->RespawnHeight.Curve.RowName = FName();
-					Playlist->RespawnHeight.Value = 20000;
-					Playlist->RespawnTime.Curve.CurveTable = nullptr;
-					Playlist->RespawnTime.Curve.RowName = FName();
-					Playlist->RespawnTime.Value = 3;
+					if (Playlist->HasbRespawnInAir())
+						Playlist->bRespawnInAir = true;
+					if (Playlist->HasRespawnHeight())
+					{
+						Playlist->RespawnHeight.Curve.CurveTable = nullptr;
+						Playlist->RespawnHeight.Curve.RowName = FName();
+						Playlist->RespawnHeight.Value = 20000;
+					}
+					if (Playlist->HasRespawnTime())
+					{
+						Playlist->RespawnTime.Curve.CurveTable = nullptr;
+						Playlist->RespawnTime.Curve.RowName = FName();
+						Playlist->RespawnTime.Value = 3;
+					}
 					Playlist->RespawnType = 1; // InfiniteRespawns
+					if (Playlist->HasbAllowJoinInProgress())
+						Playlist->bAllowJoinInProgress = true;
 					if (Playlist->HasbForceRespawnLocationInsideOfVolume())
 						Playlist->bForceRespawnLocationInsideOfVolume = true;
 				}
@@ -388,6 +397,7 @@ void Misc::Hook()
 			AttemptDeriveFromURL = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 48 8B D1").Get();
 		if (!AttemptDeriveFromURL)
 			AttemptDeriveFromURL = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 4C 8B D1").Get();
+
 		Utils::Hook(AttemptDeriveFromURL, GetNetMode);
 		PatchAllNetModes(AttemptDeriveFromURL);
 	}
@@ -470,7 +480,7 @@ void Misc::Hook()
 	{
 		auto pattern = Memcury::Scanner::FindPattern("48 8B 01 FF 90 ? ? ? ? 48 8B 8B ? ? ? ? 48 85 C9 74 ? 48 8B 01 FF 90 ? ? ? ? 48 8D 8B");
 
-		auto patchPoint = pattern.ScanFor({ 0x48, 0x89, 0x5C }, false).ScanFor({ 0x83, 0xF8, 0x02 }).Get();
+		auto patchPoint = pattern.ScanFor(VersionInfo.EngineVersion < 5.5 ? std::vector<uint8_t>{ 0x48, 0x89, 0x5C } : std::vector<uint8_t>{ 0x40, 0x53 }, false).ScanFor({0x83, 0xF8, 0x02}).Get();
 
 		Utils::Patch<uint8_t>(patchPoint + 2, 0x1);
 	}

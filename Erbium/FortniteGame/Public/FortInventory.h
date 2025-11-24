@@ -92,17 +92,23 @@ public:
     {
         static auto Prop = this->GetProperty("MaxStackSize");
 
-        static auto MaxStackSizeSize = GetFromOffset<int32>(Prop, Offsets::ElementSize); // tuff variable name
-        static auto MaxStackSizeOffset = GetFromOffset<int32>(Prop, Offsets::Offset_Internal);
+        if (Prop)
+        {
+            static auto MaxStackSizeSize = GetFromOffset<int32>(Prop, Offsets::ElementSize); // tuff variable name
+            static auto MaxStackSizeOffset = GetFromOffset<int32>(Prop, Offsets::Offset_Internal);
 
-        if (MaxStackSizeSize == 4) // sizeof(int32)
-            return GetFromOffset<int32>(this, MaxStackSizeOffset);
+            if (MaxStackSizeSize == 4) // sizeof(int32)
+                return GetFromOffset<int32>(this, MaxStackSizeOffset);
 
-        // scalablefloat
-        static auto GetMaxStackSizeFn = GetFunction("GetMaxStackSize");
-        return Call<int32>(GetMaxStackSizeFn, nullptr);
-        //auto& ScalableFloat = GetFromOffset<FScalableFloat>(this, MaxStackSizeOffset);
-        //return (int32)ScalableFloat.Evaluate();
+            // scalablefloat
+            auto& ScalableFloat = GetFromOffset<FScalableFloat>(this, MaxStackSizeOffset);
+            return (int32)ScalableFloat.Evaluate();
+        }
+        else
+        {
+            static auto GetMaxStackSizeFn = GetFunction("GetMaxStackSize");
+            return Call<int32>(GetMaxStackSizeFn, nullptr);
+        }
     }
 };
 

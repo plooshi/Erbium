@@ -256,6 +256,9 @@ namespace SDK
 
 			if (!Offsets::StaticFindObject)
 				Offsets::StaticFindObject = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 55 41 54 41 55 41 56 41 57 48 8B EC 48 83 EC ? 4C 8B E9").Get();
+
+			if (!Offsets::StaticFindObject)
+				Offsets::StaticFindObject = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 83 FA FF").Get();
 		}
 		else if (VersionInfo.EngineVersion == 5.2)
 			Offsets::StaticFindObject = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 48 89 7C 24 ? 55 41 56 41 57 48 8B EC 48 83 EC ? 33 DB 4C 8B F9").Get();
@@ -332,6 +335,9 @@ namespace SDK
 
 			if (!Offsets::StaticLoadObject)
 				Offsets::StaticLoadObject = Memcury::Scanner::FindPattern("40 55 53 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 8B 85 ? ? ? ? 45 33 FF 4C 8B B5 ? ? ? ? 49 8B D8").Get();
+
+			if (!Offsets::StaticLoadObject)
+				Offsets::StaticLoadObject = Memcury::Scanner::FindPattern("40 55 53 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 8B 85 ? ? ? ? 45 33 E4 4C 8B B5 ? ? ? ? 49 8B D8").Get();
 		}
 		else
 		{

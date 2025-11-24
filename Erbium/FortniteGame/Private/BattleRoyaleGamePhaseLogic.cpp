@@ -39,7 +39,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::HandleMatchHasStarted(A
 	if (!bSkipWarmup)
 	{
 		auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
-		auto WarmupDuration = 90.f;
+		auto WarmupDuration = 60.f;
 
 		GamePhaseLogic->WarmupCountdownStartTime = Time;
 		GamePhaseLogic->WarmupCountdownEndTime = Time + WarmupDuration;
@@ -450,7 +450,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 				printf("LateGame is not supported on this version!\n");
 				return;
 			}
-			FVector Loc = StormCircles[FConfiguration::LateGameZone - 1].Center;
+			FVector Loc = StormCircles[FConfiguration::LateGameZone + 2].Center;
 			Loc.Z = 17500.f;
 
 			FlightInfo.FlightSpeed = 0.f;
@@ -639,7 +639,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 				{
 					formedZone = true;
 					auto SafeZoneIndicator = SetupSafeZoneIndicator();
-					StartNewSafeZonePhase(FConfiguration::bLateGame ? FConfiguration::LateGameZone + 1 : 1);
+					StartNewSafeZonePhase(FConfiguration::bLateGame ? FConfiguration::LateGameZone + 3 : 1);
 					return;
 				}
 			}

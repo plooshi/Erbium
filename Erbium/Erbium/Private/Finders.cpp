@@ -460,6 +460,11 @@ uint64_t FindTickFlush()
                         TickFlush = uint64_t(Ptr);
                         break;
                     }
+                    else if (*Ptr == 0x40 && *(Ptr + 1) == 0x55)
+                    {
+                        TickFlush = uint64_t(Ptr);
+                        break;
+                    }
                 }
         }
     }
@@ -993,6 +998,9 @@ uint64_t FindFinishedTargetSpline()
 
             if (!FinishedTargetSpline)
                 FinishedTargetSpline = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 8B F9 48 89 4C 24 ? 48 81 C1 ? ? ? ? E8").Get();
+
+            if (!FinishedTargetSpline)
+                FinishedTargetSpline = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 4C 8B F1 48 89 4C 24 ? 48 81 C1 ? ? ? ? E8").Get();
         }
     }
 
@@ -1118,6 +1126,9 @@ uint64_t FindKickPlayer()
 
         if (!pattern)
             pattern = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 45 33 E4 48 8B FA 41 8B DC").Get();
+
+        if (!pattern)
+            pattern = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 45 33 F6 48 89 4C 24 ? 45 8B FE").Get();
 
         return pattern;
     }
@@ -2884,20 +2895,6 @@ void FindNullsAndRetTrues()
 
     if (VersionInfo.FortniteVersion >= 16.00)
     {
-        auto UnsafeEnvironment = Memcury::Scanner::FindPattern("4C 8B DC 55 49 8D AB ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 49 89 73 F0 49 89 7B E8 48 8B F9 4D 89 63 E0 4D 8B E0 4D 89 6B D8").Get();
-
-        if (!UnsafeEnvironment)
-            UnsafeEnvironment = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 80 B9 ? ? ? ? ? 48 8B DA 48 8B F1").Get();
-        if (!UnsafeEnvironment)
-            UnsafeEnvironment = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? ? 0F B6 ? 44 88 44 24 ?").Get();
-        if (!UnsafeEnvironment)
-            UnsafeEnvironment = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 45 0F B6 F8").Get();
-        if (!UnsafeEnvironment)
-            UnsafeEnvironment = Memcury::Scanner::FindPattern("4C 8B DC 55 49 8D AB ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ?").Get();
-
-        if (UnsafeEnvironment)
-            NullFuncs.push_back(UnsafeEnvironment);
-
         auto RequestExitWithStatus = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC 40 41 B9 ? ? ? ? 0F B6 F9 44 38 0D ? ? ? ? 0F B6 DA 72 24 89 5C 24 30 48 8D 05 ? ? ? ? 89 7C 24 28 4C 8D 05 ? ? ? ? 33 D2 48 89 44 24 ? 33 C9 E8 ? ? ? ?").Get();
         if (!RequestExitWithStatus)
             RequestExitWithStatus = Memcury::Scanner::FindPattern("4C 8B DC 49 89 5B 08 49 89 6B 10 49 89 73 18 49 89 7B 20 41 56 48 83 EC 30 80 3D ? ? ? ? ? 49 8B").Get();
@@ -2930,6 +2927,9 @@ void FindNullsAndRetTrues()
         else
         {
             auto sRef = Memcury::Scanner::FindStringRef(L"CanActivateAbility %s failed, blueprint refused", true, 0, VersionInfo.EngineVersion >= 5.0).Get();
+
+            if (!sRef)
+                sRef = Memcury::Scanner::FindStringRef(L"CanActivateAbility %s failed, called with invalid Handle", true, 0, VersionInfo.EngineVersion >= 5.0).Get();
 
             if (sRef)
             {

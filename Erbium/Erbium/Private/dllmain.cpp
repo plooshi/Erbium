@@ -57,6 +57,7 @@ void Main()
     {
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"net.AllowEncryption 0"), nullptr);
     
+#ifndef CLIENT
         auto DefaultCurieGlobals = FindClass("CurieGlobals")->GetDefaultObj();
         
         if (DefaultCurieGlobals)
@@ -66,6 +67,7 @@ void Main()
             if (Offset != -1)
                 *(bool*)(uintptr_t(DefaultCurieGlobals) + Offset) = false;
         }
+#endif
     }
     if (VersionInfo.EngineVersion >= 5.3 && FConfiguration::bEnableIris)
     {

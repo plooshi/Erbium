@@ -213,7 +213,10 @@ void AFortPhysicsPawn::Hook()
         auto ServerMoveFn = DefaultPhysPawn->GetFunction("ServerMove");
 
         if (ServerMoveFn)
+        {
             Utils::ExecHook(ServerMoveFn, ServerMove);
+            Utils::ExecHook(DefaultPhysPawn->GetFunction("ServerMoveReliable"), ServerMove);
+        }
         else
         {
             auto ServerUpdatePhysicsParamsFn = DefaultPhysPawn->GetFunction("ServerUpdatePhysicsParams");

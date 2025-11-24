@@ -240,7 +240,8 @@ void UFortKismetLibrary::PickLootDrops(UObject* Object, FFrame& Stack, bool* Ret
 void UFortKismetLibrary::K2_SpawnPickupInWorldWithClassAndItemEntry(UObject* Context, FFrame& Stack, AFortPickupAthena** Ret)
 {
 	UObject* WorldContextObject;
-	FFortItemEntry Entry;
+	auto Entry = (FFortItemEntry*)malloc(FFortItemEntry::Size());
+	memset(Entry, 0, FFortItemEntry::Size());
 	TSubclassOf<AFortPickupAthena> PickupClass;
 	FVector Position;
 	FVector Direction;
@@ -254,7 +255,7 @@ void UFortKismetLibrary::K2_SpawnPickupInWorldWithClassAndItemEntry(UObject* Con
 	bool bPickupOnlyRelevantToOwner;
 
 	Stack.StepCompiledIn(&WorldContextObject);
-	Stack.StepCompiledIn(&Entry);
+	Stack.StepCompiledIn(Entry);
 	Stack.StepCompiledIn(&PickupClass);
 	Stack.StepCompiledIn(&Position);
 	Stack.StepCompiledIn(&Direction);
@@ -268,7 +269,8 @@ void UFortKismetLibrary::K2_SpawnPickupInWorldWithClassAndItemEntry(UObject* Con
 	Stack.StepCompiledIn(&bPickupOnlyRelevantToOwner);
 	Stack.IncrementCode();
 
-	*Ret = AFortInventory::SpawnPickup(Position, Entry.ItemDefinition, Entry.Count, Entry.Level, SourceType, Source, OptionalOwnerPC ? OptionalOwnerPC->MyFortPawn : nullptr, bToss, bRandomRotation, PickupClass.Get());
+	*Ret = AFortInventory::SpawnPickup(Position, Entry->ItemDefinition, Entry->Count, Entry->Level, SourceType, Source, OptionalOwnerPC ? OptionalOwnerPC->MyFortPawn : nullptr, bToss, bRandomRotation);
+	free(Entry);
 }
 
 
@@ -296,6 +298,8 @@ void UFortKismetLibrary::Hook()
 				bHasOptionalOwnerPC = true;
 		}
 	Utils::ExecHook(K2_SpawnPickupInWorldFn, K2_SpawnPickupInWorld);
+
+	Utils::ExecHook(GetDefaultObj()->GetFunction("K2_SpawnPickupInWorldWithClassAndItemEntry"), K2_SpawnPickupInWorldWithClassAndItemEntry);
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("SpawnItemVariantPickupInWorld"), SpawnItemVariantPickupInWorld);
 
