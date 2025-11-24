@@ -824,12 +824,13 @@ namespace SDK
 
 	inline void UObject::AddToRoot() const
 	{
+		if (!this)
+			return;
+
 		auto Item = (FUObjectItem*)TUObjectArray::GetItemByIndex(Index);
 
 		if (Item)
-		{
 			Item->Flags |= 1 << 30;
-		}
 	}
 
 	inline const UClass* FindClass(const char* Name)
