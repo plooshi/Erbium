@@ -388,6 +388,15 @@ public:
 	UCLASS_COMMON_MEMBERS(AFortTeamMemberPedestal);
 };
 
+__int64 (*CrashSomethingOG)(__int64 a1, __int64 a2);
+__int64 CrashSomething(__int64 a1, __int64 a2)
+{
+	if (!a1)
+		return 0;
+
+	return CrashSomethingOG(a1, a2);
+}
+
 void Misc::Hook()
 {
 	if (VersionInfo.FortniteVersion == 23.00 || (VersionInfo.FortniteVersion >= 25 && VersionInfo.FortniteVersion != 28.30 && VersionInfo.FortniteVersion != 29.40) || VersionInfo.FortniteVersion >= 30)
@@ -484,4 +493,7 @@ void Misc::Hook()
 
 		Utils::Patch<uint8_t>(patchPoint + 2, 0x1);
 	}
+
+	if (VersionInfo.FortniteVersion >= 27)
+		Utils::Hook(Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC ? 4C 8D B1 ? ? ? ? 33 DB 49 8D 7E").Get(), CrashSomething, CrashSomethingOG);
 }
