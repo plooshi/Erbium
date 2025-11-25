@@ -129,8 +129,11 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 		PlayerController->MyFortPawn->OnRep_IsInsideSafeZone();
 	}
 
-	for (auto& AbilitySet : AFortGameMode::AbilitySets)
-		PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
+	if (VersionInfo.FortniteVersion < 15)
+	{
+		for (auto& AbilitySet : AFortGameMode::AbilitySets)
+			PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
+	}
 
 	if (Num == 0)
 	{
@@ -1169,8 +1172,12 @@ void AFortPlayerControllerAthena::ServerClientIsReadyToRespawn(UObject* Context,
 		NewPawn->SetHealth(100.f);
 		NewPawn->SetShield(0.f);
 
-		PlayerState->RespawnData.bClientIsReady = true;
+
+		for (auto& AbilitySet : AFortGameMode::AbilitySets)
+			PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
 	}
+
+	PlayerState->RespawnData.bClientIsReady = true;
 }
 
 struct FCustomCharacterParts
