@@ -142,7 +142,7 @@ namespace SDK
 				break;
 			}
 		}
-		else
+		else 
 			VersionInfo.FortniteVersion = std::stod(BuildString.substr(BuildString.rfind(L'-') + 1));
 
 		bUE51 = VersionInfo.FortniteVersion >= 24.00;

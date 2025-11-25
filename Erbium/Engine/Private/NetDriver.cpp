@@ -848,7 +848,7 @@ void UNetDriver::PostLoadHook()
 	}
 	else if (VersionInfo.FortniteVersion >= 23)
 	{
-		DestroyedStartupOrDormantActorsOffset = VersionInfo.FortniteVersion >= 24 ? 0x2f8 : 0x300;
+		DestroyedStartupOrDormantActorsOffset = std::floor(VersionInfo.FortniteVersion) == 24 ? 0x2f8 : 0x300;
 		DestroyedStartupOrDormantActorGUIDsOffset = VersionInfo.EngineVersion == 5.2 ? 0x14a8 : 0x14b0;
 		ClientVisibleLevelNamesOffset = DestroyedStartupOrDormantActorGUIDsOffset + (VersionInfo.FortniteVersion < 24 ? 0x190 : 0x1e0);
 	}
