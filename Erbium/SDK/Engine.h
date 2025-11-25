@@ -762,7 +762,7 @@ namespace SDK
 			uint32_t ObjectFlags;
 		};
 
-		static AActor* SpawnActor(const UClass* Class, FTransform Transform, AActor* Owner = nullptr)
+		static AActor* SpawnActor(const UClass* Class, FTransform Transform, AActor* Owner = nullptr, uint8_t CollisionOverride = 2)
 		{
 			/*if (VersionInfo.EngineVersion >= 5.2)
 			{
@@ -813,7 +813,7 @@ namespace SDK
 			Params.Owner = Owner;
 			
 			UGameplayStatics::GetDefaultObj()->ProcessEvent(BeginDeferredActorSpawnFromClassFn, &Params);*/
-			auto Actor = UGameplayStatics::BeginDeferredActorSpawnFromClass(GetWorld(), Class, Transform, 2, Owner);
+			auto Actor = UGameplayStatics::BeginDeferredActorSpawnFromClass(GetWorld(), Class, Transform, CollisionOverride, Owner);
 
 			/*GameplayStatics_FinishSpawningActor Params2{};
 			Params2.Actor = Params.ReturnValue;

@@ -355,7 +355,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 
 		std::sort(PriorityActors.begin(), PriorityActors.end());
 
-		if (IsNetReady && VersionInfo.FortniteVersion < 22 && !IsNetReady(Conn, false))
+		if (IsNetReady && /*VersionInfo.FortniteVersion < 22 && */ !IsNetReady(Conn, false))
 			goto _out;
 
 		if (DestroyedStartupOrDormantActorGUIDsOffset)
@@ -459,12 +459,12 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 					if (PriorityActor.bIsRelevant)
 						Channel->GetRelevantTime() = Driver->GetTime() + 0.5 * ((float)rand() / 32767.f);
 
-					if (VersionInfo.FortniteVersion >= 22 || (IsNetReady && IsNetReady(Conn, false))) // actually uchannel::isnetready
+					if (/*VersionInfo.FortniteVersion >= 22 || */(IsNetReady && IsNetReady(Conn, false))) // actually uchannel::isnetready
 						((int32(*)(UActorChannel*))FindReplicateActor())(Channel);
 					else
 						Actor->ForceNetUpdate();
 
-					if (IsNetReady && VersionInfo.FortniteVersion < 22 && !IsNetReady(Conn, false))
+					if (IsNetReady/* && VersionInfo.FortniteVersion < 22*/ && !IsNetReady(Conn, false))
 					{
 						break;
 					}

@@ -905,6 +905,23 @@ namespace UC
 
 		inline void Remove(int32 Index)
 		{
+			const SetDataType& ElementBeingRemoved = Elements[Index];
+
+			int32* HashPtr = Hash.GetAllocation();
+			int32* NextElementIndexIter = &HashPtr[ElementBeingRemoved.HashIndex];
+			for (;;)
+			{
+				int32 NextElementIndex = *NextElementIndexIter;
+
+				if (NextElementIndex == Index)
+				{
+					*NextElementIndexIter = ElementBeingRemoved.HashNextId;
+					break;
+				}
+
+				NextElementIndexIter = &Elements[NextElementIndex].HashNextId;
+			}
+
 			return Elements.Remove(Index);
 		}
 
@@ -926,7 +943,8 @@ namespace UC
 		{
 			for (auto& SetElement : *this)
 			{
-				if (SetElement == Element) return true;
+				if (SetElement == Element) 
+					return true;
 			}
 
 			return false;
