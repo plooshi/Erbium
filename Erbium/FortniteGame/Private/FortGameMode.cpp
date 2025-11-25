@@ -1314,8 +1314,6 @@ void AFortGameMode::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor*
     }
     else
     {
-        for (auto& AbilitySet : AFortGameMode::AbilitySets)
-            NewPlayer->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
         //NewPlayer->WorldInventory->Inventory.ReplicatedEntries.ResetNum();
         //NewPlayer->WorldInventory->Inventory.ItemInstances.ResetNum();
 

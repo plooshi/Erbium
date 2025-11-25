@@ -129,6 +129,9 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 		PlayerController->MyFortPawn->OnRep_IsInsideSafeZone();
 	}
 
+	for (auto& AbilitySet : AFortGameMode::AbilitySets)
+		PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
+
 	if (Num == 0)
 	{
 		static auto SmartItemDefClass = FindClass("FortSmartBuildingItemDefinition");
