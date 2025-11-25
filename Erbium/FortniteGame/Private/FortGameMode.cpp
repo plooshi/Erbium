@@ -916,7 +916,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
             }
         }
 
-        if (SupplyDropClass && GameState->MapInfo)
+        if (SupplyDropClass && GameState->HasMapInfo() && GameState->MapInfo)
             for (auto& Info : GameState->MapInfo->SupplyDropInfoList)
                 Info->SupplyDropClass = SupplyDropClass;
 
