@@ -446,7 +446,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
         else if (VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.26)
             GameState->OnRep_CurrentPlaylistInfo();
 
-        if (VersionInfo.FortniteVersion >= 25.20 && GameState->MapInfo)
+        if (VersionInfo.FortniteVersion >= 25.20 && GameState->HasMapInfo() && GameState->MapInfo)
         {
             auto InitializeFlightPath = (void(*)(AFortAthenaMapInfo*, AFortGameStateAthena*, UFortGameStateComponent_BattleRoyaleGamePhaseLogic*, bool, double, float, float)) FindInitializeFlightPath();
             if (InitializeFlightPath)
