@@ -75,6 +75,12 @@ AFortAthenaCreativePortal* AFortAthenaCreativePortal::Create(AFortPlayerControll
 		LevelSaveComponent->bLoadPlaysetFromPlot = true;
 		LevelSaveComponent->bAutoLoadFromRestrictedPlotDefinition = true;
 		LevelSaveComponent->RestrictedPlotDefinition = RestrictedPlotDefinition;
+		if (LevelSaveComponent->HasPlotPermissions())
+			LevelSaveComponent->PlotPermissions.Permission = 1;
+		else
+		{
+			static auto PlayspaceComponent = FindClass("PlayspaceComponent_CreativeToolsPermission");
+		}
 	}
 	auto LevelStreamComponent = (UPlaysetLevelStreamComponent*)Portal->LinkedVolume->GetComponentByClass(UPlaysetLevelStreamComponent::StaticClass());
 

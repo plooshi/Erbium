@@ -93,9 +93,6 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 			PlayerController->WorldInventory->Remove(Guid);
 	}
 
-	for (auto& AbilitySet : AFortGameMode::AbilitySets)
-		PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
-
 	if (VersionInfo.FortniteVersion >= 25.20)
 	{
 		static auto Effect = FindObject<UClass>(L"/Game/Athena/SafeZone/GE_OutsideSafeZoneDamage.GE_OutsideSafeZoneDamage_C");
@@ -143,7 +140,8 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 			PlayerController->WorldInventory->GiveItem(PlayerController->CosmeticLoadoutPC.Pickaxe->WeaponDefinition);
 		else if (HasCustomizationLoadout && PlayerController->CustomizationLoadout.Pickaxe)
 			PlayerController->WorldInventory->GiveItem(PlayerController->CustomizationLoadout.Pickaxe->WeaponDefinition);
-		else if (GameMode->StartingItems.Num() == 0)
+		
+		if (GameMode->StartingItems.Num() == 0)
 		{
 			static auto DefaultPickaxe = FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
 			static auto WallBuild = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Wall.BuildingItemData_Wall");
@@ -176,6 +174,9 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 
 		if (wcsstr(FConfiguration::Playlist, L"/Game/Athena/Playlists/Creative/Playlist_PlaygroundV2.Playlist_PlaygroundV2"))
 			AFortAthenaCreativePortal::Create(PlayerController);
+
+		for (auto& AbilitySet : AFortGameMode::AbilitySets)
+			PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
 	}
 	else if (FConfiguration::bLateGame && (!FConfiguration::bKeepInventory || FConfiguration::bLateGame))
 	{

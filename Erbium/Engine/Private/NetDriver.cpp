@@ -508,7 +508,7 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
         auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
 		auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 		auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
-		static auto bSkipAircraft = GameState->CurrentPlaylistInfo.BasePlaylist ? GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft : false;
+		static auto bSkipAircraft = GameState->HasCurrentPlaylistInfo() && GameState->CurrentPlaylistInfo.BasePlaylist ? GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft : false;
 		if (!bSkipAircraft && GameMode->MatchState == FName(L"InProgress") && GameState->WarmupCountdownEndTime <= Time)
         {
             UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
@@ -571,7 +571,7 @@ void UNetDriver::TickFlush__RepGraph(UNetDriver* Driver, float DeltaSeconds)
 			auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
 			auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 			auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
-			static auto bSkipAircraft = GameState->CurrentPlaylistInfo.BasePlaylist ? GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft : false;
+			static auto bSkipAircraft = GameState->HasCurrentPlaylistInfo() && GameState->CurrentPlaylistInfo.BasePlaylist ? GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft : false;
 			if (!bSkipAircraft && GameMode->MatchState == FName(L"InProgress") && GameState->WarmupCountdownEndTime <= Time)
 			{
 				UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
@@ -794,8 +794,8 @@ void UNetDriver::PostLoadHook()
 	}
 	else if (VersionInfo.FortniteVersion >= 25 && VersionInfo.FortniteVersion < 28)
 	{
-		NetworkObjectListOffset = 0x750;
-		ReplicationFrameOffset = 0x458;
+		NetworkObjectListOffset = VersionInfo.FortniteVersion < 25.11 ? 0x738 : 0x750;
+		ReplicationFrameOffset = VersionInfo.FortniteVersion < 25.11 ? 0x440 : 0x458;
 	}
 	else if (VersionInfo.FortniteVersion >= 28)
 	{
@@ -840,7 +840,7 @@ void UNetDriver::PostLoadHook()
 	else if (VersionInfo.FortniteVersion >= 20)
 		ClientWorldPackageNameOffset = 0x1698;
 
-	if (VersionInfo.FortniteVersion >= 25)
+	if (VersionInfo.FortniteVersion >= 25.10)
 	{
 		DestroyedStartupOrDormantActorsOffset = VersionInfo.FortniteVersion >= 28 ? 0x328 : 0x318;
 		DestroyedStartupOrDormantActorGUIDsOffset = VersionInfo.FortniteVersion >= 28 ? 0x14b8 : (VersionInfo.EngineVersion == 5.2 ? 0x14a8 : 0x14b0);
@@ -849,7 +849,7 @@ void UNetDriver::PostLoadHook()
 	else if (VersionInfo.FortniteVersion >= 23)
 	{
 		DestroyedStartupOrDormantActorsOffset = VersionInfo.FortniteVersion >= 24 ? 0x2f8 : 0x300;
-		DestroyedStartupOrDormantActorGUIDsOffset = 0x14b0;
+		DestroyedStartupOrDormantActorGUIDsOffset = VersionInfo.EngineVersion == 5.2 ? 0x14a8 : 0x14b0;
 		ClientVisibleLevelNamesOffset = DestroyedStartupOrDormantActorGUIDsOffset + (VersionInfo.FortniteVersion < 24 ? 0x190 : 0x1e0);
 	}
 	else if (VersionInfo.FortniteVersion >= 20.40)

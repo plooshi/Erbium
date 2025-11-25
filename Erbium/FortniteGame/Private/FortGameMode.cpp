@@ -329,6 +329,9 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
         auto Engine = UEngine::GetEngine();
         auto NetDriverName = FName(L"GameNetDriver");
 
+        if (GameMode->HasbEnableReplicationGraph())
+            GameMode->bEnableReplicationGraph = true;
+
         UNetDriver* NetDriver = nullptr;
         if (VersionInfo.FortniteVersion >= 16.00)
         {
@@ -918,7 +921,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                 Info->SupplyDropClass = SupplyDropClass;
 
 
-        if (VersionInfo.FortniteVersion >= 3.4 && GameState->MapInfo)
+        if (VersionInfo.FortniteVersion >= 3.4 && GameState->HasMapInfo() && GameState->MapInfo)
         {
             GameData = Playlist ? Playlist->GameData : nullptr;
             if (!GameData)
@@ -1019,23 +1022,26 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
 
         PlayerList.Free();
 
-        auto VolumeManager = GameState->VolumeManager;
-        TArray<FPlaylistStreamedLevelData>& AdditionalPlaylistLevels = *(TArray<FPlaylistStreamedLevelData>*) (__int64(GameState) + GameState->GetOffset("AdditionalPlaylistLevelsStreamed") - 0x10);
+        auto VolumeManager = GameState->HasVolumeManager() ? GameState->VolumeManager : nullptr;
 
         bool bAllLevelsFinishedStreaming = true;
-        for (int i = 0; i < AdditionalPlaylistLevels.Num(); i++)
+        if (GameState->HasAdditionalPlaylistLevelsStreamed())
         {
-            auto& AdditionalPlaylistLevel = AdditionalPlaylistLevels.Get(i, FPlaylistStreamedLevelData::Size());
-
-            if (!AdditionalPlaylistLevel.bIsFinishedStreaming || !AdditionalPlaylistLevel.StreamingLevel || !AdditionalPlaylistLevel.StreamingLevel->LoadedLevel->bIsVisible)
+            TArray<FPlaylistStreamedLevelData>& AdditionalPlaylistLevels = *(TArray<FPlaylistStreamedLevelData>*) (__int64(GameState) + GameState->GetOffset("AdditionalPlaylistLevelsStreamed") - 0x10);
+            for (int i = 0; i < AdditionalPlaylistLevels.Num(); i++)
             {
-                bAllLevelsFinishedStreaming = false;
-                break;
+                auto& AdditionalPlaylistLevel = AdditionalPlaylistLevels.Get(i, FPlaylistStreamedLevelData::Size());
+
+                if (!AdditionalPlaylistLevel.bIsFinishedStreaming || !AdditionalPlaylistLevel.StreamingLevel || !AdditionalPlaylistLevel.StreamingLevel->LoadedLevel->bIsVisible)
+                {
+                    bAllLevelsFinishedStreaming = false;
+                    break;
+                }
             }
         }
 
         static auto WaitingToStart = FName(L"WaitingToStart");
-        *Ret = GameMode->bWorldIsReady && GameState->bPlaylistDataIsLoaded && GameMode->MatchState == WaitingToStart && bAllLevelsFinishedStreaming && (!VolumeManager || !(VolumeManager->HasbInSpawningStartup() ? VolumeManager->bInSpawningStartup : GameState->bInSpawningStartup)) && ReadyPlayers >= GameMode->WarmupRequiredPlayerCount;
+        *Ret = GameMode->bWorldIsReady && (GameState->HasbPlaylistDataIsLoaded() ? GameState->bPlaylistDataIsLoaded : true) && GameMode->MatchState == WaitingToStart && bAllLevelsFinishedStreaming && (!VolumeManager || !(VolumeManager->HasbInSpawningStartup() ? VolumeManager->bInSpawningStartup : GameState->bInSpawningStartup)) && ReadyPlayers >= (GameMode->HasWarmupRequiredPlayerCount() ? GameMode->WarmupRequiredPlayerCount : 1);
     }
     else
         *Ret = callOGWithRet(GameMode, Stack.GetCurrentNativeFunction(), ReadyToStartMatch);
@@ -1295,6 +1301,8 @@ void AFortGameMode::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor*
     }
     else
     {
+        for (auto& AbilitySet : AFortGameMode::AbilitySets)
+            NewPlayer->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
         //NewPlayer->WorldInventory->Inventory.ReplicatedEntries.ResetNum();
         //NewPlayer->WorldInventory->Inventory.ItemInstances.ResetNum();
 

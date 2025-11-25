@@ -11,6 +11,14 @@ public:
     DEFINE_STRUCT_PROP(Version, int32);
 };
 
+struct FFortCreativePlotPermissionData
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FFortCreativePlotPermissionData);
+
+    DEFINE_STRUCT_PROP(Permission, uint8);
+};
+
 class UFortLevelSaveComponent : public UObject
 {
 public:
@@ -22,6 +30,7 @@ public:
     DEFINE_PROP(bLoadPlaysetFromPlot, bool);
     DEFINE_PROP(bAutoLoadFromRestrictedPlotDefinition, bool);
     DEFINE_PROP(LoadedLinkData, FCreativeLoadedLinkData);
+    DEFINE_PROP(PlotPermissions, FFortCreativePlotPermissionData);
 };
 
 class UFortPlaysetItemDefinition : public UObject
