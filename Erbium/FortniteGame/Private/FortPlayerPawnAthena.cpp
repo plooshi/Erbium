@@ -342,11 +342,15 @@ void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack
 	}
 
 	Stack.IncrementCode();
+
 	auto Pawn = (AFortPlayerPawnAthena*)Context;
 	static auto GetVehicleFunc = Pawn->GetFunction("GetVehicle");
 	if (!GetVehicleFunc)
 		GetVehicleFunc = Pawn->GetFunction("BP_GetVehicle");
 	auto Vehicle = Pawn->Call<AFortAthenaVehicle*>(GetVehicleFunc);
+
+	if (!Vehicle)
+		return;
 
 	auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
 

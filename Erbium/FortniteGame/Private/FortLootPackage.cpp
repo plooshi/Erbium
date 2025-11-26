@@ -65,7 +65,7 @@ int GetLevel(const FDataTableCategoryHandle& CategoryHandle)
 void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SDK::FName Package, int i, FName TierGroup, int WorldLevel)
 {
 	TArray<FFortLootPackageData*> LPGroups;
-	if (VersionInfo.EngineVersion == 4.21)
+	/*if (VersionInfo.EngineVersion == 4.21)
 	{
 		auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
 
@@ -95,7 +95,7 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 			LPGroups.Add(Val);
 		}
 	}
-	else
+	else*/
 	{
 		for (auto const& Val : LootPackageMap[Package.ComparisonIndex])
 		{
