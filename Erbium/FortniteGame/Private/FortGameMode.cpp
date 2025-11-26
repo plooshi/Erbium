@@ -53,7 +53,10 @@ bool bIsLargeTeamGame = false;
 
 void SetupPlaylist(AFortGameMode* GameMode, AFortGameStateAthena* GameState)
 {
-    static auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
+    auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
+
+    if (!Playlist)
+        Playlist = FindObject<UFortPlaylistAthena>(L"/Game/Athena/Playlists/Playlist_DefaultSolo.Playlist_DefaultSolo");
 
     if (Playlist)
     {
