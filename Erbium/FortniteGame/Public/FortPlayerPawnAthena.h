@@ -110,6 +110,7 @@ public:
     DEFINE_FUNC(SetInVortex, void);
     DEFINE_FUNC(ClientInternalEquipWeapon, void);
     DEFINE_FUNC(ServerInternalEquipWeapon, void);
+    DEFINE_FUNC(SetGravityMultiplier, void);
 
     DefUHookOg(ServerHandlePickup_);
     DefUHookOg(ServerHandlePickupInfo);
