@@ -2706,6 +2706,24 @@ uint64 FindMinigameSettingsBuilding__BeginPlay()
     return Memcury::Scanner::FindPattern("40 55 57 41 56 41 57 48 8B EC 48 83 EC ? 80 3D").Get();
 }
 
+uint64_t FindPickSupplyDropLocation()
+{
+    auto sRef = Memcury::Scanner::FindStringRef(L"PickSupplyDropLocation: Failed to find valid location using rejection.  Using safe zone location.", false, 0, VersionInfo.FortniteVersion >= 19, false);
+
+    if (!sRef.IsValid())
+        sRef = Memcury::Scanner::FindStringRef("AFortAthenaMapInfo::PickSupplyDropLocation");
+
+    for (int i = 0; i < 2000; i++)
+    {
+        auto Ptr = (uint8_t*)(sRef.Get() - i);
+
+        if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4)
+            return uint64_t(Ptr);
+        else if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
+            return uint64_t(Ptr);
+    }
+}
+
 void FindNullsAndRetTrues()
 {
     if (VersionInfo.EngineVersion == 4.16)

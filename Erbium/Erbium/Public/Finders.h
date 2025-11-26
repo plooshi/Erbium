@@ -71,6 +71,7 @@ uint32 FindSpawnDecoVft();
 uint32 FindShouldAllowServerSpawnDecoVft();
 uint64 FindSetState();
 uint64 FindMinigameSettingsBuilding__BeginPlay();
+uint64 FindPickSupplyDropLocation();
 
 inline std::vector<uint64_t> NullFuncs = {};
 inline std::vector<uint64_t> RetTrueFuncs = {};
