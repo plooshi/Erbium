@@ -1388,26 +1388,26 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 	_help:
 		PlayerController->ClientMessage(FString(LR"(Command List:
     cheat startaircraft - Starts the battle bus
-	cheat resumesafezone - Resumes the storm
+    cheat resumesafezone - Resumes the storm
     cheat pausesafezone - Pauses the storm
-	cheat skipsafezone - Skips to the next safe zone
-	cheat startshrinksafezone - Starts shrinking the safe zone
-	cheat infiniteammo - Toggles infinite ammo
-	cheat infinitemats - Toggles infinite materials
-	cheat demospeed <Speed> - Sets the speed of the server
-	cheat god - Toggles god mode
-	cheat speed <Speed> - Sets the player's movement speed
-	cheat timeofday <Hour> - Sets the time of day (0-23)
-	cheat spawnbot - Spawns a player bot at your location (WIP)
-	cheat startevent - Starts the event for the current version
-	cheat tp <X> <Y> <Z> - Teleports to a location
-	cheat launch <X> <Y> <Z> - Launches the player
-	cheat savewaypoint - Saves your current location as a waypoint
-	cheat waypoint <Name> - Loads a saved waypoint
-	cheat skydive - Toggles skydiving
-	cheat giveitem <WID/path> <Count = 1> - Gives you an item
-	cheat spawnpickup <WID/path> <Count = 1> - Spawns a pickup at your player's location
-	cheat spawnactor <class/path> - Spawns an actor at your location + 5 meters)"), FName(), 1);
+    cheat skipsafezone - Skips to the next safe zone
+    cheat startshrinksafezone - Starts shrinking the safe zone
+    cheat infiniteammo - Toggles infinite ammo
+    cheat infinitemats - Toggles infinite materials
+    cheat demospeed <Speed> - Sets the speed of the server
+    cheat god - Toggles god mode
+    cheat speed <Speed> - Sets the player's movement speed
+    cheat timeofday <Hour> - Sets the time of day (0-23)
+    cheat spawnbot - Spawns a player bot at your location (WIP)
+    cheat startevent - Starts the event for the current version
+    cheat tp <X> <Y> <Z> - Teleports to a location
+    cheat launch <X> <Y> <Z> - Launches the player
+    cheat savewaypoint - Saves your current location as a waypoint
+    cheat waypoint <Name> - Loads a saved waypoint
+    cheat skydive - Toggles skydiving
+    cheat giveitem <WID/path> <Count = 1> - Gives you an item
+    cheat spawnpickup <WID/path> <Count = 1> - Spawns a pickup at your player's location
+    cheat spawnactor <class/path> - Spawns an actor at your location + 5 meters)"), FName(), 1);
 	}
 	else
 	{
@@ -2538,6 +2538,12 @@ void AFortPlayerControllerAthena::ServerGiveCreativeItem(UObject* Context, FFram
 	PlayerController->InternalPickup(CreativeItem);
 	free(CreativeItem);
 }
+
+void AFortPlayerControllerAthena::ServerRequestSeatChange_(UObject* Context, FFrame& Stack)
+{
+
+}
+
 
 void AFortPlayerControllerAthena::PostLoadHook()
 {

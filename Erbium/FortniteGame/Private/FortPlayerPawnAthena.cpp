@@ -330,7 +330,7 @@ void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack
 {
 	struct FVehicleExitData { uint8_t Pad[0x30]; };
 
-	FVehicleExitData VehicleExitData;
+	FVehicleExitData VehicleExitData;  
 	uint8_t ExitForceBehavior;
 	bool bDestroyVehicleWhenForced;
 	if (VersionInfo.FortniteVersion >= 29)
@@ -378,39 +378,31 @@ void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack
 			{ return entry.ItemDefinition == Weapon; }, FFortItemEntry::Size());
 
 		if (ItemEntry)
-		{
-			printf("3");
 			PlayerController->WorldInventory->Remove(ItemEntry->ItemGuid);
-
-			auto LastItem = Pawn->HasPreviousWeapon() ? (AFortWeapon*)Pawn->PreviousWeapon : nullptr;
-			if (LastItem)
-			{
-				auto entr = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
-					{ return entry.ItemGuid == LastItem->ItemEntryGuid; }, FFortItemEntry::Size());
-
-				printf("Previous Weapon %s\n", entr->ItemDefinition->Name.ToString().c_str());
-
-				PlayerController->ServerExecuteInventoryItem(LastItem->ItemEntryGuid);
-				PlayerController->ClientEquipItem(LastItem->ItemEntryGuid, true);
-			}
-			else
-			{
-				auto pickaxeEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([Weapon](FFortItemEntry& entry)
-					{ return entry.ItemDefinition->IsA<UFortWeaponMeleeItemDefinition>(); }, FFortItemEntry::Size());
-
-				if (pickaxeEntry)
-				{
-					PlayerController->ServerExecuteInventoryItem(pickaxeEntry->ItemGuid);
-					PlayerController->ClientEquipItem(pickaxeEntry->ItemGuid, true);
-				}
-			}
-		}
-		printf("3");
 	}
 	if (VersionInfo.FortniteVersion >= 29)
 		callOG(Pawn, Stack.GetCurrentNativeFunction(), ServerOnExitVehicle, VehicleExitData);
 	else
 		callOG(Pawn, Stack.GetCurrentNativeFunction(), ServerOnExitVehicle, ExitForceBehavior, bDestroyVehicleWhenForced);
+
+	auto LastItem = Pawn->HasPreviousWeapon() ? (AFortWeapon*)Pawn->PreviousWeapon : nullptr;
+
+	if (LastItem)
+	{
+		PlayerController->ServerExecuteInventoryItem(LastItem->ItemEntryGuid);
+		PlayerController->ClientEquipItem(LastItem->ItemEntryGuid, true);
+	}
+	else
+	{
+		auto pickaxeEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([](FFortItemEntry& entry)
+			{ return entry.ItemDefinition->IsA<UFortWeaponMeleeItemDefinition>(); }, FFortItemEntry::Size());
+
+		if (pickaxeEntry)
+		{
+			PlayerController->ServerExecuteInventoryItem(pickaxeEntry->ItemGuid);
+			PlayerController->ClientEquipItem(pickaxeEntry->ItemGuid, true);
+		}
+	}
 }
 
 void AFortPlayerPawnAthena::PostLoadHook()

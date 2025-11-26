@@ -263,6 +263,7 @@ public:
     static void ServerTeleportToPlaygroundLobbyIsland(UObject*, FFrame&);
     static void ServerCraftSchematic(UObject*, FFrame&);
     static void ServerGiveCreativeItem(UObject*, FFrame&);
+    DefUHookOg(ServerRequestSeatChange_);
 
 
     InitPostLoadHooks;
