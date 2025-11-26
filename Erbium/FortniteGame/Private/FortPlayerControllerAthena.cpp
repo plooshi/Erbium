@@ -806,6 +806,20 @@ void AFortPlayerControllerAthena::ServerAttemptInventoryDrop(UObject* Context, F
 
 	FVector FinalLoc = PlayerController->Pawn->K2_GetActorLocation();
 
+	static auto WID_Launcher_Petrol = FindObject<UFortWorldItemDefinition>(L"/Game/Athena/Items/Weapons/Prototype/WID_Launcher_Petrol.WID_Launcher_Petrol");
+
+	if (itemEntry->ItemDefinition == WID_Launcher_Petrol)
+	{
+		static auto BGA_Petrol_PickupClass = FindObject<UClass>(L"/Game/Athena/Items/Weapons/Prototype/PetrolPump/BGA_Petrol_Pickup.BGA_Petrol_Pickup_C");
+
+		AActor* PetrolPickup = UWorld::SpawnActor<AActor>(BGA_Petrol_PickupClass, FinalLoc);
+
+		PlayerController->WorldInventory->Remove(Guid);
+		PlayerController->WorldInventory->Update(itemEntry);
+
+		return;
+	}
+
 	FVector ForwardVector = PlayerController->Pawn->GetActorForwardVector();
 	//ForwardVector.Z = 0.0f;
 	//ForwardVector.Normalize();
@@ -1394,10 +1408,17 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
     cheat startshrinksafezone - Starts shrinking the safe zone
     cheat infiniteammo - Toggles infinite ammo
     cheat infinitemats - Toggles infinite materials
+    cheat gravity <Scale> - Sets the gravity scale
+    cheat changename <Name> - Changes your player name
+    cheat keepinventory - Toggles keeping inventory on death
+    cheat spawnactor <class/path> - Spawns an actor near your location
+    cheat sethealth <amount> - Sets your pawn's health (0-100)
+    cheat setshield <amount> - Sets your pawn's shield (0-100)
     cheat demospeed <Speed> - Sets the speed of the server
     cheat god - Toggles god mode
     cheat speed <Speed> - Sets the player's movement speed
     cheat timeofday <Hour> - Sets the time of day (0-23)
+	cheat pausetimeofday - Pauses/Unpauses the time of day
     cheat spawnbot - Spawns a player bot at your location (WIP)
     cheat startevent - Starts the event for the current version
     cheat tp <X> <Y> <Z> - Teleports to a location
@@ -1504,12 +1525,52 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 			auto ws = L"demospeed " + UEAllocatedWString(args[1].begin(), args[1].end());
 
 			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(ws.c_str()), nullptr);
-			//PlayerController->ClientMessage(FString(L"Set the server's demospeed to {}!"), ws.c_str(), FName(), 1);
+			PlayerController->ClientMessage(FString(L"Modified the server's demospeed!"), FName(), 1.f);
 		}
 		else if (command == "god")
 		{
-			PlayerController->Pawn->bCanBeDamaged ^= 1;
-			PlayerController->ClientMessage(FString(L"Toggled god mode!"), FName(), 1.f);
+			static bool bGod = false;
+			bool bUseMin = false;
+
+			if (args.size() > 1)
+			{
+				std::string FullCommand = args[1].c_str();
+				std::transform(FullCommand.begin(), FullCommand.end(), FullCommand.begin(), tolower);
+
+				if (FullCommand == "min" || FullCommand == "minimum")
+					bUseMin = true;
+			}
+
+			float MinValue = bUseMin ? 1.f : 100.f;
+			auto& Health = PlayerController->MyFortPawn->HealthSet->Health;
+			auto& OldHealth = Health;
+
+			if (VersionInfo.FortniteVersion >= 21)
+			{
+				PlayerController->Pawn->bCanBeDamaged ^= 1;
+				PlayerController->ClientMessage(FString(L"Toggled god mode!"), FName(), 1.f);
+				return;
+			}
+			else if (!bGod)
+			{
+				bGod = true;
+
+				Health.Minimum = MinValue;
+				PlayerController->MyFortPawn->HealthSet->OnRep_Health(Health);
+
+				if (bUseMin)
+					PlayerController->ClientMessage(FString(L"Minimum Health God mode enabled!"), FName(), 1);
+				else
+					PlayerController->ClientMessage(FString(L"God mode enabled!"), FName(), 1);
+			}
+			else
+			{
+				bGod = false;
+				Health.Minimum = 0.f;
+				PlayerController->MyFortPawn->HealthSet->OnRep_Health(Health);
+
+				PlayerController->ClientMessage(FString(L"God mode disabled!"), FName(), 1);
+			}
 		}
 		else if (command == "speed")
 		{
@@ -1543,6 +1604,135 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 
 			Pawn->ProcessEvent(SetMovementSpeedFn, &Speed);
 			PlayerController->ClientMessage(FString(L"Set player speed!"), FName(), 1.f);
+		}
+		else if (command == "gravity")
+		{
+			if (args.size() < 2)
+			{
+				PlayerController->ClientMessage(FString(L"Usage: gravity <multiplier>"), FName(), 1.f);
+				return;
+			}
+
+			auto Pawn = PlayerController->Pawn;
+
+			if (!Pawn)
+				return;
+
+			float Multiplier = 1.0f;
+
+			try
+			{
+				std::string argStr(args[1].begin(), args[1].end());
+				Multiplier = std::stof(argStr);
+			}
+			catch (...)
+			{
+				PlayerController->ClientMessage(FString(L"Invalid multiplier!"), FName(), 1.f);
+				return;
+			}
+
+			Pawn->SetGravityMultiplier(Multiplier);
+
+			PlayerController->ClientMessage(FString(L"Gravity multiplier set!"), FName(), 1.f);
+		}
+		else if (command == "changename" || command == "name")
+		{
+			if (args.size() < 2)
+			{
+				PlayerController->ClientMessage(FString(L"Please include a phrase/name you'd want to change to!"), FName(), 1);
+				return;
+			}
+
+			std::string nameStr;
+
+			for (size_t i = 1; i < args.size(); i++)
+			{
+				nameStr += std::string(args[i].begin(), args[i].end());
+				if (i + 1 < args.size())
+					nameStr += " ";
+			}
+
+			if (nameStr.empty())
+			{
+				PlayerController->ClientMessage(FString(L"Invalid name!"), FName(), 1);
+				return;
+			}
+
+			std::wstring nameW(nameStr.begin(), nameStr.end());
+			FString NewName(nameW.c_str());
+
+			if (!PlayerController)
+				return;
+
+			PlayerController->ServerChangeName(NewName);
+
+			PlayerController->ClientMessage(FString(L"Changed the player's name!"), FName(), 1.f);
+		}
+		else if (command == "pausetimeofday" || command == "pausetime" || command == "pt")
+		{
+			static bool bIsPaused = false;
+
+			float Speed = bIsPaused ? 1.f : 0.f;
+
+			UFortKismetLibrary::SetTimeOfDaySpeed(UWorld::GetWorld(), Speed);
+
+			if (bIsPaused)
+				PlayerController->ClientMessage(FString(L"Unpaused time of day!"), FName(), 1.f);
+			else
+				PlayerController->ClientMessage(FString(L"Paused time of day!"), FName(), 1.f);
+		}
+		else if (command == "sethealth")
+		{
+			if (args.size() < 2)
+			{
+				PlayerController->ClientMessage(FString(L"Please choose an amount to set your health to!"), FName(), 1.f);
+				return;
+			}
+
+			auto Pawn = PlayerController->Pawn;
+
+			if (!Pawn)
+			{
+				PlayerController->ClientMessage(FString(L"No pawn!"), FName(), 1.f);
+				return;
+			}
+
+			float Health = 100.f;
+
+			try { Health = std::stof(std::string(args[1])); }
+			catch (...) {}
+
+			Pawn->SetHealth(Health);
+			PlayerController->ClientMessage(FString(L"Set pawn health!"), FName(), 1.f);
+		}
+		else if (command == "setshield")
+		{
+			if (args.size() < 2)
+			{
+				PlayerController->ClientMessage(FString(L"Please choose an amount to set your shield to!"), FName(), 1.f);
+				return;
+			}
+
+			auto Pawn = PlayerController->Pawn;
+
+			if (!Pawn)
+			{
+				PlayerController->ClientMessage(FString(L"No pawn!"), FName(), 1.f);
+				return;
+			}
+
+			float Shield = 100.f;
+
+			try { Shield = std::stof(std::string(args[1])); }
+			catch (...) {}
+
+			Pawn->SetShield(Shield);
+			PlayerController->ClientMessage(FString(L"Set pawn shield!"), FName(), 1.f);
+		}
+		else if (command == "keepinv" || command == "keepinventory")
+		{
+			FConfiguration::bKeepInventory ^= 1;
+			PlayerController->ClientMessage(FString(L"Toggled keep inventory!"), FName(), 1.f);
 		}
 		else if (command == "timeofday" || command == "time" || command == "t")
 		{
