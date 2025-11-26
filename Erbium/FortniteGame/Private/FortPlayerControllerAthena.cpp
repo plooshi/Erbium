@@ -1541,7 +1541,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 					bUseMin = true;
 			}
 
-			float MinValue = bUseMin ? 1.f : 100.f;
+			float MinValue = bUseMin ? 0.f : 100.f;
 			auto& Health = PlayerController->MyFortPawn->HealthSet->Health;
 
 			if (VersionInfo.FortniteVersion >= 21)
