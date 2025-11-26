@@ -87,4 +87,5 @@ public:
     DEFINE_PROP(ModifierList, TArray<TSoftObjectPtr<UFortGameplayModifierItemDefinition>>);
     DEFINE_PROP(PreloadPersistentLevel, TSoftObjectPtr<UWorld>);
     DEFINE_PROP(UIDisplayName, FText);
+    DEFINE_PROP(JoinInProgressMatchType, FText);
 };

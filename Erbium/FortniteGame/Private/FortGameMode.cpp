@@ -76,6 +76,8 @@ void SetupPlaylist(AFortGameMode* GameMode, AFortGameStateAthena* GameState)
             Playlist->RespawnType = 1; // InfiniteRespawns
             if (Playlist->HasbAllowJoinInProgress())
                 Playlist->bAllowJoinInProgress = true;
+            if (Playlist->HasJoinInProgressMatchType())
+                Playlist->JoinInProgressMatchType = UKismetTextLibrary::Conv_StringToText(L"Creative");
             if (Playlist->HasbForceRespawnLocationInsideOfVolume())
                 Playlist->bForceRespawnLocationInsideOfVolume = true;
         }
