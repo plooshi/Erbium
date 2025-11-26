@@ -2722,6 +2722,8 @@ uint64_t FindPickSupplyDropLocation()
         else if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
             return uint64_t(Ptr);
     }
+
+    return 0;
 }
 
 void FindNullsAndRetTrues()

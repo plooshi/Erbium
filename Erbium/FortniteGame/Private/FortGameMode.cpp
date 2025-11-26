@@ -77,12 +77,15 @@ void SetupPlaylist(AFortGameMode* GameMode, AFortGameStateAthena* GameState)
                 Playlist->RespawnTime.Value = 3;
             }
             Playlist->RespawnType = 1; // InfiniteRespawns
+            if (Playlist->HasbForceRespawnLocationInsideOfVolume())
+                Playlist->bForceRespawnLocationInsideOfVolume = true;
+        }
+        if (FConfiguration::bJoinInProgress)
+        {
             if (Playlist->HasbAllowJoinInProgress())
                 Playlist->bAllowJoinInProgress = true;
             if (Playlist->HasJoinInProgressMatchType())
                 Playlist->JoinInProgressMatchType = UKismetTextLibrary::Conv_StringToText(FString(L"Creative"));
-            if (Playlist->HasbForceRespawnLocationInsideOfVolume())
-                Playlist->bForceRespawnLocationInsideOfVolume = true;
         }
         //if (VersionInfo.FortniteVersion >= 16)
         {
@@ -926,30 +929,71 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
             }
         }
 
-        if (SupplyDropClass && GameState->HasMapInfo() && GameState->MapInfo)
-            for (auto& Info : GameState->MapInfo->SupplyDropInfoList)
-                Info->SupplyDropClass = SupplyDropClass;
-
-
-        if (VersionInfo.FortniteVersion >= 3.4 && GameState->HasMapInfo() && GameState->MapInfo)
+        if (GameState->HasMapInfo() && GameState->MapInfo)
         {
-            GameData = Playlist ? Playlist->GameData : nullptr;
-            if (!GameData)
-                GameData = FindObject<UCurveTable>(L"/Game/Athena/Balance/DataTables/AthenaGameData.AthenaGameData");
+            if (SupplyDropClass)
+                for (auto& Info : GameState->MapInfo->SupplyDropInfoList)
+                    Info->SupplyDropClass = SupplyDropClass;
 
-            for (int i = 0; i < 6; i++)
+            if (VersionInfo.FortniteVersion >= 3.4)
             {
-                float Weight;
-                UDataTableFunctionLibrary::EvaluateCurveTableRow(GameState->MapInfo->VendingMachineRarityCount.Curve.CurveTable, GameState->MapInfo->VendingMachineRarityCount.Curve.RowName, (float)i, nullptr, &Weight, FString());
+                GameData = Playlist ? Playlist->GameData : nullptr;
+                if (!GameData)
+                    GameData = FindObject<UCurveTable>(L"/Game/Athena/Balance/DataTables/AthenaGameData.AthenaGameData");
 
-                WeightMap[i] = Weight;
-                Sum += Weight;
+                for (int i = 0; i < 6; i++)
+                {
+                    float Weight;
+                    UDataTableFunctionLibrary::EvaluateCurveTableRow(GameState->MapInfo->VendingMachineRarityCount.Curve.CurveTable, GameState->MapInfo->VendingMachineRarityCount.Curve.RowName, (float)i, nullptr, &Weight, FString());
+
+                    WeightMap[i] = Weight;
+                    Sum += Weight;
+                }
+
+                UDataTableFunctionLibrary::EvaluateCurveTableRow(GameState->MapInfo->VendingMachineRarityCount.Curve.CurveTable, GameState->MapInfo->VendingMachineRarityCount.Curve.RowName, 0.f, nullptr, &Weight, FString());
+
+                TotalWeight = std::accumulate(WeightMap.begin(), WeightMap.end(), 0.0f, [&](float acc, const std::pair<int, float>& p)
+                    { return acc + p.second; });
             }
 
-            UDataTableFunctionLibrary::EvaluateCurveTableRow(GameState->MapInfo->VendingMachineRarityCount.Curve.CurveTable, GameState->MapInfo->VendingMachineRarityCount.Curve.RowName, 0.f, nullptr, &Weight, FString());
+            if (VersionInfo.FortniteVersion >= 3.3)
+            {
+                auto PickSupplyDropLocation = (FVector* (*)(AFortAthenaMapInfo*, FVector*, FVector*, float, bool, float, float)) FindPickSupplyDropLocation();
 
-            TotalWeight = std::accumulate(WeightMap.begin(), WeightMap.end(), 0.0f, [&](float acc, const std::pair<int, float>& p)
-                { return acc + p.second; });
+                if (PickSupplyDropLocation)
+                {
+                    FFortSafeZoneDefinition& SafeZoneDefinition = GameState->MapInfo->SafeZoneDefinition;
+
+                    auto LlamaMin = GameState->MapInfo->LlamaQuantityMin.Evaluate();
+                    auto LlamaMax = GameState->MapInfo->LlamaQuantityMax.Evaluate();
+                    auto LlamaCount = UKismetMathLibrary::RandomIntegerInRange((int)LlamaMin, (int)LlamaMax);
+                    auto Radius = SafeZoneDefinition.Radius.Evaluate(0);
+
+                    if (Radius == 0)
+                        Radius = 120000;
+                    auto Center = GameState->MapInfo->GetMapCenter();
+                    Center.Z = 10000;
+
+                    for (int i = 0; i < LlamaCount; i++)
+                    {
+                        FVector Loc(0, 0, 0);
+                        PickSupplyDropLocation(GameState->MapInfo, &Loc, &Center, Radius, 0, -1, -1);
+
+                        if (Loc.X != 0 || Loc.Y != 0 || Loc.Z != 0)
+                        {
+                            FRotator Rot{};
+                            Rot.Yaw = (float)rand() * 0.010986663f;
+
+                            auto NewLlama = UWorld::SpawnActorUnfinished(GameState->MapInfo->LlamaClass, Loc, Rot);
+
+                            static auto FindGroundLocationAt = NewLlama->GetFunction("FindGroundLocationAt");
+                            auto GroundLoc = NewLlama->Call<FVector>(FindGroundLocationAt, Loc);
+
+                            UWorld::FinishSpawnActor(NewLlama, GroundLoc, Rot);
+                        }
+                    }
+                }
+            }
         }
 
         GameMode->DefaultPawnClass = FindObject<UClass>(L"/Game/Athena/PlayerPawn_Athena.PlayerPawn_Athena_C");

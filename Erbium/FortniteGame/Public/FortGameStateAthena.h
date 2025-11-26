@@ -113,13 +113,15 @@ class AFortAthenaMapInfo : public AActor
 public:
     UCLASS_COMMON_MEMBERS(AFortAthenaMapInfo);
 
-    DEFINE_PROP(LlamaClass, UClass*);
     DEFINE_PROP(SupplyDropInfoList, TArray<UFortSupplyDropInfo*>);
     DEFINE_PROP(VendingMachineRarityCount, FScalableFloat);
     DEFINE_PROP(SafeZoneDefinition, FFortSafeZoneDefinition);
     DEFINE_PROP(AircraftClass, TSubclassOf<AFortAthenaAircraft>);
     DEFINE_PROP(FlightInfos, TArray<FAircraftFlightInfo>);
     DEFINE_PROP(CachedPlayableBoundsForClients, FBoxSphereBounds);
+    DEFINE_PROP(LlamaQuantityMin, FScalableFloat);
+    DEFINE_PROP(LlamaQuantityMax, FScalableFloat);
+    DEFINE_PROP(LlamaClass, UClass*);
 
     DEFINE_FUNC(GetMapCenter, FVector);
 };

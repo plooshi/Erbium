@@ -876,6 +876,17 @@ namespace SDK
 		}
 	};
 
+	class UKismetMathLibrary : public SDK::UObject
+	{
+	public:
+		UCLASS_COMMON_MEMBERS(UKismetMathLibrary);
+
+		DEFINE_STATIC_FUNC(RandomIntegerInRange, int);
+		DEFINE_STATIC_FUNC(RandomFloatInRange, float);
+		DEFINE_STATIC_FUNC(InverseTransformLocation, FVector);
+		DEFINE_STATIC_FUNC(InverseTransformDirection, FVector);
+	};
+
 	class UKismetSystemLibrary : public SDK::UObject
 	{
 	public:

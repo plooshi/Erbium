@@ -12,6 +12,7 @@ struct FConfiguration
     static inline auto bInfiniteMats = false;
     static inline auto bInfiniteAmmo = false;
     static inline auto bForceRespawns = false; // build your client with this too!
+    static inline auto bJoinInProgress = false;
     static inline auto bAutoRestart = false;
     static inline auto bKeepInventory = false;
     static inline constexpr auto bEnableIris = true; 

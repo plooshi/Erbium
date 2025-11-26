@@ -157,15 +157,6 @@ public:
     DEFINE_FUNC(Kill, void);
 };
 
-class UKismetMathLibrary : public UObject
-{
-public:
-    UCLASS_COMMON_MEMBERS(UKismetMathLibrary);
-
-    DEFINE_STATIC_FUNC(InverseTransformLocation, FVector);
-    DEFINE_STATIC_FUNC(InverseTransformDirection, FVector);
-};
-
 uint64_t CanGrappleToComponent_ = 0;
 void (*OnRep_ReplicatedAttachedInfoOG)(AFortOctopusTowhookAttachableProjectile* _this);
 void OnRep_ReplicatedAttachedInfo(AFortOctopusTowhookAttachableProjectile* _this)
