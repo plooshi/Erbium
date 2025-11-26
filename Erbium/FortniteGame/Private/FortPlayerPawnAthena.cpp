@@ -385,6 +385,11 @@ void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack
 			auto LastItem = Pawn->HasPreviousWeapon() ? (AFortWeapon*)Pawn->PreviousWeapon : nullptr;
 			if (LastItem)
 			{
+				auto entr = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+					{ return entry.ItemGuid == LastItem->ItemEntryGuid; }, FFortItemEntry::Size());
+
+				printf("Previous Weapon %s\n", entr->ItemDefinition->Name.ToString().c_str());
+
 				PlayerController->ServerExecuteInventoryItem(LastItem->ItemEntryGuid);
 				PlayerController->ClientEquipItem(LastItem->ItemEntryGuid, true);
 			}

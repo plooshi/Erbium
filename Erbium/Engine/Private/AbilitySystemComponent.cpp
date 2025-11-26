@@ -47,14 +47,8 @@ void UAbilitySystemComponent::GiveAbilitySet(const UFortAbilitySet* Set)
     ScriptInterface.InterfacePointer = ScriptInterface.ObjectPointer->GetInterface(IFortAbilitySystemInterface::StaticClass());
 
     if (VersionInfo.EngineVersion >= 4.19 && ScriptInterface.ObjectPointer && ScriptInterface.InterfacePointer)
-    {
-        static bool bDoesGetInterfaceAddressWork = ScriptInterface.InterfacePointer->IsA<IInterface>();
-
-        if (bDoesGetInterfaceAddressWork)
-            return UFortKismetLibrary::EquipFortAbilitySet(ScriptInterface, Set, nullptr);
-    }
-    
-    if (Set)
+        UFortKismetLibrary::EquipFortAbilitySet(ScriptInterface, Set, nullptr);
+    else if (Set)
     {
         //printf("GiveAbilitySet[%s]\n", Set->Name.ToString().c_str());
         for (auto& GameplayAbility : Set->GameplayAbilities)
