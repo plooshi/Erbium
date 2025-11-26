@@ -1529,7 +1529,6 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 		}
 		else if (command == "god")
 		{
-			static bool bGod = false;
 			bool bUseMin = false;
 
 			if (args.size() > 1)
@@ -1541,7 +1540,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 					bUseMin = true;
 			}
 
-			float MinValue = bUseMin ? 0.f : 100.f;
+			float MinValue = bUseMin ? 1.f : 100.f;
 			auto& Health = PlayerController->MyFortPawn->HealthSet->Health;
 
 			if (VersionInfo.FortniteVersion >= 21)
@@ -1550,10 +1549,8 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				PlayerController->ClientMessage(FString(L"Toggled god mode!"), FName(), 1.f);
 				return;
 			}
-			else if (!bGod)
+			else if (Health.Minimum != MinValue)
 			{
-				bGod = true;
-
 				Health.Minimum = MinValue;
 				PlayerController->MyFortPawn->HealthSet->OnRep_Health(Health);
 
@@ -1564,7 +1561,6 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 			}
 			else
 			{
-				bGod = false;
 				Health.Minimum = 0.f;
 				PlayerController->MyFortPawn->HealthSet->OnRep_Health(Health);
 
