@@ -359,9 +359,9 @@ void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack
 
 	UFortVehicleSeatWeaponComponent* SeatWeaponComponent = (UFortVehicleSeatWeaponComponent*)Vehicle->GetComponentByClass(UFortVehicleSeatWeaponComponent::StaticClass());
 
+	UFortWeaponItemDefinition* Weapon = nullptr;
 	if (SeatWeaponComponent)
 	{
-		UFortWeaponItemDefinition* Weapon = nullptr;
 		for (int i = 0; i < SeatWeaponComponent->WeaponSeatDefinitions.Num(); i++)
 		{
 			auto& WeaponDefinition = SeatWeaponComponent->WeaponSeatDefinitions.Get(i, FWeaponSeatDefinition::Size());
@@ -374,33 +374,39 @@ void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack
 		}
 
 
-		auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([Weapon](FFortItemEntry& entry)
-			{ return entry.ItemDefinition == Weapon; }, FFortItemEntry::Size());
+		if (Weapon)
+		{
+			auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([Weapon](FFortItemEntry& entry)
+				{ return entry.ItemDefinition == Weapon; }, FFortItemEntry::Size());
 
-		if (ItemEntry)
-			PlayerController->WorldInventory->Remove(ItemEntry->ItemGuid);
+			if (ItemEntry)
+				PlayerController->WorldInventory->Remove(ItemEntry->ItemGuid);
+		}
 	}
 	if (VersionInfo.FortniteVersion >= 29)
 		callOG(Pawn, Stack.GetCurrentNativeFunction(), ServerOnExitVehicle, VehicleExitData);
 	else
 		callOG(Pawn, Stack.GetCurrentNativeFunction(), ServerOnExitVehicle, ExitForceBehavior, bDestroyVehicleWhenForced);
 
-	auto LastItem = Pawn->HasPreviousWeapon() ? (AFortWeapon*)Pawn->PreviousWeapon : nullptr;
-
-	if (LastItem)
+	if (Weapon)
 	{
-		PlayerController->ServerExecuteInventoryItem(LastItem->ItemEntryGuid);
-		PlayerController->ClientEquipItem(LastItem->ItemEntryGuid, true);
-	}
-	else
-	{
-		auto pickaxeEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([](FFortItemEntry& entry)
-			{ return entry.ItemDefinition->IsA<UFortWeaponMeleeItemDefinition>(); }, FFortItemEntry::Size());
+		auto LastItem = Pawn->HasPreviousWeapon() ? (AFortWeapon*)Pawn->PreviousWeapon : nullptr;
 
-		if (pickaxeEntry)
+		if (LastItem)
 		{
-			PlayerController->ServerExecuteInventoryItem(pickaxeEntry->ItemGuid);
-			PlayerController->ClientEquipItem(pickaxeEntry->ItemGuid, true);
+			PlayerController->ServerExecuteInventoryItem(LastItem->ItemEntryGuid);
+			PlayerController->ClientEquipItem(LastItem->ItemEntryGuid, true);
+		}
+		else
+		{
+			auto pickaxeEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([](FFortItemEntry& entry)
+				{ return entry.ItemDefinition->IsA<UFortWeaponMeleeItemDefinition>(); }, FFortItemEntry::Size());
+
+			if (pickaxeEntry)
+			{
+				PlayerController->ServerExecuteInventoryItem(pickaxeEntry->ItemGuid);
+				PlayerController->ClientEquipItem(pickaxeEntry->ItemGuid, true);
+			}
 		}
 	}
 }

@@ -2039,18 +2039,18 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 			if (Weapon)
 			{
 				printf("Weapon: %s\n", Weapon->Name.ToString().c_str());
-				auto Item = PlayerController->WorldInventory->GiveItem(Weapon, 1, 99999);
-				auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
-					{ return entry.ItemDefinition == Weapon; }, FFortItemEntry::Size());
+				auto Item = PlayerController->WorldInventory->GiveItem(Weapon, 1, AFortInventory::GetStats(Weapon)->ClipSize);
 
 				auto CurrentWeapon = Pawn->CurrentWeapon;
-				PlayerController->ServerExecuteInventoryItem(ItemEntry->ItemGuid);
-				PlayerController->ClientEquipItem(ItemEntry->ItemGuid, true);
+
+				PlayerController->ServerExecuteInventoryItem(Item->ItemEntry.ItemGuid);
+				PlayerController->ClientEquipItem(Item->ItemEntry.ItemGuid, true);
 				if (Pawn->HasPreviousWeapon())
 					Pawn->PreviousWeapon = CurrentWeapon;
+
+				return;
 			}
 		}
-
 		return;
 	}
 	else if (auto CollectorActor = ReceivingActor->Cast<ABuildingItemCollectorActor>())
@@ -2541,7 +2541,95 @@ void AFortPlayerControllerAthena::ServerGiveCreativeItem(UObject* Context, FFram
 
 void AFortPlayerControllerAthena::ServerRequestSeatChange_(UObject* Context, FFrame& Stack)
 {
+	int TargetSeatIndex;
 
+	Stack.StepCompiledIn(&TargetSeatIndex);
+	Stack.IncrementCode();
+	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+
+	auto Pawn = PlayerController->Pawn;
+
+	static auto GetVehicleFunc = Pawn->GetFunction("GetVehicle");
+	if (!GetVehicleFunc)
+		GetVehicleFunc = Pawn->GetFunction("BP_GetVehicle");
+	auto Vehicle = Pawn->Call<AFortAthenaVehicle*>(GetVehicleFunc);
+
+	if (!Vehicle)
+		return;
+
+	auto SeatIdx = Vehicle->FindSeatIndex(PlayerController->MyFortPawn);
+
+	UFortVehicleSeatWeaponComponent* SeatWeaponComponent = (UFortVehicleSeatWeaponComponent*)Vehicle->GetComponentByClass(UFortVehicleSeatWeaponComponent::StaticClass());
+
+	UFortWeaponItemDefinition* OldWeapon = nullptr;
+	UFortWeaponItemDefinition* NewWeapon = nullptr;
+	if (SeatWeaponComponent)
+	{
+		for (int i = 0; i < SeatWeaponComponent->WeaponSeatDefinitions.Num(); i++)
+		{
+			auto& WeaponDefinition = SeatWeaponComponent->WeaponSeatDefinitions.Get(i, FWeaponSeatDefinition::Size());
+
+			if (WeaponDefinition.SeatIndex != SeatIdx)
+				continue;
+
+			OldWeapon = WeaponDefinition.VehicleWeapon;
+			break;
+		}
+
+		if (OldWeapon)
+		{
+			auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+				{ return entry.ItemDefinition == OldWeapon; }, FFortItemEntry::Size());
+
+			if (ItemEntry)
+				PlayerController->WorldInventory->Remove(ItemEntry->ItemGuid);
+		}
+
+		for (int i = 0; i < SeatWeaponComponent->WeaponSeatDefinitions.Num(); i++)
+		{
+			auto& WeaponDefinition = SeatWeaponComponent->WeaponSeatDefinitions.Get(i, FWeaponSeatDefinition::Size());
+
+			if (WeaponDefinition.SeatIndex != TargetSeatIndex)
+				continue;
+
+			NewWeapon = WeaponDefinition.VehicleWeapon;
+			break;
+		}
+	}
+
+	callOG(PlayerController, Stack.GetCurrentNativeFunction(), ServerRequestSeatChange, TargetSeatIndex);
+
+	if (!NewWeapon && OldWeapon)
+	{
+		auto LastItem = Pawn->HasPreviousWeapon() ? (AFortWeapon*)Pawn->PreviousWeapon : nullptr;
+
+		if (LastItem)
+		{
+			PlayerController->ServerExecuteInventoryItem(LastItem->ItemEntryGuid);
+			PlayerController->ClientEquipItem(LastItem->ItemEntryGuid, true);
+		}
+		else
+		{
+			auto pickaxeEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([](FFortItemEntry& entry)
+				{ return entry.ItemDefinition->IsA<UFortWeaponMeleeItemDefinition>(); }, FFortItemEntry::Size());
+
+			if (pickaxeEntry)
+			{
+				PlayerController->ServerExecuteInventoryItem(pickaxeEntry->ItemGuid);
+				PlayerController->ClientEquipItem(pickaxeEntry->ItemGuid, true);
+			}
+		}
+	}
+	else if (NewWeapon)
+	{
+		auto NewItem = PlayerController->WorldInventory->GiveItem(NewWeapon, 1, AFortInventory::GetStats(NewWeapon)->ClipSize);
+		auto CurrentWeapon = Pawn->CurrentWeapon;
+
+		PlayerController->ServerExecuteInventoryItem(NewItem->ItemEntry.ItemGuid);
+		PlayerController->ClientEquipItem(NewItem->ItemEntry.ItemGuid, true);
+		if (Pawn->HasPreviousWeapon())
+			Pawn->PreviousWeapon = CurrentWeapon;
+	}
 }
 
 
@@ -2662,4 +2750,6 @@ void AFortPlayerControllerAthena::PostLoadHook()
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCraftSchematic"), ServerCraftSchematic);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerGiveCreativeItem"), ServerGiveCreativeItem);
+
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerRequestSeatChange"), ServerRequestSeatChange_, ServerRequestSeatChange_OG);
 }
