@@ -128,7 +128,7 @@ public:
 				FEventFunction{ false, L"/Game/Athena/Events/NewYear/BP_NewYearTimer.BP_NewYearTimer_C.TimeOfDaySetup" }
 			},
 			11.31,
-			L""
+			nullptr
 		},
 		FEvent
 		{
