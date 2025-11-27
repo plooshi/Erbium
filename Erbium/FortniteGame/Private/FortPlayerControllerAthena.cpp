@@ -2225,15 +2225,31 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 			{
 				printf("Weapon: %s\n", Weapon->Name.ToString().c_str());
 				auto Item = PlayerController->WorldInventory->GiveItem(Weapon, 1, AFortInventory::GetStats(Weapon)->ClipSize);
+				auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+					{ return entry.ItemDefinition == Weapon; }, FFortItemEntry::Size());
 
-				auto CurrentWeapon = Pawn->CurrentWeapon;
+				auto OldWeapon = Pawn->CurrentWeapon;
 
-				PlayerController->ServerExecuteInventoryItem(Item->ItemEntry.ItemGuid);
-				PlayerController->ClientEquipItem(Item->ItemEntry.ItemGuid, true);
+				PlayerController->ServerExecuteInventoryItem(ItemEntry->ItemGuid);
+				PlayerController->ClientEquipItem(ItemEntry->ItemGuid, true);
 				if (Pawn->HasPreviousWeapon())
-					Pawn->PreviousWeapon = CurrentWeapon;
+					Pawn->PreviousWeapon = OldWeapon;
 
-				return;
+				auto Weapon = (AFortWeapon*)Pawn->CurrentWeapon;
+
+				FMountedWeaponInfoRepped RepWeaponInfo{};
+
+				if (RepWeaponInfo.HasHostVehicleCached())
+				{
+					RepWeaponInfo.HostVehicleCached.ObjectPointer = Vehicle;
+					RepWeaponInfo.HostVehicleCached.InterfacePointer = Vehicle->GetInterface(IFortVehicleInterface::StaticClass());
+				}
+				else
+					RepWeaponInfo.HostVehicleCachedActor = Vehicle;
+				RepWeaponInfo.HostVehicleSeatIndexCached = SeatIdx;
+
+				Weapon->MountedWeaponInfoRepped = RepWeaponInfo;
+				Weapon->OnRep_MountedWeaponInfoRepped();
 			}
 		}
 		return;
@@ -2808,10 +2824,12 @@ void AFortPlayerControllerAthena::ServerRequestSeatChange_(UObject* Context, FFr
 	else if (NewWeapon)
 	{
 		auto NewItem = PlayerController->WorldInventory->GiveItem(NewWeapon, 1, AFortInventory::GetStats(NewWeapon)->ClipSize);
+		auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+			{ return entry.ItemDefinition == NewWeapon; }, FFortItemEntry::Size());
 		auto CurrentWeapon = Pawn->CurrentWeapon;
 
-		PlayerController->ServerExecuteInventoryItem(NewItem->ItemEntry.ItemGuid);
-		PlayerController->ClientEquipItem(NewItem->ItemEntry.ItemGuid, true);
+		PlayerController->ServerExecuteInventoryItem(ItemEntry->ItemGuid);
+		PlayerController->ClientEquipItem(ItemEntry->ItemGuid, true);
 		if (Pawn->HasPreviousWeapon())
 			Pawn->PreviousWeapon = CurrentWeapon;
 	}

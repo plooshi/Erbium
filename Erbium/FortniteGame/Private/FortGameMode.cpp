@@ -1248,6 +1248,8 @@ void AFortGameMode::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor*
                     {
                         auto Vehicle = UWorld::SpawnActor<AFortAthenaVehicle>(VehicleClass, Spawner->K2_GetActorLocation(), Spawner->K2_GetActorRotation());
 
+                        if (auto Car = Vehicle->Cast<AFortDagwoodVehicle>())
+                            Car->SetFuel(100.f);
                         //printf("Spawned a %s\n", Spawner->Name.ToString().c_str());
                     }
                     else 

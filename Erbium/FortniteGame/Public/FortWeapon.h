@@ -2,6 +2,7 @@
 #include "../../pch.h"
 #include "FortInventory.h"
 #include "../../Engine/Public/AbilitySystemComponent.h"
+#include "FortPhysicsPawn.h"
 
 struct FFortAbilitySetHandle final
 {
@@ -29,6 +30,8 @@ public:
     DEFINE_PROP(ReticleTraceOverrideSpecHandle, FGameplayAbilitySpecHandle);
     DEFINE_PROP(EquippedAbilityHandles, TArray<FGameplayAbilitySpecHandle>);
     DEFINE_PROP(EquippedAbilitySetHandles, TArray<FFortAbilitySetHandle>);
+    DEFINE_PROP(MountedWeaponInfoRepped, FMountedWeaponInfoRepped);
 
     DEFINE_FUNC(ServerReleaseWeaponAbility, void);
+    DEFINE_FUNC(OnRep_MountedWeaponInfoRepped, void);
 };

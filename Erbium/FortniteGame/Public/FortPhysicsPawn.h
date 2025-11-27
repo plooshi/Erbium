@@ -47,6 +47,23 @@ public:
     DEFINE_STRUCT_PROP(LocalNormal, FVector);
 };
 
+class IFortVehicleInterface : IInterface
+{
+public:
+    UCLASS_COMMON_MEMBERS(IFortVehicleInterface);
+};
+
+struct FMountedWeaponInfoRepped
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FMountedWeaponInfoRepped);
+    uint8_t Padding[0x48];
+
+    DEFINE_STRUCT_PROP(HostVehicleCached, TScriptInterface<IFortVehicleInterface>);
+    DEFINE_STRUCT_PROP(HostVehicleCachedActor, AActor*);
+    DEFINE_STRUCT_PROP(HostVehicleSeatIndexCached, int32);
+};
+
 class AFortOctopusVehicle : public AFortPhysicsPawn
 {
 public:
