@@ -52,12 +52,29 @@ public:
     DEFINE_STRUCT_PROP(Items, TArray<FGameplayAbilitySpec>);
 };
 
+class UGameplayEffect : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UGameplayEffect);
+};
+
+
+struct FGameplayEffectApplicationInfo
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FGameplayEffectApplicationInfo);
+
+    DEFINE_STRUCT_PROP(GameplayEffect, TSubclassOf<UGameplayEffect>);
+    DEFINE_STRUCT_PROP(Level, float);
+};
+
 class UFortAbilitySet : public UObject
 {
 public:
     UCLASS_COMMON_MEMBERS(UFortAbilitySet);
     
     DEFINE_PROP(GameplayAbilities, TArray<TSubclassOf<UFortGameplayAbility>>);
+    DEFINE_PROP(PassiveGameplayEffects, TArray<FGameplayEffectApplicationInfo>);
 };
 
 struct FGameplayEffectContextHandle
@@ -82,13 +99,6 @@ public:
     bool bPassedFiltersAndWasExecuted;
     uint8 Pad_5[0x3];
 };
-
-class UGameplayEffect : public UObject
-{
-public:
-    UCLASS_COMMON_MEMBERS(UGameplayEffect);
-};
-
 
 struct FGameplayEffectSpec
 {
