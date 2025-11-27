@@ -2266,6 +2266,8 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 				}
 			}
 		}
+		
+		free(RepWeaponInfo);
 		return;
 	}
 	else if (auto CollectorActor = ReceivingActor->Cast<ABuildingItemCollectorActor>())
