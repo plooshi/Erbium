@@ -494,6 +494,13 @@ void Misc::Hook()
 		Utils::Patch<uint8_t>(patchPoint + 2, 0x1);
 	}
 
-	if (VersionInfo.FortniteVersion >= 27)
-		Utils::Hook(Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC ? 4C 8D B1 ? ? ? ? 33 DB 49 8D 7E").Get(), CrashSomething, CrashSomethingOG);
+	if (VersionInfo.FortniteVersion >= 25)
+	{
+		auto sig = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC ? 4C 8D B1 ? ? ? ? 33 DB 49 8D 7E").Get();
+
+		if (!sig)
+			sig = Memcury::Scanner::FindPattern("40 53 48 83 EC ? 48 8B DA 48 8B D1 48 81 C1 ? ? ? ? E8 ? ? ? ? 48 85 C0 74 ? 4C 8B 0B 45 33 C0").Get();
+		
+		Utils::Hook(sig, CrashSomething, CrashSomethingOG);
+	}
 }

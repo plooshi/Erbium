@@ -956,7 +956,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                     { return acc + p.second; });
             }
 
-            if (VersionInfo.FortniteVersion >= 3.3)
+            if (VersionInfo.FortniteVersion >= 3.3 && VersionInfo.FortniteVersion < 17)
             {
                 auto PickSupplyDropLocation = (FVector* (*)(AFortAthenaMapInfo*, FVector*, FVector*, float, bool, float, float)) FindPickSupplyDropLocation();
 
