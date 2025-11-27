@@ -801,41 +801,6 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                 GameState->DefaultParachuteDeployTraceForGroundDistance = 10000;
         }
 
-        if (VersionInfo.FortniteVersion >= 18 && VersionInfo.FortniteVersion < 25.20 && (GameMode->HasAthenaGameDataTable() || GameState->HasAthenaGameDataTable()))
-        {
-            // fix storm damage bug
-            UCurveTable* AthenaGameDataTable = GameMode->HasAthenaGameDataTable() ? GameMode->AthenaGameDataTable : GameState->AthenaGameDataTable;
-
-            if (AthenaGameDataTable)
-            {
-                static FName DefaultSafeZoneDamageName = FName(L"Default.SafeZone.Damage");
-
-                for (const auto& [RowName, RowPtr] : AthenaGameDataTable->RowMap)
-                {
-                    if (RowName != DefaultSafeZoneDamageName)
-                        continue;
-
-                    FSimpleCurve* Row = (FSimpleCurve*)RowPtr;
-
-                    if (!Row)
-                        continue;
-
-                    for (int i = 0; i < Row->Keys.Num(); i++)
-                    {
-                        auto& Key = Row->Keys.Get(i, FSimpleCurveKey::Size());
-
-                        if (Key.Time == 0.f)
-                            Key.Value = 0.f;
-                    }
-
-                    auto NewKey = (FSimpleCurveKey*)malloc(FSimpleCurveKey::Size());
-                    NewKey->Time = 1.f;
-                    NewKey->Value = 0.01f;
-                    Row->Keys.AddAt(*NewKey, 1, FSimpleCurveKey::Size());
-                }
-            }
-        }
-
         if (VersionInfo.FortniteVersion >= 27)
         {
             // fix grind rails
@@ -998,7 +963,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
 
         GameMode->DefaultPawnClass = FindObject<UClass>(L"/Game/Athena/PlayerPawn_Athena.PlayerPawn_Athena_C");
 
-        if (VersionInfo.EngineVersion == 4.16)
+        if (VersionInfo.EngineVersion == 4.16 && VersionInfo.FortniteVersion < 1.9)
         {
             auto sRef = Memcury::Scanner::FindStringRef(L"CollectGarbageInternal() is flushing async loading").Get();
             uint64_t CollectGarbage = 0;
@@ -1029,6 +994,8 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                 Utils::Patch<uint8_t>(CollectGarbage, 0xC3);
             }
         }
+        else if (VersionInfo.EngineVersion < 4.20)
+            Utils::Patch<uint8_t>(Memcury::Scanner::FindPattern("E8 ? ? ? ? F0 FF 0D ? ? ? ? 0F B6 C3").RelativeOffset(1).Get(), 0xC3);
 
         if (GameState->HasAllPlayerBuildableClassesIndexLookup())
             for (auto& [Class, Handle] : GameState->AllPlayerBuildableClassesIndexLookup)

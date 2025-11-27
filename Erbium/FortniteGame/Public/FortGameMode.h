@@ -59,6 +59,7 @@ public:
     DEFINE_FUNC(ChangeName, void);
     DEFINE_FUNC(ChoosePlayerStart, AActor*);
     DEFINE_FUNC(GetDefaultPawnClassForController, const UClass*);
+    DEFINE_FUNC(IsInCurrentSafeZone, bool);
 
     DefUHookOgRet(bool, ReadyToStartMatch_);
     static void SpawnDefaultPawnFor(UObject*, FFrame&, AActor**);

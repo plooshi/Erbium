@@ -503,10 +503,10 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 	if (Driver->ClientConnections.Num() > 0)
 		ServerReplicateActors(Driver, DeltaSeconds);
 
+	auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
     if (GUI::gsStatus == 1 && VersionInfo.FortniteVersion >= 11.00)
     { 
         auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
-		auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 		auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
 		static auto bSkipAircraft = GameState->HasCurrentPlaylistInfo() && GameState->CurrentPlaylistInfo.BasePlaylist ? GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft : false;
 		if (!bSkipAircraft && GameMode->MatchState == FName(L"InProgress") && GameState->WarmupCountdownEndTime <= Time)
@@ -514,7 +514,7 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
             UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
         }
 	}
-	else if (GUI::gsStatus == 2 && (FConfiguration::bAutoRestart || (FConfiguration::WebhookURL && *FConfiguration::WebhookURL)))
+	else if (GUI::gsStatus == 2 && (FConfiguration::bAutoRestart || (FConfiguration::WebhookURL && *FConfiguration::WebhookURL) || (VersionInfo.FortniteVersion >= 18 && VersionInfo.FortniteVersion < 25.20)))
 	{
 		auto WorldNetDriver = UWorld::GetWorld()->NetDriver;
 		if (Driver == WorldNetDriver && Driver->ClientConnections.Num() == 0)
@@ -551,6 +551,26 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 					TerminateProcess(GetCurrentProcess(), 0);
 			}
 		}
+		else if (Driver == WorldNetDriver && VersionInfo.FortniteVersion >= 18)
+		{
+			for (auto& UncastedPlayer : GameMode->AlivePlayers)
+			{
+				auto Player = (AFortPlayerControllerAthena*)UncastedPlayer;
+				if (auto Pawn = Player->MyFortPawn)
+				{
+					bool bInZone = GameMode->IsInCurrentSafeZone(Player->MyFortPawn->K2_GetActorLocation(), false);
+
+					if (Pawn->bIsInsideSafeZone != bInZone || Pawn->bIsInAnyStorm != !bInZone)
+					{
+						printf("Pawn %s new storm status: %s\n", Pawn->Name.ToString().c_str(), bInZone ? "true" : "false");
+						Pawn->bIsInAnyStorm = !bInZone;
+						Pawn->OnRep_IsInAnyStorm();
+						Pawn->bIsInsideSafeZone = bInZone;
+						Pawn->OnRep_IsInsideSafeZone();
+					}
+				}
+			}
+		}
 	}
 
     return TickFlushOG(Driver, DeltaSeconds);
@@ -566,10 +586,10 @@ void UNetDriver::TickFlush__RepGraph(UNetDriver* Driver, float DeltaSeconds)
 			((void (*)(UObject*, float)) ServerReplicateActors_)(Driver->ReplicationDriver, DeltaSeconds);
 
 
+		auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 		if (GUI::gsStatus == 1 && VersionInfo.FortniteVersion >= 11.00)
 		{
 			auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
-			auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 			auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
 			static auto bSkipAircraft = GameState->HasCurrentPlaylistInfo() && GameState->CurrentPlaylistInfo.BasePlaylist ? GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft : false;
 			if (!bSkipAircraft && GameMode->MatchState == FName(L"InProgress") && GameState->WarmupCountdownEndTime <= Time)
@@ -577,7 +597,7 @@ void UNetDriver::TickFlush__RepGraph(UNetDriver* Driver, float DeltaSeconds)
 				UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
 			}
 		}
-		else if (GUI::gsStatus == 2 && (FConfiguration::bAutoRestart || (FConfiguration::WebhookURL && *FConfiguration::WebhookURL)))
+		else if (GUI::gsStatus == 2 && (FConfiguration::bAutoRestart || (FConfiguration::WebhookURL && *FConfiguration::WebhookURL) || VersionInfo.FortniteVersion >= 18))
 		{
 			auto WorldNetDriver = UWorld::GetWorld()->NetDriver;
 			if (Driver == WorldNetDriver && Driver->ClientConnections.Num() == 0)
@@ -612,6 +632,26 @@ void UNetDriver::TickFlush__RepGraph(UNetDriver* Driver, float DeltaSeconds)
 
 					if (FConfiguration::bAutoRestart)
 						TerminateProcess(GetCurrentProcess(), 0);
+				}
+			}
+			else if (Driver == WorldNetDriver && VersionInfo.FortniteVersion >= 18)
+			{
+				for (auto& UncastedPlayer : GameMode->AlivePlayers)
+				{
+					auto Player = (AFortPlayerControllerAthena*)UncastedPlayer;
+					if (auto Pawn = Player->MyFortPawn)
+					{
+						bool bInZone = GameMode->IsInCurrentSafeZone(Player->MyFortPawn->K2_GetActorLocation(), false);
+
+						if (Pawn->bIsInsideSafeZone != bInZone || Pawn->bIsInAnyStorm != !bInZone)
+						{
+							printf("Pawn %s new storm status: %s\n", Pawn->Name.ToString().c_str(), bInZone ? "true" : "false");
+							Pawn->bIsInAnyStorm = !bInZone;
+							Pawn->OnRep_IsInAnyStorm();
+							Pawn->bIsInsideSafeZone = bInZone;
+							Pawn->OnRep_IsInsideSafeZone();
+						}
+					}
 				}
 			}
 		}
@@ -682,7 +722,18 @@ void UNetDriver::TickFlush__Iris(UNetDriver* Driver, float DeltaSeconds)
 		}
 	}
 
-	if (GUI::gsStatus == 2 && (FConfiguration::bAutoRestart || (FConfiguration::WebhookURL && *FConfiguration::WebhookURL)))
+	auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
+	if (GUI::gsStatus == 1 && VersionInfo.FortniteVersion < 25.20)
+	{
+		auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
+		auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
+		static auto bSkipAircraft = GameState->HasCurrentPlaylistInfo() && GameState->CurrentPlaylistInfo.BasePlaylist ? GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft : false;
+		if (!bSkipAircraft && GameMode->MatchState == FName(L"InProgress") && GameState->WarmupCountdownEndTime <= Time)
+		{
+			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
+		}
+	}
+	else if (GUI::gsStatus == 2 && (FConfiguration::bAutoRestart || (FConfiguration::WebhookURL && *FConfiguration::WebhookURL) || VersionInfo.FortniteVersion < 25.20))
 	{
 		auto WorldNetDriver = UWorld::GetWorld()->NetDriver;
 		if (Driver == WorldNetDriver && Driver->ClientConnections.Num() == 0)
@@ -717,6 +768,26 @@ void UNetDriver::TickFlush__Iris(UNetDriver* Driver, float DeltaSeconds)
 
 				if (FConfiguration::bAutoRestart)
 					TerminateProcess(GetCurrentProcess(), 0);
+			}
+		}
+		else if (Driver == WorldNetDriver && VersionInfo.FortniteVersion < 25.20)
+		{
+			for (auto& UncastedPlayer : GameMode->AlivePlayers)
+			{
+				auto Player = (AFortPlayerControllerAthena*)UncastedPlayer;
+				if (auto Pawn = Player->MyFortPawn)
+				{
+					bool bInZone = GameMode->IsInCurrentSafeZone(Player->MyFortPawn->K2_GetActorLocation(), false);
+
+					if (Pawn->bIsInsideSafeZone != bInZone || Pawn->bIsInAnyStorm != !bInZone)
+					{
+						printf("Pawn %s new storm status: %s\n", Pawn->Name.ToString().c_str(), bInZone ? "true" : "false");
+						Pawn->bIsInAnyStorm = !bInZone;
+						Pawn->OnRep_IsInAnyStorm();
+						Pawn->bIsInsideSafeZone = bInZone;
+						Pawn->OnRep_IsInsideSafeZone();
+					}
+				}
 			}
 		}
 	}

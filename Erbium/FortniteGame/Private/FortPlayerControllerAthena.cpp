@@ -93,34 +93,37 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 			PlayerController->WorldInventory->Remove(Guid);
 	}
 
-	if (VersionInfo.FortniteVersion >= 25.20)
+	if (VersionInfo.FortniteVersion >= 18)
 	{
-		static auto Effect = FindObject<UClass>(L"/Game/Athena/SafeZone/GE_OutsideSafeZoneDamage.GE_OutsideSafeZoneDamage_C");
-
-		bool Found = false;
-		auto AbilitySystemComponent = PlayerController->PlayerState->AbilitySystemComponent;
-
-		for (int i = 0; i < AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Num(); i++)
+		if (VersionInfo.FortniteVersion >= 25.20)
 		{
-			auto& ActiveEffect = AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Get(i, FActiveGameplayEffect::Size());
+			static auto Effect = FindObject<UClass>(L"/Game/Athena/SafeZone/GE_OutsideSafeZoneDamage.GE_OutsideSafeZoneDamage_C");
 
-			if (ActiveEffect.Spec.Def)
-				if (ActiveEffect.Spec.Def->IsA(Effect))
-				{
-					Found = true;
-					break;
-				}
-		}
+			bool Found = false;
+			auto AbilitySystemComponent = PlayerController->PlayerState->AbilitySystemComponent;
 
-		if (!Found)
-		{
-			auto EffectHandle = FGameplayEffectContextHandle();
-			auto SpecHandle = AbilitySystemComponent->BP_ApplyGameplayEffectToSelf(Effect, 0.f, EffectHandle);
+			for (int i = 0; i < AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Num(); i++)
+			{
+				auto& ActiveEffect = AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Get(i, FActiveGameplayEffect::Size());
 
-			//AbilitySystemComponent->SetActiveGameplayEffectLevel(SpecHandle, 1);
+				if (ActiveEffect.Spec.Def)
+					if (ActiveEffect.Spec.Def->IsA(Effect))
+					{
+						Found = true;
+						break;
+					}
+			}
 
-			AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(SpecHandle,
-				FGameplayTag(FName(L"SetByCaller.StormCampingDamage")), 1.f);
+			if (!Found)
+			{
+				auto EffectHandle = FGameplayEffectContextHandle();
+				auto SpecHandle = AbilitySystemComponent->BP_ApplyGameplayEffectToSelf(Effect, 0.f, EffectHandle);
+
+				//AbilitySystemComponent->SetActiveGameplayEffectLevel(SpecHandle, 1);
+
+				AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(SpecHandle,
+					FGameplayTag(FName(L"SetByCaller.StormCampingDamage")), 1.f);
+			}
 		}
 
 		PlayerController->MyFortPawn->bIsInAnyStorm = false;
@@ -2125,7 +2128,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 			}
 
 			auto Loc = PlayerController->Pawn->K2_GetActorLocation();
-			Loc.Z += 500.f;
+			Loc.Z += 200.f;
 
 			auto Class = FindObject<UClass>(UEAllocatedWString(args[1].begin(), args[1].end()).c_str());
 
@@ -2264,11 +2267,8 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 					*(FMountedWeaponInfoRepped*)(__int64(Weapon) + MountedWeaponInfoReppedOff) = *RepWeaponInfo;
 					Weapon->Call(OnRep_MountedWeaponInfoRepped);
 				}
-				
-				free(RepWeaponInfo);
 			}
 		}
-		
 		return;
 	}
 	else if (auto CollectorActor = ReceivingActor->Cast<ABuildingItemCollectorActor>())

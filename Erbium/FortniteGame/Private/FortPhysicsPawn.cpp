@@ -241,7 +241,27 @@ void AFortPhysicsPawn::Hook()
         auto OnRep_ReplicatedAttachedInfoIdx = AFortOctopusTowhookAttachableProjectile::GetDefaultObj()->GetFunction("OnRep_ReplicatedAttachedInfo")->GetVTableIndex();
 
         auto OnRep_ReplicatedAttachedInfo__Impl = AFortOctopusTowhookAttachableProjectile::GetDefaultObj()->Vft[OnRep_ReplicatedAttachedInfoIdx];
-        CanGrappleToComponent_ = Memcury::Scanner(OnRep_ReplicatedAttachedInfo__Impl).ScanFor({ 0xFF, 0x90 }).ScanFor({ 0x48, 0x8B, 0xFF, 0xE8 }, false, 0, 1, 2048, true).RelativeOffset(4).Get();
+        auto CanGrappleToComponent = Memcury::Scanner(OnRep_ReplicatedAttachedInfo__Impl).ScanFor({ 0xFF, 0x90 }).Get();
+        
+        for (int i = 0; i < 2000; i++)
+        {
+            auto Ptr = (uint8_t*)(CanGrappleToComponent - i);
+
+            if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B)
+            {
+                if (*(Ptr + 3) == 0xE8)
+                {
+                    CanGrappleToComponent_ = uint64_t(Ptr);
+                    break;
+                }
+                else if (*(Ptr + 3) == 0xFF && (*(Ptr + 4) & 0xF0) == 0x90)
+                {
+                    CanGrappleToComponent_ = uint64_t(AFortOctopusTowhookAttachableProjectile::GetDefaultObj()->Vft[*(uint32_t*)(Ptr + 5) / 8]);
+                    break;
+                }
+            }
+        }
+        //.ScanFor({ 0x48, 0x8B, 0xFF, 0xE8 }, false, 0, 1, 2048, true).RelativeOffset(4).Get();
 
         Utils::Hook<AFortOctopusTowhookAttachableProjectile>(OnRep_ReplicatedAttachedInfoIdx, OnRep_ReplicatedAttachedInfo, OnRep_ReplicatedAttachedInfoOG);
     }
