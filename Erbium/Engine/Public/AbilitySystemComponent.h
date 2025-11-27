@@ -74,7 +74,7 @@ public:
     UCLASS_COMMON_MEMBERS(UFortAbilitySet);
     
     DEFINE_PROP(GameplayAbilities, TArray<TSubclassOf<UFortGameplayAbility>>);
-    DEFINE_PROP(PassiveGameplayEffects, TArray<FGameplayEffectApplicationInfo>);
+    DEFINE_PROP(GrantedGameplayEffects, TArray<FGameplayEffectApplicationInfo>);
 };
 
 struct FGameplayEffectContextHandle
