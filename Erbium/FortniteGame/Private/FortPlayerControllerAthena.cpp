@@ -2264,8 +2264,11 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 					*(FMountedWeaponInfoRepped*)(__int64(Weapon) + MountedWeaponInfoReppedOff) = *RepWeaponInfo;
 					Weapon->Call(OnRep_MountedWeaponInfoRepped);
 				}
+				
+				free(RepWeaponInfo);
 			}
 		}
+		
 		return;
 	}
 	else if (auto CollectorActor = ReceivingActor->Cast<ABuildingItemCollectorActor>())
