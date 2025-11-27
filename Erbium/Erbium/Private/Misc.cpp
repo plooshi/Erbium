@@ -503,7 +503,4 @@ void Misc::Hook()
 		
 		Utils::Hook(sig, CrashSomething, CrashSomethingOG);
 	}
-
-	if (VersionInfo.EngineVersion <= 4.19)
-		Utils::Hook(Memcury::Scanner::FindPattern("40 57 48 83 EC ? 48 8B C2 48 8B F9 48 85 D2 75 ? 48 8B 41").Get(), RetFalse);
 }

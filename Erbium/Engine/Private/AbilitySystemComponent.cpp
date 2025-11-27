@@ -53,12 +53,13 @@ void UAbilitySystemComponent::GiveAbilitySet(const UFortAbilitySet* Set)
         //printf("GiveAbilitySet[%s]\n", Set->Name.ToString().c_str());
         for (auto& GameplayAbility : Set->GameplayAbilities)
             GiveAbility(GameplayAbility->GetDefaultObj());
-        for (int i = 0; i < Set->GrantedGameplayEffects.Num(); i++)
-        {
-            auto& GameplayEffect = Set->GrantedGameplayEffects.Get(i, FGameplayEffectApplicationInfo::Size());
+        if (Set->HasGrantedGameplayEffects())
+            for (int i = 0; i < Set->GrantedGameplayEffects.Num(); i++)
+            {
+                auto& GameplayEffect = Set->GrantedGameplayEffects.Get(i, FGameplayEffectApplicationInfo::Size());
 
-            BP_ApplyGameplayEffectToSelf(GameplayEffect.GameplayEffect.Get(), GameplayEffect.Level, MakeEffectContext());
-        }
+                BP_ApplyGameplayEffectToSelf(GameplayEffect.GameplayEffect.Get(), GameplayEffect.Level, MakeEffectContext());
+            }
     }
 }
 

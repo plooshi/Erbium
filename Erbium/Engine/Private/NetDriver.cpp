@@ -257,7 +257,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 					continue;
 				}
 			}
-			else
+			else if (VersionInfo.FortniteVersion >= 20) // its broken on legacy builds. idk why
 			{
 				if (VersionInfo.FortniteVersion == 1.72 || VersionInfo.FortniteVersion == 0.00)
 				{
