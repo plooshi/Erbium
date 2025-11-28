@@ -4,9 +4,10 @@
 
 void AFortMinigameSettingsBuilding::BeginPlay(AFortMinigameSettingsBuilding* Settings)
 {
-	if (Settings->HasSettingsVolume()) 
-		Settings->SettingsVolume = Settings->GetOwner();
-	
+	if (Settings->HasSettingsVolume())
+	{
+	}
+
 	return BeginPlayOG(Settings);
 }
 
@@ -17,21 +18,33 @@ AFortAthenaCreativePortal* AFortAthenaCreativePortal::Create(AFortPlayerControll
 
 	AFortAthenaCreativePortal* Portal = nullptr;
 
-	static TArray<AFortAthenaCreativePortal*> AvailablePortals, UsedPortals;
-	if (AvailablePortals.Num() == 0 && UsedPortals.Num() == 0)
-		for (auto& Portal__Uncasted : GameState->CreativePortalManager->AllPortals)
-		{
-			auto Portal = (AFortAthenaCreativePortal*)Portal__Uncasted;
-
-			if (Portal->OwningPlayer.ReplicationBytes.Num() > 0) UsedPortals.Add(Portal);
-			else AvailablePortals.Add(Portal);
-		}
-
-	if (AvailablePortals.Num() > 0) 
+	if (!GameState->CreativePortalManager->HasAvailablePortals())
 	{
-		Portal = (AFortAthenaCreativePortal*)AvailablePortals[0];
-		AvailablePortals.Remove(0);
-		UsedPortals.Add(Portal);
+		static TArray<AFortAthenaCreativePortal*> AvailablePortals, UsedPortals;
+		if (AvailablePortals.Num() == 0 && UsedPortals.Num() == 0)
+			for (auto& Portal__Uncasted : GameState->CreativePortalManager->AllPortals)
+			{
+				auto Portal = (AFortAthenaCreativePortal*)Portal__Uncasted;
+
+				if (Portal->OwningPlayer.ReplicationBytes.Num() > 0) UsedPortals.Add(Portal);
+				else AvailablePortals.Add(Portal);
+			}
+
+		if (AvailablePortals.Num() > 0)
+		{
+			Portal = (AFortAthenaCreativePortal*)AvailablePortals[0];
+			AvailablePortals.Remove(0);
+			UsedPortals.Add(Portal);
+		}
+	}
+	else
+	{
+		if (GameState->CreativePortalManager->AvailablePortals.Num() > 0)
+		{
+			Portal = (AFortAthenaCreativePortal*)GameState->CreativePortalManager->AvailablePortals[0];
+			GameState->CreativePortalManager->AvailablePortals.Remove(0);
+			GameState->CreativePortalManager->UsedPortals.Add(Portal);
+		}
 	}
 
 	if (!Portal)
@@ -46,15 +59,6 @@ AFortAthenaCreativePortal* AFortAthenaCreativePortal::Create(AFortPlayerControll
 	Portal->OnRep_OwningPlayer();
 	Portal->bPortalOpen = true;
 	Portal->OnRep_PortalOpen();
-	Portal->PlayersReady.Add(PlayerState->UniqueId, FUniqueNetIdRepl::Size());
-	Portal->OnRep_PlayersReady();
-
-	Portal->LinkedVolume->LinkedPortals.Add(Portal);
-
-	Portal->bUserInitiatedLoad = true;
-	Portal->bInErrorState = false;
-
-	Portal->LinkedVolume->bNeverAllowSaving = false;
 
 	auto RestrictedPlotDefinition = FindObject<UFortCreativeRealEstatePlotItemDefinition>(L"/Game/Playgrounds/Items/Plots/Temperate_Medium.Temperate_Medium");
 
@@ -62,9 +66,6 @@ AFortAthenaCreativePortal* AFortAthenaCreativePortal::Create(AFortPlayerControll
 		RestrictedPlotDefinition = FindObject<UFortCreativeRealEstatePlotItemDefinition>(L"/CR_Legacy/Playgrounds/Items/Plots/Temperate_Medium.Temperate_Medium");
 
 	auto IslandPlayset = RestrictedPlotDefinition->BasePlayset.Get();
-	/*Portal->LinkedVolume->CurrentPlayset = IslandPlayset;
-	Portal->LinkedVolume->OnRep_CurrentPlayset();*/
-
 
 	auto LevelSaveComponent = (UFortLevelSaveComponent*)Portal->LinkedVolume->GetComponentByClass(UFortLevelSaveComponent::StaticClass());
 
@@ -79,27 +80,39 @@ AFortAthenaCreativePortal* AFortAthenaCreativePortal::Create(AFortPlayerControll
 			LevelSaveComponent->PlotPermissions.Permission = 1;
 		else
 		{
-			static auto PlayspaceComponent = FindClass("PlayspaceComponent_CreativeToolsPermission");
-		}
-	}
-	auto LevelStreamComponent = (UPlaysetLevelStreamComponent*)Portal->LinkedVolume->GetComponentByClass(UPlaysetLevelStreamComponent::StaticClass());
+			auto PermissionComponent = (UPlayspaceComponent_CreativeToolsPermission*)Portal->LinkedVolume->Playspace->GetComponentByClass(UPlayspaceComponent_CreativeToolsPermission::StaticClass());
 
-	//LevelStreamComponent->CurrentPlayset = IslandPlayset;
+			PermissionComponent->AccountIdOfOwner = PlayerState->UniqueId;
+			PermissionComponent->PlotPermissions.Permission = 1;
+		}
+		LevelSaveComponent->OnRep_AccountIdOfOwner();
+	}
+
+	auto LevelStreamComponent = (UPlaysetLevelStreamComponent*)Portal->LinkedVolume->GetComponentByClass(UPlaysetLevelStreamComponent::StaticClass());
 	LevelStreamComponent->SetPlayset(IslandPlayset);
-	//LevelStreamComponent->ClientPlaysetData.bValid = true;
-	//LevelStreamComponent->OnRep_ClientPlaysetData();
-	LevelStreamComponent->bAutoLoadLevel = true;
-	LevelStreamComponent->bAutoActivate = true;
 	
-	if (VersionInfo.FortniteVersion >= 5 && VersionInfo.FortniteVersion <= 25.00)
-		UWorld::SpawnActor<AMinigameSettingsMachine_C>(FVector{}, {}, Portal->LinkedVolume);
+	static auto SettingsMachineClass = FindObject<UClass>("/Game/Athena/Items/Gameplay/MinigameSettingsControl/MinigameSettingsMachine.MinigameSettingsMachine_C");
+	auto SettingsMachine = UWorld::SpawnActor<AMinigameSettingsMachine_C>(SettingsMachineClass, FVector{}, {}, Portal->LinkedVolume);
+
+	if (SettingsMachine)
+	{
+		if (SettingsMachine->HasSettingsVolume())
+		{
+			SettingsMachine->SettingsVolume = Portal->LinkedVolume;
+			SettingsMachine->OnRep_SettingsVolume();
+		}
+
+		auto MinigameVolumeComponent = (UFortMinigameVolumeComponent*)Portal->LinkedVolume->GetComponentByClass(UFortMinigameVolumeComponent::StaticClass());
+		if (MinigameVolumeComponent)
+			MinigameVolumeComponent->CurrentMinigameSettingsMachine = SettingsMachine;
+	}
 	
 	auto LoadPlayset = (void (*)(UPlaysetLevelStreamComponent*)) FindLoadPlayset();
 	if (LoadPlayset)
 		LoadPlayset(LevelStreamComponent);
 
-	PlayerController->CreativePlotLinkedVolume = Portal->LinkedVolume;
-	PlayerController->OnRep_CreativePlotLinkedVolume();
+	//PlayerController->CreativePlotLinkedVolume = Portal->LinkedVolume;
+	//PlayerController->OnRep_CreativePlotLinkedVolume();
 
 	Portal->LinkedVolume->VolumeState = 3;
 	Portal->LinkedVolume->OnRep_VolumeState();
@@ -107,6 +120,9 @@ AFortAthenaCreativePortal* AFortAthenaCreativePortal::Create(AFortPlayerControll
 	PlayerController->OwnedPortal = Portal;
 
 	printf("[Creative] Setup portal!\n");
+
+	PlayerController->CreativePlotLinkedVolume = PlayerController->GetCurrentVolume();
+	PlayerController->OnRep_CreativePlotLinkedVolume();
 
 	return nullptr;
 }
@@ -124,8 +140,38 @@ void AFortAthenaCreativePortal::TeleportPlayerToLinkedVolume(UObject* Context, F
 	if (!PlayerPawn)
 		return;
 
+	auto PlayerController = (AFortPlayerControllerAthena*)PlayerPawn->Controller;
+
+	// credit to andrew
+
+	static auto CreativePhone = FindObject<UFortWeaponItemDefinition>(L"/Game/Athena/Items/Weapons/Prototype/WID_CreativeTool.WID_CreativeTool");
+
+	auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+		{
+			return entry.ItemDefinition == CreativePhone;
+		}, FFortItemEntry::Size());
+
+	if (!ItemEntry)
+	{
+		PlayerController->WorldInventory->GiveItem(CreativePhone, 1, AFortInventory::GetStats(CreativePhone)->ClipSize);
+		PlayerController->ClientCreativePhoneCreated();
+	}
+
+	if (PlayerController->HasbIsCreativeQuickbarEnabled())
+		PlayerController->bIsCreativeQuickbarEnabled = true;
+	if (PlayerController->HasbIsCreativeQuickmenuEnabled())
+		PlayerController->bIsCreativeQuickmenuEnabled = true;
+	if (PlayerController->HasbIsCreativeModeEnabled())
+	{
+		PlayerController->bIsCreativeModeEnabled = true;
+		PlayerController->OnRep_IsCreativeModeEnabled();
+	}
+
 	auto Location = Portal->LinkedVolume->K2_GetActorLocation();
 	Location.Z = 10000;
+
+	PlayerController->CreativePlotLinkedVolume = Portal->LinkedVolume;
+	PlayerController->OnRep_CreativePlotLinkedVolume();
 
 	PlayerPawn->K2_TeleportTo(Location, FRotator());
 	PlayerPawn->BeginSkydiving(false);
@@ -144,5 +190,5 @@ void AFortMinigameSettingsBuilding::Hook()
 	if (!GetDefaultObj())
 		return;
 	
-	Utils::Hook(FindMinigameSettingsBuilding__BeginPlay(), BeginPlay, BeginPlayOG);
+	//Utils::Hook(FindMinigameSettingsBuilding__BeginPlay(), BeginPlay, BeginPlayOG);
 }

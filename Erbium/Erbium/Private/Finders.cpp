@@ -2693,12 +2693,21 @@ uint32 FindShouldAllowServerSpawnDecoVft()
     return 0;
 }
 
-uint64 FindSetState() // yea yea ik its not very uni ploosh u can fix - andr1ww
+uint64 FindSetState()
 {
-    if (VersionInfo.FortniteVersion <= 9.10) 
-        return Memcury::Scanner::FindPattern("4C 8B DC 55 53 56 57 41 56 49 8D 6B ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 33 F6 0F B6 FA").Get();
+    auto sRef = Memcury::Scanner::FindStringRef(L"Time from Setup to InProgress: %6.2fms", false, 0, VersionInfo.FortniteVersion >= 19, false);
 
-    return Memcury::Scanner::FindPattern("40 55 53 56 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 33 F6").Get();
+    for (int i = 0; i < 2000; i++)
+    {
+        auto Ptr = (uint8_t*)(sRef.Get() - i);
+
+        if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4)
+            return uint64_t(Ptr);
+        else if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
+            return uint64_t(Ptr);
+    }
+
+    return 0;
 }
 
 uint64 FindMinigameSettingsBuilding__BeginPlay()
@@ -2767,9 +2776,9 @@ void FindNullsAndRetTrues()
     {
         //NullFuncs.push_back(Memcury::Scanner::FindStringRef(L"Widget Class %s - Running Initialize On Archetype, %s.").ScanFor(std::vector<uint8_t>{ 0x48, 0x89, 0x5C }, false).Get()); // for 12.41
         //NullFuncs.push_back(Memcury::Scanner::FindPattern(VersionInfo.FortniteVersion == 12.41 ? "40 57 41 56 48 81 EC ? ? ? ? 80 3D ? ? ? ? ? 0F B6 FA 44 8B F1 74 3A 80 3D ? ? ? ? ? 0F" : "40 57 41 56 48 81 EC ? ? ? ? 80 3D ? ? ? ? ? 0F B6 FA 44 8B F1 74 3A 80 3D ? ? ? ? ? 0F 82").Get());
-        /*if (VersionInfo.FortniteVersion == 12.41)
-            NullFuncs.push_back(Memcury::Scanner::FindPattern("48 8B C4 48 89 58 08 48 89 68 10 48 89 70 18 48 89 78 20 41 54 41 56 41 57 48 83 EC 70 48 8B 35").Get());
-        else */if (VersionInfo.FortniteVersion == 12.61)
+        if (VersionInfo.FortniteVersion == 12.41)
+            NullFuncs.push_back(Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC ? 48 8B FA 4C 8B F9").Get());
+        else if (VersionInfo.FortniteVersion == 12.61)
             NullFuncs.push_back(Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 57 41 54 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 20 4C 8B A5").Get());
     }
     else if (VersionInfo.FortniteVersion == 14.60)

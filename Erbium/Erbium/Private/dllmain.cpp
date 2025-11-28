@@ -22,11 +22,21 @@
 void Main()
 {
 #ifndef CLIENT
+
     if constexpr (!FConfiguration::bGUI)
     {
         AllocConsole();
     }
-    else
+    
+    if constexpr (FConfiguration::bCustomCrashReporter)
+        FCrashReporter::Register();
+#endif
+
+    printf("Initializing SDK...\n");
+    SDK::Init();
+
+#ifndef CLIENT
+    if (FConfiguration::bGUI)
     {
         if constexpr (FConfiguration::bUseStdoutLog)
         {
@@ -34,9 +44,6 @@ void Main()
             freopen_s(&s, "stdout.log", "w", stdout);
             freopen_s(&s, "stdout.log", "w+", stderr);
         }
-
-        printf("Initializing SDK...\n");
-        SDK::Init();
 
         CreateThread(0, 0, (LPTHREAD_START_ROUTINE)GUI::Init, 0, 0, 0);
     }
@@ -48,16 +55,7 @@ void Main()
         freopen_s(&s, "CONOUT$", "w+", stderr);
         freopen_s(&s, "CONIN$", "r", stdin);
     }
-    
-    if (!FConfiguration::bGUI)
-    {
-        printf("Initializing SDK...\n");
-        SDK::Init();
-    }
 #endif
-
-    if constexpr (FConfiguration::bCustomCrashReporter)
-        FCrashReporter::Register();
 
     if (VersionInfo.EngineVersion >= 5.0)
     {

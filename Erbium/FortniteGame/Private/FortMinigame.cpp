@@ -9,6 +9,8 @@ void AFortMinigame::SetState(AFortMinigame* Minigame, uint8 NewState)
     TArray<AFortPlayerStateAthena *> Players;
     Minigame->GetParticipatingPlayers(&Players);
 
+    printf("[CreativeRuntime] (SetState): %d\n", NewState);
+
     if (NewState == EFortMinigameState::GetTransitioning())
     {
         for (int i = 0; i < Players.Num(); i++)

@@ -88,6 +88,7 @@ public:
     DEFINE_PROP(HealthSet, UFortHealthSet*);
     DEFINE_PROP(CurrentWeaponList, TArray<AActor*>);
     DEFINE_PROP(bShouldDropItemsOnDeath, bool);
+    DEFINE_PROP(MoveSoundStimulusBroadcastInterval, uint16_t);
 
     DEFINE_FUNC(BeginSkydiving, void);
     DEFINE_FUNC(GetHealth, float);

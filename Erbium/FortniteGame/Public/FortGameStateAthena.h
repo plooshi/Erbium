@@ -150,6 +150,8 @@ public:
     USCRIPTSTRUCT_COMMON_MEMBERS(AFortCreativePortalManager);
 
     DEFINE_PROP(AllPortals, TArray<AActor*>);
+    DEFINE_PROP(UsedPortals, TArray<AActor*>);
+    DEFINE_PROP(AvailablePortals, TArray<AActor*>);
 };
 
 class AFortGameStateAthena : public AActor

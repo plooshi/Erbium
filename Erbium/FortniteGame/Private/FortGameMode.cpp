@@ -177,19 +177,20 @@ void SetupPlaylist(AFortGameMode* GameMode, AFortGameStateAthena* GameState)
                     bEvent = true;
                     if (VersionInfo.FortniteVersion == 7.30)
                         ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.PleasentParkFestivus"));
-                    else if (VersionInfo.FortniteVersion == 12.41)
-                    {
-                        ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.LF_Athena_POI_19x19_2"));
-                        ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.BP_Jerky_Head6_18"));
-                        ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.BP_Jerky_Head5_14"));
-                        ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.BP_Jerky_Head3_8"));
-                        ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.BP_Jerky_Head_2"));
-                        ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.BP_Jerky_Head4_11"));
-                    }
 
                     break;
                 }
             }
+        }
+
+        if (VersionInfo.FortniteVersion == 12.41)
+        {
+            ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.LF_Athena_POI_19x19_2"));
+            ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.BP_Jerky_Head6_18"));
+            ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.BP_Jerky_Head5_14"));
+            ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.BP_Jerky_Head3_8"));
+            ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.BP_Jerky_Head_2"));
+            ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.BP_Jerky_Head4_11"));
         }
 
         if (VersionInfo.FortniteVersion == 7.30 && !bEvent)
@@ -1102,13 +1103,13 @@ void AFortGameMode::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor*
     auto Num = NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Num();
     AFortPlayerPawnAthena* Pawn = nullptr;
    
-    Pawn = (AFortPlayerPawnAthena*)UWorld::SpawnActor(GameMode->GetDefaultPawnClassForController(NewPlayer), StartSpot->GetTransform());
+    Pawn = (AFortPlayerPawnAthena*)UWorld::SpawnActor(GameMode->GetDefaultPawnClassForController(NewPlayer), StartSpot->GetTransform(), NewPlayer, 3);
 
     while (!Pawn)
     {
         auto PlayerStart = GameMode->ChoosePlayerStart();
         if (PlayerStart)
-            Pawn = (AFortPlayerPawnAthena*)UWorld::SpawnActor(GameMode->GetDefaultPawnClassForController(NewPlayer), PlayerStart->GetTransform());
+            Pawn = (AFortPlayerPawnAthena*)UWorld::SpawnActor(GameMode->GetDefaultPawnClassForController(NewPlayer), PlayerStart->GetTransform(), NewPlayer, 3);
     }
     // they only stripped it on athena for some reason
     /*static auto FortGMSpawnDefaultPawnFor = (AFortPlayerPawnAthena * (*)(AFortGameMode*, AFortPlayerControllerAthena*, AActor*)) DefaultObjImpl("FortGameMode")->Vft[SpawnDefaultPawnForIdx];
@@ -1578,6 +1579,7 @@ bool AFortGameMode::StartAircraftPhase(AFortGameMode* GameMode, char a2)
 
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 
+    auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
     if constexpr (FConfiguration::WebhookURL && *FConfiguration::WebhookURL)
     {
         auto curl = curl_easy_init();
@@ -1590,7 +1592,6 @@ bool AFortGameMode::StartAircraftPhase(AFortGameMode* GameMode, char a2)
 
         sprintf_s(version, VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "%.2f" : "%.1f", VersionInfo.FortniteVersion);
 
-        auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
         auto payload = UEAllocatedString("{\"embeds\": [{\"title\": \"Match has started!\", \"fields\": [{\"name\":\"Version\",\"value\":\"") + version + "\"}, {\"name\":\"Playlist\",\"value\":\"" + (Playlist ? Playlist->PlaylistName.ToString() : "Playlist_DefaultSolo") + "\"},{\"name\":\"Players\",\"value\":\"" + std::to_string(GameMode->AlivePlayers.Num()).c_str() + "\"}], \"color\": " + "\"7237230\", \"footer\": {\"text\":\"Erbium\", \"icon_url\":\"https://cdn.discordapp.com/attachments/1341168629378584698/1436803905119064105/L0WnFa.png.png?ex=6910ef69&is=690f9de9&hm=01a0888b46647959b38ee58df322048ab49e2a5a678e52d4502d9c5e3978d805&\"}, \"timestamp\":\"" + iso8601() + "\"}] }";
 
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload.c_str());
@@ -1603,10 +1604,12 @@ bool AFortGameMode::StartAircraftPhase(AFortGameMode* GameMode, char a2)
     sprintf_s(GUI::windowTitle, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Match started" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Match started" : "Erbium (FN %.1f, UE %.2f): Match started"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
     SetConsoleTitleA(GUI::windowTitle);
 
+    // credit to heliato
+    if (FConfiguration::bJoinInProgress || (Playlist && Playlist->bAllowJoinInProgress))
+        *(bool*)(uint64_t(&GameMode->WarmupRequiredPlayerCount) - 4) = false;
+
     if (FConfiguration::bLateGame && VersionInfo.FortniteVersion < 25.20)
     {
-        /**/
-
         auto Aircraft = GameState->HasAircrafts() ?  (GameState->Aircrafts.Num() > 0 ?GameState->Aircrafts[0] : nullptr) : GameState->Aircraft;
 
         if (!Aircraft)

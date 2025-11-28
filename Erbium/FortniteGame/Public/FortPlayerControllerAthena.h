@@ -209,6 +209,11 @@ public:
     DEFINE_PROP(CreativePlotLinkedVolume, AFortVolume*);
     DEFINE_PROP(CurrentResourceType, EFortResourceType);
     DEFINE_PROP(WarmupPlayerStart, AActor*);
+    DEFINE_BITFIELD_PROP(bIsCreativeModeEnabled);
+    DEFINE_PROP(FlyingModifierIndex, int32);
+    DEFINE_BITFIELD_PROP(bIsFlightSprinting);
+    DEFINE_BITFIELD_PROP(bIsCreativeQuickbarEnabled);
+    DEFINE_BITFIELD_PROP(bIsCreativeQuickmenuEnabled);
 
     DEFINE_FUNC(GetViewTarget, AActor*);
     DEFINE_FUNC(GetControlRotation, FRotator);
@@ -239,7 +244,13 @@ public:
     DEFINE_FUNC(OnRep_CreativePlotLinkedVolume, void);
     DEFINE_FUNC(ClientRemoveItemAbilitySet, void);
     DEFINE_FUNC(ServerRequestSeatChange, void);
-
+    DEFINE_FUNC(OnRep_IsCreativeModeEnabled, void);
+    DEFINE_FUNC(ServerLoadingScreenDropped, void);
+    DEFINE_FUNC(GetCurrentVolume, AFortVolume*);
+    DEFINE_FUNC(OnRep_FlyingModifierIndex, void);
+    DEFINE_FUNC(OnRep_IsFlightSprinting, void);
+    DEFINE_FUNC(Validation_IsFlyingPossible, bool);
+    DEFINE_FUNC(ClientCreativePhoneCreated, void);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);
@@ -265,7 +276,9 @@ public:
     static void ServerCraftSchematic(UObject*, FFrame&);
     static void ServerGiveCreativeItem(UObject*, FFrame&);
     DefUHookOg(ServerRequestSeatChange_);
-
+    DefUHookOg(ServerLoadingScreenDropped_);
+    static void ServerCreativeSetFlightSpeedIndex(UObject*, FFrame&);
+    static void ServerCreativeSetFlightSprint(UObject*, FFrame&);
 
     InitPostLoadHooks;
 };

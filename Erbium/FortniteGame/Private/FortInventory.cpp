@@ -312,7 +312,7 @@ _Skip:
     //Update(nullptr);
 }
 
-FFortRangedWeaponStats* AFortInventory::GetStats(UFortWeaponItemDefinition* Def)
+FFortRangedWeaponStats* AFortInventory::GetStats(const UFortWeaponItemDefinition* Def)
 {
     if (!Def || !Def->WeaponStatHandle.DataTable)
         return nullptr;

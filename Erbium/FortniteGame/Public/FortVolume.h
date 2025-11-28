@@ -31,6 +31,8 @@ public:
     DEFINE_PROP(bAutoLoadFromRestrictedPlotDefinition, bool);
     DEFINE_PROP(LoadedLinkData, FCreativeLoadedLinkData);
     DEFINE_PROP(PlotPermissions, FFortCreativePlotPermissionData);
+
+    DEFINE_FUNC(OnRep_AccountIdOfOwner, void);
 };
 
 class UFortPlaysetItemDefinition : public UObject
@@ -70,6 +72,24 @@ public:
     DEFINE_FUNC(OnRep_ClientPlaysetData, void);
 };
 
+class UFortMinigameVolumeComponent : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortMinigameVolumeComponent);
+
+    DEFINE_PROP(CurrentMinigameSettingsMachine, const AActor*);
+    DEFINE_PROP(AccountIdOfOwner, FUniqueNetIdRepl);
+};
+
+class UPlayspaceComponent_CreativeToolsPermission : public UActorComponent
+{
+public:
+    UCLASS_COMMON_MEMBERS(UPlayspaceComponent_CreativeToolsPermission);
+
+    DEFINE_PROP(AccountIdOfOwner, FUniqueNetIdRepl);
+    DEFINE_PROP(PlotPermissions, FFortCreativePlotPermissionData);
+};
+
 class AFortVolume : public AActor
 {
 public:
@@ -79,6 +99,7 @@ public:
     DEFINE_PROP(VolumeState, uint8);
     DEFINE_PROP(CurrentPlayset, const UFortPlaysetItemDefinition*);
     DEFINE_PROP(LinkedPortals, TArray<AActor*>);
+    DEFINE_PROP(Playspace, AActor*);
 
     DEFINE_FUNC(OnRep_VolumeState, void);
     DEFINE_FUNC(OnRep_CurrentPlayset, void);

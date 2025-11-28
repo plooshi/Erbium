@@ -410,7 +410,7 @@ public:
     static AFortPickupAthena* SpawnPickup(FVector, const UFortItemDefinition*, int, int, long long = EFortPickupSourceTypeFlag::GetOther(), long long = EFortPickupSpawnSource::GetUnset(), AFortPlayerPawnAthena* = nullptr, bool = true, bool = true, const UClass* = nullptr);
     static AFortPickupAthena* SpawnPickup(ABuildingContainer*, FFortItemEntry&, AFortPlayerPawnAthena* = nullptr, int = -1);
     static FFortItemEntry* MakeItemEntry(const UFortItemDefinition*, int32, int32);
-    static FFortRangedWeaponStats* GetStats(UFortWeaponItemDefinition*);
+    static FFortRangedWeaponStats* GetStats(const UFortWeaponItemDefinition*);
     static bool IsPrimaryQuickbar(const UFortItemDefinition*);
     void UpdateEntry(FFortItemEntry&);
     void SetRequiresUpdate();

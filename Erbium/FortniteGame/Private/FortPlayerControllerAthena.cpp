@@ -181,9 +181,6 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 			((void (*)(AActor*, AActor*)) ApplyCharacterCustomization)(PlayerController->PlayerState, Pawn);
 		}
 
-		if (wcsstr(FConfiguration::Playlist, L"/Game/Athena/Playlists/Creative/Playlist_PlaygroundV2.Playlist_PlaygroundV2"))
-			AFortAthenaCreativePortal::Create(PlayerController);
-
 		for (auto& AbilitySet : AFortGameMode::AbilitySets)
 			PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
 	}
@@ -382,6 +379,15 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryWeapon(UObject* Context,
 	UFortItemDefinition* ItemDefinition = (UFortItemDefinition*)entry->ItemDefinition;
 
 	PlayerController->MyFortPawn->EquipWeaponDefinition(ItemDefinition, Weapon->ItemEntryGuid, entry->HasTrackerGuid() ? entry->TrackerGuid : FGuid(), false);
+
+	if (ItemDefinition->IsA(UFortDecoItemDefinition::StaticClass()))
+	{
+		auto DecoTool = (AFortDecoTool*)Weapon;
+		DecoTool->ItemDefinition = ItemDefinition;
+
+		if (auto ContextTrapTool = Weapon->Cast<AFortDecoTool_ContextTrap>())
+			ContextTrapTool->ContextTrapItemDefinition = (UFortContextTrapItemDefinition*)ItemDefinition;
+	}
 }
 
 bool CanBePlacedByPlayer(TSubclassOf<AActor> BuildClass)
@@ -1004,7 +1010,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 		if (FDeathInfo::HasDeathLocation())
 			PlayerState->DeathInfo.DeathLocation = PlayerState->HasPawnDeathLocation() ? PlayerState->PawnDeathLocation : (PlayerController->Pawn ? PlayerController->Pawn->K2_GetActorLocation() : FVector());
 		if (FDeathInfo::HasDeathTags())
-			PlayerState->DeathInfo.DeathTags = DeathReport.Tags;
+			PlayerState->DeathInfo.DeathTags = /*DeathReport.Tags*/ PlayerController->Pawn ? *(FGameplayTagContainer*)(__int64(&PlayerController->Pawn->MoveSoundStimulusBroadcastInterval) + (VersionInfo.FortniteVersion >= 11 && VersionInfo.FortniteVersion < 18 ? 0x18 : 0x10)) : FGameplayTagContainer();
 		if (FDeathInfo::HasDeathClassSlot())
 			PlayerState->DeathInfo.DeathClassSlot = -1;
 		PlayerState->DeathInfo.DeathCause = ToDeathCause(PlayerController->Pawn, DeathReport.Tags, PlayerState->DeathInfo.bDBNO);
@@ -2234,7 +2240,7 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 				auto OldWeapon = Pawn->CurrentWeapon;
 
 				PlayerController->ServerExecuteInventoryItem(ItemEntry->ItemGuid);
-				PlayerController->ClientEquipItem(ItemEntry->ItemGuid, true);
+				//PlayerController->ClientEquipItem(ItemEntry->ItemGuid, true);
 				if (Pawn->HasPreviousWeapon())
 					Pawn->PreviousWeapon = OldWeapon;
 
@@ -2623,7 +2629,7 @@ void AFortPlayerControllerAthena::EnterAircraft(UObject* Object, AActor* Aircraf
 
 			if (Entry.ItemDefinition->HasbCanBeDropped() ? Entry.ItemDefinition->bCanBeDropped : (Entry.ItemDefinition->GetPickupComponent() ? Entry.ItemDefinition->GetPickupComponent()->bCanBeDroppedFromInventory : false))
 			{
-				//NewPlayer->WorldInventory->Inventorxy.ReplicatedEntries.Remove(i, FFortItemEntry::Size());
+				//NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Remove(i, FFortItemEntry::Size());
 				//i--;
 				GuidsToRemove.push_back(Entry.ItemGuid);
 			}
@@ -2641,19 +2647,44 @@ void AFortPlayerControllerAthena::EnterAircraft(UObject* Object, AActor* Aircraf
 	return EnterAircraftOG(Object, Aircraft);
 }
 
+class AFortPlayerStartCreative : public AActor
+{
+public:
+	UCLASS_COMMON_MEMBERS(AFortPlayerStartCreative);
+
+	DEFINE_PROP(PlayerStartTags, FGameplayTagContainer);
+};
 void AFortPlayerControllerAthena::ServerTeleportToPlaygroundLobbyIsland(UObject* Context, FFrame& Stack)
 {
 	Stack.IncrementCode();
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+
 	auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
 
-	if (PlayerController->WarmupPlayerStart)
-		PlayerController->Pawn->K2_TeleportTo(PlayerController->WarmupPlayerStart->K2_GetActorLocation(), PlayerController->Pawn->K2_GetActorRotation());
-	else
+	static auto CreativePhone = FindObject<UFortWeaponItemDefinition>(L"/Game/Athena/Items/Weapons/Prototype/WID_CreativeTool.WID_CreativeTool");
+
+	auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+		{
+			return entry.ItemDefinition == CreativePhone;
+		}, FFortItemEntry::Size());
+	if (ItemEntry)
+		PlayerController->WorldInventory->Remove(ItemEntry->ItemGuid);
+
+	if (PlayerController->HasbIsCreativeQuickbarEnabled())
+		PlayerController->bIsCreativeQuickbarEnabled = false;
+	if (PlayerController->HasbIsCreativeQuickmenuEnabled())
+		PlayerController->bIsCreativeQuickmenuEnabled = false;
+	if (PlayerController->HasbIsCreativeModeEnabled())
 	{
-		AActor* Actor = GameMode->ChoosePlayerStart(PlayerController);
-		PlayerController->Pawn->K2_TeleportTo(Actor->K2_GetActorLocation(), Actor->K2_GetActorRotation());
+		PlayerController->bIsCreativeModeEnabled = false;
+		PlayerController->OnRep_IsCreativeModeEnabled();
 	}
+
+	AActor* Actor = GameMode->ChoosePlayerStart(PlayerController);
+	PlayerController->Pawn->K2_TeleportTo(Actor->K2_GetActorLocation(), Actor->K2_GetActorRotation());
+
+	PlayerController->CreativePlotLinkedVolume = PlayerController->GetCurrentVolume();
+	PlayerController->OnRep_CreativePlotLinkedVolume();
 }
 
 inline std::string CleanupString(std::string& s)
@@ -2752,6 +2783,9 @@ void AFortPlayerControllerAthena::ServerGiveCreativeItem(UObject* Context, FFram
 	Stack.StepCompiledIn(&ItemToRemoveGuid);
 	Stack.IncrementCode();
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+
+	if (auto WeaponDef = CreativeItem->ItemDefinition->Cast<UFortWeaponItemDefinition>())
+		CreativeItem->LoadedAmmo = AFortInventory::GetStats(WeaponDef)->ClipSize;
 
 	PlayerController->InternalPickup(CreativeItem);
 	free(CreativeItem);
@@ -2852,6 +2886,45 @@ void AFortPlayerControllerAthena::ServerRequestSeatChange_(UObject* Context, FFr
 	}
 }
 
+void AFortPlayerControllerAthena::ServerLoadingScreenDropped_(UObject* Context, FFrame& Stack)
+{
+	Stack.IncrementCode();
+	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+
+	if (wcsstr(FConfiguration::Playlist, L"/Game/Athena/Playlists/Creative/Playlist_PlaygroundV2.Playlist_PlaygroundV2"))
+		AFortAthenaCreativePortal::Create(PlayerController);
+
+	callOG(PlayerController, Stack.GetCurrentNativeFunction(), ServerLoadingScreenDropped);
+}
+
+void AFortPlayerControllerAthena::ServerCreativeSetFlightSpeedIndex(UObject* Context, FFrame& Stack)
+{
+	int32 Index_0;
+
+	Stack.StepCompiledIn(&Index_0);
+	Stack.IncrementCode();
+	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+
+	auto bIsFlyingPossible = PlayerController->Validation_IsFlyingPossible();
+
+	if (PlayerController->Validation_IsFlyingPossible__Ptr && !bIsFlyingPossible)
+		return;
+
+	PlayerController->FlyingModifierIndex = Index_0;
+	PlayerController->OnRep_FlyingModifierIndex();
+}
+
+void AFortPlayerControllerAthena::ServerCreativeSetFlightSprint(UObject* Context, FFrame& Stack)
+{
+	bool bSprint;
+
+	Stack.StepCompiledIn(&bSprint);
+	Stack.IncrementCode();
+	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+
+	PlayerController->bIsFlightSprinting = bSprint;
+	PlayerController->OnRep_IsFlightSprinting();
+}
 
 void AFortPlayerControllerAthena::PostLoadHook()
 {
@@ -2972,4 +3045,9 @@ void AFortPlayerControllerAthena::PostLoadHook()
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerGiveCreativeItem"), ServerGiveCreativeItem);
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerRequestSeatChange"), ServerRequestSeatChange_, ServerRequestSeatChange_OG);
+
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerLoadingScreenDropped"), ServerLoadingScreenDropped_, ServerLoadingScreenDropped_OG);
+
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCreativeSetFlightSpeedIndex"), ServerCreativeSetFlightSpeedIndex);
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCreativeSetFlightSprint"), ServerCreativeSetFlightSprint);
 }

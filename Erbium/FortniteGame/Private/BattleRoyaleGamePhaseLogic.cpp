@@ -391,6 +391,8 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 {
 	auto Time = UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
 
+	auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
+	auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
     if constexpr (FConfiguration::WebhookURL && *FConfiguration::WebhookURL)
     {
         auto curl = curl_easy_init();
@@ -403,8 +405,6 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 
         sprintf_s(version, VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "%.2f" : "%.1f", VersionInfo.FortniteVersion);
 
-		auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
-		auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
         auto payload = UEAllocatedString("{\"embeds\": [{\"title\": \"Match has started!\", \"fields\": [{\"name\":\"Version\",\"value\":\"") + version + "\"}, {\"name\":\"Playlist\",\"value\":\"" + (Playlist ? Playlist->PlaylistName.ToString() : "Playlist_DefaultSolo") + "\"},{\"name\":\"Players\",\"value\":\"" + std::to_string(GameMode->AlivePlayers.Num()).c_str() + "\"}], \"color\": " + "\"7237230\", \"footer\": {\"text\":\"Erbium\", \"icon_url\":\"https://cdn.discordapp.com/attachments/1341168629378584698/1436803905119064105/L0WnFa.png.png?ex=6910ef69&is=690f9de9&hm=01a0888b46647959b38ee58df322048ab49e2a5a678e52d4502d9c5e3978d805&\"}, \"timestamp\":\"" + iso8601() + "\"}] }";
 
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload.c_str());
@@ -416,6 +416,9 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 	GUI::gsStatus = 2;
 	sprintf_s(GUI::windowTitle, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Match started" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Match started" : "Erbium (FN %.1f, UE %.2f): Match started"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
 	SetConsoleTitleA(GUI::windowTitle);
+
+	if (FConfiguration::bJoinInProgress || (Playlist && Playlist->bAllowJoinInProgress))
+		*(bool*)(uint64_t(&GameMode->WarmupRequiredPlayerCount) - 4) = false;
 
 	if (bSkipAircraft)
 	{
