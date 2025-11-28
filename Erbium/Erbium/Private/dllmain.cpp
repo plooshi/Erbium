@@ -22,21 +22,29 @@
 void Main()
 {
 #ifndef CLIENT
-
     if constexpr (!FConfiguration::bGUI)
-    {
         AllocConsole();
+
+    if constexpr (!FConfiguration::bGUI || !FConfiguration::bUseStdoutLog)
+    {
+        if (!FConfiguration::bGUI || GetConsoleWindow())
+        {
+            FILE* s;
+            freopen_s(&s, "CONOUT$", "w", stdout);
+            freopen_s(&s, "CONOUT$", "w+", stderr);
+            freopen_s(&s, "CONIN$", "r", stdin);
+        }
     }
-    
+
     if constexpr (FConfiguration::bCustomCrashReporter)
         FCrashReporter::Register();
-#endif
 
     printf("Initializing SDK...\n");
+#endif
     SDK::Init();
 
 #ifndef CLIENT
-    if (FConfiguration::bGUI)
+    if constexpr (FConfiguration::bGUI)
     {
         if constexpr (FConfiguration::bUseStdoutLog)
         {
@@ -47,14 +55,6 @@ void Main()
 
         CreateThread(0, 0, (LPTHREAD_START_ROUTINE)GUI::Init, 0, 0, 0);
     }
-
-    if constexpr (FConfiguration::bGUI && !FConfiguration::bUseStdoutLog)
-    {
-        FILE* s;
-        freopen_s(&s, "CONOUT$", "w", stdout);
-        freopen_s(&s, "CONOUT$", "w+", stderr);
-        freopen_s(&s, "CONIN$", "r", stdin);
-    }
 #endif
 
     if (VersionInfo.EngineVersion >= 5.0)
@@ -64,14 +64,14 @@ void Main()
     if (VersionInfo.EngineVersion >= 5.1)
     {
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"net.AllowEncryption 0"), nullptr);
-    
+
 #ifndef CLIENT
         auto DefaultCurieGlobals = FindClass("CurieGlobals")->GetDefaultObj();
-        
+
         if (DefaultCurieGlobals)
         {
             uint32 Offset = DefaultCurieGlobals->GetOffset("bEnableCurie");
-            
+
             if (Offset != -1)
                 *(bool*)(uintptr_t(DefaultCurieGlobals) + Offset) = false;
         }
@@ -87,7 +87,7 @@ void Main()
             *(uint32_t*)IrisBool = true;
         else
         {
-            IrisBool = Memcury::Scanner::FindPattern("44 39 25 ? ? ? ? 0F 9F C0 45 84 FF").RelativeOffset(3).Get(); 
+            IrisBool = Memcury::Scanner::FindPattern("44 39 25 ? ? ? ? 0F 9F C0 45 84 FF").RelativeOffset(3).Get();
 
             if (IrisBool)
                 *(uint32_t*)IrisBool = true;
@@ -148,7 +148,7 @@ void Main()
             Utils::Patch<uint8_t>(NullFunc, 0xc3);
         }
 
-    for (auto& RetTrueFunc : RetTrueFuncs) 
+    for (auto& RetTrueFunc : RetTrueFuncs)
     {
         if (RetTrueFunc == 0)
             continue;
@@ -163,7 +163,7 @@ void Main()
 
     MH_Initialize();
 
-    for (auto& HookFunc : _HookFuncs) 
+    for (auto& HookFunc : _HookFuncs)
         HookFunc();
 
     MH_EnableHook(MH_ALL_HOOKS);
@@ -172,7 +172,7 @@ void Main()
     if (VersionInfo.EngineVersion > 4.20) // 3.6 and below have a crash on ALandscapeProxy
         *(bool*)FindGIsServer() = true;
 
-    srand((uint32_t) time(0));
+    srand((uint32_t)time(0));
 
     UWorld::GetWorld()->OwningGameInstance->LocalPlayers.Remove(0);
     const wchar_t* terrainOpen = L"open Athena_Terrain";
@@ -181,7 +181,8 @@ void Main()
     {
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"Mole.WorstCasePlayerCount 1"), nullptr);
         terrainOpen = L"open Mole_UnderBase_Parent";
-    } else if (VersionInfo.FortniteVersion >= 11.00 && wcsstr(FConfiguration::Playlist, L"/Game/Athena/Playlists/Creative/Playlist_PlaygroundV2.Playlist_PlaygroundV2"))
+    }
+    else if (VersionInfo.FortniteVersion >= 11.00 && wcsstr(FConfiguration::Playlist, L"/Game/Athena/Playlists/Creative/Playlist_PlaygroundV2.Playlist_PlaygroundV2"))
         terrainOpen = L"open Creative_NoApollo_Terrain";
     else
     {
@@ -210,14 +211,14 @@ void Main()
         HookFunc();
 
     MH_EnableHook(MH_ALL_HOOKS);
-    
+
     Misc::bHookedAll = true;
 }
 
-BOOL APIENTRY DllMain( HMODULE hModule,
-                       DWORD  ul_reason_for_call,
-                       LPVOID lpReserved
-                     )
+BOOL APIENTRY DllMain(HMODULE hModule,
+    DWORD  ul_reason_for_call,
+    LPVOID lpReserved
+)
 {
     switch (ul_reason_for_call)
     {
@@ -230,4 +231,3 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     }
     return TRUE;
 }
-
