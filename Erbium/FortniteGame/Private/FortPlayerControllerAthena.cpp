@@ -347,9 +347,8 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryItem_(UObject* Context, 
 		}
 	}
 
-	if (ItemDefinition->IsA(UFortDecoItemDefinition::StaticClass()))
+	if (auto DecoTool = Weapon->Cast<AFortDecoTool>())
 	{
-		auto DecoTool = (AFortDecoTool*)Weapon;
 		DecoTool->ItemDefinition = ItemDefinition;
 
 		if (auto ContextTrapTool = Weapon->Cast<AFortDecoTool_ContextTrap>())
