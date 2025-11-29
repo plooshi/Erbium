@@ -90,7 +90,7 @@ void ClientThread()
 
 				if (PlayerController && !PlayerController->CheatManager)
 				{
-					PlayerController->CheatManager = UGameplayStatics::SpawnObject(PlayerController->CheatClass, PlayerController);
+					PlayerController->CheatManager = (UFortCheatManager*)UGameplayStatics::SpawnObject(PlayerController->CheatClass, PlayerController);
 					PlayerController->CheatManager->ObjectFlags &= ~0x1000000;
 					TUObjectArray::GetItemByIndex(PlayerController->CheatManager->Index)->Flags &= ~0x4000000;
 				}

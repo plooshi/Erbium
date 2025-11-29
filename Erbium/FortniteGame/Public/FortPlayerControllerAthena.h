@@ -5,7 +5,7 @@
 #include "FortPlayerStateAthena.h"
 #include "GameplayTagContainer.h"
 #include "FortVolume.h"
-
+#include "FortCheatManager.h"
 
 class UAthenaPickaxeItemDefinition : public UFortItemDefinition
 {
@@ -193,7 +193,7 @@ public:
     DEFINE_PROP(SwappingItemDefinition, FFortItemEntry*); // scuffness
     DEFINE_PROP(QuickBars, AFortQuickBars*);
     DEFINE_PROP(XPComponent, UFortPlayerControllerAthenaXPComponent*);
-    DEFINE_PROP(CheatManager, UObject*);
+    DEFINE_PROP(CheatManager, UFortCheatManager*);
     DEFINE_PROP(CheatClass, TSubclassOf<UObject>);
     DEFINE_PROP(WorldInventoryClass, TSubclassOf<AFortInventory>);
     DEFINE_PROP(bHasInitializedWorldInventory, bool);

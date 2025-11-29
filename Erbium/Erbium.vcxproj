@@ -252,6 +252,7 @@
     <ClInclude Include="FortniteGame\Public\BuildingSMActor.h" />
     <ClInclude Include="FortniteGame\Public\FortAthenaCreativePortal.h" />
     <ClInclude Include="FortniteGame\Public\FortAthenaMutator.h" />
+    <ClInclude Include="FortniteGame\Public\FortCheatManager.h" />
     <ClInclude Include="FortniteGame\Public\FortGameMode.h" />
     <ClInclude Include="FortniteGame\Public\FortGameSessionAthena.h" />
     <ClInclude Include="FortniteGame\Public\FortGameStateAthena.h" />

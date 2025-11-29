@@ -1922,9 +1922,9 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 		else if (command == "startevent")
 		{
 			Events::StartEvent();
-			PlayerController->ClientMessage(FString(L"Event started!"), FName(), 1);
+			PlayerController->ClientMessage(FString(L"Event started!"), FName(), 1.f);
 		}
-		else if (command == "bugitgo" || command == "tp")
+		else if (command == "bugitgo" || command == "tpto" || command == "t")
 		{
 			if (args.size() != 4)
 			{
@@ -1943,6 +1943,11 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				PlayerController->Pawn->K2_SetActorLocation(FVector(X, Y, Z), false, nullptr, true);
 				PlayerController->ClientMessage(FString(L"Teleported to location!"), FName(), 1.f);
 			}
+		}
+		else if (command == "tp" || command == "teleport")
+		{
+			PlayerController->CheatManager->Teleport();
+			PlayerController->ClientMessage(FString(L"Teleported to target!"), FName(), 1.f);
 		}
 		else if (command == "launch" || command == "launchpawn")
 		{

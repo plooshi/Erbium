@@ -1505,7 +1505,7 @@ void AFortGameMode::HandleStartingNewPlayer_(UObject* Context, FFrame& Stack)
 
     if (!NewPlayer->CheatManager)
     {
-        NewPlayer->CheatManager = UGameplayStatics::SpawnObject(NewPlayer->CheatClass, NewPlayer);
+        NewPlayer->CheatManager = (UFortCheatManager*)UGameplayStatics::SpawnObject(NewPlayer->CheatClass, NewPlayer);
         NewPlayer->CheatManager->ObjectFlags &= ~0x1000000;
         TUObjectArray::GetItemByIndex(NewPlayer->CheatManager->Index)->Flags &= ~0x4000000;
     }
