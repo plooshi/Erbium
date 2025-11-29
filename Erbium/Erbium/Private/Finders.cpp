@@ -2092,12 +2092,16 @@ uint32_t FindOnItemInstanceAddedVft()
     {
         bInitialized = true;
 
-        auto inFunc = Memcury::Scanner::FindPattern("41 57 48 83 EC ? 48 8B 01 4C 8B F2 48 8B F1 FF 90").Get();
+        uint64_t OnItemInstanceAdded = 0;
+
+        auto inFunc = Memcury::Scanner::FindPattern("41 57 48 83 EC ? 48 8B 01 4C 8B F2 48 8B F1 FF 90 ? ? ? ? 4C 8B F8").Get();
+
+        if (!inFunc)
+            inFunc = Memcury::Scanner::FindPattern("41 56 48 83 EC ? 48 8B 01 4C 8B F2 48 8B F1 FF 90 ? ? ? ? 48 8B F8").Get();
 
         if (!inFunc)
             return 0;
 
-        uint64_t OnItemInstanceAdded = 0;
         for (int i = 0; i < 1000; i++)
         {
             if (*(uint8_t*)(inFunc - i) == 0x48 && *(uint8_t*)(inFunc - i + 1) == 0x8B && *(uint8_t*)(inFunc - i + 2) == 0xC4)
@@ -2107,6 +2111,9 @@ uint32_t FindOnItemInstanceAddedVft()
             }
             else if (*(uint8_t*)(inFunc - i) == 0x48 && *(uint8_t*)(inFunc - i + 1) == 0x89 && *(uint8_t*)(inFunc - i + 2) == 0x74)
             {
+                if (*(uint8_t*)(inFunc - i - 5) == 0x48 && *(uint8_t*)(inFunc - i - 4) == 0x89 && *(uint8_t*)(inFunc - i - 3) == 0x5C)
+                    i += 5;
+
                 OnItemInstanceAdded = inFunc - i;
                 break;
             }

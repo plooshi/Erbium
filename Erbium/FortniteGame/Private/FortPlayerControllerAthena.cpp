@@ -1686,6 +1686,8 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				PlayerController->ClientMessage(FString(L"Unpaused time of day!"), FName(), 1.f);
 			else
 				PlayerController->ClientMessage(FString(L"Paused time of day!"), FName(), 1.f);
+
+			bIsPaused ^= 1;
 		}
 		else if (command == "sethealth")
 		{

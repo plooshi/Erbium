@@ -1503,6 +1503,13 @@ void AFortGameMode::HandleStartingNewPlayer_(UObject* Context, FFrame& Stack)
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
     AFortPlayerStateAthena* PlayerState = (AFortPlayerStateAthena*)NewPlayer->PlayerState;
 
+    if (!NewPlayer->CheatManager)
+    {
+        NewPlayer->CheatManager = UGameplayStatics::SpawnObject(NewPlayer->CheatClass, NewPlayer);
+        NewPlayer->CheatManager->ObjectFlags &= ~0x1000000;
+        TUObjectArray::GetItemByIndex(NewPlayer->CheatManager->Index)->Flags &= ~0x4000000;
+    }
+
     if (VersionInfo.FortniteVersion <= 2.5)
     {
         NewPlayer->QuickBars = UWorld::SpawnActor<AFortQuickBars>(FVector{});

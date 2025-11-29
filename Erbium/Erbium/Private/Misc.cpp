@@ -80,23 +80,15 @@ void ClientThread()
 	bool bPressed = false;
 	while (true)
 	{
-		if (!bPressed && GetAsyncKeyState(VK_F3))
+		if (UWorld::GetWorld() && UWorld::GetWorld()->OwningGameInstance)
 		{
-			bPressed = true;
-
-			bEOREnabled ^= 1;
-		}
-		else if (!bPressed && GetAsyncKeyState(VK_F2))
-		{
-			bPressed = true;
-			//bEnableResetOnRelease ^= 1;
 			auto& LocalPlayers = UWorld::GetWorld()->OwningGameInstance->LocalPlayers;
 
 			if (LocalPlayers.Num() > 0)
 			{
-				auto PlayerController = (AFortPlayerControllerAthena*) LocalPlayers[0]->PlayerController;
+				auto PlayerController = (AFortPlayerControllerAthena*)LocalPlayers[0]->PlayerController;
 
-				if (!PlayerController->CheatManager)
+				if (PlayerController && !PlayerController->CheatManager)
 				{
 					PlayerController->CheatManager = UGameplayStatics::SpawnObject(PlayerController->CheatClass, PlayerController);
 					PlayerController->CheatManager->ObjectFlags &= ~0x1000000;
@@ -104,7 +96,19 @@ void ClientThread()
 				}
 			}
 		}
-		else if (!GetAsyncKeyState(VK_F3) && !GetAsyncKeyState(VK_F2))
+
+		if (!bPressed && GetAsyncKeyState(VK_F3))
+		{
+			bPressed = true;
+
+			bEOREnabled ^= 1;
+		}
+		/*else if (!bPressed && GetAsyncKeyState(VK_F2))
+		{
+			bPressed = true;
+			//bEnableResetOnRelease ^= 1;
+		}*/
+		else if (!GetAsyncKeyState(VK_F3)/* && !GetAsyncKeyState(VK_F2)*/)
 			bPressed = false;
 
 		Sleep(33); // thread runs at 30tps	
