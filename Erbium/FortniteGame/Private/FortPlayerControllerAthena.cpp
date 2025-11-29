@@ -320,6 +320,7 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryItem_(UObject* Context, 
 	if (auto Gadget = ItemDefinition->Cast<UFortGadgetItemDefinition>())
 		ItemDefinition = Gadget->GetWeaponItemDefinition();
 
+
 	auto Weapon = PlayerController->MyFortPawn->EquipWeaponDefinition(ItemDefinition, ItemGuid, entry->HasTrackerGuid() ? entry->TrackerGuid : FGuid(), false);
 	if (VersionInfo.FortniteVersion <= 2.5)
 	{
@@ -1922,9 +1923,9 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 		else if (command == "startevent")
 		{
 			Events::StartEvent();
-			PlayerController->ClientMessage(FString(L"Event started!"), FName(), 1.f);
+			PlayerController->ClientMessage(FString(L"Event started!"), FName(), 1);
 		}
-		else if (command == "bugitgo" || command == "tpto" || command == "t")
+		else if (command == "bugitgo" || command == "tp")
 		{
 			if (args.size() != 4)
 			{
@@ -1943,11 +1944,6 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				PlayerController->Pawn->K2_SetActorLocation(FVector(X, Y, Z), false, nullptr, true);
 				PlayerController->ClientMessage(FString(L"Teleported to location!"), FName(), 1.f);
 			}
-		}
-		else if (command == "tp" || command == "teleport")
-		{
-			PlayerController->CheatManager->Teleport();
-			PlayerController->ClientMessage(FString(L"Teleported to target!"), FName(), 1.f);
 		}
 		else if (command == "launch" || command == "launchpawn")
 		{
