@@ -207,19 +207,6 @@ public:
 		},
 		FEvent
 		{
-			L"/NewYears/Blueprints/BP_NYE_LoadDatalayer.BP_NYE_LoadDatalayer_C",
-			L"/NewYears/Blueprints/BP_NewYearTimer.BP_NewYearTimer_C",
-			{
-				FEventFunction{ true, L"/NewYears/Blueprints/BP_NYE_LoadDatalayer.BP_NYE_LoadDatalayer_C.ForceLoad_NYE" },
-				FEventFunction{ false, L"/NewYears/Blueprints/BP_NewYearTimer.BP_NewYearTimer_C.RollStormOut" },
-				FEventFunction{ false, L"/NewYears/Blueprints/BP_NewYearTimer.BP_NewYearTimer_C.TimeOfDaySetup" },
-				FEventFunction{ false, L"/NewYears/Blueprints/BP_NewYearTimer.BP_NewYearTimer_C.startNYE" }
-			},
-			23.10,
-			nullptr
-		},
-		FEvent
-		{
 			nullptr,
 			L"/Durian/Gameplay/BP_Durian_SpecialEventScript.BP_Durian_SpecialEventScript_C",
 			{
