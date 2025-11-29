@@ -57,6 +57,8 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 	Stack.IncrementCode();
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
 
+	auto FortPawn = (AFortPlayerPawnAthena*)Pawn;
+
 	static auto FortPCServerAcknowledgePossession = (void(*)(AFortPlayerControllerAthena*, AActor*))DefaultObjImpl("FortPlayerController")->Vft[Stack.GetCurrentNativeFunction()->GetVTableIndex()];
 	FortPCServerAcknowledgePossession(PlayerController, Pawn);
 
@@ -66,7 +68,7 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 	if (Playlist && Playlist->RespawnType > 0)
 	{
 		if (FConfiguration::bLateGame)
-			PlayerController->MyFortPawn->SetShield(100.f);
+			FortPawn->SetShield(100.f);
 	}
 	if ((!FConfiguration::bKeepInventory || FConfiguration::bLateGame) && PlayerController->WorldInventory)
 	{	
@@ -126,10 +128,10 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 			}
 		}
 
-		PlayerController->MyFortPawn->bIsInAnyStorm = false;
-		PlayerController->MyFortPawn->OnRep_IsInAnyStorm();
-		PlayerController->MyFortPawn->bIsInsideSafeZone = true;
-		PlayerController->MyFortPawn->OnRep_IsInsideSafeZone();
+		FortPawn->bIsInAnyStorm = false;
+		FortPawn->OnRep_IsInAnyStorm();
+		FortPawn->bIsInsideSafeZone = true;
+		FortPawn->OnRep_IsInsideSafeZone();
 	}
 
 	if (VersionInfo.FortniteVersion < 15)
