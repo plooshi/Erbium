@@ -833,7 +833,7 @@ void AFortPlayerControllerAthena::ServerAttemptInventoryDrop(UObject* Context, F
 	//ForwardVector.Normalize();
 
 	FinalLoc = FinalLoc + ForwardVector * 450.f;
-	FinalLoc.Z += 20.f;
+	FinalLoc.Z += 50.f;
 
 	const float RandomAngleVariation = ((float)rand() * 0.00109866634f) - 18.f;
 	const float FinalAngle = (RandomAngleVariation + 360.f / ((float)rand() * 0.00015259254737998596f)) * 0.017453292519943295f;
@@ -1234,7 +1234,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 	ForwardVector.Normalize();
 
 	FinalLoc = FinalLoc + ForwardVector * 450.f;
-	FinalLoc.Z += 20.f;
+	FinalLoc.Z += 50.f;
 
 	const float RandomAngleVariation = ((float)rand() * 0.00109866634f) - 18.f;
 	const float FinalAngle = RandomAngleVariation * 0.017453292519943295f;
@@ -2258,7 +2258,7 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 
 				static auto DualClass = FindClass("FortWeaponRangedDualForVehicle");
 
-				if (DualClass)
+				if (Weapon->IsA(DualClass))
 				{
 					static auto MountedWeaponInfoReppedOff = Weapon->GetOffset("MountedWeaponInfoRepped");
 					static auto OnRep_MountedWeaponInfoRepped = Weapon->GetFunction("OnRep_MountedWeaponInfoRepped");

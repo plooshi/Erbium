@@ -59,10 +59,10 @@ public:
 };
 
 
-struct FGameplayEffectApplicationInfo
+struct FGameplayEffectApplicationInfoHard
 {
 public:
-    USCRIPTSTRUCT_COMMON_MEMBERS(FGameplayEffectApplicationInfo);
+    USCRIPTSTRUCT_COMMON_MEMBERS(FGameplayEffectApplicationInfoHard);
 
     DEFINE_STRUCT_PROP(GameplayEffect, TSubclassOf<UGameplayEffect>);
     DEFINE_STRUCT_PROP(Level, float);
@@ -74,7 +74,7 @@ public:
     UCLASS_COMMON_MEMBERS(UFortAbilitySet);
     
     DEFINE_PROP(GameplayAbilities, TArray<TSubclassOf<UFortGameplayAbility>>);
-    DEFINE_PROP(GrantedGameplayEffects, TArray<FGameplayEffectApplicationInfo>);
+    DEFINE_PROP(GrantedGameplayEffects, TArray<FGameplayEffectApplicationInfoHard>);
 };
 
 struct FGameplayEffectContextHandle

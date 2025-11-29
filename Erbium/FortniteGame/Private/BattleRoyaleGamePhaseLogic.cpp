@@ -650,24 +650,31 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 			static bool bUpdatedPhase = false;
 			if (formedZone && SafeZoneIndicator)
 			{
-				bool bStartedNewPhase = false;
-				if (!bPausedZone && !bUpdatedPhase && SafeZoneIndicator->SafeZoneStartShrinkTime < Time)
+				if (SafeZoneIndicator->SafeZonePhases.IsValidIndex(SafeZoneIndicator->CurrentPhase))
 				{
-					bUpdatedPhase = true;
+					bool bStartedNewPhase = false;
+					if (!bPausedZone && !bUpdatedPhase && SafeZoneIndicator->SafeZoneStartShrinkTime < Time)
+					{
+						bUpdatedPhase = true;
 
-					auto& SafeZoneState = *(uint8_t*)(__int64(&SafeZoneIndicator->FutureReplicator) - 0x4);
-					SafeZoneState = 3;
+						auto& SafeZoneState = *(uint8_t*)(__int64(&SafeZoneIndicator->FutureReplicator) - 0x4);
+						SafeZoneState = 3;
 
-					SafeZoneIndicator->OnSafeZoneStateChange(3, false);
-					SafeZoneIndicator->SafezoneStateChangedDelegate.Process(SafeZoneIndicator, 3);
+						SafeZoneIndicator->OnSafeZoneStateChange(3, false);
+						SafeZoneIndicator->SafezoneStateChangedDelegate.Process(SafeZoneIndicator, 3);
 
-					SetGamePhaseStep(EAthenaGamePhaseStep::StormShrinking);
-				}
-				else if (!bPausedZone && SafeZoneIndicator->SafeZoneFinishShrinkTime < Time)
-				{
-					bStartedNewPhase = true;
-					StartNewSafeZonePhase(SafeZoneIndicator->CurrentPhase + 1);
-					bUpdatedPhase = false;
+						SetGamePhaseStep(EAthenaGamePhaseStep::StormShrinking);
+					}
+					else if (!bPausedZone && SafeZoneIndicator->SafeZoneFinishShrinkTime < Time)
+					{
+						bStartedNewPhase = true;
+
+						if (SafeZoneIndicator->SafeZonePhases.IsValidIndex(SafeZoneIndicator->CurrentPhase + 1))
+						{
+							StartNewSafeZonePhase(SafeZoneIndicator->CurrentPhase + 1);
+							bUpdatedPhase = false;
+						}
+					}
 				}
 
 				auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;

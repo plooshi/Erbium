@@ -251,7 +251,7 @@ void AFortPhysicsPawn::Hook()
             {
                 if (*(Ptr + 3) == 0xE8)
                 {
-                    CanGrappleToComponent_ = uint64_t(Ptr);
+                    CanGrappleToComponent_ = Memcury::Scanner(Ptr).RelativeOffset(4).Get();
                     break;
                 }
                 else if (*(Ptr + 3) == 0xFF && (*(Ptr + 4) & 0xF0) == 0x90)

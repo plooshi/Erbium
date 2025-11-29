@@ -2697,6 +2697,9 @@ uint64 FindSetState()
 {
     auto sRef = Memcury::Scanner::FindStringRef(L"Time from Setup to InProgress: %6.2fms", false, 0, VersionInfo.FortniteVersion >= 19, false);
 
+    if (!sRef.IsValid())
+        return 0;
+
     for (int i = 0; i < 2000; i++)
     {
         auto Ptr = (uint8_t*)(sRef.Get() - i);
@@ -2730,6 +2733,30 @@ uint64_t FindPickSupplyDropLocation()
             return uint64_t(Ptr);
         else if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
             return uint64_t(Ptr);
+    }
+
+    return 0;
+}
+
+uint64_t FindSetPickupTarget()
+{
+    auto sRef = Memcury::Scanner::FindStringRef(L"%s: Attempted to spawn non-world item %s!", false, 0, VersionInfo.FortniteVersion >= 17, false);
+
+    if (!sRef.IsValid())
+        sRef = Memcury::Scanner::FindStringRef(L"Attempted to spawn non-world item %s!", false, 0, VersionInfo.FortniteVersion >= 17, false);
+
+    for (int i = 0; i < 2000; i++)
+    {
+        auto Ptr = (uint8_t*)(sRef.Get() - i);
+
+        if (*Ptr == 0x40 && (*(Ptr + 1) == 0x53 || *(Ptr + 1) == 0x55))
+            return uint64_t(Ptr);
+        else if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4)
+            return uint64_t(Ptr);
+        else if (*Ptr == 0x4C && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xDC)
+            return uint64_t(Ptr);
+        //else if (VersionInfo.FortniteVersion >= 15 && *Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
+        //    return uint64_t(Ptr);
     }
 
     return 0;

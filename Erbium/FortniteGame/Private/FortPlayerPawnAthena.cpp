@@ -42,7 +42,7 @@ public:
 	uint8                                         Pad_2[0x7];                                       // 0x0021(0x0003)(Fixing Struct Size After Last Property [ Dumper-7 ])
 };
 
-
+uint64_t SetPickupTarget_ = 0;
 void AFortPlayerPawnAthena::ServerHandlePickup_(UObject* Context, FFrame& Stack)
 {
 	AFortPickupAthena* Pickup;
@@ -58,7 +58,7 @@ void AFortPlayerPawnAthena::ServerHandlePickup_(UObject* Context, FFrame& Stack)
 	if (!Pawn || !Pickup || Pickup->bPickedUp)
 		return;
 
-	Pickup->SetLifeSpan(5.f);
+	/*Pickup->SetLifeSpan(5.f);
 	if (FFortPickupLocationData::HasbPlayPickupSound())
 		Pickup->PickupLocationData.bPlayPickupSound = bPlayPickupSound;
 	Pickup->PickupLocationData.PickupTarget = Pawn;
@@ -70,7 +70,10 @@ void AFortPlayerPawnAthena::ServerHandlePickup_(UObject* Context, FFrame& Stack)
 	Pickup->OnRep_bPickedUp();
 
 
-	Pawn->IncomingPickups.Add(Pickup);
+	Pawn->IncomingPickups.Add(Pickup);*/
+	auto SetPickupTarget = (void(*&)(AFortPickupAthena*, AFortPlayerPawnAthena*, float, FVector, bool))SetPickupTarget_;
+
+	SetPickupTarget(Pickup, Pawn, InFlyTime / Pawn->PickupSpeedMultiplier, InStartDirection, bPlayPickupSound);
 }
 
 void AFortPlayerPawnAthena::ServerHandlePickupInfo(UObject* Context, FFrame& Stack)
@@ -79,6 +82,8 @@ void AFortPlayerPawnAthena::ServerHandlePickupInfo(UObject* Context, FFrame& Sta
 	bool bUseRequestedSwap;
 	bool bPlayPickupSound;
 	FGuid SwapWithItem;
+	float FlyTime;
+	FVector Direction;
 
 	AFortPickupAthena* Pickup;
 	Stack.StepCompiledIn(&Pickup);
@@ -90,6 +95,8 @@ void AFortPlayerPawnAthena::ServerHandlePickupInfo(UObject* Context, FFrame& Sta
 		bUseRequestedSwap = Params.bUseRequestedSwap;
 		bPlayPickupSound = Params.bPlayPickupSound;
 		SwapWithItem = Params.SwapWithItem;
+		FlyTime = Params.FlyTime;
+		Direction = *(FVector*)&Params.Direction;
 	}
 	else
 	{
@@ -99,6 +106,8 @@ void AFortPlayerPawnAthena::ServerHandlePickupInfo(UObject* Context, FFrame& Sta
 		bUseRequestedSwap = Params.bUseRequestedSwap;
 		bPlayPickupSound = Params.bPlayPickupSound;
 		SwapWithItem = Params.SwapWithItem;
+		FlyTime = Params.FlyTime;
+		Direction = *(FVector*)&Params.Direction;
 	}
 	Stack.IncrementCode();
 	auto Pawn = (AFortPlayerPawnAthena*)Context;
@@ -106,15 +115,19 @@ void AFortPlayerPawnAthena::ServerHandlePickupInfo(UObject* Context, FFrame& Sta
 	if (!Pawn || !Pickup || Pickup->bPickedUp)
 		return;
 
-	if ((bTrySwapWithWeapon || bUseRequestedSwap) && Pawn->CurrentWeapon && AFortInventory::IsPrimaryQuickbar(((AFortWeapon*)Pawn->CurrentWeapon)->WeaponData) && AFortInventory::IsPrimaryQuickbar(Pickup->PrimaryPickupItemEntry.ItemDefinition))
+	if (bUseRequestedSwap && Pawn->CurrentWeapon && AFortInventory::IsPrimaryQuickbar(((AFortWeapon*)Pawn->CurrentWeapon)->WeaponData) && AFortInventory::IsPrimaryQuickbar(Pickup->PrimaryPickupItemEntry.ItemDefinition))
 	{
 		auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
-		auto SwapEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+		/*auto SwapEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
 			{ return entry.ItemGuid == SwapWithItem; }, FFortItemEntry::Size());
-		PlayerController->SwappingItemDefinition = SwapEntry; // proper af
+		PlayerController->SwappingItemDefinition = SwapEntry; // proper af*/
+		PlayerController->bTryPickupSwap = true;
 	}
 
-	Pickup->SetLifeSpan(5.f);
+	auto SetPickupTarget = (void(*&)(AFortPickupAthena*, AFortPlayerPawnAthena*, float, FVector&, bool))SetPickupTarget_;
+
+	SetPickupTarget(Pickup, Pawn, FlyTime / Pawn->PickupSpeedMultiplier, Direction, bPlayPickupSound);
+	/*Pickup->SetLifeSpan(5.f);
 	Pickup->PickupLocationData.bPlayPickupSound = bPlayPickupSound;
 	Pickup->PickupLocationData.PickupGuid = Pickup->PrimaryPickupItemEntry.ItemGuid;
 	Pickup->PickupLocationData.PickupTarget = Pawn;
@@ -126,7 +139,7 @@ void AFortPlayerPawnAthena::ServerHandlePickupInfo(UObject* Context, FFrame& Sta
 	Pickup->OnRep_bPickedUp();
 
 
-	Pawn->IncomingPickups.Add(Pickup);
+	Pawn->IncomingPickups.Add(Pickup);*/
 }
 
 
@@ -142,32 +155,58 @@ bool AFortPlayerPawnAthena::FinishedTargetSpline(void* _Pickup)
 	if (!PlayerController)
 		return FinishedTargetSplineOG(Pickup);
 
-	if (auto entry = PlayerController->HasSwappingItemDefinition() ? (FFortItemEntry*)PlayerController->SwappingItemDefinition : nullptr)
+	//if (auto entry = PlayerController->HasSwappingItemDefinition() ? (FFortItemEntry*)PlayerController->SwappingItemDefinition : nullptr)
+	if (PlayerController->HasbTryPickupSwap() ? PlayerController->bTryPickupSwap : false)
 	{
-		AFortInventory::SpawnPickup(PlayerController->GetViewTarget()->K2_GetActorLocation(), *entry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn);
-		// SwapEntry(PC, *entry, Pickup->PrimaryPickupItemEntry);
-		PlayerController->WorldInventory->Remove(entry->ItemGuid);
-		auto Item = PlayerController->WorldInventory->GiveItem(Pickup->PrimaryPickupItemEntry);
-		PlayerController->ServerExecuteInventoryItem(Item->ItemEntry.ItemGuid);
-		if (VersionInfo.FortniteVersion < 3)
-		{
-			auto& QuickBar = (AFortInventory::IsPrimaryQuickbar(Item->ItemEntry.ItemDefinition) || Item->ItemEntry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest()) ? PlayerController->QuickBars->PrimaryQuickBar : PlayerController->QuickBars->SecondaryQuickBar;
-			int i = 0;
-			for (i = 0; i < QuickBar.Slots.Num(); i++)
-			{
-				auto& Slot = QuickBar.Slots.Get(i, FQuickBarSlot::Size());
+		FVector FinalLoc = Pawn->K2_GetActorLocation();
 
-				for (auto& SlotItem : Slot.Items)
-					if (SlotItem == Item->ItemEntry.ItemGuid)
-					{
-						PlayerController->QuickBars->ServerActivateSlotInternal(!(AFortInventory::IsPrimaryQuickbar(Item->ItemEntry.ItemDefinition) || Item->ItemEntry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest()), i, 0.f, true);
-						break;
-					}
+		FVector ForwardVector = Pawn->GetActorForwardVector();
+		ForwardVector.Z = 0.0f;
+		ForwardVector.Normalize();
+
+		FinalLoc = FinalLoc + ForwardVector * 450.f;
+		FinalLoc.Z += 50.f;
+
+		const float RandomAngleVariation = ((float)rand() * 0.00109866634f) - 18.f;
+		const float FinalAngle = RandomAngleVariation * 0.017453292519943295f;
+
+		FinalLoc.X += cos(FinalAngle) * 100.f;
+		FinalLoc.Y += sin(FinalAngle) * 100.f;
+
+		if (AFortInventory::IsPrimaryQuickbar(((AFortWeapon*)Pawn->CurrentWeapon)->WeaponData) && AFortInventory::IsPrimaryQuickbar(Pickup->PrimaryPickupItemEntry.ItemDefinition))
+		{
+			PlayerController->bTryPickupSwap = false;
+
+			auto entry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+				{ return entry.ItemGuid == ((AFortWeapon*)PlayerController->Pawn->CurrentWeapon)->ItemEntryGuid; }, FFortItemEntry::Size());
+
+			AFortInventory::SpawnPickup(PlayerController->GetViewTarget()->K2_GetActorLocation(), *entry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn, -1, true, true, true, nullptr, FinalLoc);
+			// SwapEntry(PC, *entry, Pickup->PrimaryPickupItemEntry);
+			PlayerController->WorldInventory->Remove(entry->ItemGuid);
+			auto Item = PlayerController->WorldInventory->GiveItem(Pickup->PrimaryPickupItemEntry);
+			PlayerController->ServerExecuteInventoryItem(Item->ItemEntry.ItemGuid);
+			if (VersionInfo.FortniteVersion < 3)
+			{
+				auto& QuickBar = (AFortInventory::IsPrimaryQuickbar(Item->ItemEntry.ItemDefinition) || Item->ItemEntry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest()) ? PlayerController->QuickBars->PrimaryQuickBar : PlayerController->QuickBars->SecondaryQuickBar;
+				int i = 0;
+				for (i = 0; i < QuickBar.Slots.Num(); i++)
+				{
+					auto& Slot = QuickBar.Slots.Get(i, FQuickBarSlot::Size());
+
+					for (auto& SlotItem : Slot.Items)
+						if (SlotItem == Item->ItemEntry.ItemGuid)
+						{
+							PlayerController->QuickBars->ServerActivateSlotInternal(!(AFortInventory::IsPrimaryQuickbar(Item->ItemEntry.ItemDefinition) || Item->ItemEntry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest()), i, 0.f, true);
+							break;
+						}
+				}
 			}
+			else
+				PlayerController->ClientEquipItem(Item->ItemEntry.ItemGuid, true);
 		}
 		else
-			PlayerController->ClientEquipItem(Item->ItemEntry.ItemGuid, true);
-		PlayerController->SwappingItemDefinition = nullptr;
+			AFortInventory::SpawnPickup(PlayerController->GetViewTarget()->K2_GetActorLocation(), Pickup->PrimaryPickupItemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn, -1, true, true, true, nullptr, FinalLoc);
+
 	}
 	else
 		PlayerController->InternalPickup(&Pickup->PrimaryPickupItemEntry);
@@ -253,7 +292,7 @@ void AFortPlayerPawnAthena::OnCapsuleBeginOverlap_(UObject* Context, FFrame& Sta
 	if (Pickup && Pickup->PawnWhoDroppedPickup != Pawn)
 	{
 		if ((!itemEntry && ((Pickup->PrimaryPickupItemEntry.ItemDefinition->HasbForceAutoPickup() && (Pickup->PrimaryPickupItemEntry.ItemDefinition->HasbForceAutoPickup() ? Pickup->PrimaryPickupItemEntry.ItemDefinition->bForceAutoPickup : (Pickup->PrimaryPickupItemEntry.ItemDefinition->GetPickupComponent() ? Pickup->PrimaryPickupItemEntry.ItemDefinition->GetPickupComponent()->bForceAutoPickup : false))) || !AFortInventory::IsPrimaryQuickbar(Pickup->PrimaryPickupItemEntry.ItemDefinition))) || (itemEntry && itemEntry->Count < MaxStack))
-			Pawn->ServerHandlePickup(Pickup, 0.4f, FVector(), true);
+			Pawn->ServerHandlePickup(Pickup, Pickup->PickupLocationData.FlyTime, FVector(), true);
 	}
 
 	return callOG(Pawn, Stack.GetCurrentNativeFunction(), OnCapsuleBeginOverlap, OverlappedComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
@@ -414,6 +453,7 @@ void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack
 void AFortPlayerPawnAthena::PostLoadHook()
 {
 	OnRep_ZiplineState = FindOnRep_ZiplineState();
+	SetPickupTarget_ = FindSetPickupTarget();
 
 	auto ServerHandlePickupInfoFn = GetDefaultObj()->GetFunction("ServerHandlePickupInfo");
 
