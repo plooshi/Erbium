@@ -91,8 +91,8 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
 
         if (Def->ItemType == EFortItemType::GetWeaponHarvest())
         {
-            PlayerController->ServerExecuteInventoryItem(Item->ItemEntry.ItemGuid);
-            PlayerController->QuickBars->ServerActivateSlotInternal(0, 0, 0.f, true);
+            //PlayerController->ServerExecuteInventoryItem(Item->ItemEntry.ItemGuid);
+            //PlayerController->QuickBars->ServerActivateSlotInternal(0, 0, 0.f, true);
         }
     }
 
@@ -287,8 +287,8 @@ void AFortInventory::Remove(FGuid Guid)
 
             if (Entry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest())
             {
-                PlayerController->ServerExecuteInventoryItem(Entry.ItemGuid);
-                PlayerController->QuickBars->ServerActivateSlotInternal(0, 0, 0.f, true);
+                //PlayerController->ServerExecuteInventoryItem(Entry.ItemGuid);
+                //PlayerController->QuickBars->ServerActivateSlotInternal(0, 0, 0.f, true);
             }
         }
     }
