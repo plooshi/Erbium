@@ -57,6 +57,9 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 	Stack.IncrementCode();
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
 
+	if (!Pawn)
+		return;
+
 	auto FortPawn = (AFortPlayerPawnAthena*)Pawn;
 
 	static auto FortPCServerAcknowledgePossession = (void(*)(AFortPlayerControllerAthena*, AActor*))DefaultObjImpl("FortPlayerController")->Vft[Stack.GetCurrentNativeFunction()->GetVTableIndex()];
