@@ -84,5 +84,5 @@ void AFortMinigame::Hook()
     if (!GetDefaultObj())
         return;
     
-    Utils::Hook(FindSetState(), SetState, SetStateOG);
+    //Utils::Hook(FindSetState(), SetState, SetStateOG);
 }
