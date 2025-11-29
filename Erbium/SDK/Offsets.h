@@ -242,6 +242,9 @@ namespace SDK
 					Offsets::GetInterfaceAddress = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 33 DB 48 8B FA 48 8B F1 48 85 D2 0F 84 ? ? ? ? F7 82").Get();
 
 					if (!Offsets::GetInterfaceAddress)
+						Offsets::GetInterfaceAddress = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 68 ? 48 89 70 ? 48 89 78 ? 41 56 48 83 EC ? 33 DB 48 8B FA 48 8B E9").Get();
+
+					if (!Offsets::GetInterfaceAddress)
 						Offsets::GetInterfaceAddress = Memcury::Scanner::FindPattern("4C 8B DC 49 89 5B ? 49 89 73 ? 57 48 83 EC ? 33 DB 48 8B FA 48 8B F1").Get();
 
 					if (!Offsets::GetInterfaceAddress)
