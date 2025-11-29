@@ -875,8 +875,6 @@ void AFortPlayerControllerAthena::ServerPlayEmoteItem(UObject* Context, FFrame& 
 		return;
 
 	auto* AbilitySystemComponent = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->AbilitySystemComponent;
-	auto Spec = (FGameplayAbilitySpec*)malloc(FGameplayAbilitySpec::Size());
-	memset(PBYTE(Spec), 0, FGameplayAbilitySpec::Size());
 	UObject* AbilityToUse = nullptr;
 
 	static auto SprayClass = FindClass("AthenaSprayItemDefinition");
@@ -911,6 +909,9 @@ void AFortPlayerControllerAthena::ServerPlayEmoteItem(UObject* Context, FFrame& 
 
 	if (AbilityToUse)
 	{
+		auto Spec = (FGameplayAbilitySpec*)malloc(FGameplayAbilitySpec::Size());
+		memset(PBYTE(Spec), 0, FGameplayAbilitySpec::Size());
+
 		if (ConstructAbilitySpec)
 			((void (*)(FGameplayAbilitySpec*, const UObject*, int, int, UObject*)) ConstructAbilitySpec)(Spec, AbilityToUse, 1, -1, Asset);
 		else
@@ -926,6 +927,8 @@ void AFortPlayerControllerAthena::ServerPlayEmoteItem(UObject* Context, FFrame& 
 		}
 		FGameplayAbilitySpecHandle handle;
 		((void (*)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle*, FGameplayAbilitySpec*, void*)) GiveAbilityAndActivateOnce)(AbilitySystemComponent, &handle, Spec, nullptr);
+
+		free(Spec);
 	}
 }
 
@@ -2272,6 +2275,8 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 					*(FMountedWeaponInfoRepped*)(__int64(Weapon) + MountedWeaponInfoReppedOff) = *RepWeaponInfo;
 					Weapon->Call(OnRep_MountedWeaponInfoRepped);
 				}
+
+				free(RepWeaponInfo);
 			}
 		}
 		return;
@@ -2753,7 +2758,7 @@ void AFortPlayerControllerAthena::ServerCraftSchematic(UObject* Context, FFrame&
 			{
 				auto& Cost = RecipeData->RecipeCosts.Get(i, FFortItemQuantityPair::Size());
 				auto CostItemDef = Cost.ItemDefinition.Get();
-				auto ItemEntry = AFortInventory::MakeItemEntry(CostItemDef, Cost.Quantity, 0);
+				//auto ItemEntry = AFortInventory::MakeItemEntry(CostItemDef, Cost.Quantity, 0);
 
 				FFortItemEntry* InventoryEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& Entry)
 					{

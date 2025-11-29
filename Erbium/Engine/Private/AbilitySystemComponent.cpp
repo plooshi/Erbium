@@ -175,6 +175,9 @@ void UAbilitySystemComponent::Hook()
 
     Utils::HookEvery<UAbilitySystemComponent>(istaIdx, InternalServerTryActivateAbility);
 
-    //Utils::ExecHook(UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_ExecuteGameplayCue"), UFortGameplayAbility::K2_ExecuteGameplayCue_, UFortGameplayAbility::K2_ExecuteGameplayCue_OG);
-    //Utils::ExecHook(UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_AddGameplayCueWithParams"), UFortGameplayAbility::K2_AddGameplayCueWithParams_, UFortGameplayAbility::K2_AddGameplayCueWithParams_OG);
+    if (VersionInfo.FortniteVersion >= 8)
+    {
+        Utils::ExecHook(UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_ExecuteGameplayCue"), UFortGameplayAbility::K2_ExecuteGameplayCue_, UFortGameplayAbility::K2_ExecuteGameplayCue_OG);
+        Utils::ExecHook(UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_AddGameplayCueWithParams"), UFortGameplayAbility::K2_AddGameplayCueWithParams_, UFortGameplayAbility::K2_AddGameplayCueWithParams_OG);
+    }
 }

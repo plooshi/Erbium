@@ -362,6 +362,8 @@ void AFortPlayerPawnAthena::Athena_MedConsumable_Triggered(UObject* Context, FFr
 	PlayerState->AbilitySystemComponent->NetMulticast_InvokeGameplayCueAdded(Tag, *PredictionKey, Handle);
 	PlayerState->AbilitySystemComponent->NetMulticast_InvokeGameplayCueExecuted(Tag, *PredictionKey, Handle);
 
+	free(PredictionKey);
+
 	return Athena_MedConsumable_TriggeredOG(Context, Stack);
 }
 
