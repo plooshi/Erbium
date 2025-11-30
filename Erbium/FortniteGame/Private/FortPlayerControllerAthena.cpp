@@ -1617,6 +1617,50 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 			Pawn->ProcessEvent(SetMovementSpeedFn, &Speed);
 			PlayerController->ClientMessage(FString(L"Set player speed!"), FName(), 1.f);
 		}
+		else if (command == "fly")
+		{
+			auto Pawn = PlayerController->Pawn;
+
+			if (!Pawn)
+			{
+				PlayerController->ClientMessage(FString(L"No pawn found!"), FName(), 1.f);
+				return;
+			}
+
+			Pawn->SetActorEnableCollision(true);
+
+			if (Pawn->CharacterMovement)
+			{
+				Pawn->CharacterMovement->bCheatFlying = !Pawn->CharacterMovement->bCheatFlying;
+
+				if (Pawn->CharacterMovement->bCheatFlying)
+					Pawn->CharacterMovement->SetMovementMode(EMovementMode::MOVE_Flying, 0);
+				else
+					Pawn->CharacterMovement->SetMovementMode(EMovementMode::MOVE_Walking, 0);
+			}
+		}
+		else if (command == "ghost")
+		{
+			auto Pawn = PlayerController->Pawn;
+
+			if (!Pawn)
+			{
+				PlayerController->ClientMessage(FString(L"No pawn found!"), FName(), 1.f);
+				return;
+			}
+
+			Pawn->SetActorEnableCollision(!Pawn->bActorEnableCollision);
+
+			if (Pawn->CharacterMovement)
+			{
+				Pawn->CharacterMovement->bCheatFlying = !Pawn->CharacterMovement->bCheatFlying;
+
+				if (Pawn->CharacterMovement->bCheatFlying)
+					Pawn->CharacterMovement->SetMovementMode(EMovementMode::MOVE_Flying, 0);
+				else
+					Pawn->CharacterMovement->SetMovementMode(EMovementMode::MOVE_Walking, 0);
+			}
+		}
 		else if (command == "gravity")
 		{
 			if (args.size() < 2)
@@ -1747,6 +1791,97 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 		{
 			FConfiguration::bKeepInventory ^= 1;
 			PlayerController->ClientMessage(FString(L"Toggled keep inventory!"), FName(), 1.f);
+		}
+		else if (command == "destroyall")
+		{
+			if (args.size() < 2)
+			{
+				PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1.f);
+				return;
+			}
+
+			std::string Class = std::string(args[1]);
+
+			TSubclassOf<AActor> ActorClass = FindObject<UClass>(Class.c_str());
+
+			auto CheatManager = (UCheatManager*)PlayerController->CheatManager;
+
+			if (!CheatManager)
+			{
+				PlayerController->ClientMessage(FString(L"Failed to find the cheat manager!"), FName(), 1.f);
+				return;
+			}
+
+			if (ActorClass)
+				CheatManager->DestroyAll(ActorClass);
+
+			PlayerController->ClientMessage(FString(L"Destroyed all objects of class!"), FName(), 1.f);
+		}
+		else if (command == "setmaxhealth" || command == "maxhealth")
+        {
+            if (args.size() < 2)
+            {
+                PlayerController->ClientMessage(FString(L"Usage: maxhealth <value>"), FName(), 1);
+                return;
+            }
+
+            auto Pawn = PlayerController->MyFortPawn;
+            if (!Pawn)
+                return;
+
+            float Value = 0.f;
+
+            try
+            {
+                std::string argStr(args[1].begin(), args[1].end());
+                Value = std::stof(argStr);
+            }
+            catch (...)
+            {
+                PlayerController->ClientMessage(FString(L"Invalid max health value"), FName(), 1);
+                return;
+            }
+
+            Pawn->SetMaxHealth(Value);
+
+            std::wstring Msg = L"Max health set to " + std::to_wstring((int)Value);
+            PlayerController->ClientMessage(FString(Msg.c_str()), FName(), 1);
+        }
+		else if (command == "setmaxshield" || command == "maxshield")
+        {
+            if (args.size() < 2)
+            {
+                PlayerController->ClientMessage(FString(L"Usage: maxshield <value>"), FName(), 1);
+                return;
+            }
+
+            auto Pawn = PlayerController->MyFortPawn;
+
+            if (!Pawn)
+                return;
+
+            float Value = 0.f;
+
+            try
+            {
+                std::string argStr(args[1].begin(), args[1].end());
+                Value = std::stof(argStr);
+            }
+            catch (...)
+            {
+                PlayerController->ClientMessage(FString(L"Invalid max shield value"), FName(), 1);
+                return;
+            }
+
+            Pawn->SetMaxShield(Value);
+
+            std::wstring Msg = L"Max shield set to " + std::to_wstring((int)Value);
+            PlayerController->ClientMessage(FString(Msg.c_str()), FName(), 1);
+        }
+		else if (command == "suicide")
+		{
+			PlayerController->ServerSuicide();
+			PlayerController->ClientMessage(FString(L"Killed player!"), FName(), 1.f);
 		}
 		else if (command == "timeofday" || command == "time" || command == "t")
 		{
