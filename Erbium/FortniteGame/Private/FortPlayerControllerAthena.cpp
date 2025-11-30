@@ -68,7 +68,7 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 	auto Num = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num();
 
 	auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
-	if (Playlist && Playlist->RespawnType > 0)
+	if (Playlist && Playlist->RespawnType > 0 && Num > 0)
 	{
 		if (FConfiguration::bLateGame)
 			FortPawn->SetShield(100.f);
