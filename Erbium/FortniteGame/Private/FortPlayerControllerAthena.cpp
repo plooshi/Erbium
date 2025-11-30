@@ -1431,6 +1431,11 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
     cheat spawnactor <class/path> - Spawns an actor near your location
     cheat sethealth <amount> - Sets your pawn's health (0-100)
     cheat setshield <amount> - Sets your pawn's shield (0-100)
+	cheat setmaxhealth <amount> - Sets your pawn's max health
+	cheat setmaxshield <amount> - Sets your pawn's max shield
+	cheat fly - Toggles flying
+	cheat ghost - Toggles no-clip flying
+	cheat suicide - Kills your pawn
     cheat demospeed <Speed> - Sets the speed of the server
     cheat god - Toggles god mode
     cheat speed <Speed> - Sets the player's movement speed
@@ -1444,6 +1449,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
     cheat waypoint <Name> - Loads a saved waypoint
     cheat skydive - Toggles skydiving
     cheat giveitem <WID/path> <Count = 1> - Gives you an item
+	cheat destroyall <Class> - Destroys all actors of a path
     cheat spawnpickup <WID/path> <Count = 1> - Spawns a pickup at your player's location
     cheat spawnactor <class/path> - Spawns an actor at your location + 5 meters)"), FName(), 1);
 	}
