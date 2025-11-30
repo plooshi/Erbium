@@ -503,12 +503,12 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 	if (Driver->ClientConnections.Num() > 0)
 		ServerReplicateActors(Driver, DeltaSeconds);
 
-	auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
     if (GUI::gsStatus == 1 && VersionInfo.FortniteVersion >= 11.00)
     { 
         auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
 		auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
 		static auto bSkipAircraft = GameState->HasCurrentPlaylistInfo() && GameState->CurrentPlaylistInfo.BasePlaylist ? GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft : false;
+		auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 		if (!bSkipAircraft && GameMode->MatchState == FName(L"InProgress") && GameState->WarmupCountdownEndTime <= Time)
         {
             UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
@@ -553,6 +553,7 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 		}
 		else if (Driver == WorldNetDriver && VersionInfo.FortniteVersion >= 18)
 		{
+			auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 			for (auto& UncastedPlayer : GameMode->AlivePlayers)
 			{
 				auto Player = (AFortPlayerControllerAthena*)UncastedPlayer;
@@ -586,11 +587,11 @@ void UNetDriver::TickFlush__RepGraph(UNetDriver* Driver, float DeltaSeconds)
 			((void (*)(UObject*, float)) ServerReplicateActors_)(Driver->ReplicationDriver, DeltaSeconds);
 
 
-		auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 		if (GUI::gsStatus == 1 && VersionInfo.FortniteVersion >= 11.00)
 		{
 			auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
 			auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
+			auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 			static auto bSkipAircraft = GameState->HasCurrentPlaylistInfo() && GameState->CurrentPlaylistInfo.BasePlaylist ? GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft : false;
 			if (!bSkipAircraft && GameMode->MatchState == FName(L"InProgress") && GameState->WarmupCountdownEndTime <= Time)
 			{
@@ -636,6 +637,7 @@ void UNetDriver::TickFlush__RepGraph(UNetDriver* Driver, float DeltaSeconds)
 			}
 			else if (Driver == WorldNetDriver && VersionInfo.FortniteVersion >= 18)
 			{
+				auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 				for (auto& UncastedPlayer : GameMode->AlivePlayers)
 				{
 					auto Player = (AFortPlayerControllerAthena*)UncastedPlayer;
@@ -722,11 +724,11 @@ void UNetDriver::TickFlush__Iris(UNetDriver* Driver, float DeltaSeconds)
 		}
 	}
 
-	auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 	if (GUI::gsStatus == 1 && VersionInfo.FortniteVersion < 25.20)
 	{
 		auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
 		auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
+		auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 		static auto bSkipAircraft = GameState->HasCurrentPlaylistInfo() && GameState->CurrentPlaylistInfo.BasePlaylist ? GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft : false;
 		if (!bSkipAircraft && GameMode->MatchState == FName(L"InProgress") && GameState->WarmupCountdownEndTime <= Time)
 		{
@@ -772,6 +774,7 @@ void UNetDriver::TickFlush__Iris(UNetDriver* Driver, float DeltaSeconds)
 		}
 		else if (Driver == WorldNetDriver && VersionInfo.FortniteVersion < 25.20)
 		{
+			auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 			for (auto& UncastedPlayer : GameMode->AlivePlayers)
 			{
 				auto Player = (AFortPlayerControllerAthena*)UncastedPlayer;
