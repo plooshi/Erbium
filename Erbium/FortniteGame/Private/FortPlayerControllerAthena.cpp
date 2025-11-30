@@ -1806,11 +1806,28 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				return;
 			}
 
-			std::string Class = std::string(args[1]);
+			auto Class = FindObject<UClass>(UEAllocatedWString(args[1].begin(), args[1].end()).c_str());
 
-			TSubclassOf<AActor> ActorClass = FindObject<UClass>(Class.c_str());
+			if (!Class)
+			{
+				PlayerController->ClientMessage(FString(L"Class not found!"), FName(), 1.f);
+				return;
+			}
 
-			auto CheatManager = (UCheatManager*)PlayerController->CheatManager;
+			TSubclassOf<AActor> AClass = Class;
+
+			if (!AClass)
+			{
+				PlayerController->ClientMessage(FString(L"Invalid actor class!"), FName(), 1.f);
+				return;
+			}
+
+			UFortCheatManager* CheatManager = PlayerController->CheatManager;
+
+			if (!CheatManager)
+			{
+				CheatManager = (UFortCheatManager*)UFortCheatManager::StaticClass();
+			}
 
 			if (!CheatManager)
 			{
@@ -1818,8 +1835,8 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				return;
 			}
 
-			if (ActorClass)
-				CheatManager->DestroyAll(ActorClass);
+			if (AClass)
+				CheatManager->DestroyAll(AClass);
 
 			PlayerController->ClientMessage(FString(L"Destroyed all objects of class!"), FName(), 1.f);
 		}
@@ -1827,7 +1844,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
         {
             if (args.size() < 2)
             {
-                PlayerController->ClientMessage(FString(L"Usage: maxhealth <value>"), FName(), 1);
+                PlayerController->ClientMessage(FString(L"Please choose a value to set the max health to!"), FName(), 1);
                 return;
             }
 
@@ -1844,7 +1861,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
             }
             catch (...)
             {
-                PlayerController->ClientMessage(FString(L"Invalid max health value"), FName(), 1);
+                PlayerController->ClientMessage(FString(L"Invalid max health value!"), FName(), 1);
                 return;
             }
 
@@ -1857,7 +1874,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
         {
             if (args.size() < 2)
             {
-                PlayerController->ClientMessage(FString(L"Usage: maxshield <value>"), FName(), 1);
+                PlayerController->ClientMessage(FString(L"Please choose a value to set the max shield to!"), FName(), 1);
                 return;
             }
 

@@ -295,11 +295,3 @@ public:
 
     InitPostLoadHooks;
 };
-
-class UCheatManager : public UObject
-{
-public:
-    UCLASS_COMMON_MEMBERS(UCheatManager);
-
-    DEFINE_FUNC(DestroyAll, void);
-};
