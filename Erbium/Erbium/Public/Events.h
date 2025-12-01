@@ -120,6 +120,18 @@ public:
 		},
 		FEvent
 		{
+			nullptr,
+			L"/Game/Athena/Events/NewYear/BP_NewYearTimer.BP_NewYearTimer_C",
+			{
+				FEventFunction{ false, L"/Game/Athena/Events/NewYear/BP_NewYearTimer.BP_NewYearTimer_C.startNYE" },
+				FEventFunction{ false, L"/Game/Athena/Events/NewYear/BP_NewYearTimer.BP_NewYearTimer_C.RollStormOut" },
+				FEventFunction{ false, L"/Game/Athena/Events/NewYear/BP_NewYearTimer.BP_NewYearTimer_C.TimeOfDaySetup" }
+			},
+			11.31,
+			nullptr
+		},
+		FEvent
+		{
 			L"/CycloneJerky/Gameplay/BP_Jerky_Loader.BP_Jerky_Loader_C",
 			L"/CycloneJerky/Gameplay/BP_Jerky_Scripting.BP_Jerky_Scripting_C",
 			{
