@@ -163,6 +163,12 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 			PlayerController->WorldInventory->GiveItem(PlayerController->CosmeticLoadoutPC.Pickaxe->WeaponDefinition);
 		else if (HasCustomizationLoadout && PlayerController->CustomizationLoadout.Pickaxe)
 			PlayerController->WorldInventory->GiveItem(PlayerController->CustomizationLoadout.Pickaxe->WeaponDefinition);
+		else if (HasCosmeticLoadoutPC || HasCustomizationLoadout) // fix ur backend gng
+		{
+			static auto DefaultPickaxe = FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
+
+			PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
+		}
 		
 		if (GameMode->StartingItems.Num() == 0)
 		{
@@ -173,11 +179,11 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 			static auto ConeBuild = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_RoofS.BuildingItemData_RoofS");
 			static auto EditTool = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/EditTool.EditTool");
 
+			PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
 			PlayerController->WorldInventory->GiveItem(WallBuild);
 			PlayerController->WorldInventory->GiveItem(FloorBuild);
 			PlayerController->WorldInventory->GiveItem(StairBuild);
 			PlayerController->WorldInventory->GiveItem(ConeBuild);
-			PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
 			PlayerController->WorldInventory->GiveItem(EditTool);
 		}
 
@@ -414,10 +420,11 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryWeapon(UObject* Context,
 
 bool CanBePlacedByPlayer(TSubclassOf<AActor> BuildClass)
 {
-	auto GameState = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState);
+	return ((ABuildingSMActor*)BuildClass->GetDefaultObj())->bIsPlayerBuildable;
+	/*auto GameState = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState);
 	static auto HasAllPlayerBuildableClasses = GameState->HasAllPlayerBuildableClasses();
 	return HasAllPlayerBuildableClasses ? GameState->AllPlayerBuildableClasses.Search([BuildClass](TSubclassOf<AActor> Class)
-		{ return Class == BuildClass; }) != 0 : true;
+		{ return Class == BuildClass; }) != 0 : true;*/
 }
 
 uint64_t CantBuild_ = 0;
@@ -677,17 +684,17 @@ void AFortPlayerControllerAthena::ServerEditBuildingActor(UObject* Context, FFra
 	Stack.StepCompiledIn(&RotationIterations);
 	Stack.StepCompiledIn(&bMirrored);
 	Stack.IncrementCode();
-
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
-	if (!PlayerController || !Building || !NewClass || !Building->IsA<ABuildingSMActor>() || !CanBePlacedByPlayer(NewClass)/* || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex*/ || Building->bDestroyed)
+
+	if (!PlayerController || !Building || !NewClass || !Building->IsA<ABuildingSMActor>() || !CanBePlacedByPlayer(NewClass) || Building->EditingPlayer != PlayerController->PlayerState || Building->bDestroyed)
 	{
 		return;
 	}
 
 	SetEditingPlayer(Building, nullptr);
 
-	static auto ReplaceBuildingActor = (ABuildingSMActor * (*)(ABuildingSMActor*, unsigned int, TSubclassOf<AActor>, unsigned int, int, bool, AFortPlayerControllerAthena*)) ReplaceBuildingActor_;
-	static auto ReplaceBuildingActor__New = (ABuildingSMActor * (*)(ABuildingSMActor*, unsigned int, TSubclassOf<AActor>&, unsigned int, int, bool, AFortPlayerControllerAthena*)) ReplaceBuildingActor_;
+	auto ReplaceBuildingActor = (ABuildingSMActor * (*&)(ABuildingSMActor*, unsigned int, TSubclassOf<AActor>, unsigned int, int, bool, AFortPlayerControllerAthena*)) ReplaceBuildingActor_;
+	auto ReplaceBuildingActor__New = (ABuildingSMActor * (*&)(ABuildingSMActor*, unsigned int, TSubclassOf<AActor>&, unsigned int, int, bool, AFortPlayerControllerAthena*)) ReplaceBuildingActor_;
 
 	ABuildingSMActor* NewBuild;
 	
