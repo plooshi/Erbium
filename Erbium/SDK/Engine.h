@@ -674,6 +674,7 @@ namespace SDK
 		DEFINE_PROP(DemoNetDriver, UObject*);
 		DEFINE_PROP(LevelCollections, TArray<FLevelCollection>);
 		DEFINE_PROP(ServerStreamingLevelsVisibility, AServerStreamingLevelsVisibility*);
+		DEFINE_PROP(NavigationSystem, UObject*);
 
 		struct GameplayStatics_BeginDeferredActorSpawnFromClass
 		{

@@ -133,6 +133,7 @@ public:
     UCLASS_COMMON_MEMBERS(UFortSchematicItemDefinition);
 
     DEFINE_PROP(CraftingRecipe, FDataTableRowHandle);
+    DEFINE_PROP(CraftingRequirements, FDataTableRowHandle);
 
     DEFINE_FUNC(GetResultWorldItemDefinition, UFortWorldItemDefinition*)
     DEFINE_FUNC(GetQuantityProduced, int32);
@@ -148,6 +149,23 @@ public:
     DEFINE_STRUCT_PROP(RecipeCosts, TArray<FFortItemQuantityPair>);
     DEFINE_STRUCT_PROP(RequiredCatalysts, FGameplayTagContainer);
     DEFINE_STRUCT_PROP(Score, int32);
+};
+
+struct FSchematicRequirement
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FSchematicRequirement);
+
+    DEFINE_STRUCT_PROP(ItemDefinition, UFortItemDefinition*);
+    DEFINE_STRUCT_PROP(Count, int32);
+};
+
+struct FSchematicRequirements : public FTableRowBase
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FSchematicRequirements);
+
+    DEFINE_STRUCT_PROP(Requirements, TArray<FSchematicRequirement>);
 };
 
 struct FFortItemEntryStateValue
@@ -389,6 +407,7 @@ class UFortEditToolItemDefinition : public UFortWorldItemDefinition
 public:
     UCLASS_COMMON_MEMBERS(UFortEditToolItemDefinition);
 };
+
 
 class AFortInventory : public AActor
 {

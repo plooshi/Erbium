@@ -404,24 +404,42 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
         if (!AIDirectorClass)
             AIDirectorClass = FindClass("FortAIDirector"); 
 
-        GameMode->AIDirector = UWorld::SpawnActor(AIDirectorClass, FVector{});
+        GameMode->AIDirector = UWorld::SpawnActor(AIDirectorClass, FVector{}, GameMode);
         if (GameMode->AIDirector)
             GameMode->AIDirector->Call(GameMode->AIDirector->GetFunction("Activate"));
 
         auto GoalManagerClass = GameMode->HasWarmupRequiredPlayerCount() ? FindClass("FortAIGoalManager") : FindObject<UClass>("/Game/AI/GoalSelection/AIGoalManager.AIGoalManager_C");
 
-        GameMode->AIGoalManager = UWorld::SpawnActor(GoalManagerClass, FVector{});
+        GameMode->AIGoalManager = UWorld::SpawnActor(GoalManagerClass, FVector{}, GameMode);
 
         auto MissionManagerClass = GameMode->HasWarmupRequiredPlayerCount() ? nullptr : FindObject<UClass>("/Game/Blueprints/MissionManager.MissionManager_C");
 
         if (MissionManagerClass)
         {
-            GameState->MissionManager = UWorld::SpawnActor(MissionManagerClass, FVector{});
-            // we need to spawn bluglo manager too
+            GameState->MissionManager = UWorld::SpawnActor(MissionManagerClass, FVector{}, GameState);
+            GameState->OnRep_MissionManager();
+
+            auto MissionInfo = FindObject<UFortMissionInfo>(L"/Game/Missions/Primary/EvacuateTheSurvivors/EvacuteTheSurvivors.EvacuteTheSurvivors");
+
+            MissionInfo->bStartPlayingOnLoad = true; // bad hack, we should find a better way to do this later
+            // startplayingmission
+
+            UFortMissionLibrary::LoadMission(UWorld::GetWorld(), MissionInfo);
+            // we need to spawn bluglo manager too?
         }
 
-        if (!GameMode->HasWarmupRequiredPlayerCount())
-            UWorld::SpawnActor(FindClass("FortPlayerStart"), FVector{0, 0, 3000});
+       /* if (VersionInfo.EngineVersion == 4.16)
+        {
+            if (!UWorld::GetWorld()->NavigationSystem)
+            {
+                UWorld::GetWorld()->NavigationSystem = UGameplayStatics::SpawnObject(FindClass("FortNavSystem"), UWorld::GetWorld());
+                auto OnWorldInitDone = (void(*)(UObject*, char))(ImageBase + 0x1f6fc40);
+                OnWorldInitDone(UWorld::GetWorld()->NavigationSystem, 1);
+            }
+        }*/
+
+        //if (!GameMode->HasWarmupRequiredPlayerCount())
+        //    UWorld::SpawnActor(FindClass("FortPlayerStart"), FVector{0, 0, 3000});
 
         *Ret = false;
         return;
@@ -1900,9 +1918,41 @@ void GetPhaseInfo(UObject* Context, FFrame& Stack, bool* Ret)
     *Ret = false;
 }
 
+class AFortNavMesh : public AActor
+{
+public:
+    UCLASS_COMMON_MEMBERS(AFortNavMesh);
+
+    DEFINE_PROP(HotSpotManager, const UObject*);
+};
+void (*OnWorldInitDoneOG)(UNavigationSystem* NavSys, char Mode);
+void OnWorldInitDone(UNavigationSystem* NavSys, char Mode)
+{
+    printf("OnWorldInitDone\n");
+    NavSys->bAutoCreateNavigationData = true;
+    NavSys->bAllowClientSideNavigation = true;
+    NavSys->bSupportRebuilding = true;
+
+    OnWorldInitDoneOG(NavSys, Mode);
+
+    auto AllBounds = Utils::GetAll(FindClass("NavMeshBoundsVolume"));
+    auto AllNavmeshes = Utils::GetAll<AFortNavMesh>();
+    auto HotSpotMgr = TUObjectArray::FindFirstObject("FortAIHotSpotManager");
+
+    //auto Test = (void(*)(UNavigationSystem*)) (ImageBase + 0x1F5C290);
+    //Test(NavSys);
+
+    NavSys->OnNavigationBoundsUpdated(AllBounds[0]);
+    AllNavmeshes[0]->HotSpotManager = HotSpotMgr;
+    //printf("NavGraphData: %llx, AllBounds.Num() = %d\n", NavSys->NavGraphData, AllBounds.Num());
+    AllBounds.Free();
+}
+
 void AFortGameMode::Hook()
 {
     Utils::ExecHook(GetDefaultObj()->GetFunction("ReadyToStartMatch"), ReadyToStartMatch_, ReadyToStartMatch_OG);
+    //if (VersionInfo.EngineVersion == 4.16)
+    //    Utils::Hook(Memcury::Scanner::FindPattern("40 55 53 56 41 56 48 8D 6C 24 ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 48 8B 01 48 8B F1").Get(), OnWorldInitDone, OnWorldInitDoneOG);
 }
 
 void AFortGameMode::PostLoadHook()

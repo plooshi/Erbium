@@ -34,12 +34,6 @@ FGameplayAbilitySpecHandle UAbilitySystemComponent::GiveAbility(const UObject* A
     return OutHandle;
 }
 
-class IFortAbilitySystemInterface : public IInterface
-{
-public:
-    UCLASS_COMMON_MEMBERS(IFortAbilitySystemInterface);
-};
-
 void UAbilitySystemComponent::GiveAbilitySet(const UFortAbilitySet* Set)
 {
     TScriptInterface<class IFortAbilitySystemInterface> ScriptInterface;

@@ -186,6 +186,7 @@ public:
     __declspec(property(get = GetWorldInventory, put = SetWorldInventory))
     AFortInventory* WorldInventory;
 
+    DEFINE_PROP(OutpostInventory, AFortInventory*);
     DEFINE_PROP(CosmeticLoadoutPC, FFortAthenaLoadout);
     DEFINE_PROP(CustomizationLoadout, FFortAthenaLoadout);
     DEFINE_BITFIELD_PROP(bBuildFree);

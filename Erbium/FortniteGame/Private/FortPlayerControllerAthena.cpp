@@ -50,6 +50,7 @@ void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena
 }
 
 extern uint64_t ApplyCharacterCustomization;
+uint64_t InitializePlayerGameplayAbilities_;
 void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, FFrame& Stack)
 {
 	AActor* Pawn;
@@ -137,10 +138,18 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 		FortPawn->OnRep_IsInsideSafeZone();
 	}
 
-	if (VersionInfo.FortniteVersion < 15)
+	if (VersionInfo.FortniteVersion < 15 && Num > 0 && Playlist && Playlist->RespawnType > 0)
 	{
-		for (auto& AbilitySet : AFortGameMode::AbilitySets)
-			PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
+		auto Interface = PlayerController->PlayerState->GetInterface(IFortAbilitySystemInterface::StaticClass());
+		if (InitializePlayerGameplayAbilities_ && Interface)
+		{
+			auto InitializePlayerGameplayAbilities = (void(*&)(const IInterface*))InitializePlayerGameplayAbilities_;
+
+			InitializePlayerGameplayAbilities(Interface);
+		}
+		else
+			for (auto& AbilitySet : AFortGameMode::AbilitySets)
+				PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
 	}
 
 	if (Num == 0)
@@ -186,8 +195,16 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 			((void (*)(AActor*, AActor*)) ApplyCharacterCustomization)(PlayerController->PlayerState, Pawn);
 		}
 
-		for (auto& AbilitySet : AFortGameMode::AbilitySets)
-			PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
+		auto Interface = PlayerController->PlayerState->GetInterface(IFortAbilitySystemInterface::StaticClass());
+		if (InitializePlayerGameplayAbilities_ && Interface)
+		{
+			auto InitializePlayerGameplayAbilities = (void(*&)(const IInterface*))InitializePlayerGameplayAbilities_;
+
+			InitializePlayerGameplayAbilities(Interface);
+		}
+		else
+			for (auto& AbilitySet : AFortGameMode::AbilitySets)
+				PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
 	}
 	else if (FConfiguration::bLateGame && (!FConfiguration::bKeepInventory || FConfiguration::bLateGame))
 	{
@@ -1203,9 +1220,16 @@ void AFortPlayerControllerAthena::ServerClientIsReadyToRespawn(UObject* Context,
 		NewPawn->SetHealth(100.f);
 		NewPawn->SetShield(0.f);
 
+		auto Interface = PlayerController->PlayerState->GetInterface(IFortAbilitySystemInterface::StaticClass());
+		if (InitializePlayerGameplayAbilities_ && Interface)
+		{
+			auto InitializePlayerGameplayAbilities = (void(*&)(const IInterface*))InitializePlayerGameplayAbilities_;
 
-		for (auto& AbilitySet : AFortGameMode::AbilitySets)
-			PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
+			InitializePlayerGameplayAbilities(Interface);
+		}
+		else
+			for (auto& AbilitySet : AFortGameMode::AbilitySets)
+				PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
 	}
 
 	PlayerState->RespawnData.bClientIsReady = true;
@@ -2737,49 +2761,110 @@ void AFortPlayerControllerAthena::ServerCraftSchematic(UObject* Context, FFrame&
 
 		printf("item: %s\n", ResultItemDef->Name.ToString().c_str());
 
-		auto FoundItemDef = TUObjectArray::FindObject<UFortItemDefinition>(ResultItemDef->Name.ToString().c_str());
-		if (FoundItemDef) {
-			auto ExistingEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& Entry)
-				{
-					return Entry.ItemDefinition == FoundItemDef;
-				}, FFortItemEntry::Size());
+		if (ResultItemDef) {
 
-			if (ExistingEntry)
-			{
-				ExistingEntry->Count += Schematic->GetQuantityProduced();
-				PlayerController->WorldInventory->UpdateEntry(*ExistingEntry);
-			}
+			auto subbed = Schematic->MaxLevel - Schematic->MinLevel;
+
+			if (subbed <= -1)
+				subbed = 0;
 			else
 			{
-				PlayerController->WorldInventory->GiveItem(FoundItemDef, Schematic->GetQuantityProduced(), 0, 0, false);
+				auto calc = (int)(((float)rand() / 32767) * (float)(subbed + 1));
+				if (calc <= subbed)
+					subbed = calc;
 			}
 
-			auto RecipeTable = Schematic->CraftingRecipe.DataTable;
-			auto RowIterator = Schematic->CraftingRecipe.DataTable->RowMap.Find(Schematic->CraftingRecipe.RowName, [](const FName& Left, const FName& Right) {return Left == Right; });
-			auto RowPair = Schematic->CraftingRecipe.DataTable->RowMap[RowIterator.GetIndex()];
-			auto RecipeData = reinterpret_cast<FRecipe*>(RowPair.Value());
-			auto CostCount = RecipeData->RecipeCosts.Num();
+			auto NewEntry = AFortInventory::MakeItemEntry(ResultItemDef, Schematic->GetQuantityProduced(), subbed + Schematic->MinLevel);
 
-			printf("num costs: %d\n", CostCount);
+			PlayerController->InternalPickup(NewEntry);
+			free(NewEntry);
 
-			for (int i = 0; i < RecipeData->RecipeCosts.Num(); i++)
+			if (Schematic->CraftingRecipe.DataTable)
 			{
-				auto& Cost = RecipeData->RecipeCosts.Get(i, FFortItemQuantityPair::Size());
-				auto CostItemDef = Cost.ItemDefinition.Get();
-				//auto ItemEntry = AFortInventory::MakeItemEntry(CostItemDef, Cost.Quantity, 0);
+				auto FoundRecipe = Schematic->CraftingRecipe.DataTable->RowMap.Search([&](FName& Key, uint8_t*& Value)
+					{ return Key == Schematic->CraftingRecipe.RowName; });
 
-				FFortItemEntry* InventoryEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& Entry)
-					{
-						return Entry.ItemDefinition == CostItemDef;
-					}, FFortItemEntry::Size());
-
-				if (InventoryEntry)
+				if (!FoundRecipe)
 				{
-					auto NewCount = InventoryEntry->Count - Cost.Quantity;
-					if (NewCount < 0)
-						NewCount = 0;
-					InventoryEntry->Count = NewCount;
-					PlayerController->WorldInventory->UpdateEntry(*InventoryEntry);
+					printf("[Crafting] Failed to find recipe!\n");
+					return;
+				}
+
+				auto Recipe = *(FRecipe**)FoundRecipe;
+				auto CostCount = Recipe->RecipeCosts.Num();
+
+				printf("num costs: %d\n", CostCount);
+
+				for (int i = 0; i < Recipe->RecipeCosts.Num(); i++)
+				{
+					auto& Cost = Recipe->RecipeCosts.Get(i, FFortItemQuantityPair::Size());
+
+					auto ItemDef = Cost.ItemDefinition.Get();
+
+					auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& Entry)
+						{ return Entry.ItemDefinition == ItemDef; }, FFortItemEntry::Size());
+					auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem*& Item)
+						{ return Item->ItemEntry.ItemDefinition == ItemDef; });
+
+					if (itemEntry)
+					{
+						auto Item = *ItemP;
+
+						itemEntry->Count -= Cost.Quantity;
+
+						if (itemEntry->Count <= 0)
+							PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
+						else
+						{
+							Item->ItemEntry.Count = itemEntry->Count;
+							PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+							Item->ItemEntry.bIsDirty = true;
+						}
+					}
+				}
+			}
+
+			if (Schematic->HasCraftingRequirements() && Schematic->CraftingRequirements.DataTable)
+			{
+				auto FoundRequirements = Schematic->CraftingRequirements.DataTable->RowMap.Search([&](FName& Key, uint8_t*& Value)
+					{ return Key == Schematic->CraftingRequirements.RowName; });
+
+				if (!FoundRequirements)
+				{
+					printf("[Crafting] Failed to find requirements!\n");
+					return;
+				}
+
+				auto Reqirements = *(FSchematicRequirements**)FoundRequirements;
+				auto CostCount = Reqirements->Requirements.Num();
+
+				printf("num requirements: %d\n", CostCount);
+
+				for (int i = 0; i < Reqirements->Requirements.Num(); i++)
+				{
+					auto& Requirement = Reqirements->Requirements.Get(i, FSchematicRequirement::Size());
+					auto ItemDef = Requirement.ItemDefinition;
+
+					auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& Entry)
+						{ return Entry.ItemDefinition == ItemDef; }, FFortItemEntry::Size());
+					auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem*& Item)
+						{ return Item->ItemEntry.ItemDefinition == ItemDef; });
+
+					if (itemEntry)
+					{
+						auto Item = *ItemP;
+
+						itemEntry->Count -= Requirement.Count;
+
+						if (itemEntry->Count <= 0)
+							PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
+						else
+						{
+							Item->ItemEntry.Count = itemEntry->Count;
+							PlayerController->WorldInventory->UpdateEntry(*itemEntry);
+							Item->ItemEntry.bIsDirty = true;
+						}
+					}
 				}
 			}
 		}
@@ -2895,6 +2980,38 @@ void AFortPlayerControllerAthena::ServerRequestSeatChange_(UObject* Context, FFr
 		PlayerController->ClientEquipItem(ItemEntry->ItemGuid, true);
 		if (Pawn->HasPreviousWeapon())
 			Pawn->PreviousWeapon = CurrentWeapon;
+
+		auto Weapon = (AFortWeapon*)Pawn->CurrentWeapon;
+
+		auto RepWeaponInfo = (FMountedWeaponInfoRepped*)malloc(FMountedWeaponInfoRepped::Size());
+
+		if (RepWeaponInfo->HasHostVehicleCached())
+		{
+			RepWeaponInfo->HostVehicleCached.ObjectPointer = Vehicle;
+			RepWeaponInfo->HostVehicleCached.InterfacePointer = Vehicle->GetInterface(IFortVehicleInterface::StaticClass());
+		}
+		else
+			RepWeaponInfo->HostVehicleCachedActor = Vehicle;
+		RepWeaponInfo->HostVehicleSeatIndexCached = SeatIdx;
+
+		static auto DualClass = FindClass("FortWeaponRangedDualForVehicle");
+
+		if (Weapon->IsA(DualClass))
+		{
+			static auto MountedWeaponInfoReppedOff = Weapon->GetOffset("MountedWeaponInfoRepped");
+			static auto OnRep_MountedWeaponInfoRepped = Weapon->GetFunction("OnRep_MountedWeaponInfoRepped");
+			*(FMountedWeaponInfoRepped*)(__int64(Weapon) + MountedWeaponInfoReppedOff) = *RepWeaponInfo;
+			Weapon->Call(OnRep_MountedWeaponInfoRepped);
+		}
+		else
+		{
+			static auto MountedWeaponInfoReppedOff = Weapon->GetOffset("MountedWeaponInfoRepped");
+			static auto OnRep_MountedWeaponInfoRepped = Weapon->GetFunction("OnRep_MountedWeaponInfoRepped");
+			*(FMountedWeaponInfoRepped*)(__int64(Weapon) + MountedWeaponInfoReppedOff) = *RepWeaponInfo;
+			Weapon->Call(OnRep_MountedWeaponInfoRepped);
+		}
+
+		free(RepWeaponInfo);
 	}
 }
 
@@ -2952,6 +3069,7 @@ void AFortPlayerControllerAthena::PostLoadHook()
 	GiveAbilityAndActivateOnce = FindGiveAbilityAndActivateOnce();
 	CanAffordToPlaceBuildableClass_ = FindCanAffordToPlaceBuildableClass();
 	PayBuildableClassPlacementCost_ = FindPayBuildableClassPlacementCost();
+	InitializePlayerGameplayAbilities_ = FindInitializePlayerGameplayAbilities();
 
 	auto DefaultFortPC = DefaultObjImpl("FortPlayerController");
 

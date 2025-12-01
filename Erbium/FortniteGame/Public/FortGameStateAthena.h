@@ -154,6 +154,35 @@ public:
     DEFINE_PROP(AvailablePortals, TArray<AActor*>);
 };
 
+class UFortMissionInfo : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortMissionInfo);
+
+    DEFINE_BITFIELD_PROP(bStartPlayingOnLoad);
+};
+
+class UFortMissionLibrary : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortMissionLibrary);
+
+    DEFINE_STATIC_FUNC(LoadMission, void);
+};
+
+class UNavigationSystem : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UNavigationSystem);
+
+    DEFINE_BITFIELD_PROP(bAutoCreateNavigationData);
+    DEFINE_BITFIELD_PROP(bAllowClientSideNavigation);
+    DEFINE_BITFIELD_PROP(bSupportRebuilding);
+    DEFINE_PROP(NavGraphData, UObject*);
+
+    DEFINE_FUNC(OnNavigationBoundsUpdated, void);
+};
+
 class AFortGameStateAthena : public AActor
 {
 public:
@@ -202,4 +231,5 @@ public:
     DEFINE_FUNC(OnRep_GamePhase, void);
     DEFINE_FUNC(OnRep_PlayersLeft, void);
     DEFINE_FUNC(OnRep_SafeZoneIndicator, void);
+    DEFINE_FUNC(OnRep_MissionManager, void);
 };

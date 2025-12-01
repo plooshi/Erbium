@@ -126,6 +126,12 @@ public:
     DEFINE_STRUCT_PROP(GameplayEffects_Internal, TArray<FActiveGameplayEffect>);
 };
 
+class IFortAbilitySystemInterface : public IInterface
+{
+public:
+    UCLASS_COMMON_MEMBERS(IFortAbilitySystemInterface);
+};
+
 class UAbilitySystemComponent : public UActorComponent
 {
 public:

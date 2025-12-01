@@ -73,6 +73,7 @@ uint64 FindSetState();
 uint64 FindMinigameSettingsBuilding__BeginPlay();
 uint64 FindPickSupplyDropLocation();
 uint64 FindSetPickupTarget();
+uint64 FindInitializePlayerGameplayAbilities();
 
 inline std::vector<uint64_t> NullFuncs = {};
 inline std::vector<uint64_t> RetTrueFuncs = {};

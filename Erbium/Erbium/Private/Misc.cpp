@@ -5,6 +5,7 @@
 #include "../Public/Configuration.h"
 #include "../../FortniteGame/Public/FortPlayerControllerAthena.h"
 #include "../../Engine/Public/NetDriver.h"
+#include "../../FortniteGame/Public/FortGameMode.h"
 
 int Misc::GetNetMode() 
 {
@@ -42,10 +43,14 @@ void Misc::ApplyHomebaseEffectsOnPlayerSetup(
 	char a6,
 	unsigned __int8 a7)
 {
-	static auto ItemDefOffset = a5->GetOffset("ItemDefinition");
-	static auto Commando = FindObject<UObject>(L"/Game/Athena/Heroes/HID_001_Athena_Commando_F.HID_001_Athena_Commando_F");
-	static auto Commando2 = FindObject<UObject>(L"/Game/Athena/Heroes/HID_Commando_Athena_01.HID_Commando_Athena_01");
-	GetFromOffset<const UObject*>(a5, ItemDefOffset) = Commando ? Commando : Commando2;
+	auto GameMode = (AFortGameModeAthena*) UWorld::GetWorld()->AuthorityGameMode;
+	if (GameMode->HasWarmupRequiredPlayerCount())
+	{
+		static auto ItemDefOffset = a5->GetOffset("ItemDefinition");
+		static auto Commando = FindObject<UObject>(L"/Game/Athena/Heroes/HID_001_Athena_Commando_F.HID_001_Athena_Commando_F");
+		static auto Commando2 = FindObject<UObject>(L"/Game/Athena/Heroes/HID_Commando_Athena_01.HID_Commando_Athena_01");
+		GetFromOffset<const UObject*>(a5, ItemDefOffset) = Commando ? Commando : Commando2;
+	}
 
 	return ApplyHomebaseEffectsOnPlayerSetupOG(a1, a2, a3, a4, a5, a6, a7);
 }
