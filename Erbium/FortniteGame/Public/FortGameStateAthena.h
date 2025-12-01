@@ -218,7 +218,6 @@ public:
     DEFINE_PROP(bPlaylistDataIsLoaded, bool);
     DEFINE_PROP(VolumeManager, AFortVolumeManager*);
     DEFINE_PROP(CreativePortalManager, AFortCreativePortalManager*);
-    DEFINE_PROP(MissionManager, AActor*);
     DEFINE_BITFIELD_PROP(bInSpawningStartup);
 
     DEFINE_FUNC(OnRep_CurrentPlaylistInfo, void);
@@ -231,5 +230,36 @@ public:
     DEFINE_FUNC(OnRep_GamePhase, void);
     DEFINE_FUNC(OnRep_PlayersLeft, void);
     DEFINE_FUNC(OnRep_SafeZoneIndicator, void);
+};
+
+class AFortGameStateZone : public AActor
+{
+public:
+	UCLASS_COMMON_MEMBERS(AFortGameStateZone);
+
+
+	DEFINE_PROP(ZoneDifficultyInfoRow, struct FDataTableRowHandle);
+    DEFINE_PROP(MissionManager, AActor*);
+    DEFINE_PROP(MissionGeneratorClass, TSoftClassPtr<class UClass>);
+    DEFINE_PROP(GameDifficulty, float);
+    DEFINE_PROP(UIMapManager, AActor*);  // AFortInGameMapManager class to redo
+    DEFINE_PROP(DeployedDefenders, TArray<class AActor*>); // AFortAIPawn class
+
+
+    // survivors mission related // yes they are made 
+    DEFINE_PROP(NumSurvivorsSpawned, int32);
+    DEFINE_PROP(NumSurvivorsDead, int32);
+    DEFINE_PROP(NumSurvivorsRescued, int32)
+    // funcs same thing 
+    DEFINE_FUNC(NotifySurvivorDead, void);
+    DEFINE_FUNC(NotifySurvivorSpawned, void);
+    DEFINE_FUNC(NotifySurvivorRescued, void);
+
+    // onreps yo
+    DEFINE_FUNC(OnRep_GameDifficulty, void);
+    DEFINE_FUNC(OnRep_MissionGenerator, void);
+    DEFINE_FUNC(OnRep_NumSurvivorsRescued, void);
+    DEFINE_FUNC(OnRep_ZoneDifficultyInfoRow, void);
     DEFINE_FUNC(OnRep_MissionManager, void);
+
 };

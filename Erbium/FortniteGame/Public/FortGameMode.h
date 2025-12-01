@@ -47,8 +47,6 @@ public:
     DEFINE_PROP(OnSafeZoneIndicatorSpawned, TMulticastInlineDelegate<void(AFortSafeZoneIndicator*)>);
     DEFINE_PROP(MatchState, FName);
     DEFINE_PROP(bEnableDBNO, bool);
-    DEFINE_PROP(AIDirector, AActor*);
-    DEFINE_PROP(AIGoalManager, AActor*);
     DEFINE_PROP(bEnableReplicationGraph, bool);
 
     DEFINE_FUNC(SpawnDefaultPawnAtTransform, AFortPlayerPawnAthena*);
@@ -77,4 +75,16 @@ class AFortGameModeAthena : public AFortGameMode
 {
 public:
     UCLASS_COMMON_MEMBERS(AFortGameModeAthena);
+};
+
+class AFortGameModeZone : public AFortGameMode
+{
+public:
+    UCLASS_COMMON_MEMBERS(AFortGameModeZone);
+
+    DEFINE_PROP(ActiveSpawnPad, ABuildingSMActor*);
+    DEFINE_PROP(AIDirector, AActor*); // classes for these two are needed for husk movement
+    DEFINE_PROP(AIGoalManager, AActor*);
+    DEFINE_PROP(bUseAllSocketsInSpawnPad, bool);
+
 };
