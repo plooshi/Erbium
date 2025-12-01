@@ -1455,6 +1455,11 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
     cheat spawnactor <class/path> - Spawns an actor near your location
     cheat sethealth <amount> - Sets your pawn's health (0-100)
     cheat setshield <amount> - Sets your pawn's shield (0-100)
+	cheat setmaxhealth <amount> - Sets your pawn's max health
+	cheat setmaxshield <amount> - Sets your pawn's max shield
+	cheat fly - Toggles flying
+	cheat ghost - Toggles no-clip flying
+	cheat suicide - Kills your pawn
     cheat demospeed <Speed> - Sets the speed of the server
     cheat god - Toggles god mode
     cheat speed <Speed> - Sets the player's movement speed
@@ -1468,6 +1473,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
     cheat waypoint <Name> - Loads a saved waypoint
     cheat skydive - Toggles skydiving
     cheat giveitem <WID/path> <Count = 1> - Gives you an item
+	cheat destroyall <Class> - Destroys all actors of a path
     cheat spawnpickup <WID/path> <Count = 1> - Spawns a pickup at your player's location
     cheat spawnactor <class/path> - Spawns an actor at your location + 5 meters)"), FName(), 1);
 	}
@@ -1641,6 +1647,50 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 			Pawn->ProcessEvent(SetMovementSpeedFn, &Speed);
 			PlayerController->ClientMessage(FString(L"Set player speed!"), FName(), 1.f);
 		}
+		else if (command == "fly")
+		{
+			auto Pawn = PlayerController->Pawn;
+
+			if (!Pawn)
+			{
+				PlayerController->ClientMessage(FString(L"No pawn found!"), FName(), 1.f);
+				return;
+			}
+
+			Pawn->SetActorEnableCollision(true);
+
+			if (Pawn->CharacterMovement)
+			{
+				Pawn->CharacterMovement->bCheatFlying = !Pawn->CharacterMovement->bCheatFlying;
+
+				if (Pawn->CharacterMovement->bCheatFlying)
+					Pawn->CharacterMovement->SetMovementMode(EMovementMode::MOVE_Flying, 0);
+				else
+					Pawn->CharacterMovement->SetMovementMode(EMovementMode::MOVE_Walking, 0);
+			}
+		}
+		else if (command == "ghost")
+		{
+			auto Pawn = PlayerController->Pawn;
+
+			if (!Pawn)
+			{
+				PlayerController->ClientMessage(FString(L"No pawn found!"), FName(), 1.f);
+				return;
+			}
+
+			Pawn->SetActorEnableCollision(!Pawn->bActorEnableCollision);
+
+			if (Pawn->CharacterMovement)
+			{
+				Pawn->CharacterMovement->bCheatFlying = !Pawn->CharacterMovement->bCheatFlying;
+
+				if (Pawn->CharacterMovement->bCheatFlying)
+					Pawn->CharacterMovement->SetMovementMode(EMovementMode::MOVE_Flying, 0);
+				else
+					Pawn->CharacterMovement->SetMovementMode(EMovementMode::MOVE_Walking, 0);
+			}
+		}
 		else if (command == "gravity")
 		{
 			if (args.size() < 2)
@@ -1771,6 +1821,114 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 		{
 			FConfiguration::bKeepInventory ^= 1;
 			PlayerController->ClientMessage(FString(L"Toggled keep inventory!"), FName(), 1.f);
+		}
+		else if (command == "destroyall")
+		{
+			if (args.size() < 2)
+			{
+				PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1.f);
+				return;
+			}
+
+			auto Class = FindObject<UClass>(UEAllocatedWString(args[1].begin(), args[1].end()).c_str());
+
+			if (!Class)
+			{
+				PlayerController->ClientMessage(FString(L"Class not found!"), FName(), 1.f);
+				return;
+			}
+
+			TSubclassOf<AActor> AClass = Class;
+
+			if (!AClass)
+			{
+				PlayerController->ClientMessage(FString(L"Invalid actor class!"), FName(), 1.f);
+				return;
+			}
+
+			UFortCheatManager* CheatManager = PlayerController->CheatManager;
+
+			if (!CheatManager)
+			{
+				CheatManager = (UFortCheatManager*)UFortCheatManager::StaticClass();
+			}
+
+			if (!CheatManager)
+			{
+				PlayerController->ClientMessage(FString(L"Failed to find the cheat manager!"), FName(), 1.f);
+				return;
+			}
+
+			if (AClass)
+				CheatManager->DestroyAll(AClass);
+
+			PlayerController->ClientMessage(FString(L"Destroyed all objects of class!"), FName(), 1.f);
+		}
+		else if (command == "setmaxhealth" || command == "maxhealth")
+        {
+            if (args.size() < 2)
+            {
+                PlayerController->ClientMessage(FString(L"Please choose a value to set the max health to!"), FName(), 1);
+                return;
+            }
+
+            auto Pawn = PlayerController->MyFortPawn;
+            if (!Pawn)
+                return;
+
+            float Value = 0.f;
+
+            try
+            {
+                std::string argStr(args[1].begin(), args[1].end());
+                Value = std::stof(argStr);
+            }
+            catch (...)
+            {
+                PlayerController->ClientMessage(FString(L"Invalid max health value!"), FName(), 1);
+                return;
+            }
+
+            Pawn->SetMaxHealth(Value);
+
+            std::wstring Msg = L"Max health set to " + std::to_wstring((int)Value);
+            PlayerController->ClientMessage(FString(Msg.c_str()), FName(), 1);
+        }
+		else if (command == "setmaxshield" || command == "maxshield")
+        {
+            if (args.size() < 2)
+            {
+                PlayerController->ClientMessage(FString(L"Please choose a value to set the max shield to!"), FName(), 1);
+                return;
+            }
+
+            auto Pawn = PlayerController->MyFortPawn;
+
+            if (!Pawn)
+                return;
+
+            float Value = 0.f;
+
+            try
+            {
+                std::string argStr(args[1].begin(), args[1].end());
+                Value = std::stof(argStr);
+            }
+            catch (...)
+            {
+                PlayerController->ClientMessage(FString(L"Invalid max shield value"), FName(), 1);
+                return;
+            }
+
+            Pawn->SetMaxShield(Value);
+
+            std::wstring Msg = L"Max shield set to " + std::to_wstring((int)Value);
+            PlayerController->ClientMessage(FString(Msg.c_str()), FName(), 1);
+        }
+		else if (command == "suicide")
+		{
+			PlayerController->ServerSuicide();
+			PlayerController->ClientMessage(FString(L"Killed player!"), FName(), 1.f);
 		}
 		else if (command == "timeofday" || command == "time" || command == "t")
 		{

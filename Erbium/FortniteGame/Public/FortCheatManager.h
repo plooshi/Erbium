@@ -7,4 +7,5 @@ public:
     UCLASS_COMMON_MEMBERS(UFortCheatManager);
     
     DEFINE_FUNC(Teleport, void);
+    DEFINE_FUNC(DestroyAll, void);
 };

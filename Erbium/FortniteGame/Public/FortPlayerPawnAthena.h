@@ -8,6 +8,10 @@ public:
     UCLASS_COMMON_MEMBERS(UCharacterMovementComponent);
 
     DEFINE_PROP(Velocity, FVector);
+
+    DEFINE_BITFIELD_PROP(bCheatFlying, bool);
+
+    DEFINE_FUNC(SetMovementMode, void);
 };
 
 struct FZiplinePawnState
@@ -96,6 +100,7 @@ public:
     DEFINE_FUNC(SetHealth, void);
     DEFINE_FUNC(SetShield, void);
     DEFINE_FUNC(SetMaxHealth, void);
+    DEFINE_FUNC(SetMaxShield, void);
     DEFINE_FUNC(EquipWeaponDefinition, AActor*);
     DEFINE_FUNC(LaunchCharacterJump, void);
     DEFINE_FUNC(OnCapsuleBeginOverlap, void);
@@ -112,6 +117,7 @@ public:
     DEFINE_FUNC(ClientInternalEquipWeapon, void);
     DEFINE_FUNC(ServerInternalEquipWeapon, void);
     DEFINE_FUNC(SetGravityMultiplier, void);
+    DEFINE_FUNC(SetActorEnableCollision, void);
 
     DefUHookOg(ServerHandlePickup_);
     DefUHookOg(ServerHandlePickupInfo);

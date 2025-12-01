@@ -7,6 +7,18 @@
 #include "FortVolume.h"
 #include "FortCheatManager.h"
 
+enum class EMovementMode : uint8_t
+{
+    MOVE_None = 0,
+    MOVE_Walking = 1,
+    MOVE_NavWalking = 2,
+    MOVE_Falling = 3,
+    MOVE_Swimming = 4,
+    MOVE_Flying = 5,
+    MOVE_Custom = 6,
+    MOVE_MAX = 7,
+};
+
 class UAthenaPickaxeItemDefinition : public UFortItemDefinition
 {
 public:
@@ -252,6 +264,7 @@ public:
     DEFINE_FUNC(OnRep_IsFlightSprinting, void);
     DEFINE_FUNC(Validation_IsFlyingPossible, bool);
     DEFINE_FUNC(ClientCreativePhoneCreated, void);
+    DEFINE_FUNC(ServerSuicide, void);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);
