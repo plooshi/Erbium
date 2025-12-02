@@ -88,3 +88,34 @@ public:
     DEFINE_PROP(bUseAllSocketsInSpawnPad, bool);
 
 };
+
+class EMissionGenerationCategory
+{
+public:
+    UENUM_COMMON_MEMBERS(EMissionGenerationCategory);
+
+    DEFINE_ENUM_PROP(Primary);
+    DEFINE_ENUM_PROP(Secondary);
+    DEFINE_ENUM_PROP(Tertiary);
+    DEFINE_ENUM_PROP(Survivor);
+    DEFINE_ENUM_PROP(Max_None);
+    DEFINE_ENUM_PROP(EMissionGenerationCategory_MAX);
+};
+
+class AFortMission : public AActor
+{
+public:
+	UCLASS_COMMON_MEMBERS(AFortMission);
+
+    DEFINE_PROP(MissionInfo, UFortMissionInfo*);
+    DEFINE_PROP(MissionEnemyClasses, TArray<class UClass*>);
+    DEFINE_PROP(BotLogicClass, TSubclassOf<class AActor>); // UFortBotMissionLogic
+    DEFINE_PROP(BotLogic, AActor); // same shit as above
+    DEFINE_PROP(MissionGenerator, AActor*);
+    DEFINE_PROP(MissionCategory, EMissionGenerationCategory);
+
+    DEFINE_FUNC(SpawnAtPlacementActorsAsArray, TArray<AActor*>);
+
+    DEFINE_FUNC(GetMissionGuid, FGuid);
+
+};

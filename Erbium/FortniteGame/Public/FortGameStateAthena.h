@@ -168,6 +168,7 @@ public:
     UCLASS_COMMON_MEMBERS(UFortMissionLibrary);
 
     DEFINE_STATIC_FUNC(LoadMission, void);
+    DEFINE_STATIC_FUNC(StartPlayingMission, void);
 };
 
 class UNavigationSystem : public UObject
