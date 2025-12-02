@@ -117,6 +117,7 @@ public:
     DEFINE_FUNC(SpawnAtPlacementActorsAsArray, TArray<AActor*>);
 
     DEFINE_FUNC(GetMissionGuid, FGuid);
+    DEFINE_FUNC(AddParticipantAccount, bool);
 
 };
 
