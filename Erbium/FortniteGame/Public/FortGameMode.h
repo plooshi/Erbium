@@ -48,6 +48,7 @@ public:
     DEFINE_PROP(MatchState, FName);
     DEFINE_PROP(bEnableDBNO, bool);
     DEFINE_PROP(bEnableReplicationGraph, bool);
+    DEFINE_PROP(AIDirector, AActor*);
 
     DEFINE_FUNC(SpawnDefaultPawnAtTransform, AFortPlayerPawnAthena*);
     DEFINE_FUNC(RestartPlayer, void);
@@ -83,7 +84,6 @@ public:
     UCLASS_COMMON_MEMBERS(AFortGameModeZone);
 
     DEFINE_PROP(ActiveSpawnPad, ABuildingSMActor*);
-    DEFINE_PROP(AIDirector, AActor*); // classes for these two are needed for husk movement
     DEFINE_PROP(AIGoalManager, AActor*);
     DEFINE_PROP(bUseAllSocketsInSpawnPad, bool);
 
