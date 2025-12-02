@@ -422,6 +422,8 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
             GameStateZone->OnRep_MissionManager();
 
             auto MissionInfo = FindObject<UFortMissionInfo>(L"/Game/Missions/Primary/EvacuateTheSurvivors/EvacuteTheSurvivors.EvacuteTheSurvivors");
+            GameStateZone->GameDifficulty = 10.f; // proper? idk
+            GameStateZone->OnRep_GameDifficulty();
 
             MissionInfo->bStartPlayingOnLoad = true; // bad hack, we should find a better way to do this later
             // startplayingmission
