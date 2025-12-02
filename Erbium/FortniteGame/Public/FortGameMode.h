@@ -119,3 +119,21 @@ public:
     DEFINE_FUNC(GetMissionGuid, FGuid);
 
 };
+
+class FFortStartingMissionInfo final 
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FFortStartingMissionInfo);
+    DEFINE_STRUCT_PROP(StartingMissions, TArray<class UFortMissionInfo*>);
+    DEFINE_STRUCT_PROP(bDisableSharedMissionLoading, bool);
+};
+
+class AFortWorldManager : public AActor
+{
+public:
+    UCLASS_COMMON_MEMBERS(AFortWorldManager);
+
+    DEFINE_PROP(bSavingEnabled, uint8);
+    DEFINE_PROP(StartingMissionInfo, FFortStartingMissionInfo);
+
+};
