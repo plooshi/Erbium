@@ -160,6 +160,7 @@ public:
     UCLASS_COMMON_MEMBERS(UFortMissionInfo);
 
     DEFINE_BITFIELD_PROP(bStartPlayingOnLoad);
+    DEFINE_PROP(MissionRef, TSoftClassPtr<class UClass>);
 };
 
 class UFortMissionLibrary : public UObject

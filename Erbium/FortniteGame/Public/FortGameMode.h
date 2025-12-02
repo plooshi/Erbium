@@ -112,12 +112,14 @@ public:
     DEFINE_PROP(BotLogicClass, TSubclassOf<class AActor>); // UFortBotMissionLogic
     DEFINE_PROP(BotLogic, AActor); // same shit as above
     DEFINE_PROP(MissionGenerator, AActor*);
+    DEFINE_PROP(MissionGuid, FGuid);
     DEFINE_PROP(MissionCategory, EMissionGenerationCategory);
 
     DEFINE_FUNC(SpawnAtPlacementActorsAsArray, TArray<AActor*>);
 
     DEFINE_FUNC(GetMissionGuid, FGuid);
     DEFINE_FUNC(AddParticipantAccount, bool);
+    DEFINE_PROP(bLoadedFromRecord, bool);
 
 };
 
