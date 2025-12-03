@@ -1501,16 +1501,6 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startsafezone"), nullptr);
 			PlayerController->ClientMessage(FString(L"Resumed the safe zone."), FName(), 1.f);
 		}
-		else if (command == "stw")
-		{
-//#include "FortniteGame/Public/FortMissionGenerator.h"
-			TArray <AActor*> FoundActors;
-			UGameplayStatics::GetAllActorsOfClass(UWorld::GetWorld(), AFortPlacementActor::StaticClass(), FoundActors);
-			for (auto& Actor : FoundActors)
-			{
-				printf("Actor: %s\n", Actor->Name.ToString().c_str());
-			}
-		}
 		else if (command == "pausesafezone")
 		{
 			UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bPausedZone = true;
