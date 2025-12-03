@@ -284,10 +284,7 @@ void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEv
             auto Accolade = (UFortAccoladeItemDefinition*)UKismetSystemLibrary::GetObjectFromPrimaryAssetId(Row->AccoladePrimaryAssetId);
 
             if (!IsConditionMet(Row->Condition, TargetTags, AdditionalSourceTags, ContextTags))
-            {
-                printf("Cond failed: %ls\n", Row->Condition.CStr());
                 continue;
-            }
 
             if (PlayerController)
             {
