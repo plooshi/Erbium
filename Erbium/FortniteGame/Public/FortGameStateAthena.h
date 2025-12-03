@@ -246,6 +246,7 @@ public:
     DEFINE_PROP(GameDifficulty, float);
     DEFINE_PROP(UIMapManager, AActor*);  // AFortInGameMapManager class to redo
     DEFINE_PROP(DeployedDefenders, TArray<class AActor*>); // AFortAIPawn class
+    DEFINE_PROP(ZoneTheme, UObject*);
 
 
     // survivors mission related // yes they are made 
