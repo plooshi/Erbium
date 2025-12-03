@@ -68,7 +68,8 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 
 	auto Num = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num();
 
-	auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
+	auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
+	auto Playlist = VersionInfo.FortniteVersion >= 3.5 ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
 	if (Playlist && Playlist->RespawnType > 0 && Num > 0)
 	{
 		if (FConfiguration::bLateGame)
@@ -158,7 +159,6 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 		static bool HasCosmeticLoadoutPC = PlayerController->HasCosmeticLoadoutPC();
 		static bool HasCustomizationLoadout = PlayerController->HasCustomizationLoadout();
 
-		auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 		if (HasCosmeticLoadoutPC && PlayerController->CosmeticLoadoutPC.Pickaxe)
 			PlayerController->WorldInventory->GiveItem(PlayerController->CosmeticLoadoutPC.Pickaxe->WeaponDefinition);
 		else if (HasCustomizationLoadout && PlayerController->CustomizationLoadout.Pickaxe)
@@ -279,8 +279,8 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 
 		if (PlayerController->MyFortPawn)
 		{
-			PlayerController->MyFortPawn->BeginSkydiving(true);
-			PlayerController->MyFortPawn->SetHealth(100.f);
+			//PlayerController->MyFortPawn->BeginSkydiving(true);
+			//PlayerController->MyFortPawn->SetHealth(100.f);
 		}
 	}
 	else
@@ -1029,6 +1029,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 
 	auto KillerPlayerState = (AFortPlayerStateAthena*)DeathReport.KillerPlayerState;
 	auto KillerPawn = (AFortPlayerPawnAthena*)DeathReport.KillerPawn;
+	auto KillerPlayerController = KillerPlayerState ? (AFortPlayerControllerAthena*)KillerPlayerState->Owner : nullptr;
 
 	if (PlayerState->HasPawnDeathLocation())
 		PlayerState->PawnDeathLocation = PlayerController->Pawn ? PlayerController->Pawn->K2_GetActorLocation() : FVector();
@@ -1079,6 +1080,43 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 		KillerPlayerState->ClientReportKill(t);
 		if (KillerPlayerState->HasTeamKillScore())
 			KillerPlayerState->ClientReportTeamKill(KillerPlayerState->TeamKillScore);
+
+		for (auto& Damager : PlayerController->Pawn->Damagers)
+		{
+			if (Damager.DamageCauser != KillerPlayerController && Damager.DamageCauser->IsA<AFortPlayerControllerAthena>())
+			{
+				FGameplayTagContainer TargetTags{};
+				auto DamagerController = (AFortPlayerControllerAthena*)Damager.DamageCauser;
+
+				auto Interface = (IGameplayTagAssetInterface*)PlayerController->Pawn->GetInterface(IGameplayTagAssetInterface::StaticClass());
+				if (Interface)
+				{
+					auto Blud = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface->Vft[0x2];
+					Blud(Interface, &TargetTags);
+					//Interface->GetOwnedGameplayTags(&TargetTags);
+				}
+
+				DamagerController->GetQuestManager(1)->SendStatEvent(DamagerController, EFortQuestObjectiveStatEvent::GetKillContribution(), 1, PlayerController->Pawn, TargetTags);
+
+				TargetTags.GameplayTags.Free();
+				TargetTags.ParentTags.Free();
+			}
+		}
+
+		FGameplayTagContainer TargetTags{};
+
+		auto Interface = (IGameplayTagAssetInterface*)PlayerController->Pawn->GetInterface(IGameplayTagAssetInterface::StaticClass());
+		if (Interface)
+		{
+			auto Blud = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface->Vft[0x2];
+			Blud(Interface, &TargetTags);
+			//Interface->GetOwnedGameplayTags(&TargetTags);
+		}
+
+		KillerPlayerController->GetQuestManager(1)->SendStatEvent(KillerPlayerController, EFortQuestObjectiveStatEvent::GetKill(), 1, PlayerController->Pawn, TargetTags);
+
+		TargetTags.GameplayTags.Free();
+		TargetTags.ParentTags.Free();
 	}
 
 	static auto IsRespawningAllowedFunc = GameState->GetFunction("IsRespawningAllowed");
@@ -1087,7 +1125,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 
 	if (!IsRespawningAllowedFunc)
 	{
-		auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
+		auto Playlist = VersionInfo.FortniteVersion >= 3.5 ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
 
 		// respawn except storm needs to be fixed
 		bRespawnAllowed = Playlist ? Playlist->RespawnType > 0 : false;
@@ -1136,7 +1174,6 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 				KillerPawn = (AFortPlayerPawnAthena*)PlayerController->Pawn;
 			}*/
 			
-			auto KillerPlayerController = (AFortPlayerControllerAthena*)KillerPlayerState->Owner;
 			auto KillerWeapon = DamageCauser ? DamageCauser->WeaponData : nullptr;
 
 
@@ -1267,9 +1304,9 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 		}
 
 	//printf("br: %d\n", ItemCount);
-	FVector FinalLoc = Pawn->K2_GetActorLocation();
+	FVector FinalLoc = Pawn ? Pawn->K2_GetActorLocation() : FVector();
 
-	FVector ForwardVector = Pawn->GetActorForwardVector();
+	FVector ForwardVector = Pawn ? Pawn->GetActorForwardVector() : FVector();
 	ForwardVector.Z = 0.0f;
 	ForwardVector.Normalize();
 
@@ -2247,11 +2284,30 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 
 	auto Pawn = (AFortPlayerPawnAthena*)PlayerController->Pawn;
 
+	auto sendStat = [&]()
+	{
+		FGameplayTagContainer TargetTags{};
+		
+		auto Interface = (IGameplayTagAssetInterface*)ReceivingActor->GetInterface(IGameplayTagAssetInterface::StaticClass());
+		if (Interface)
+		{
+			auto Blud = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface->Vft[0x2];
+			Blud(Interface, &TargetTags);
+			//Interface->GetOwnedGameplayTags(&TargetTags);
+		}
+
+		PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetInteract(), 1, ReceivingActor, TargetTags);
+
+		//TargetTags.GameplayTags.Free();
+		//TargetTags.ParentTags.Free();
+	};
+
 	if (auto Container = bDidntFind ? ReceivingActor->Cast<ABuildingContainer>() : nullptr)
 		UFortLootPackage::SpawnLootHook(Container);
 	else if (auto Vehicle = ReceivingActor->Cast<AFortAthenaVehicle>())
 	{
 		ServerAttemptInteract_OG(Context, Stack);
+		sendStat();
 
 		UFortVehicleSeatWeaponComponent* SeatWeaponComponent = (UFortVehicleSeatWeaponComponent*)Vehicle->GetComponentByClass(UFortVehicleSeatWeaponComponent::StaticClass());
 
@@ -2335,7 +2391,9 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 			CollectorActor->bCurrentInteractionSuccess = false;
 			CollectorActor->ControllingPlayer = nullptr;
 			CollectorActor->Call(CollectorActor->GetFunction("BlueprintOnInteract"), PlayerController->MyFortPawn);
-			return ServerAttemptInteract_OG(Context, Stack);
+			ServerAttemptInteract_OG(Context, Stack);
+			sendStat();
+			return;
 		}
 
 		float Cost = Collection->InputCount.Evaluate((float)CollectorActor->StartingGoalLevel);
@@ -2352,7 +2410,9 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 				CollectorActor->ControllingPlayer = nullptr;
 				CollectorActor->Call(CollectorActor->GetFunction("BlueprintOnInteract"), Pawn);
 				//CollectorActor->PlayVendFailFX();
-				return ServerAttemptInteract_OG(Context, Stack);
+				ServerAttemptInteract_OG(Context, Stack);
+				sendStat();
+				return;
 			}
 
 			auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
@@ -2399,7 +2459,8 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 		//CollectorActor->PlayVendFX();
 	}
 
-	return ServerAttemptInteract_OG(Context, Stack);
+	ServerAttemptInteract_OG(Context, Stack);
+	sendStat();
 	//return bIsComp ? (void)callOG(((UFortControllerComponent_Interaction*)Context), Stack.GetCurrentNativeFunction(), ServerAttemptInteract, ReceivingActor, InteractComponent, InteractType, OptionalObjectData, InteractionBeingAttempted, RequestID) : callOG(PlayerController, Stack.GetCurrentNativeFunction(), ServerAttemptInteract, ReceivingActor, InteractComponent, InteractType, OptionalObjectData, InteractionBeingAttempted, RequestID);
 }
 

@@ -328,7 +328,7 @@ AFortSafeZoneIndicator* UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Setu
 	return this->SafeZoneIndicator;
 }
 
-void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartNewSafeZonePhase(int NewSafeZonePhase)
+void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartNewSafeZonePhase(int NewSafeZonePhase, bool bInitial)
 {
 	float TimeSeconds = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
 	auto& Array = SafeZoneIndicator->SafeZonePhases;
@@ -384,6 +384,15 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartNewSafeZonePhase(i
 		SafeZoneIndicator->SafezoneStateChangedDelegate.Process(SafeZoneIndicator, 2);
 
 		SetGamePhaseStep(EAthenaGamePhaseStep::StormHolding);
+
+		auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+		if (!bInitial)
+			for (auto& UncastedPlayer : GameMode->AlivePlayers)
+			{
+				auto PlayerController = (AFortPlayerControllerAthena*)UncastedPlayer;
+
+				PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetStormPhase(), 1);
+			}
 	}
 }
 
@@ -391,8 +400,9 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 {
 	auto Time = UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
 
-	auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
 	auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
+	auto Playlist = VersionInfo.FortniteVersion >= 3.5 ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
+	
     if constexpr (FConfiguration::WebhookURL && *FConfiguration::WebhookURL)
     {
         auto curl = curl_easy_init();
@@ -642,7 +652,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 				{
 					formedZone = true;
 					auto SafeZoneIndicator = SetupSafeZoneIndicator();
-					StartNewSafeZonePhase(FConfiguration::bLateGame ? FConfiguration::LateGameZone + 3 : 1);
+					StartNewSafeZonePhase(FConfiguration::bLateGame ? FConfiguration::LateGameZone + 3 : 1, true);
 					return;
 				}
 			}
@@ -698,7 +708,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 							Pawn->bIsInsideSafeZone = bInZone;
 							Pawn->OnRep_IsInsideSafeZone();
 
-							auto AbilitySystemComponent = Player->PlayerState->AbilitySystemComponent;
+							/*auto AbilitySystemComponent = Player->PlayerState->AbilitySystemComponent;
 							if (AbilitySystemComponent)
 							{
 								for (int i = 0; i < AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Num(); i++)
@@ -719,7 +729,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 										break;
 									}
 								}
-							}
+							}*/
 						}
 
 					}

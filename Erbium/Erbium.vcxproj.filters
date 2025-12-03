@@ -222,6 +222,9 @@
     <ClInclude Include="FortniteGame\Public\FortCheatManager.h">
       <Filter>FortniteGame\Public</Filter>
     </ClInclude>
+    <ClInclude Include="FortniteGame\Public\FortQuestManager.h">
+      <Filter>FortniteGame\Public</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Erbium\Private\dllmain.cpp">
@@ -312,6 +315,9 @@
       <Filter>FortniteGame\Private</Filter>
     </ClCompile>
     <ClCompile Include="FortniteGame\Private\FortMinigame.cpp">
+      <Filter>FortniteGame\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="FortniteGame\Private\FortQuestManager.cpp">
       <Filter>FortniteGame\Private</Filter>
     </ClCompile>
   </ItemGroup>

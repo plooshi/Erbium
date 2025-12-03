@@ -56,6 +56,14 @@ public:
     DEFINE_FUNC(OnRep_Health, void);
 };
 
+struct FDamagerInfo
+{
+public:
+    AActor* DamageCauser;
+    int32 DamageAmount;
+    FGameplayTagContainer SourceTags;
+};
+
 class AFortPlayerPawnAthena : public AActor
 {
 public:
@@ -89,6 +97,7 @@ public:
     DEFINE_PROP(CurrentWeaponList, TArray<AActor*>);
     DEFINE_PROP(bShouldDropItemsOnDeath, bool);
     DEFINE_PROP(MoveSoundStimulusBroadcastInterval, uint16_t);
+    DEFINE_PROP(Damagers, TArray<FDamagerInfo>);
 
     DEFINE_FUNC(BeginSkydiving, void);
     DEFINE_FUNC(GetHealth, float);

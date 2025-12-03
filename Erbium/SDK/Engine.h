@@ -873,7 +873,12 @@ namespace SDK
 
 		static UWorld* GetWorld()
 		{
-			return (UWorld*)UEngine::GetEngine()->GameViewport->World;
+			auto Engine = UEngine::GetEngine();
+
+			if (!Engine)
+				return nullptr;
+
+			return (UWorld*)Engine->GameViewport->World;
 		}
 	};
 
@@ -888,6 +893,12 @@ namespace SDK
 		DEFINE_STATIC_FUNC(InverseTransformDirection, FVector);
 	};
 
+	struct FPrimaryAssetId
+	{
+	public:
+		uint8_t Padding[0x10];
+	};
+
 	class UKismetSystemLibrary : public SDK::UObject
 	{
 	public:
@@ -895,6 +906,7 @@ namespace SDK
 
 		DEFINE_STATIC_FUNC(ExecuteConsoleCommand, void);
 		DEFINE_STATIC_FUNC(GetPathName, FString);
+		DEFINE_STATIC_FUNC(GetObjectFromPrimaryAssetId, UObject*);
 
 		/*static void ExecuteConsoleCommand(FString Command)
 		{

@@ -77,6 +77,7 @@ public:
     DEFINE_BITFIELD_PROP(bForceAutoPickup);
     DEFINE_PROP(ItemType, uint8);
     DEFINE_PROP(DisplayName, FText);
+    DEFINE_PROP(ShortDescription, FText);
     DEFINE_PROP(Rarity, uint8);
     DEFINE_BITFIELD_PROP(bSupportsQuickbarFocus);
 
@@ -418,6 +419,7 @@ public:
     DEFINE_PROP(bRequiresLocalUpdate, bool);
     DEFINE_PROP(bRequiresSaving, bool);
     DEFINE_PROP(InventoryType, uint8_t);
+    DEFINE_PROP(PendingInstances, TArray<UFortWorldItem*>);
 
     DEFINE_FUNC(HandleInventoryLocalUpdate, void);
 
