@@ -16,7 +16,7 @@ static FParseConditionResult ParseCondition(UEAllocatedString Condition, const F
     {
         if (CondTypeStart == -1)
         {
-            bool ud = c == '>' || c == '<' || c == '=' || c == '&';
+            bool ud = c == '>' || c == '<' || c == '=' || c == '&' || c == '|';
             if (!ud && strncmp((char*)&c, "HasTag", 6) == 0)
             {
                 CondTypeStart = __int64(&c - Condition.data());
@@ -32,9 +32,9 @@ static FParseConditionResult ParseCondition(UEAllocatedString Condition, const F
             else if (ud)
                 CondTypeStart = __int64(&c - Condition.data());
         }
-        else if (CondTypeStart != -1 && CondTypeEnd == -1 && (c != '>' && c != '<' && c != '=' && c != '&'))
+        else if (CondTypeStart != -1 && CondTypeEnd == -1 && (c != '>' && c != '<' && c != '=' && c != '&' && c != '|'))
             CondTypeEnd = __int64(&c - Condition.data());
-        else if (CondTypeEnd != -1 && (c == '=' || c == '&'))
+        else if (CondTypeEnd != -1 && (c == '=' || c == '&' || c == '|'))
             NextCond = __int64(&c - Condition.data());
 
         if (CondTypeStart != -1 && CondTypeEnd != -1 && NextCond != -1)
@@ -182,7 +182,7 @@ void GiveAccolade(AFortPlayerControllerAthena* PlayerController, UFortAccoladeIt
     PlayerController->XPComponent->OnXPEvent(*Info);
     free(Info);
 
-    for (auto& SoftAccoladeToReplace : Accolade->AccoladeToReplace)
+    /*for (auto& SoftAccoladeToReplace : Accolade->AccoladeToReplace)
     {
         auto AccoladeToReplace = SoftAccoladeToReplace.Get();
         auto AthenaAccoladeIndex = PlayerController->XPComponent->PlayerAccolades.SearchIndex([&](FAthenaAccolades& item)
@@ -196,7 +196,7 @@ void GiveAccolade(AFortPlayerControllerAthena* PlayerController, UFortAccoladeIt
 
         if (MedalIndex != -1)
             PlayerController->XPComponent->MedalsEarned.Remove(MedalIndex);
-    }
+    }*/
 
 
     /*for (auto& AthenaAccolade : PlayerController->XPComponent->PlayerAccolades)
@@ -228,7 +228,7 @@ void GiveAccolade(AFortPlayerControllerAthena* PlayerController, UFortAccoladeIt
     }
 }
 
-std::unordered_map<AActor*, std::unordered_map<uint8_t, int32_t>> Scuff;
+std::unordered_map<AActor*, std::unordered_map<int32_t, int32_t>> Scuff;
 
 void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEvent, int32 Count, UObject* TargetObject, FGameplayTagContainer TargetTags, FGameplayTagContainer AdditionalSourceTags, bool* QuestActive, bool* QuestCompleted)
 {
@@ -255,8 +255,6 @@ void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEv
 
 	if (XPTable)
 	{
-        if (PlayerController)
-            Scuff[PlayerController][(uint8_t)StatEvent] += Count;
 
 		for (const auto& [ Key, Value ] : XPTable->RowMap)
 		{
@@ -286,13 +284,20 @@ void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEv
             auto Accolade = (UFortAccoladeItemDefinition*)UKismetSystemLibrary::GetObjectFromPrimaryAssetId(Row->AccoladePrimaryAssetId);
 
             if (!IsConditionMet(Row->Condition, TargetTags, AdditionalSourceTags, ContextTags))
+            {
+                printf("Cond failed: %ls\n", Row->Condition.CStr());
                 continue;
+            }
 
             if (PlayerController)
             {
                 auto FortPC = (AFortPlayerControllerAthena*)PlayerController;
 
-                if (Row->CountThreshhold > 0 && Scuff[PlayerController][(uint8_t)StatEvent] < Row->CountThreshhold)
+                auto& PrimaryAssetName = *(int32*)(__int64(&Row->AccoladePrimaryAssetId) + (VersionInfo.FortniteVersion >= 20 ? 4 : 8));
+                if (PlayerController)
+                    Scuff[PlayerController][PrimaryAssetName] += Count;
+
+                if (Row->CountThreshhold > 0 && Scuff[PlayerController][PrimaryAssetName] != Row->CountThreshhold)
                     continue;
 
                 auto AccoladeCount = 0;
