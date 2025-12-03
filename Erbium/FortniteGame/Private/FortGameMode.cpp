@@ -421,10 +421,13 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
 
             auto MissionInfo = FindObject<UFortMissionInfo>(L"/Game/Missions/Primary/EvacuateTheSurvivors/EvacuteTheSurvivors.EvacuteTheSurvivors");
 
-            MissionInfo->bStartPlayingOnLoad = true; // bad hack, we should find a better way to do this later
-            // startplayingmission
+            if (MissionInfo)
+            {
+                MissionInfo->bStartPlayingOnLoad = true; // bad hack, we should find a better way to do this later
+                // startplayingmission
 
-            UFortMissionLibrary::LoadMission(UWorld::GetWorld(), MissionInfo);
+                UFortMissionLibrary::LoadMission(UWorld::GetWorld(), MissionInfo);
+            }
             // we need to spawn bluglo manager too?
         }
 

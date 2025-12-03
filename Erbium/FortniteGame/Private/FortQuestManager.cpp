@@ -149,10 +149,8 @@ static bool IsConditionMet(const FString& InCondition, const FGameplayTagContain
     return Result.bMatch;
 }
 
-void GiveAccolade(AFortPlayerControllerAthena* PlayerController, FPrimaryAssetId AssetId)
+void GiveAccolade(AFortPlayerControllerAthena* PlayerController, UFortAccoladeItemDefinition* Accolade, FPrimaryAssetId AssetId)
 {
-    auto Accolade = (UFortAccoladeItemDefinition*)UKismetSystemLibrary::GetObjectFromPrimaryAssetId(AssetId);
-
     printf("GiveAccolade %s\n", Accolade->Name.ToString().c_str());
 
     auto Info = (FXPEventInfo*)malloc(FXPEventInfo::Size());
@@ -201,7 +199,7 @@ void GiveAccolade(AFortPlayerControllerAthena* PlayerController, FPrimaryAssetId
     }
 
 
-    for (auto& AthenaAccolade : PlayerController->XPComponent->PlayerAccolades)
+    /*for (auto& AthenaAccolade : PlayerController->XPComponent->PlayerAccolades)
     {
         if (AthenaAccolade.AccoladeDef == Accolade)
         {
@@ -221,7 +219,7 @@ void GiveAccolade(AFortPlayerControllerAthena* PlayerController, FPrimaryAssetId
         TemplateId.Add(c);
     }
     AthenaAccolade.TemplateId = TemplateId;
-    PlayerController->XPComponent->PlayerAccolades.Add(AthenaAccolade);
+    PlayerController->XPComponent->PlayerAccolades.Add(AthenaAccolade);*/
 
     if (Accolade->AccoladeType == 2)
     {
@@ -229,6 +227,8 @@ void GiveAccolade(AFortPlayerControllerAthena* PlayerController, FPrimaryAssetId
         PlayerController->XPComponent->ClientMedalsRecived(PlayerController->XPComponent->PlayerAccolades);
     }
 }
+
+std::unordered_map<AActor*, std::unordered_map<uint8_t, int32_t>> Scuff;
 
 void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEvent, int32 Count, UObject* TargetObject, FGameplayTagContainer TargetTags, FGameplayTagContainer AdditionalSourceTags, bool* QuestActive, bool* QuestCompleted)
 {
@@ -251,6 +251,10 @@ void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEv
 		ContextTags.AppendTags(Playlist->GameplayTagContainer);
 	AdditionalSourceTags.AppendTags(PlayerSourceTags);
 
+
+    if (PlayerController)
+        Scuff[PlayerController][(uint8_t)StatEvent] += Count;
+
 	static auto XPTable = FindObject<UDataTable>(L"/Game/Athena/Items/Quests/AthenaObjectiveStatXPTable.AthenaObjectiveStatXPTable");
 
 	if (XPTable)
@@ -259,7 +263,7 @@ void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEv
 		{
 			auto Row = (FFortQuestObjectiveStatXPTableRow*)Value;
 
-			if (Row->Type != (uint8_t)StatEvent/* || (Row->CountThreshhold > 0 && Row->CountThreshhold < Count)*/ || Count > Row->MaxCount) // todo: fix this count threshold stuff
+			if (Row->Type != (uint8_t)StatEvent) // todo: fix this count threshold stuff
 				continue;
 
 			if (!TargetTags.HasAll(Row->TargetTags))
@@ -280,25 +284,56 @@ void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEv
 			if (FFortQuestObjectiveStatXPTableRow::HasExcludeContextTags() && ContextTags.HasAny(Row->ExcludeContextTags))
 				continue;
 
+            auto Accolade = (UFortAccoladeItemDefinition*)UKismetSystemLibrary::GetObjectFromPrimaryAssetId(Row->AccoladePrimaryAssetId);
+
             if (!IsConditionMet(Row->Condition, TargetTags, AdditionalSourceTags, ContextTags))
                 continue;
 
             if (PlayerController)
-                GiveAccolade((AFortPlayerControllerAthena*)PlayerController, Row->AccoladePrimaryAssetId);
+            {
+                auto FortPC = (AFortPlayerControllerAthena*)PlayerController;
+
+                if (Row->CountThreshhold > 0 && Scuff[PlayerController][(uint8_t)StatEvent] < Row->CountThreshhold)
+                    continue;
+
+                auto AccoladeCount = 0;
+                for (auto& AthenaAccolade : FortPC->XPComponent->PlayerAccolades)
+                {
+                    if (AthenaAccolade.AccoladeDef == Accolade)
+                    {
+                        AccoladeCount = AthenaAccolade.Count;
+                        break;
+                    }
+                }
+
+                printf("%s %d\n", Accolade->Name.ToString().c_str(), AccoladeCount);
+                if (AccoladeCount > Row->MaxCount)
+                    continue;
+
+                GiveAccolade(FortPC, Accolade, Row->AccoladePrimaryAssetId);
+            }
 		}
 	}
 }
 
+bool bHasQuestActive = false;
+bool bHasQuestCompleted = false;
 void SendComplexCustomStatEvent(UObject* Context, FFrame& Stack)
 {
     UObject* TargetObject;
     FGameplayTagContainer AdditionalSourceTags;
     FGameplayTagContainer TargetTags;
+    bool* QuestActive = nullptr;
+    bool* QuestCompleted = nullptr;
     int32 Count;
 
     Stack.StepCompiledIn(&TargetObject);
     Stack.StepCompiledIn(&AdditionalSourceTags);
     Stack.StepCompiledIn(&TargetTags);
+    if (bHasQuestActive)
+        Stack.StepCompiledIn(&QuestActive);
+    if (bHasQuestCompleted)
+        Stack.StepCompiledIn(&QuestCompleted);
     Stack.StepCompiledIn(&Count);
     Stack.IncrementCode();
     auto QuestManager = (UFortQuestManager*)Context;
@@ -312,5 +347,16 @@ void SendComplexCustomStatEvent(UObject* Context, FFrame& Stack)
 
 void UFortQuestManager::PostLoadHook()
 {
-    Utils::ExecHook(GetDefaultObj()->GetFunction("SendComplexCustomStatEvent"), SendComplexCustomStatEvent);
+    auto SendComplexCustomStatEventFn = GetDefaultObj()->GetFunction("SendComplexCustomStatEvent");
+
+    if (SendComplexCustomStatEventFn)
+        for (auto& Param : SendComplexCustomStatEventFn->GetParamsNamed().NameOffsetMap)
+        {
+            if (Param.Name == "QuestActive")
+                bHasQuestActive = true;
+            else if (Param.Name == "QuestCompleted")
+                bHasQuestCompleted = true;
+        }
+
+    Utils::ExecHook(SendComplexCustomStatEventFn, SendComplexCustomStatEvent);
 }
