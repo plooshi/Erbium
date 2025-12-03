@@ -247,18 +247,17 @@ void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEv
 
 	auto Playlist = VersionInfo.FortniteVersion >= 3.5 ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
 	
-	if (Playlist)
+	if (Playlist && Playlist->HasGameplayTagContainer())
 		ContextTags.AppendTags(Playlist->GameplayTagContainer);
 	AdditionalSourceTags.AppendTags(PlayerSourceTags);
-
-
-    if (PlayerController)
-        Scuff[PlayerController][(uint8_t)StatEvent] += Count;
 
 	static auto XPTable = FindObject<UDataTable>(L"/Game/Athena/Items/Quests/AthenaObjectiveStatXPTable.AthenaObjectiveStatXPTable");
 
 	if (XPTable)
 	{
+        if (PlayerController)
+            Scuff[PlayerController][(uint8_t)StatEvent] += Count;
+
 		for (const auto& [ Key, Value ] : XPTable->RowMap)
 		{
 			auto Row = (FFortQuestObjectiveStatXPTableRow*)Value;
