@@ -252,8 +252,9 @@ void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEv
 	AdditionalSourceTags.AppendTags(PlayerSourceTags);
 
 	static auto XPTable = FindObject<UDataTable>(L"/Game/Athena/Items/Quests/AthenaObjectiveStatXPTable.AthenaObjectiveStatXPTable");
+    auto FortPC = (AFortPlayerControllerAthena*)PlayerController;
 
-	if (XPTable)
+	if (XPTable && FortPC->HasXPComponent())
 	{
 
 		for (const auto& [ Key, Value ] : XPTable->RowMap)
@@ -288,7 +289,6 @@ void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEv
 
             if (PlayerController)
             {
-                auto FortPC = (AFortPlayerControllerAthena*)PlayerController;
 
                 auto& PrimaryAssetName = *(int32*)(__int64(&Row->AccoladePrimaryAssetId) + (VersionInfo.FortniteVersion >= 20 ? 4 : 8));
                 if (PlayerController)
