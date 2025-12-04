@@ -1059,7 +1059,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
             if (GameMode->GameSession->HasMaxPlayers())
                 GameMode->GameSession->MaxPlayers = 100;
 
-        GUI::gsStatus = 1;
+        GUI::gsStatus = Joinable;
         sprintf_s(GUI::windowTitle, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Joinable" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Joinable" : "Erbium (FN %.1f, UE %.2f): Joinable"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
         SetConsoleTitleA(GUI::windowTitle);
         GameMode->bWorldIsReady = true;
@@ -1648,13 +1648,13 @@ bool AFortGameMode::StartAircraftPhase(AFortGameMode* GameMode, char a2)
 
         curl_easy_cleanup(curl);
     }
-    GUI::gsStatus = 2;
+    GUI::gsStatus = StartedMatch;
     sprintf_s(GUI::windowTitle, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Match started" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Match started" : "Erbium (FN %.1f, UE %.2f): Match started"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
     SetConsoleTitleA(GUI::windowTitle);
 
     // credit to heliato
     if (FConfiguration::bJoinInProgress || (Playlist && (Playlist->HasbAllowJoinInProgress() ? Playlist->bAllowJoinInProgress : false)))
-        *(bool*)(uint64_t(&GameMode->WarmupRequiredPlayerCount) - 4) = false;
+        *(bool*)(uint64_t(&GameMode->WarmupRequiredPlayerCount) - 4) = false; // theres no way this works uni
 
     if (FConfiguration::bLateGame && VersionInfo.FortniteVersion < 25.20)
     {

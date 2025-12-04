@@ -503,7 +503,7 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 	if (Driver->ClientConnections.Num() > 0)
 		ServerReplicateActors(Driver, DeltaSeconds);
 
-    if (GUI::gsStatus == 1 && VersionInfo.FortniteVersion >= 11.00)
+    if (GUI::gsStatus == Joinable && VersionInfo.FortniteVersion >= 11.00)
     { 
         auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
 		auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
@@ -514,7 +514,7 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
             UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
         }
 	}
-	else if (GUI::gsStatus == 2 && (FConfiguration::bAutoRestart || (FConfiguration::WebhookURL && *FConfiguration::WebhookURL) || (VersionInfo.FortniteVersion >= 18 && VersionInfo.FortniteVersion < 25.20)))
+	else if (GUI::gsStatus == StartedMatch && (FConfiguration::bAutoRestart || (FConfiguration::WebhookURL && *FConfiguration::WebhookURL) || (VersionInfo.FortniteVersion >= 18 && VersionInfo.FortniteVersion < 25.20)))
 	{
 		auto WorldNetDriver = UWorld::GetWorld()->NetDriver;
 		auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
@@ -587,7 +587,7 @@ void UNetDriver::TickFlush__RepGraph(UNetDriver* Driver, float DeltaSeconds)
 			((void (*)(UObject*, float)) ServerReplicateActors_)(Driver->ReplicationDriver, DeltaSeconds);
 
 
-		if (GUI::gsStatus == 1 && VersionInfo.FortniteVersion >= 11.00)
+		if (GUI::gsStatus == Joinable && VersionInfo.FortniteVersion >= 11.00)
 		{
 			auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
 			auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
@@ -598,7 +598,7 @@ void UNetDriver::TickFlush__RepGraph(UNetDriver* Driver, float DeltaSeconds)
 				UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
 			}
 		}
-		else if (GUI::gsStatus == 2 && (FConfiguration::bAutoRestart || (FConfiguration::WebhookURL && *FConfiguration::WebhookURL) || VersionInfo.FortniteVersion >= 18))
+		else if (GUI::gsStatus == StartedMatch && (FConfiguration::bAutoRestart || (FConfiguration::WebhookURL && *FConfiguration::WebhookURL) || VersionInfo.FortniteVersion >= 18))
 		{
 			auto WorldNetDriver = UWorld::GetWorld()->NetDriver;
 			auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
@@ -724,7 +724,7 @@ void UNetDriver::TickFlush__Iris(UNetDriver* Driver, float DeltaSeconds)
 		}
 	}
 
-	if (GUI::gsStatus == 1 && VersionInfo.FortniteVersion < 25.20)
+	if (GUI::gsStatus == Joinable && VersionInfo.FortniteVersion < 25.20)
 	{
 		auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
 		auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
@@ -735,7 +735,7 @@ void UNetDriver::TickFlush__Iris(UNetDriver* Driver, float DeltaSeconds)
 			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
 		}
 	}
-	else if (GUI::gsStatus == 2 && (FConfiguration::bAutoRestart || (FConfiguration::WebhookURL && *FConfiguration::WebhookURL) || VersionInfo.FortniteVersion < 25.20))
+	else if (GUI::gsStatus == StartedMatch && (FConfiguration::bAutoRestart || (FConfiguration::WebhookURL && *FConfiguration::WebhookURL) || VersionInfo.FortniteVersion < 25.20))
 	{
 		auto WorldNetDriver = UWorld::GetWorld()->NetDriver;
 		auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;

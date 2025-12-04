@@ -232,7 +232,7 @@ void GUI::Init()
                 ImGui::EndTabItem();
             }
 
-            if (gsStatus == 2)
+            if (gsStatus == StartedMatch)
             {
                 if (ImGui::BeginTabItem("Zones"))
                 {
@@ -266,12 +266,12 @@ void GUI::Init()
         switch (SelectedUI)
         {
         case 0:
-            ImGui::Text((std::string("Status: ") + (gsStatus == 0 ? "Setting up the server..." : (gsStatus == 1 ? "Joinable!" : "Match Started."))).c_str());
+            ImGui::Text((std::string("Status: ") + (gsStatus == NotReady ? "Setting up the server..." : (gsStatus == Joinable ? "Joinable!" : "Match Started."))).c_str());
 
-            if (gsStatus <= 1)
+            if (gsStatus <= Joinable)
                 ImGui::Checkbox("Lategame", &FConfiguration::bLateGame);
 
-            if (gsStatus == 1 && ImGui::Button("Start Bus Early"))
+            if (gsStatus == Joinable && ImGui::Button("Start Bus Early"))
             {
                 if (UFortGameStateComponent_BattleRoyaleGamePhaseLogic::GetDefaultObj())
                 {
