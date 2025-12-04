@@ -318,6 +318,13 @@ void AFortPlayerPawnAthena::MovingEmoteStopped(UObject* Context, FFrame& Stack)
 	static auto HasbMovingEmoteFollowingOnly = Pawn->HasbMovingEmoteFollowingOnly();
 	if (HasbMovingEmoteFollowingOnly)
 		Pawn->bMovingEmoteFollowingOnly = false;
+
+	if (Pawn->HasLastReplicatedEmoteExecuted())
+	{
+		auto OldEmote = Pawn->LastReplicatedEmoteExecuted;
+		Pawn->LastReplicatedEmoteExecuted = nullptr;
+		Pawn->OnRep_LastReplicatedEmoteExecuted(OldEmote);
+	}
 }
 
 class UGA_Athena_MedConsumable_Parent_C : public UObject
@@ -452,6 +459,24 @@ void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack
 	}
 }
 
+void AFortPlayerPawnAthena::EmoteStopped_(UObject* Context, FFrame& Stack)
+{
+	UObject* MontageItemDef;
+
+	Stack.StepCompiledIn(&MontageItemDef);
+	Stack.IncrementCode();
+	auto Pawn = (AFortPlayerPawnAthena*)Context;
+
+	if (Pawn->HasLastReplicatedEmoteExecuted() && Pawn->LastReplicatedEmoteExecuted == MontageItemDef)
+	{
+		auto OldEmote = Pawn->LastReplicatedEmoteExecuted;
+		Pawn->LastReplicatedEmoteExecuted = nullptr;
+		Pawn->OnRep_LastReplicatedEmoteExecuted(OldEmote);
+	}
+
+	return callOG(Pawn, Stack.GetCurrentNativeFunction(), EmoteStopped, MontageItemDef);
+}
+
 void AFortPlayerPawnAthena::PostLoadHook()
 {
 	OnRep_ZiplineState = FindOnRep_ZiplineState();
@@ -472,6 +497,7 @@ void AFortPlayerPawnAthena::PostLoadHook()
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerSendZiplineState"), ServerSendZiplineState);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("MovingEmoteStopped"), MovingEmoteStopped);
 
-	// uncomment ltr
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerOnExitVehicle"), ServerOnExitVehicle_, ServerOnExitVehicle_OG);
+
+	Utils::ExecHook(GetDefaultObj()->GetFunction("EmoteStopped"), EmoteStopped_, EmoteStopped_OG);
 }

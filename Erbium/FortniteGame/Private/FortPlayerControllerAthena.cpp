@@ -933,8 +933,15 @@ void AFortPlayerControllerAthena::ServerPlayEmoteItem(UObject* Context, FFrame& 
 		if (HasbMovingEmoteFollowingOnly)
 			PlayerController->MyFortPawn->bMovingEmoteFollowingOnly = DanceAsset->bMoveFollowingOnly;
 
-		static auto EmoteAbilityClass = FindObject<UClass>(L"/Game/Abilities/Emotes/GAB_Emote_Generic.GAB_Emote_Generic_C");
-		AbilityToUse = EmoteAbilityClass->GetDefaultObj();
+		auto CustomAbility = DanceAsset->HasCustomDanceAbility() ? DanceAsset->CustomDanceAbility.Get() : nullptr;
+
+		if (CustomAbility)
+			AbilityToUse = CustomAbility->GetDefaultObj();
+		else
+		{
+			static auto EmoteAbilityClass = FindObject<UClass>(L"/Game/Abilities/Emotes/GAB_Emote_Generic.GAB_Emote_Generic_C");
+			AbilityToUse = EmoteAbilityClass->GetDefaultObj();
+		}
 	}
 
 	if (AbilityToUse)
@@ -959,6 +966,13 @@ void AFortPlayerControllerAthena::ServerPlayEmoteItem(UObject* Context, FFrame& 
 		((void (*)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle*, FGameplayAbilitySpec*, void*)) GiveAbilityAndActivateOnce)(AbilitySystemComponent, &handle, Spec, nullptr);
 
 		free(Spec);
+
+		if (PlayerController->MyFortPawn->HasLastReplicatedEmoteExecuted())
+		{
+			auto OldEmote = PlayerController->MyFortPawn->LastReplicatedEmoteExecuted;
+			PlayerController->MyFortPawn->LastReplicatedEmoteExecuted = Asset;
+			PlayerController->MyFortPawn->OnRep_LastReplicatedEmoteExecuted(OldEmote);
+		}
 	}
 }
 

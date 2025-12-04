@@ -44,6 +44,7 @@ public:
     DEFINE_PROP(WalkForwardSpeed, float);
     DEFINE_BITFIELD_PROP(bMoveForwardOnly);
     DEFINE_BITFIELD_PROP(bMoveFollowingOnly);
+    DEFINE_PROP(CustomDanceAbility, TSoftClassPtr<UClass>);
 };
 
 class UFortControllerComponent_Aircraft : public UObject
