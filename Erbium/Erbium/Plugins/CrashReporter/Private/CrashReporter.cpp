@@ -27,9 +27,6 @@ void FreezeOtherThreads()
 
                         if (thr != INVALID_HANDLE_VALUE)
                         {
-                            CONTEXT thrCtx{};
-                            GetThreadContext(thr, &thrCtx);
-
                             SuspendThread(thr);
                             CloseHandle(thr);
                         }
