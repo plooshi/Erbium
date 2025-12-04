@@ -1681,10 +1681,16 @@ bool AFortGameMode::StartAircraftPhase(AFortGameMode* GameMode, char a2)
             //return Ret;
         }
         else
+        {
             Loc = GameMode->SafeZoneLocations.Get(FConfiguration::LateGameZone + (VersionInfo.FortniteVersion >= 24 ? 3 : 0) - 1, FVector::Size());
+        }
+
         Loc.Z = 17500.f;
+
         if (GameState->HasDefaultParachuteDeployTraceForGroundDistance())
+        {
             GameState->DefaultParachuteDeployTraceForGroundDistance = 2500.f;
+        }
 
         if (Aircraft->HasFlightInfo())
         {
