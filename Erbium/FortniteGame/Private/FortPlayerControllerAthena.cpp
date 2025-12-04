@@ -70,7 +70,8 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 
 	auto Num = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num();
 
-	auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
+	auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
+	auto Playlist = VersionInfo.FortniteVersion >= 3.5 ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
 	if (Playlist && Playlist->RespawnType > 0 && Num > 0)
 	{
 		if (FConfiguration::bLateGame)
@@ -160,11 +161,16 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 		static bool HasCosmeticLoadoutPC = PlayerController->HasCosmeticLoadoutPC();
 		static bool HasCustomizationLoadout = PlayerController->HasCustomizationLoadout();
 
-		auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 		if (HasCosmeticLoadoutPC && PlayerController->CosmeticLoadoutPC.Pickaxe)
 			PlayerController->WorldInventory->GiveItem(PlayerController->CosmeticLoadoutPC.Pickaxe->WeaponDefinition);
 		else if (HasCustomizationLoadout && PlayerController->CustomizationLoadout.Pickaxe)
 			PlayerController->WorldInventory->GiveItem(PlayerController->CustomizationLoadout.Pickaxe->WeaponDefinition);
+		else if (HasCosmeticLoadoutPC || HasCustomizationLoadout) // fix ur backend gng
+		{
+			static auto DefaultPickaxe = FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
+
+			PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
+		}
 		
 		if (GameMode->StartingItems.Num() == 0)
 		{
@@ -175,11 +181,11 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 			static auto ConeBuild = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_RoofS.BuildingItemData_RoofS");
 			static auto EditTool = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/EditTool.EditTool");
 
+			PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
 			PlayerController->WorldInventory->GiveItem(WallBuild);
 			PlayerController->WorldInventory->GiveItem(FloorBuild);
 			PlayerController->WorldInventory->GiveItem(StairBuild);
 			PlayerController->WorldInventory->GiveItem(ConeBuild);
-			PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
 			PlayerController->WorldInventory->GiveItem(EditTool);
 		}
 
@@ -275,8 +281,8 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
 
 		if (PlayerController->MyFortPawn)
 		{
-			PlayerController->MyFortPawn->BeginSkydiving(true);
-			PlayerController->MyFortPawn->SetHealth(100.f);
+			//PlayerController->MyFortPawn->BeginSkydiving(true);
+			//PlayerController->MyFortPawn->SetHealth(100.f);
 		}
 	}
 	else
@@ -416,10 +422,11 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryWeapon(UObject* Context,
 
 bool CanBePlacedByPlayer(TSubclassOf<AActor> BuildClass)
 {
-	auto GameState = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState);
+	return ((ABuildingSMActor*)BuildClass->GetDefaultObj())->bIsPlayerBuildable;
+	/*auto GameState = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState);
 	static auto HasAllPlayerBuildableClasses = GameState->HasAllPlayerBuildableClasses();
 	return HasAllPlayerBuildableClasses ? GameState->AllPlayerBuildableClasses.Search([BuildClass](TSubclassOf<AActor> Class)
-		{ return Class == BuildClass; }) != 0 : true;
+		{ return Class == BuildClass; }) != 0 : true;*/
 }
 
 uint64_t CantBuild_ = 0;
@@ -679,17 +686,17 @@ void AFortPlayerControllerAthena::ServerEditBuildingActor(UObject* Context, FFra
 	Stack.StepCompiledIn(&RotationIterations);
 	Stack.StepCompiledIn(&bMirrored);
 	Stack.IncrementCode();
-
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
-	if (!PlayerController || !Building || !NewClass || !Building->IsA<ABuildingSMActor>() || !CanBePlacedByPlayer(NewClass)/* || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex*/ || Building->bDestroyed)
+
+	if (!PlayerController || !Building || !NewClass || !Building->IsA<ABuildingSMActor>() || !CanBePlacedByPlayer(NewClass) || Building->EditingPlayer != PlayerController->PlayerState || Building->bDestroyed)
 	{
 		return;
 	}
 
 	SetEditingPlayer(Building, nullptr);
 
-	static auto ReplaceBuildingActor = (ABuildingSMActor * (*)(ABuildingSMActor*, unsigned int, TSubclassOf<AActor>, unsigned int, int, bool, AFortPlayerControllerAthena*)) ReplaceBuildingActor_;
-	static auto ReplaceBuildingActor__New = (ABuildingSMActor * (*)(ABuildingSMActor*, unsigned int, TSubclassOf<AActor>&, unsigned int, int, bool, AFortPlayerControllerAthena*)) ReplaceBuildingActor_;
+	auto ReplaceBuildingActor = (ABuildingSMActor * (*&)(ABuildingSMActor*, unsigned int, TSubclassOf<AActor>, unsigned int, int, bool, AFortPlayerControllerAthena*)) ReplaceBuildingActor_;
+	auto ReplaceBuildingActor__New = (ABuildingSMActor * (*&)(ABuildingSMActor*, unsigned int, TSubclassOf<AActor>&, unsigned int, int, bool, AFortPlayerControllerAthena*)) ReplaceBuildingActor_;
 
 	ABuildingSMActor* NewBuild;
 	
@@ -928,8 +935,15 @@ void AFortPlayerControllerAthena::ServerPlayEmoteItem(UObject* Context, FFrame& 
 		if (HasbMovingEmoteFollowingOnly)
 			PlayerController->MyFortPawn->bMovingEmoteFollowingOnly = DanceAsset->bMoveFollowingOnly;
 
-		static auto EmoteAbilityClass = FindObject<UClass>(L"/Game/Abilities/Emotes/GAB_Emote_Generic.GAB_Emote_Generic_C");
-		AbilityToUse = EmoteAbilityClass->GetDefaultObj();
+		auto CustomAbility = DanceAsset->HasCustomDanceAbility() ? DanceAsset->CustomDanceAbility.Get() : nullptr;
+
+		if (CustomAbility)
+			AbilityToUse = CustomAbility->GetDefaultObj();
+		else
+		{
+			static auto EmoteAbilityClass = FindObject<UClass>(L"/Game/Abilities/Emotes/GAB_Emote_Generic.GAB_Emote_Generic_C");
+			AbilityToUse = EmoteAbilityClass->GetDefaultObj();
+		}
 	}
 
 	if (AbilityToUse)
@@ -954,6 +968,13 @@ void AFortPlayerControllerAthena::ServerPlayEmoteItem(UObject* Context, FFrame& 
 		((void (*)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle*, FGameplayAbilitySpec*, void*)) GiveAbilityAndActivateOnce)(AbilitySystemComponent, &handle, Spec, nullptr);
 
 		free(Spec);
+
+		if (PlayerController->MyFortPawn->HasLastReplicatedEmoteExecuted())
+		{
+			auto OldEmote = PlayerController->MyFortPawn->LastReplicatedEmoteExecuted;
+			PlayerController->MyFortPawn->LastReplicatedEmoteExecuted = Asset;
+			PlayerController->MyFortPawn->OnRep_LastReplicatedEmoteExecuted(OldEmote);
+		}
 	}
 }
 
@@ -1024,6 +1045,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 
 	auto KillerPlayerState = (AFortPlayerStateAthena*)DeathReport.KillerPlayerState;
 	auto KillerPawn = (AFortPlayerPawnAthena*)DeathReport.KillerPawn;
+	auto KillerPlayerController = KillerPlayerState ? (AFortPlayerControllerAthena*)KillerPlayerState->Owner : nullptr;
 
 	if (PlayerState->HasPawnDeathLocation())
 		PlayerState->PawnDeathLocation = PlayerController->Pawn ? PlayerController->Pawn->K2_GetActorLocation() : FVector();
@@ -1074,6 +1096,43 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 		KillerPlayerState->ClientReportKill(t);
 		if (KillerPlayerState->HasTeamKillScore())
 			KillerPlayerState->ClientReportTeamKill(KillerPlayerState->TeamKillScore);
+
+		for (auto& Damager : PlayerController->Pawn->Damagers)
+		{
+			if (Damager.DamageCauser != KillerPlayerController && Damager.DamageCauser->IsA<AFortPlayerControllerAthena>())
+			{
+				FGameplayTagContainer TargetTags{};
+				auto DamagerController = (AFortPlayerControllerAthena*)Damager.DamageCauser;
+
+				auto Interface = (IGameplayTagAssetInterface*)PlayerController->Pawn->GetInterface(IGameplayTagAssetInterface::StaticClass());
+				if (Interface)
+				{
+					auto Blud = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface->Vft[0x2];
+					Blud(Interface, &TargetTags);
+					//Interface->GetOwnedGameplayTags(&TargetTags);
+				}
+
+				DamagerController->GetQuestManager(1)->SendStatEvent(DamagerController, EFortQuestObjectiveStatEvent::GetKillContribution(), 1, PlayerController->Pawn, TargetTags);
+
+				TargetTags.GameplayTags.Free();
+				TargetTags.ParentTags.Free();
+			}
+		}
+
+		FGameplayTagContainer TargetTags{};
+
+		auto Interface = (IGameplayTagAssetInterface*)PlayerController->Pawn->GetInterface(IGameplayTagAssetInterface::StaticClass());
+		if (Interface)
+		{
+			auto Blud = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface->Vft[0x2];
+			Blud(Interface, &TargetTags);
+			//Interface->GetOwnedGameplayTags(&TargetTags);
+		}
+
+		KillerPlayerController->GetQuestManager(1)->SendStatEvent(KillerPlayerController, EFortQuestObjectiveStatEvent::GetKill(), 1, PlayerController->Pawn, TargetTags);
+
+		TargetTags.GameplayTags.Free();
+		TargetTags.ParentTags.Free();
 	}
 
 	static auto IsRespawningAllowedFunc = GameState->GetFunction("IsRespawningAllowed");
@@ -1082,7 +1141,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 
 	if (!IsRespawningAllowedFunc)
 	{
-		auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
+		auto Playlist = VersionInfo.FortniteVersion >= 3.5 ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
 
 		// respawn except storm needs to be fixed
 		bRespawnAllowed = Playlist ? Playlist->RespawnType > 0 : false;
@@ -1131,7 +1190,6 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 				KillerPawn = (AFortPlayerPawnAthena*)PlayerController->Pawn;
 			}*/
 			
-			auto KillerPlayerController = (AFortPlayerControllerAthena*)KillerPlayerState->Owner;
 			auto KillerWeapon = DamageCauser ? DamageCauser->WeaponData : nullptr;
 
 
@@ -1262,9 +1320,9 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 		}
 
 	//printf("br: %d\n", ItemCount);
-	FVector FinalLoc = Pawn->K2_GetActorLocation();
+	FVector FinalLoc = Pawn ? Pawn->K2_GetActorLocation() : FVector();
 
-	FVector ForwardVector = Pawn->GetActorForwardVector();
+	FVector ForwardVector = Pawn ? Pawn->GetActorForwardVector() : FVector();
 	ForwardVector.Z = 0.0f;
 	ForwardVector.Normalize();
 
@@ -1812,6 +1870,9 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 				auto PlayerController = (AFortPlayerControllerAthena*)UWorld::SpawnActor(FindObject<UClass>(L"/Game/Athena/Athena_PlayerController.Athena_PlayerController_C"), FVector{});
 				//auto PlayerState = PlayerController->PlayerState;
 
+				if (!PlayerController || !Pawn)
+					continue;
+
 				PlayerController->Possess(Pawn);
 				PlayerController->MyFortPawn = Pawn; // dont't ask, crashes on 27+
 
@@ -2242,11 +2303,30 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 
 	auto Pawn = (AFortPlayerPawnAthena*)PlayerController->Pawn;
 
+	auto sendStat = [&]()
+	{
+		FGameplayTagContainer TargetTags{};
+		
+		auto Interface = (IGameplayTagAssetInterface*)ReceivingActor->GetInterface(IGameplayTagAssetInterface::StaticClass());
+		if (Interface)
+		{
+			auto Blud = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface->Vft[0x2];
+			Blud(Interface, &TargetTags);
+			//Interface->GetOwnedGameplayTags(&TargetTags);
+		}
+
+		PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetInteract(), 1, ReceivingActor, TargetTags);
+
+		//TargetTags.GameplayTags.Free();
+		//TargetTags.ParentTags.Free();
+	};
+
 	if (auto Container = bDidntFind ? ReceivingActor->Cast<ABuildingContainer>() : nullptr)
 		UFortLootPackage::SpawnLootHook(Container);
 	else if (auto Vehicle = ReceivingActor->Cast<AFortAthenaVehicle>())
 	{
 		ServerAttemptInteract_OG(Context, Stack);
+		sendStat();
 
 		UFortVehicleSeatWeaponComponent* SeatWeaponComponent = (UFortVehicleSeatWeaponComponent*)Vehicle->GetComponentByClass(UFortVehicleSeatWeaponComponent::StaticClass());
 
@@ -2330,7 +2410,9 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 			CollectorActor->bCurrentInteractionSuccess = false;
 			CollectorActor->ControllingPlayer = nullptr;
 			CollectorActor->Call(CollectorActor->GetFunction("BlueprintOnInteract"), PlayerController->MyFortPawn);
-			return ServerAttemptInteract_OG(Context, Stack);
+			ServerAttemptInteract_OG(Context, Stack);
+			sendStat();
+			return;
 		}
 
 		float Cost = Collection->InputCount.Evaluate((float)CollectorActor->StartingGoalLevel);
@@ -2347,7 +2429,9 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 				CollectorActor->ControllingPlayer = nullptr;
 				CollectorActor->Call(CollectorActor->GetFunction("BlueprintOnInteract"), Pawn);
 				//CollectorActor->PlayVendFailFX();
-				return ServerAttemptInteract_OG(Context, Stack);
+				ServerAttemptInteract_OG(Context, Stack);
+				sendStat();
+				return;
 			}
 
 			auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
@@ -2394,7 +2478,8 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 		//CollectorActor->PlayVendFX();
 	}
 
-	return ServerAttemptInteract_OG(Context, Stack);
+	ServerAttemptInteract_OG(Context, Stack);
+	sendStat();
 	//return bIsComp ? (void)callOG(((UFortControllerComponent_Interaction*)Context), Stack.GetCurrentNativeFunction(), ServerAttemptInteract, ReceivingActor, InteractComponent, InteractType, OptionalObjectData, InteractionBeingAttempted, RequestID) : callOG(PlayerController, Stack.GetCurrentNativeFunction(), ServerAttemptInteract, ReceivingActor, InteractComponent, InteractType, OptionalObjectData, InteractionBeingAttempted, RequestID);
 }
 

@@ -2464,7 +2464,7 @@ uint64 FindSetGamePhase()
 
 uint64_t FindPayBuildableClassPlacementCost()
 {
-    auto sRef = Memcury::Scanner::FindStringRef(L"Failed to remove item %s during pay building costs, item duplicated!", false, VersionInfo.FortniteVersion >= 10.30 && std::floor(VersionInfo.FortniteVersion) != 13 && VersionInfo.FortniteVersion < 20, VersionInfo.FortniteVersion >= 18.00);
+    auto sRef = Memcury::Scanner::FindStringRef(L"Failed to remove item %s during pay building costs, item duplicated!", false, VersionInfo.FortniteVersion >= 10.30 && VersionInfo.FortniteVersion < 20, VersionInfo.FortniteVersion >= 18.00);
 
     if (VersionInfo.FortniteVersion >= 10.00)
     {
@@ -2573,6 +2573,9 @@ uint64 FindLoadPlayset(const std::vector<uint8_t>& Bytes, int recursive)
 
             if (!LoadPlayset)
                 LoadPlayset = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 4C 8B B9").Get();
+
+            if (!LoadPlayset)
+                LoadPlayset = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 55 41 54 41 55 41 56 41 57 48 8D 68 ? 48 81 EC ? ? ? ? 4C 8B A9").Get();
             
             if (!LoadPlayset)
                 LoadPlayset = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 70 ? 55 57 41 54 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 4C 8B A1").Get();
@@ -2783,6 +2786,8 @@ uint64 FindInitializePlayerGameplayAbilities()
         if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4)
             return uint64_t(Ptr);
         else if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
+            return uint64_t(Ptr);
+        else if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x4C)
             return uint64_t(Ptr);
         else if (*Ptr == 0x40 && *(Ptr + 1) == 0x57)
             return uint64_t(Ptr);

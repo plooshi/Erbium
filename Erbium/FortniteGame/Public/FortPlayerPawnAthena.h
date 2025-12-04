@@ -56,6 +56,14 @@ public:
     DEFINE_FUNC(OnRep_Health, void);
 };
 
+struct FDamagerInfo
+{
+public:
+    AActor* DamageCauser;
+    int32 DamageAmount;
+    FGameplayTagContainer SourceTags;
+};
+
 class AFortPlayerPawnAthena : public AActor
 {
 public:
@@ -89,6 +97,8 @@ public:
     DEFINE_PROP(CurrentWeaponList, TArray<AActor*>);
     DEFINE_PROP(bShouldDropItemsOnDeath, bool);
     DEFINE_PROP(MoveSoundStimulusBroadcastInterval, uint16_t);
+    DEFINE_PROP(Damagers, TArray<FDamagerInfo>);
+    DEFINE_PROP(LastReplicatedEmoteExecuted, UObject*);
 
     DEFINE_FUNC(BeginSkydiving, void);
     DEFINE_FUNC(GetHealth, float);
@@ -112,6 +122,8 @@ public:
     DEFINE_FUNC(ClientInternalEquipWeapon, void);
     DEFINE_FUNC(ServerInternalEquipWeapon, void);
     DEFINE_FUNC(SetGravityMultiplier, void);
+    DEFINE_FUNC(OnRep_LastReplicatedEmoteExecuted, void);
+    DEFINE_FUNC(EmoteStopped, void);
 
     DefUHookOg(ServerHandlePickup_);
     DefUHookOg(ServerHandlePickupInfo);
@@ -121,6 +133,7 @@ public:
     static void MovingEmoteStopped(UObject*, FFrame&);
     DefUHookOg(Athena_MedConsumable_Triggered);
     DefUHookOg(ServerOnExitVehicle_);
+    DefUHookOg(EmoteStopped_);
 
     InitPostLoadHooks;
 };

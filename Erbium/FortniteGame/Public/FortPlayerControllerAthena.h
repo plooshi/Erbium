@@ -6,6 +6,7 @@
 #include "GameplayTagContainer.h"
 #include "FortVolume.h"
 #include "FortCheatManager.h"
+#include "FortQuestManager.h"
 
 class UAthenaPickaxeItemDefinition : public UFortItemDefinition
 {
@@ -43,6 +44,7 @@ public:
     DEFINE_PROP(WalkForwardSpeed, float);
     DEFINE_BITFIELD_PROP(bMoveForwardOnly);
     DEFINE_BITFIELD_PROP(bMoveFollowingOnly);
+    DEFINE_PROP(CustomDanceAbility, TSoftClassPtr<UClass>);
 };
 
 class UFortControllerComponent_Aircraft : public UObject
@@ -103,8 +105,15 @@ public:
 
     DEFINE_PROP(CurrentLevel, int32);
     DEFINE_PROP(bRegisteredWithQuestManager, bool);
+    DEFINE_PROP(TotalXpEarned, int32);
+    DEFINE_PROP(MatchXp, int32);
+    DEFINE_PROP(MedalsEarned, TArray<UFortAccoladeItemDefinition*>);
+    DEFINE_PROP(PlayerAccolades, TArray<FAthenaAccolades>);
 
     DEFINE_FUNC(OnRep_bRegisteredWithQuestManager, void);
+    DEFINE_FUNC(OnXPEvent, void);
+    DEFINE_FUNC(ClientMedalsRecived, void);
+    DEFINE_FUNC(OnProfileUpdated, void);
 };
 
 class AFortBroadcastRemoteClientInfo : public AActor
@@ -252,6 +261,7 @@ public:
     DEFINE_FUNC(OnRep_IsFlightSprinting, void);
     DEFINE_FUNC(Validation_IsFlyingPossible, bool);
     DEFINE_FUNC(ClientCreativePhoneCreated, void);
+    DEFINE_FUNC(GetQuestManager, UFortQuestManager*);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);

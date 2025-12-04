@@ -15,6 +15,7 @@ struct FConfiguration
     static inline auto bJoinInProgress = false;
     static inline auto bAutoRestart = false;
     static inline auto bKeepInventory = false;
+    static inline auto Port = 7777;
     static inline constexpr auto bEnableIris = true; 
     static inline constexpr auto bGUI = true;
     static inline constexpr auto bCustomCrashReporter = true;

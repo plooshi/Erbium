@@ -72,7 +72,7 @@ public:
 	DefHookOg(void, HandleMatchHasStarted, AFortGameMode*);
 	void Tick();
 	AFortSafeZoneIndicator* SetupSafeZoneIndicator();
-	void StartNewSafeZonePhase(int NewSafeZonePhase);
+	void StartNewSafeZonePhase(int NewSafeZonePhase, bool bInitial = false);
 	static void GenerateStormCircles(AFortAthenaMapInfo* MapInfo);
 	void StartAircraftPhase();
 

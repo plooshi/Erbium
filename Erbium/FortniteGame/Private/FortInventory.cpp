@@ -48,9 +48,6 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
     repEntry.bIsReplicatedCopy = true;
     this->Inventory.ItemInstances.Add(Item);
 
-    if (OnItemInstanceAddedVft)
-        ((bool(*)(const UFortWorldItem*, const IInterface*)) Item->Vft[OnItemInstanceAddedVft])(Item, Owner->GetInterface(IFortInventoryOwnerInterface::StaticClass()));
-
     /*if (Item->ItemEntry.ItemDefinition->bForceFocusWhenAdded)
     {
         ((AFortPlayerControllerAthena*)Owner)->ServerExecuteInventoryItem(Item->ItemEntry.ItemGuid);
@@ -110,6 +107,10 @@ UFortWorldItem* AFortInventory::GiveItem(const UFortItemDefinition* Def, int Cou
         ForceNetUpdate();
         Item->ItemEntry.bIsDirty = true;
     }
+
+    if (OnItemInstanceAddedVft)
+        ((bool(*)(const UFortWorldItem*, const IInterface*)) Item->Vft[OnItemInstanceAddedVft])(Item, Owner->GetInterface(IFortInventoryOwnerInterface::StaticClass()));
+
     return Item;
 }
 

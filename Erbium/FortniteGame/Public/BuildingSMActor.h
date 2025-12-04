@@ -100,6 +100,7 @@ public:
     DEFINE_BITFIELD_PROP(bHiddenDueToTrapPlacement);
     DEFINE_PROP(BuildingType, uint8);
     DEFINE_PROP(EditModePatternData, UObject*);
+    DEFINE_BITFIELD_PROP(bIsPlayerBuildable);
 
     FBuildingSMActorClassData* GetClassData() const
     {

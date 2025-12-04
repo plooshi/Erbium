@@ -372,7 +372,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
 
         auto URL = (FURL*)malloc(FURL::Size());
         memset((PBYTE)URL, 0, FURL::Size());
-        URL->Port = 7777;
+        URL->Port = FConfiguration::Port;
 
         auto InitListen = (bool (*)(UNetDriver*, UWorld*, FURL*, bool, FString&)) FindInitListen();
         auto SetWorld = (void (*)(UNetDriver*, UWorld*)) FindSetWorld();
@@ -425,10 +425,13 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
             GameStateZone->GameDifficulty = 10.f; // proper? idk
             GameStateZone->OnRep_GameDifficulty();
 
-            MissionInfo->bStartPlayingOnLoad = true; // bad hack, we should find a better way to do this later
-            // startplayingmission
+            if (MissionInfo)
+            {
+                MissionInfo->bStartPlayingOnLoad = true; // bad hack, we should find a better way to do this later
+                // startplayingmission
 
-            UFortMissionLibrary::LoadMission(UWorld::GetWorld(), MissionInfo);
+                UFortMissionLibrary::LoadMission(UWorld::GetWorld(), MissionInfo);
+            }
             // we need to spawn bluglo manager too?
         }
 
@@ -490,7 +493,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
             }
         }
 
-        static auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
+        auto Playlist = VersionInfo.FortniteVersion >= 3.5 ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
 
         if (Playlist && Playlist->HasbSkipWarmup())
             UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bSkipWarmup = Playlist->bSkipWarmup;
@@ -1192,17 +1195,18 @@ void AFortGameMode::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor*
 
         if (NewPlayer->HasXPComponent())
         {
-            if (NewPlayer->PlayerState->HasSeasonLevelUIDisplay())
-            {
-                NewPlayer->PlayerState->SeasonLevelUIDisplay = NewPlayer->XPComponent->CurrentLevel;
-                NewPlayer->PlayerState->OnRep_SeasonLevelUIDisplay();
-            }
-
             if (NewPlayer->XPComponent->HasbRegisteredWithQuestManager())
             {
                 NewPlayer->XPComponent->bRegisteredWithQuestManager = true;
                 NewPlayer->XPComponent->OnRep_bRegisteredWithQuestManager();
             }
+
+            if (NewPlayer->PlayerState->HasSeasonLevelUIDisplay())
+            {
+                NewPlayer->PlayerState->SeasonLevelUIDisplay = NewPlayer->XPComponent->CurrentLevel;
+                NewPlayer->PlayerState->OnRep_SeasonLevelUIDisplay();
+            }
+            //NewPlayer->XPComponent->OnProfileUpdated();
         }
 
         static bool bFinalSetup = false;
@@ -1503,6 +1507,7 @@ void AFortGameMode::HandlePostSafeZonePhaseChanged(AFortGameMode* GameMode, int 
     {
         GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = TimeSeconds;
         GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + 0.15f;
+        return;
     }
     else if (FConfiguration::bLateGame && GameMode->SafeZonePhase == FConfiguration::LateGameZone)
     {
@@ -1517,6 +1522,16 @@ void AFortGameMode::HandlePostSafeZonePhaseChanged(AFortGameMode* GameMode, int 
     {
         GameMode->SafeZoneIndicator->NextCenter = SafeZoneLoc;
         GameMode->SafeZoneIndicator->LastCenter = SafeZoneLoc;
+    }
+
+    if (NewSafeZonePhase > 1)
+    {
+        for (auto& UncastedPlayer : GameMode->AlivePlayers)
+        {
+            auto PlayerController = (AFortPlayerControllerAthena*)UncastedPlayer;
+
+            PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetStormPhase(), 1);
+        }
     }
 }
 
@@ -1587,7 +1602,7 @@ uint8_t AFortGameMode::PickTeam(AFortGameMode* GameMode, uint8_t PreferredTeam, 
         return 0;
 
     uint8_t ret = CurrentTeam;
-    auto Playlist = VersionInfo.FortniteVersion >= 4.0 ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
+    auto Playlist = VersionInfo.FortniteVersion >= 3.5 ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
 
     printf("Picked team %d %d\n", ret, Playlist ? Playlist->MaxSquadSize : 1);
     if (bIsLargeTeamGame)
@@ -1616,7 +1631,7 @@ bool AFortGameMode::StartAircraftPhase(AFortGameMode* GameMode, char a2)
 
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 
-    auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
+    auto Playlist = VersionInfo.FortniteVersion >= 3.5 ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
     if constexpr (FConfiguration::WebhookURL && *FConfiguration::WebhookURL)
     {
         auto curl = curl_easy_init();
@@ -1828,7 +1843,7 @@ AFortSafeZoneIndicator* SetupSafeZoneIndicator(AFortGameMode* GameMode)
     return GameMode->SafeZoneIndicator;
 }
 
-void StartNewSafeZonePhase(AFortGameMode* GameMode, int NewSafeZonePhase)
+void StartNewSafeZonePhase(AFortGameMode* GameMode, int NewSafeZonePhase, bool bInitial = false)
 {
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
     float TimeSeconds = (float)UGameplayStatics::GetTimeSeconds(GameState);
@@ -1879,6 +1894,14 @@ void StartNewSafeZonePhase(AFortGameMode* GameMode, int NewSafeZonePhase)
         GameMode->SafeZoneIndicator->OnSafeZoneStateChange(2, false);
         if (GameMode->SafeZoneIndicator->HasSafezoneStateChangedDelegate())
             GameMode->SafeZoneIndicator->SafezoneStateChangedDelegate.Process(GameMode->SafeZoneIndicator, 2);
+
+        if (!bInitial)
+            for (auto& UncastedPlayer : GameMode->AlivePlayers)
+            {
+                auto PlayerController = (AFortPlayerControllerAthena*)UncastedPlayer;
+
+                PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetStormPhase(), 1);
+            }
     }
 }
 
@@ -1892,7 +1915,7 @@ void SpawnInitialSafeZone(AFortGameMode* GameMode)
     SafeZoneIndicator->OnSafeZonePhaseChanged.Bind(GameMode, FName(L"HandlePostSafeZonePhaseChanged"));
     GameMode->OnSafeZoneIndicatorSpawned.Process(SafeZoneIndicator);
 
-    StartNewSafeZonePhase(GameMode, FConfiguration::bLateGame ? (FConfiguration::LateGameZone + (VersionInfo.FortniteVersion >= 24 ? 3 : 0)) : 1);
+    StartNewSafeZonePhase(GameMode, FConfiguration::bLateGame ? (FConfiguration::LateGameZone + (VersionInfo.FortniteVersion >= 24 ? 3 : 0)) : 1, true);
 
 
     //return SpawnInitialSafeZoneOG(GameMode);

@@ -267,6 +267,7 @@
     <ClInclude Include="FortniteGame\Public\FortPlayerPawnAthena.h" />
     <ClInclude Include="FortniteGame\Public\FortPlayerStateAthena.h" />
     <ClInclude Include="FortniteGame\Public\FortPlaylistAthena.h" />
+    <ClInclude Include="FortniteGame\Public\FortQuestManager.h" />
     <ClInclude Include="FortniteGame\Public\FortSafeZoneIndicator.h" />
     <ClInclude Include="FortniteGame\Public\FortVolume.h" />
     <ClInclude Include="FortniteGame\Public\FortWeapon.h" />
@@ -314,6 +315,7 @@
     <ClCompile Include="FortniteGame\Private\FortPhysicsPawn.cpp" />
     <ClCompile Include="FortniteGame\Private\FortPlayerControllerAthena.cpp" />
     <ClCompile Include="FortniteGame\Private\FortPlayerPawnAthena.cpp" />
+    <ClCompile Include="FortniteGame\Private\FortQuestManager.cpp" />
     <ClCompile Include="ImGui\imgui.cpp" />
     <ClCompile Include="ImGui\imgui_draw.cpp" />
     <ClCompile Include="ImGui\imgui_impl_dx11.cpp" />

@@ -65,56 +65,27 @@ int GetLevel(const FDataTableCategoryHandle& CategoryHandle)
 void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SDK::FName Package, int i, FName TierGroup, int WorldLevel)
 {
 	TArray<FFortLootPackageData*> LPGroups;
-	/*if (VersionInfo.EngineVersion == 4.21)
+
+	for (auto const& Val : LootPackageMap[Package.ComparisonIndex])
 	{
-		auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
+		if (!Val)
+			continue;
 
-		auto LootPackages = Playlist ? Playlist->LootPackages.Get() : nullptr;
-		if (!LootPackages)
-			LootPackages = FindObject<UDataTable>(L"/Game/Items/Datatables/AthenaLootPackages_Client.AthenaLootPackages_Client");
+		if (i != -1 && Val->LootPackageCategory != i)
+			continue;
 
-		for (auto& [_, _Val] : LootPackages->RowMap)
+		if (WorldLevel >= 0)
 		{
-			auto Val = (FFortLootPackageData*)_Val;
-
-			if (!Val)
+			if (Val->MaxWorldLevel >= 0 && WorldLevel > Val->MaxWorldLevel)
 				continue;
-
-			if (Val->LootPackageID != Package)
+			
+			if (Val->MinWorldLevel >= 0 && WorldLevel < Val->MinWorldLevel)
 				continue;
-			if (i != -1 && Val->LootPackageCategory != i)
-				continue;
-			if (WorldLevel >= 0)
-			{
-				if (Val->MaxWorldLevel >= 0 && WorldLevel > Val->MaxWorldLevel)
-					continue;
-				if (Val->MinWorldLevel >= 0 && WorldLevel < Val->MinWorldLevel)
-					continue;
-			}
-
-			LPGroups.Add(Val);
 		}
-	}
-	else*/
-	{
-		for (auto const& Val : LootPackageMap[Package.ComparisonIndex])
-		{
-			if (!Val)
-				continue;
 
-			if (i != -1 && Val->LootPackageCategory != i)
-				continue;
-			if (WorldLevel >= 0)
-			{
-				if (Val->MaxWorldLevel >= 0 && WorldLevel > Val->MaxWorldLevel)
-					continue;
-				if (Val->MinWorldLevel >= 0 && WorldLevel < Val->MinWorldLevel)
-					continue;
-			}
-
-			LPGroups.Add(Val);
-		}
+		LPGroups.Add(Val);
 	}
+
 	if (LPGroups.Num() == 0)
 		return;
 
@@ -188,35 +159,14 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup, int LootTier, int WorldLevel)
 {
 	TArray<FFortLootTierData*> TierDataGroups;
-
-
-	/*if (VersionInfo.EngineVersion == 4.21)
-	{
-		auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
-
-		auto LootTierData = Playlist ? Playlist->LootTierData.Get() : nullptr;
-		if (!LootTierData)
-			LootTierData = FindObject<UDataTable>(L"/Game/Items/Datatables/AthenaLootTierData_Client.AthenaLootTierData_Client");
-
-		for (auto& [_, _Val] : LootTierData->RowMap)
-		{
-			auto Val = (FFortLootTierData*)_Val;
-
-			if (Val->TierGroup == TierGroup && (LootTier == -1 ? true : LootTier == Val->LootTier))
-				TierDataGroups.Add(Val);
-		}
-	}
-	else*/
-	{
-		for (auto const& Val : TierDataMap[TierGroup.ComparisonIndex])
-		{
-			if (LootTier == -1 ? true : LootTier == Val->LootTier)
-				TierDataGroups.Add(Val);
-		}
-	}
+	
+	for (auto const& Val : TierDataMap[TierGroup.ComparisonIndex])
+		if (LootTier == -1 ? true : LootTier == Val->LootTier)
+			TierDataGroups.Add(Val);
 
 	auto LootTierData = PickWeighted(TierDataGroups, [](float Total)
 		{ return ((float)rand() / 32767.f) * Total; });
+
 	if (!LootTierData)
 		return {};
 	
