@@ -1654,7 +1654,7 @@ bool AFortGameMode::StartAircraftPhase(AFortGameMode* GameMode, char a2)
 
     // credit to heliato
     if (FConfiguration::bJoinInProgress || (Playlist && (Playlist->HasbAllowJoinInProgress() ? Playlist->bAllowJoinInProgress : false)))
-        *(bool*)(uint64_t(&GameMode->WarmupRequiredPlayerCount) - 4) = false; // theres no way this works uni
+        *(bool*)(uint64_t(&GameMode->WarmupRequiredPlayerCount) - 4) = false;
 
     if (FConfiguration::bLateGame && VersionInfo.FortniteVersion < 25.20)
     {
