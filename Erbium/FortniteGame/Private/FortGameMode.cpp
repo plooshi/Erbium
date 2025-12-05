@@ -1507,11 +1507,12 @@ void AFortGameMode::HandlePostSafeZonePhaseChanged(AFortGameMode* GameMode, int 
     }
     else if (FConfiguration::bLateGame && GameMode->SafeZonePhase == FConfiguration::LateGameZone)
     {
-        auto Duration = Durations[FConfiguration::LateGameZone];
-        auto HoldDuration = HoldDurations[FConfiguration::LateGameZone];
+        //auto Duration = Durations[FConfiguration::LateGameZone];
+        //auto HoldDuration = HoldDurations[FConfiguration::LateGameZone];
 
-        GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = FConfiguration::bLateGame && FConfiguration::bLateGameLongZone ? 676767.f : TimeSeconds + HoldDuration;
-        GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
+        if (FConfiguration::bLateGame && FConfiguration::bLateGameLongZone)
+            GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = 676767.f;
+        //GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
     }
 
     if (FConfiguration::bLateGame && (SafeZoneLoc.X != 0 || SafeZoneLoc.Y != 0 || SafeZoneLoc.Z != 0))
