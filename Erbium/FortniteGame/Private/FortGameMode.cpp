@@ -143,11 +143,14 @@ void SetupPlaylist(AFortGameMode* GameMode, AFortGameStateAthena* GameState)
             ShowFoundation(VersionInfo.FortniteVersion <= 6.10 ? FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.LF_Athena_StreamingTest13") : FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.LF_FloatingIsland"));
 
             auto IslandScripting = TUObjectArray::FindFirstObject("BP_IslandScripting_C");
-            auto UpdateMapOffset = IslandScripting->GetOffset("UpdateMap");
-            if (UpdateMapOffset != -1)
+            if (IslandScripting)
             {
-                *(bool*)(__int64(IslandScripting) + UpdateMapOffset) = true;
-                IslandScripting->ProcessEvent(IslandScripting->GetFunction("OnRep_UpdateMap"), nullptr);
+                auto UpdateMapOffset = IslandScripting->GetOffset("UpdateMap");
+                if (UpdateMapOffset != -1)
+                {
+                    *(bool*)(__int64(IslandScripting) + UpdateMapOffset) = true;
+                    IslandScripting->ProcessEvent(IslandScripting->GetFunction("OnRep_UpdateMap"), nullptr);
+                }
             }
         }
         else if (VersionInfo.FortniteVersion >= 7 && VersionInfo.FortniteVersion < 8)
