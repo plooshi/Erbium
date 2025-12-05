@@ -321,7 +321,7 @@ void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEv
 		}
 	}
 
-    /*for (auto& Quest : CurrentQuests)
+    for (auto& Quest : CurrentQuests)
     {
         if (Quest->HasCompletedQuest())
             continue;
@@ -329,7 +329,7 @@ void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEv
         auto QuestDefinition = Quest->ItemDefinition;
 
 
-    }*/
+    }
 }
 
 bool bHasQuestActive = false;
