@@ -78,6 +78,7 @@ public:
     DEFINE_PROP(ItemType, uint8);
     DEFINE_PROP(DisplayName, FText);
     DEFINE_PROP(ShortDescription, FText);
+    DEFINE_PROP(Description, FText);
     DEFINE_PROP(Rarity, uint8);
     DEFINE_BITFIELD_PROP(bSupportsQuickbarFocus);
 

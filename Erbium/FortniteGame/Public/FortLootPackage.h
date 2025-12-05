@@ -11,7 +11,7 @@ public:
     TSoftObjectPtr<UDataTable> LootPackageData;
 };
 
-struct Scuff
+struct CountThresholdMap
 {
 public:
     uint8_t Padding[0x20];
@@ -30,8 +30,8 @@ public:
 struct FFortGameFeatureLootTableData_UE53
 {
 public:
-    Scuff LootTierData;
-    Scuff LootPackageData;
+    CountThresholdMap LootTierData;
+    CountThresholdMap LootPackageData;
 };
 
 

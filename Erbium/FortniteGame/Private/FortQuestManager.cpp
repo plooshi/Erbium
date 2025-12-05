@@ -168,7 +168,7 @@ void GiveAccolade(AFortPlayerControllerAthena* PlayerController, UFortAccoladeIt
     Info->RestedXPRemaining = Info->EventXpValue;
     Info->TotalXpEarnedInMatch = Info->EventXpValue + PlayerController->XPComponent->TotalXpEarned;
     Info->Priority = Accolade->Priority;
-    Info->SimulatedText = Accolade->GetShortDescription();
+    Info->SimulatedText = Accolade->Description;
     if (FXPEventInfo::HasSimulatedName())
         Info->SimulatedName = Accolade->DisplayName;
     Info->EventName = Accolade->Name;
@@ -228,7 +228,8 @@ void GiveAccolade(AFortPlayerControllerAthena* PlayerController, UFortAccoladeIt
     }
 }
 
-std::unordered_map<AActor*, std::unordered_map<int32_t, int32_t>> Scuff;
+std::unordered_map<AActor*, std::unordered_map<int32_t, int32_t>> CountThresholdMap;
+std::set<UFortAccoladeItemDefinition*> OnlyOnceMap;
 
 void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEvent, int32 Count, UObject* TargetObject, FGameplayTagContainer TargetTags, FGameplayTagContainer AdditionalSourceTags, bool* QuestActive, bool* QuestCompleted)
 {
@@ -256,13 +257,17 @@ void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEv
 
 	if (XPTable && FortPC->HasXPComponent())
 	{
-
 		for (const auto& [ Key, Value ] : XPTable->RowMap)
 		{
 			auto Row = (FFortQuestObjectiveStatXPTableRow*)Value;
 
 			if (Row->Type != (uint8_t)StatEvent) // todo: fix this count threshold stuff
 				continue;
+
+            auto Accolade = (UFortAccoladeItemDefinition*)UKismetSystemLibrary::GetObjectFromPrimaryAssetId(Row->AccoladePrimaryAssetId);
+
+            if (Row->bOnceOnly && OnlyOnceMap.contains(Accolade))
+                continue;
 
 			if (!TargetTags.HasAll(Row->TargetTags))
 				continue;
@@ -282,19 +287,16 @@ void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEv
 			if (FFortQuestObjectiveStatXPTableRow::HasExcludeContextTags() && ContextTags.HasAny(Row->ExcludeContextTags))
 				continue;
 
-            auto Accolade = (UFortAccoladeItemDefinition*)UKismetSystemLibrary::GetObjectFromPrimaryAssetId(Row->AccoladePrimaryAssetId);
-
             if (!IsConditionMet(Row->Condition, TargetTags, AdditionalSourceTags, ContextTags))
                 continue;
 
             if (PlayerController)
             {
-
                 auto& PrimaryAssetName = *(int32*)(__int64(&Row->AccoladePrimaryAssetId) + (VersionInfo.FortniteVersion >= 20 ? 4 : 8));
                 if (PlayerController)
-                    Scuff[PlayerController][PrimaryAssetName] += Count;
+                    CountThresholdMap[PlayerController][PrimaryAssetName] += Count;
 
-                if (Row->CountThreshhold > 0 && Scuff[PlayerController][PrimaryAssetName] != Row->CountThreshhold)
+                if (Row->CountThreshhold > 0 && CountThresholdMap[PlayerController][PrimaryAssetName] != Row->CountThreshhold)
                     continue;
 
                 auto AccoladeCount = 0;
@@ -311,10 +313,23 @@ void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEv
                 if (AccoladeCount > Row->MaxCount)
                     continue;
 
+                if (Row->bOnceOnly)
+                    OnlyOnceMap.emplace(Accolade);
+
                 GiveAccolade(FortPC, Accolade, Row->AccoladePrimaryAssetId);
             }
 		}
 	}
+
+    /*for (auto& Quest : CurrentQuests)
+    {
+        if (Quest->HasCompletedQuest())
+            continue;
+
+        auto QuestDefinition = Quest->ItemDefinition;
+
+
+    }*/
 }
 
 bool bHasQuestActive = false;

@@ -875,7 +875,7 @@ namespace SDK
 		{
 			auto Engine = UEngine::GetEngine();
 
-			if (!Engine)
+			if (!Engine->GameViewport)
 				return nullptr;
 
 			return (UWorld*)Engine->GameViewport->World;

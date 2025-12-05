@@ -187,7 +187,7 @@ namespace SDK
 			addr = Memcury::Scanner::FindStringRef(L"AccessNoneNoContext").ScanFor({ 0x40, 0x55 }, true, 0, 1, 2000).Get();
 		else if (floor(VersionInfo.FortniteVersion) == 27)
 			addr = Memcury::Scanner::FindPattern("40 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 48 8D 6C 24 ? 48 89 9D ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C5 48 89 85 ? ? ? ? 45 33 E4 4C 89 45 ? 4D 8B F8").Get();
-		else if (VersionInfo.EngineVersion == 5.2)
+		else if (VersionInfo.EngineVersion == 5.2 || (std::floor(VersionInfo.FortniteVersion) == 24 && VersionInfo.FortniteVersion >= 24.30))
 			addr = Memcury::Scanner::FindPattern("40 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 48 8D 6C 24 ? 48 89 9D ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C5 48 89 85 ? ? ? ? 45 33 F6").Get();
 		else if (VersionInfo.FortniteVersion >= 23.00)
 		{
@@ -374,18 +374,18 @@ namespace SDK
 			}
 		}
 
-		Offsets::Offset_Internal = VersionInfo.FortniteVersion >= 12.10 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.EngineVersion >= 5.2 ? 0x3c : 0x44);
+		Offsets::Offset_Internal = VersionInfo.FortniteVersion >= 12.10 && VersionInfo.FortniteVersion < 20 ? 0x4c : (VersionInfo.FortniteVersion >= 24.30 ? 0x3c : 0x44);
 		Offsets::PropertyFlags = Offsets::Offset_Internal - 0xc;
 		Offsets::ElementSize = Offsets::Offset_Internal - 0x10;
 		Offsets::PropertiesSize = VersionInfo.FortniteVersion >= 12.10 ? 0x58 : (VersionInfo.EngineVersion >= 4.22 ? 0x50 : 0x40);
 		Offsets::Super = VersionInfo.EngineVersion >= 4.22 ? 0x40 : 0x30;
-		Offsets::FieldMask = VersionInfo.EngineVersion >= 5.2 ? 0x6b : (VersionInfo.FortniteVersion >= 12.10 && VersionInfo.FortniteVersion < 20 ? 0x7b : 0x73);
+		Offsets::FieldMask = VersionInfo.FortniteVersion >= 24.30 ? 0x6b : (VersionInfo.FortniteVersion >= 12.10 && VersionInfo.FortniteVersion < 20 ? 0x7b : 0x73);
 		Offsets::Children = VersionInfo.EngineVersion >= 4.22 ? 0x48 : 0x38;
-		Offsets::FField_Next = VersionInfo.EngineVersion >= 5.2 ? 0x18 : 0x20;
-		Offsets::FField_Name = VersionInfo.EngineVersion >= 5.2 ? 0x20 : 0x28;
+		Offsets::FField_Next = VersionInfo.FortniteVersion >= 24.30 ? 0x18 : 0x20;
+		Offsets::FField_Name = VersionInfo.FortniteVersion >= 24.30 ? 0x20 : 0x28;
 		Offsets::FFrame_PropertyChainForCompiledIn = VersionInfo.FortniteVersion >= 20.40 ? 0x88 : 0x80;
 		Offsets::FFrame_CurrentNativeFunction = VersionInfo.FortniteVersion >= 20.40 ? 0x90 : 0x88;
-		Offsets::FFrame_Next = VersionInfo.EngineVersion >= 5.2 ? 0x18 : (VersionInfo.FortniteVersion >= 12.10 ? 0x20 : 0x28);
+		Offsets::FFrame_Next = VersionInfo.FortniteVersion >= 24.30 ? 0x18 : (VersionInfo.FortniteVersion >= 12.10 ? 0x20 : 0x28);
 
 		if (VersionInfo.EngineVersion < 4.22)
 			Offsets::ExecFunction = 0xB0;
