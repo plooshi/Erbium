@@ -48,11 +48,6 @@ namespace SDK
 			FName__Ctor(this, String.CStr(), 1);
 		}
 
-		FName(const FName& _Rhs)
-		{
-			*this = _Rhs;
-		}
-
 
 		bool IsValid() const
 		{
@@ -156,24 +151,6 @@ namespace SDK
 
 		operator bool() const {
 			return IsValid();
-		}
-
-		FName& operator=(const FName&& _Rhs)
-		{
-			ComparisonIndex = _Rhs.ComparisonIndex;
-			if (VersionInfo.FortniteVersion < 20)
-				Number = _Rhs.Number;
-
-			return *this;
-		}
-
-		FName& operator=(const FName& _Rhs)
-		{
-			ComparisonIndex = _Rhs.ComparisonIndex;
-			if (VersionInfo.FortniteVersion < 20)
-				Number = _Rhs.Number;
-
-			return *this;
 		}
 	};
 
