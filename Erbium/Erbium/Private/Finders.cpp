@@ -3012,7 +3012,7 @@ void FindNullsAndRetTrues()
             NullFuncs.push_back(RequestExitWithStatus);
     }
 
-    if (VersionInfo.EngineVersion >= 4.21)
+    if (/*VersionInfo.EngineVersion >= 4.21*/ std::floor(VersionInfo.FortniteVersion)  == 15)
     {
         if (VersionInfo.EngineVersion == 4.21 || VersionInfo.EngineVersion == 4.22)
             RetTrueFuncs.push_back(Memcury::Scanner::FindPattern("4C 89 4C 24 20 55 56 57 41 56 48 8D 6C 24 D1").Get());
@@ -3023,7 +3023,7 @@ void FindNullsAndRetTrues()
             if (!sRef)
                 sRef = Memcury::Scanner::FindStringRef(L"CanActivateAbility %s failed, called with invalid Handle", true, 0, VersionInfo.EngineVersion >= 5.0).Get();
 
-            /*if (sRef)
+            if (sRef)
             {
                 for (int i = 0; i < 0x2000; i++)
                 {
@@ -3040,7 +3040,7 @@ void FindNullsAndRetTrues()
                         break;
                     }
                 }
-            }*/
+            }
         }
     }
 
