@@ -262,6 +262,7 @@ public:
     DEFINE_FUNC(Validation_IsFlyingPossible, bool);
     DEFINE_FUNC(ClientCreativePhoneCreated, void);
     DEFINE_FUNC(GetQuestManager, UFortQuestManager*);
+    DEFINE_FUNC(OnRep_IsCreativeQuickbarEnabled, void);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);

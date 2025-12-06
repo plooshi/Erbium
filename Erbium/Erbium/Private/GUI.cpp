@@ -404,7 +404,7 @@ void GUI::Init()
                         continue;
                     auto Item = (UFortWorldItemDefinition*)Object;
 
-                    FString Name = UKismetTextLibrary::Conv_TextToString(Item->DisplayName);
+                    FString Name = UKismetTextLibrary::Conv_TextToString(Item->HasDisplayName() ? Item->DisplayName : Item->ItemName);
 
                     ss << "- " << UKismetSystemLibrary::GetPathName(Item).ToString() << "\n";
                     ss << "-     Name: " << (Name.GetData() ? Name.ToString() : "None") << "\n";

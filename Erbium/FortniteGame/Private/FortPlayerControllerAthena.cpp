@@ -2807,7 +2807,11 @@ void AFortPlayerControllerAthena::ServerTeleportToPlaygroundLobbyIsland(UObject*
 		PlayerController->WorldInventory->Remove(ItemEntry->ItemGuid);
 
 	if (PlayerController->HasbIsCreativeQuickbarEnabled())
+	{
+		auto OldbIsCreativeQuickbarEnabled = PlayerController->bIsCreativeQuickbarEnabled;
 		PlayerController->bIsCreativeQuickbarEnabled = false;
+		PlayerController->OnRep_IsCreativeQuickbarEnabled(OldbIsCreativeQuickbarEnabled);
+	}
 	if (PlayerController->HasbIsCreativeQuickmenuEnabled())
 		PlayerController->bIsCreativeQuickmenuEnabled = false;
 	if (PlayerController->HasbIsCreativeModeEnabled())
@@ -3120,8 +3124,6 @@ void AFortPlayerControllerAthena::ServerLoadingScreenDropped_(UObject* Context, 
 	Stack.IncrementCode();
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
 
-	if (wcsstr(FConfiguration::Playlist, L"/Game/Athena/Playlists/Creative/Playlist_PlaygroundV2.Playlist_PlaygroundV2"))
-		AFortAthenaCreativePortal::Create(PlayerController);
 
 	callOG(PlayerController, Stack.GetCurrentNativeFunction(), ServerLoadingScreenDropped);
 }
@@ -3276,7 +3278,7 @@ void AFortPlayerControllerAthena::PostLoadHook()
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerRequestSeatChange"), ServerRequestSeatChange_, ServerRequestSeatChange_OG);
 
-	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerLoadingScreenDropped"), ServerLoadingScreenDropped_, ServerLoadingScreenDropped_OG);
+	//Utils::ExecHook(GetDefaultObj()->GetFunction("ServerLoadingScreenDropped"), ServerLoadingScreenDropped_, ServerLoadingScreenDropped_OG);
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCreativeSetFlightSpeedIndex"), ServerCreativeSetFlightSpeedIndex);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCreativeSetFlightSprint"), ServerCreativeSetFlightSprint);
