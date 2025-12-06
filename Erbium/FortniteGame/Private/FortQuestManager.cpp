@@ -168,9 +168,9 @@ void GiveAccolade(AFortPlayerControllerAthena* PlayerController, UFortAccoladeIt
     Info->RestedXPRemaining = Info->EventXpValue;
     Info->TotalXpEarnedInMatch = Info->EventXpValue + PlayerController->XPComponent->TotalXpEarned;
     Info->Priority = Accolade->Priority;
-    Info->SimulatedText = Accolade->Description;
+    Info->SimulatedText = Accolade->HasDescription() ? Accolade->Description : Accolade->ItemDescription;
     if (FXPEventInfo::HasSimulatedName())
-        Info->SimulatedName = Accolade->DisplayName;
+        Info->SimulatedName = Accolade->HasDisplayName() ? Accolade->DisplayName : Accolade->ItemName;
     Info->EventName = Accolade->Name;
     Info->SeasonBoostValuePortion = 0;
     if (FXPEventInfo::HasPlayerController())
@@ -246,8 +246,8 @@ void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEv
 	auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
 	auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 
-	auto Playlist = VersionInfo.FortniteVersion >= 3.5 ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
-	
+    auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount() ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
+    
 	if (Playlist && Playlist->HasGameplayTagContainer())
 		ContextTags.AppendTags(Playlist->GameplayTagContainer);
 	AdditionalSourceTags.AppendTags(PlayerSourceTags);

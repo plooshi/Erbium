@@ -79,11 +79,15 @@ public:
     DEFINE_PROP(DisplayName, FText);
     DEFINE_PROP(ShortDescription, FText);
     DEFINE_PROP(Description, FText);
+    DEFINE_PROP(ItemName, FText);
+    DEFINE_PROP(ItemShortDescription, FText);
+    DEFINE_PROP(ItemDescription, FText);
     DEFINE_PROP(Rarity, uint8);
     DEFINE_BITFIELD_PROP(bSupportsQuickbarFocus);
 
     DEFINE_FUNC(CreateTemporaryItemInstanceBP, UFortItem*);
     DEFINE_FUNC(GetItemComponentByClass, UObject*);
+    DEFINE_FUNC(GetRichDescription, FText);
 
     UFortItemComponent_Pickup* GetPickupComponent() const
     {

@@ -401,7 +401,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 	auto Time = UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
 
 	auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
-	auto Playlist = VersionInfo.FortniteVersion >= 3.5 ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
+    auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount() ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
 	
     if constexpr (FConfiguration::WebhookURL && *FConfiguration::WebhookURL)
     {

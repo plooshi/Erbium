@@ -99,6 +99,7 @@ public:
     DEFINE_PROP(MoveSoundStimulusBroadcastInterval, uint16_t);
     DEFINE_PROP(Damagers, TArray<FDamagerInfo>);
     DEFINE_PROP(LastReplicatedEmoteExecuted, UObject*);
+    DEFINE_PROP(Mesh, UActorComponent*);
 
     DEFINE_FUNC(BeginSkydiving, void);
     DEFINE_FUNC(GetHealth, float);

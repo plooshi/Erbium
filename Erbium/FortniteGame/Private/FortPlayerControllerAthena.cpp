@@ -69,7 +69,8 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 	auto Num = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Num();
 
 	auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
-	auto Playlist = VersionInfo.FortniteVersion >= 3.5 ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
+	
+    auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount() ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
 	if (Playlist && Playlist->RespawnType > 0 && Num > 0)
 	{
 		if (FConfiguration::bLateGame)
@@ -186,13 +187,40 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 			PlayerController->WorldInventory->GiveItem(ConeBuild);
 			PlayerController->WorldInventory->GiveItem(EditTool);
 		}
+		else
+			for (int i = 0; i < GameMode->StartingItems.Num(); i++)
+			{
+				auto& StartingItem = GameMode->StartingItems.Get(i, FItemAndCount::Size());
 
-		for (int i = 0; i < GameMode->StartingItems.Num(); i++)
+				if (StartingItem.Count && (!SmartItemDefClass || !StartingItem.Item->IsA(SmartItemDefClass)))
+					PlayerController->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
+			}
+
+
+		auto pickaxeEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([](FFortItemEntry& entry)
+			{ return entry.ItemDefinition->IsA<UFortWeaponMeleeItemDefinition>(); }, FFortItemEntry::Size());
+
+		if (pickaxeEntry)
 		{
-			auto& StartingItem = GameMode->StartingItems.Get(i, FItemAndCount::Size());
+			PlayerController->ServerExecuteInventoryItem(pickaxeEntry->ItemGuid);
+			if (VersionInfo.FortniteVersion < 3)
+			{
+				auto& QuickBar = (AFortInventory::IsPrimaryQuickbar(pickaxeEntry->ItemDefinition) || pickaxeEntry->ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest()) ? PlayerController->QuickBars->PrimaryQuickBar : PlayerController->QuickBars->SecondaryQuickBar;
+				int i = 0;
+				for (i = 0; i < QuickBar.Slots.Num(); i++)
+				{
+					auto& Slot = QuickBar.Slots.Get(i, FQuickBarSlot::Size());
 
-			if (StartingItem.Count && (!SmartItemDefClass || !StartingItem.Item->IsA(SmartItemDefClass)))
-				PlayerController->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
+					for (auto& SlotItem : Slot.Items)
+						if (SlotItem == pickaxeEntry->ItemGuid)
+						{
+							PlayerController->QuickBars->ServerActivateSlotInternal(0, i, 0.f, true);
+							break;
+						}
+				}
+			}
+			else
+				PlayerController->ClientEquipItem(pickaxeEntry->ItemGuid, true);
 		}
 
 		UFortKismetLibrary::UpdatePlayerCustomCharacterPartsVisualization(PlayerController->PlayerState);
@@ -342,6 +370,17 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryItem_(UObject* Context, 
 
 	if (auto Gadget = ItemDefinition->Cast<UFortGadgetItemDefinition>())
 		ItemDefinition = Gadget->GetWeaponItemDefinition();
+	else if (ItemDefinition->IsA(UFortDecoItemDefinition::StaticClass()))
+	{
+		PlayerController->MyFortPawn->PickUpActor(nullptr, ItemDefinition);
+		((AFortWeapon*)PlayerController->MyFortPawn->CurrentWeapon)->ItemEntryGuid = ItemGuid;
+
+		static auto ContextTrapClass = FindClass("FortDecoTool_ContextTrap");
+		if (PlayerController->MyFortPawn->CurrentWeapon->IsA(ContextTrapClass))
+			((AFortWeapon*)PlayerController->MyFortPawn->CurrentWeapon)->ContextTrapItemDefinition = ItemDefinition;
+
+		return;
+	}
 
 
 	auto Weapon = PlayerController->MyFortPawn->EquipWeaponDefinition(ItemDefinition, ItemGuid, entry->HasTrackerGuid() ? entry->TrackerGuid : FGuid(), false);
@@ -1139,8 +1178,8 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 
 	if (!IsRespawningAllowedFunc)
 	{
-		auto Playlist = VersionInfo.FortniteVersion >= 3.5 ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
-
+        auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount() ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
+		
 		// respawn except storm needs to be fixed
 		bRespawnAllowed = Playlist ? Playlist->RespawnType > 0 : false;
 	}
@@ -2354,7 +2393,7 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 				auto OldWeapon = Pawn->CurrentWeapon;
 
 				PlayerController->ServerExecuteInventoryItem(ItemEntry->ItemGuid);
-				//PlayerController->ClientEquipItem(ItemEntry->ItemGuid, true);
+				PlayerController->ClientEquipItem(ItemEntry->ItemGuid, true);
 				if (Pawn->HasPreviousWeapon())
 					Pawn->PreviousWeapon = OldWeapon;
 

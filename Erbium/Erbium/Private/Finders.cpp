@@ -3023,7 +3023,7 @@ void FindNullsAndRetTrues()
             if (!sRef)
                 sRef = Memcury::Scanner::FindStringRef(L"CanActivateAbility %s failed, called with invalid Handle", true, 0, VersionInfo.EngineVersion >= 5.0).Get();
 
-            if (sRef)
+            /*if (sRef)
             {
                 for (int i = 0; i < 0x2000; i++)
                 {
@@ -3040,7 +3040,7 @@ void FindNullsAndRetTrues()
                         break;
                     }
                 }
-            }
+            }*/
         }
     }
 
