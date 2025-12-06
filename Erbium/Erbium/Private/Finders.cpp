@@ -3012,7 +3012,7 @@ void FindNullsAndRetTrues()
             NullFuncs.push_back(RequestExitWithStatus);
     }
 
-    if (/*VersionInfo.EngineVersion >= 4.21*/ std::floor(VersionInfo.FortniteVersion)  == 15)
+    if (VersionInfo.EngineVersion >= 4.21)
     {
         if (VersionInfo.EngineVersion == 4.21 || VersionInfo.EngineVersion == 4.22)
             RetTrueFuncs.push_back(Memcury::Scanner::FindPattern("4C 89 4C 24 20 55 56 57 41 56 48 8D 6C 24 D1").Get());
@@ -3063,6 +3063,11 @@ void FindNullsAndRetTrues()
                 break;
             }
         }
+    }
+
+    if (VersionInfo.FortniteVersion >= 23)
+    {
+        NullFuncs.push_back(Memcury::Scanner::FindStringRef(L"STAT_FortCurieVoxelFirePropagationManager_IgniteGrassInBounds").ScanFor({ 0x48, 0x8B, 0xC4 }, false).Get());
     }
 
     if (VersionInfo.EngineVersion < 5.0)

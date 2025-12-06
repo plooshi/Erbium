@@ -135,6 +135,7 @@ public:
     DefUHookOg(Athena_MedConsumable_Triggered);
     DefUHookOg(ServerOnExitVehicle_);
     DefUHookOg(EmoteStopped_);
+    static void ServerHandlePickupWithRequestedSwap(UObject*, FFrame&);
 
     InitPostLoadHooks;
 };

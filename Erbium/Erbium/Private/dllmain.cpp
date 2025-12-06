@@ -72,8 +72,8 @@ void Main()
         {
             uint32 Offset = DefaultCurieGlobals->GetOffset("bEnableCurie");
 
-            if (Offset != -1)
-                *(bool*)(uintptr_t(DefaultCurieGlobals) + Offset) = false;
+            //if (Offset != -1)
+            //    *(bool*)(uintptr_t(DefaultCurieGlobals) + Offset) = false;
         }
 #endif
     }

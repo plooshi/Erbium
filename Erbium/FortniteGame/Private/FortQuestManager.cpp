@@ -266,6 +266,9 @@ void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEv
 
             auto Accolade = (UFortAccoladeItemDefinition*)UKismetSystemLibrary::GetObjectFromPrimaryAssetId(Row->AccoladePrimaryAssetId);
 
+            if (!Accolade)
+                continue;
+
             if (Row->bOnceOnly && OnlyOnceMap.contains(Accolade))
                 continue;
 

@@ -92,8 +92,8 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 			}
 			if (VersionInfo.FortniteVersion < 3 && Entry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest())
 			{
-				PlayerController->ServerExecuteInventoryItem(Entry.ItemGuid);
-				PlayerController->QuickBars->ServerActivateSlotInternal(0, 0, 0.f, true);
+				//PlayerController->ServerExecuteInventoryItem(Entry.ItemGuid);
+				//PlayerController->QuickBars->ServerActivateSlotInternal(0, 0, 0.f, true);
 			}
 		}
 
@@ -197,31 +197,14 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 			}
 
 
-		auto pickaxeEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([](FFortItemEntry& entry)
+		/*auto pickaxeEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([](FFortItemEntry& entry)
 			{ return entry.ItemDefinition->IsA<UFortWeaponMeleeItemDefinition>(); }, FFortItemEntry::Size());
 
-		if (pickaxeEntry)
+		if (pickaxeEntry && VersionInfo.FortniteVersion > 3)
 		{
 			PlayerController->ServerExecuteInventoryItem(pickaxeEntry->ItemGuid);
-			if (VersionInfo.FortniteVersion < 3)
-			{
-				auto& QuickBar = (AFortInventory::IsPrimaryQuickbar(pickaxeEntry->ItemDefinition) || pickaxeEntry->ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest()) ? PlayerController->QuickBars->PrimaryQuickBar : PlayerController->QuickBars->SecondaryQuickBar;
-				int i = 0;
-				for (i = 0; i < QuickBar.Slots.Num(); i++)
-				{
-					auto& Slot = QuickBar.Slots.Get(i, FQuickBarSlot::Size());
-
-					for (auto& SlotItem : Slot.Items)
-						if (SlotItem == pickaxeEntry->ItemGuid)
-						{
-							PlayerController->QuickBars->ServerActivateSlotInternal(0, i, 0.f, true);
-							break;
-						}
-				}
-			}
-			else
-				PlayerController->ClientEquipItem(pickaxeEntry->ItemGuid, true);
-		}
+			PlayerController->ClientEquipItem(pickaxeEntry->ItemGuid, true);
+		}*/
 
 		UFortKismetLibrary::UpdatePlayerCustomCharacterPartsVisualization(PlayerController->PlayerState);
 		if (!UFortKismetLibrary::UpdatePlayerCustomCharacterPartsVisualization__Ptr && ApplyCharacterCustomization)
@@ -2788,8 +2771,8 @@ void AFortPlayerControllerAthena::EnterAircraft(UObject* Object, AActor* Aircraf
 			}
 			if (VersionInfo.FortniteVersion < 3 && Entry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest())
 			{
-				PlayerController->ServerExecuteInventoryItem(Entry.ItemGuid);
-				PlayerController->QuickBars->ServerActivateSlotInternal(0, 0, 0.f, true);
+				//PlayerController->ServerExecuteInventoryItem(Entry.ItemGuid);
+				//PlayerController->QuickBars->ServerActivateSlotInternal(0, 0, 0.f, true);
 			}
 		}
 

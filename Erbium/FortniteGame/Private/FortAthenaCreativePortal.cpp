@@ -78,7 +78,7 @@ AFortAthenaCreativePortal* AFortAthenaCreativePortal::Create(AFortPlayerControll
 		LevelSaveComponent->RestrictedPlotDefinition = RestrictedPlotDefinition;
 		if (LevelSaveComponent->HasPlotPermissions())
 			LevelSaveComponent->PlotPermissions.Permission = 1;
-		else
+		else if (Portal->LinkedVolume->HasPlayspace())
 		{
 			auto PermissionComponent = (UPlayspaceComponent_CreativeToolsPermission*)Portal->LinkedVolume->Playspace->GetComponentByClass(UPlayspaceComponent_CreativeToolsPermission::StaticClass());
 

@@ -6,6 +6,8 @@
 #include "../../FortniteGame/Public/FortPlayerControllerAthena.h"
 #include "../../Engine/Public/NetDriver.h"
 #include "../../FortniteGame/Public/FortGameMode.h"
+#include "../../FortniteGame/Public/FortWeapon.h"
+#include "../../FortniteGame/Public/FortKismetLibrary.h"
 
 int Misc::GetNetMode() 
 {
@@ -406,6 +408,88 @@ __int64 CrashSomething(__int64 a1, __int64 a2)
 	return CrashSomethingOG(a1, a2);
 }
 
+class AFortLightweightProjectileManager : public AActor
+{
+public:
+	UCLASS_COMMON_MEMBERS(AFortLightweightProjectileManager);
+};
+
+class AFortLightweightProjectileConfig : public AActor
+{
+public:
+	UCLASS_COMMON_MEMBERS(AFortLightweightProjectileConfig);
+
+	DEFINE_PROP(Speed, FScalableFloat);
+	DEFINE_PROP(GravityScale, FScalableFloat);
+};
+
+struct FSpawnProjectileParams
+{
+public:
+	USCRIPTSTRUCT_COMMON_MEMBERS(FSpawnProjectileParams);
+
+	DEFINE_STRUCT_PROP(SpawnLocation, FVector);
+	DEFINE_STRUCT_PROP(SpawnDirection, FRotator);
+	DEFINE_STRUCT_PROP(OptionalAssociatedItemDef, UFortItemDefinition*);
+	DEFINE_STRUCT_PROP(InitialSpeed, float);
+	DEFINE_STRUCT_PROP(MaxSpeed, float);
+	DEFINE_STRUCT_PROP(GravityScale, float);
+};
+
+class AFortProjectileAthena : public AActor
+{
+public:
+	UCLASS_COMMON_MEMBERS(AFortProjectileAthena);
+};
+
+void (*TestOG)(AFortLightweightProjectileManager* ProjectileManager, TWeakObjectPtr<AFortPlayerPawnAthena> WeakPawn, TWeakObjectPtr<AFortWeapon> WeakWeapon, TSubclassOf<AFortLightweightProjectileConfig>& ConfigClass, FVector Location, FVector Direction, uint8_t Type, int a8, int a9);
+void Test(AFortLightweightProjectileManager* ProjectileManager, TWeakObjectPtr<AFortPlayerPawnAthena> WeakPawn, TWeakObjectPtr<AFortWeapon> WeakWeapon, TSubclassOf<AFortLightweightProjectileConfig>& ConfigClass, FVector Location, FVector Direction, uint8_t Type, int a8, int a9)
+{
+	TestOG(ProjectileManager, WeakPawn, WeakWeapon, ConfigClass, Location, Direction, Type, a8, a9);
+
+	auto Config = (AFortLightweightProjectileConfig*)ConfigClass->GetDefaultObj();
+
+	auto Params = (FSpawnProjectileParams*)malloc(FSpawnProjectileParams::Size());
+	memset(Params, 0, FSpawnProjectileParams::Size());
+
+	Params->SpawnLocation = Location;
+
+	const double RAD_TO_DEG = 57.29577951308232;
+
+	auto Weapon = WeakWeapon.Get();
+
+	auto Pitch = asin(Direction.Z) * RAD_TO_DEG;
+	auto Yaw = atan2(Direction.Y, Direction.X) * RAD_TO_DEG;
+	Params->SpawnDirection.Pitch = Pitch;
+	Params->SpawnDirection.Yaw = Yaw;
+	Params->SpawnDirection.Roll = 0;
+	Params->OptionalAssociatedItemDef = Weapon->WeaponData;
+	Params->InitialSpeed = Config->Speed.Evaluate();
+	Params->MaxSpeed = Params->InitialSpeed;
+	Params->GravityScale = Config->GravityScale.Evaluate();
+
+	UFortKismetLibrary::SpawnProjectileWithParams(AFortProjectileAthena::StaticClass(), Weapon, *Params);
+	free(Params);
+}
+
+struct FTickFunction
+{
+public:
+	USCRIPTSTRUCT_COMMON_MEMBERS(FTickFunction);
+
+	DEFINE_STRUCT_BITFIELD_PROP(bAllowTickOnDedicatedServer);
+};
+
+void (*Test2OG)(FTickFunction* _this, ULevel* Level);
+void Test2(FTickFunction* _this, ULevel* Level)
+{
+	if (!_this->bAllowTickOnDedicatedServer)
+	{
+		return;
+	}
+	return Test2OG(_this, Level);
+}
+
 void Misc::Hook()
 {
 	if (VersionInfo.FortniteVersion == 23.00 || (VersionInfo.FortniteVersion >= 24.30 && VersionInfo.FortniteVersion != 28.30 && VersionInfo.FortniteVersion != 29.40) || VersionInfo.FortniteVersion >= 30)
@@ -514,4 +598,8 @@ void Misc::Hook()
 		
 		Utils::Hook(sig, CrashSomething, CrashSomethingOG);
 	}
+
+	//Utils::Hook(ImageBase + 0x1CE85F4, Test);
+	//Utils::Hook(ImageBase + 0x2788BEC, Test, TestOG);
+	//Utils::Hook(Memcury::Scanner::FindPattern("48 89 5C 24 ?? 57 48 83 EC ?? 48 8B DA 48 8B F9 E8 ?? ?? ?? ?? 84 C0 75 ?? 48 83 79").Get(), Test2, Test2OG);
 }
