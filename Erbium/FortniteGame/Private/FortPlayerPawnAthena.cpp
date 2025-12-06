@@ -161,7 +161,7 @@ void AFortPlayerPawnAthena::ServerHandlePickupWithRequestedSwap(UObject* Context
 
 	if (!Pawn || !Pickup || Pickup->bPickedUp)
 		return;
-	auto 
+	auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
 
 	PlayerController->bTryPickupSwap = true;
 
