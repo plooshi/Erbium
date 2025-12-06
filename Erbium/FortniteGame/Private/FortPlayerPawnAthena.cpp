@@ -237,11 +237,6 @@ void AFortPlayerPawnAthena::ServerSendZiplineState(UObject* Context, FFrame& Sta
 	if (OnRep_ZiplineState)
 		((void (*)(AFortPlayerPawnAthena*)) OnRep_ZiplineState)(Pawn);
 
-	static auto OnRep_ZiplineStateFn = Pawn->GetFunction("OnRep_ZiplineState");
-
-	if (OnRep_ZiplineStateFn)
-		Pawn->Call(OnRep_ZiplineStateFn, PreviousState);
-
 	if (State.bJumped)
 	{
 		auto Velocity = Pawn->CharacterMovement->Velocity;
