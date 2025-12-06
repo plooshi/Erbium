@@ -1,6 +1,12 @@
 name: Build Erbium
 
-on: [ "push", "pull_request" ]
+on:
+  push:
+    branches: [ "main" ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -20,7 +26,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Erbium
-          path: ./x64/Release
+          path: ./x64/Release/Erbium.dll
           if-no-files-found: warn
           retention-days: 90
           
@@ -32,6 +38,28 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ErbiumClient
-          path: ./x64/Client
+          path: ./x64/Client/Erbium.dll
           if-no-files-found: warn
           retention-days: 90
+
+  release:
+    needs: build
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event_name == 'workflow_dispatch' && format('manual-{0}', github.run_id) || '' }}
+          generate_release_notes: true
+          files: |
+            artifacts/Erbium/Erbium.dll
+            artifacts/ErbiumClient/Erbium.dll
