@@ -48,6 +48,11 @@ namespace SDK
 			FName__Ctor(this, String.CStr(), 1);
 		}
 
+		FName(const FName& _Rhs)
+		{
+			*this = _Rhs;
+		}
+
 
 		bool IsValid() const
 		{
@@ -153,8 +158,23 @@ namespace SDK
 			return IsValid();
 		}
 
-		FName& operator()
+		FName& operator=(const FName&& _Rhs)
 		{
+			ComparisonIndex = _Rhs.ComparisonIndex;
+			if (VersionInfo.FortniteVersion < 20)
+				Number = _Rhs.Number;
+
+			return *this;
+		}
+
+		FName& operator=(const FName& _Rhs)
+		{
+			ComparisonIndex = _Rhs.ComparisonIndex;
+			if (VersionInfo.FortniteVersion < 20)
+				Number = _Rhs.Number;
+
+			return *this;
+		}
 	};
 
 	class ParamPair
