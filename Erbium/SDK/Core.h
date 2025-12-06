@@ -153,6 +153,8 @@ namespace SDK
 			return IsValid();
 		}
 
+		FName& operator()
+		{
 	};
 
 	class ParamPair
@@ -1303,11 +1305,12 @@ namespace SDK
 	{
 		auto DefaultObj = UObject::StaticClass()->GetDefaultObj();
 
-		for (int i = 0; i < 0x100; i++)
-			if (__int64(DefaultObj->Vft[i]) == PEAddr)
-			{
-				Offsets::ProcessEventVft = i;
-				break;
-			}
+		if (DefaultObj)
+			for (int i = 0; i < 0x100; i++)
+				if (__int64(DefaultObj->Vft[i]) == PEAddr)
+				{
+					Offsets::ProcessEventVft = i;
+					break;
+				}
 	}
 }

@@ -167,7 +167,7 @@ void AFortPlayerPawnAthena::ServerHandlePickupWithRequestedSwap(UObject* Context
 
 	auto SetPickupTarget = (void(*&)(AFortPickupAthena*, AFortPlayerPawnAthena*, float, FVector&, bool))SetPickupTarget_;
 
-	SetPickupTarget(Pickup, Pawn, InFlyTime / (Pawn->HasPickupSpeedMultiplier() ? Pawn->PickupSpeedMultiplier : 1), Direction, bPlayPickupSound);
+	SetPickupTarget(Pickup, Pawn, InFlyTime / (Pawn->HasPickupSpeedMultiplier() ? Pawn->PickupSpeedMultiplier : 1), InStartDirection, bPlayPickupSound);
 	/*Pickup->SetLifeSpan(5.f);
 	Pickup->PickupLocationData.bPlayPickupSound = bPlayPickupSound;
 	Pickup->PickupLocationData.PickupGuid = Pickup->PrimaryPickupItemEntry.ItemGuid;
