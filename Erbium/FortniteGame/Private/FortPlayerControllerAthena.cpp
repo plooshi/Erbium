@@ -13,6 +13,8 @@
 #include "../Public/BattleRoyaleGamePhaseLogic.h"
 #include "../../Erbium/Public/GUI.h"
 #include <FortniteGame/Public/FortAthenaCreativePortal.h>
+#include "FortniteGame/Public/FortMissionGenerator.h"
+
 
 void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena* PlayerController, FVector& Loc, FRotator& Rot)
 {
