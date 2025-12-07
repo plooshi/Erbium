@@ -66,7 +66,7 @@ void ClientThread()
 
 			bEOREnabled ^= 1;
 		}
-		if (!bPressed && GetAsyncKeyState(VK_F4))
+		else if (!bPressed && GetAsyncKeyState(VK_F4))
 		{
 			bPressed = true;
 
@@ -245,8 +245,8 @@ void Client::Init()
 
 		if (VersionInfo.FortniteVersion < 11)
 			Utils::Hook(SelectEditAddr, SelectEdit, SelectEditOG);
-		if (VersionInfo.FortniteVersion < 15.20)
-			Utils::Hook(PerformBuildingEditInteractionAddr, PerformBuildingEditInteraction, PerformBuildingEditInteractionOG);
+		//if (VersionInfo.FortniteVersion < 15.20)
+		//	Utils::Hook(PerformBuildingEditInteractionAddr, PerformBuildingEditInteraction, PerformBuildingEditInteractionOG);
 		if (VersionInfo.FortniteVersion < 24.30)
 			Utils::Hook(SelectResetAddr, SelectReset, SelectResetOG);
 

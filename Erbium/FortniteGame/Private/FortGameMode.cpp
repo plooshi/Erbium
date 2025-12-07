@@ -1443,23 +1443,23 @@ void AFortGameMode::HandlePostSafeZonePhaseChanged(AFortGameMode* GameMode, int 
         0.f,
     };
 
+    static auto DurationsOffset = 0;
+    if (DurationsOffset == 0)
+    {
+        DurationsOffset = 0x258;
+
+        if (VersionInfo.FortniteVersion >= 18)
+            DurationsOffset = 0x248;
+        else if (VersionInfo.FortniteVersion < 15.20)
+            DurationsOffset = 0x1f8;
+    }
+
+    auto SafeZoneDefinition = &GameState->MapInfo->SafeZoneDefinition;
+    TArray<float>& Durations = *(TArray<float>*)(SafeZoneDefinition + DurationsOffset);
+    TArray<float>& HoldDurations = *(TArray<float>*)(SafeZoneDefinition + DurationsOffset - 0x10);
+
     if (VersionInfo.FortniteVersion >= 13.00)
     {
-        auto SafeZoneDefinition = &GameState->MapInfo->SafeZoneDefinition;
-
-        static auto DurationsOffset = 0;
-        if (DurationsOffset == 0)
-        {
-            DurationsOffset = 0x258;
-
-            if (VersionInfo.FortniteVersion >= 18)
-                DurationsOffset = 0x248;
-            else if (VersionInfo.FortniteVersion < 15.20)
-                DurationsOffset = 0x1f8;
-        }
-
-        TArray<float>& Durations = *(TArray<float>*)(SafeZoneDefinition + DurationsOffset);
-        TArray<float>& HoldDurations = *(TArray<float>*)(SafeZoneDefinition + DurationsOffset - 0x10);
 
 
         static bool bSetDurations = false;
@@ -1482,7 +1482,7 @@ void AFortGameMode::HandlePostSafeZonePhaseChanged(AFortGameMode* GameMode, int 
             }
         }
 
-        if (!FConfiguration::bLateGame)
+        if (!FConfiguration::bLateGame || GameMode->SafeZonePhase > FConfiguration::LateGameZone)
         {
             auto Duration = Durations[NewSafeZonePhase];
             auto HoldDuration = HoldDurations[NewSafeZonePhase];
@@ -1518,7 +1518,8 @@ void AFortGameMode::HandlePostSafeZonePhaseChanged(AFortGameMode* GameMode, int 
 
         if (FConfiguration::bLateGame && FConfiguration::bLateGameLongZone)
             GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = 676767.f;
-        //GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
+        if (VersionInfo.FortniteVersion >= 13)
+            GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Durations[FConfiguration::LateGameZone];
     }
 
     if (FConfiguration::bLateGame && (SafeZoneLoc.X != 0 || SafeZoneLoc.Y != 0 || SafeZoneLoc.Z != 0))
