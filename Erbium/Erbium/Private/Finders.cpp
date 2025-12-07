@@ -2761,7 +2761,7 @@ uint64_t FindSetPickupTarget()
     if (!sRef.IsValid())
         sRef = Memcury::Scanner::FindStringRef(L"Attempted to spawn non-world item %s!", false, 0, VersionInfo.FortniteVersion >= 17, false);
 
-    for (int i = 0; i < 2000; i++)
+    for (int i = 0; i < 0x1500; i++)
     {
         auto Ptr = (uint8_t*)(sRef.Get() - i);
 
