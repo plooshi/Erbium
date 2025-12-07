@@ -2,7 +2,7 @@
 #include "pch.h"
 #include "../Public/Client.h"
 #include <thread>
-#include "../Public/Configuration.h"
+#include "../../../Erbium/Erbium/Public/Configuration.h"
 
 void Main()
 {

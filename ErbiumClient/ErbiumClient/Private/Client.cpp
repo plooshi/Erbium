@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "../Public/FortPlaylistAthena.h"
-#include "../Public/Configuration.h"
+#include "../../../Erbium/Erbium/Public/Configuration.h"
 #include "../Public/FortPlayerControllerAthena.h"
 #include "../Public/Client.h"
 

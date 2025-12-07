@@ -18,9 +18,6 @@
     <ClInclude Include="ErbiumClient\Public\FortPlaylistAthena.h">
       <Filter>ErbiumClient\Public</Filter>
     </ClInclude>
-    <ClInclude Include="ErbiumClient\Public\Configuration.h">
-      <Filter>ErbiumClient\Public</Filter>
-    </ClInclude>
     <ClInclude Include="ErbiumClient\Public\FortPlayerControllerAthena.h">
       <Filter>ErbiumClient\Public</Filter>
     </ClInclude>
