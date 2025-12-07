@@ -52,8 +52,11 @@ AFortAthenaCreativePortal* AFortAthenaCreativePortal::Create(AFortPlayerControll
 
 	printf("[Creative] Assigned portal %s to %s\n", Portal->Name.ToString().c_str(), PlayerController->Name.ToString().c_str());
 
-	Portal->bIsPublishedPortal = false;
-	Portal->OnRep_PublishedPortal();
+	if (Portal->HasbIsPublishedPortal())
+	{
+		Portal->bIsPublishedPortal = false;
+		Portal->OnRep_PublishedPortal();
+	}
 
 	Portal->OwningPlayer = PlayerState->UniqueId;
 	Portal->OnRep_OwningPlayer();

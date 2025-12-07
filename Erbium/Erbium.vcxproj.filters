@@ -31,9 +31,6 @@
     <Filter Include="Erbium\Private">
       <UniqueIdentifier>{cbee2d3e-a608-4025-842c-261bc8d3e0d4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="SDK\Private">
-      <UniqueIdentifier>{b6d300f4-c2e8-4cbc-9420-3d721f18e365}</UniqueIdentifier>
-    </Filter>
     <Filter Include="ImGui">
       <UniqueIdentifier>{2665ea75-93ff-4597-8707-9410bd0d274e}</UniqueIdentifier>
     </Filter>
@@ -51,27 +48,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="SDK\Includes.h">
-      <Filter>SDK</Filter>
-    </ClInclude>
-    <ClInclude Include="SDK\Offsets.h">
-      <Filter>SDK</Filter>
-    </ClInclude>
-    <ClInclude Include="SDK\Defs.h">
-      <Filter>SDK</Filter>
-    </ClInclude>
-    <ClInclude Include="SDK\Core.h">
-      <Filter>SDK</Filter>
-    </ClInclude>
-    <ClInclude Include="SDK\Engine.h">
-      <Filter>SDK</Filter>
-    </ClInclude>
-    <ClInclude Include="SDK\Containers.h">
-      <Filter>SDK</Filter>
-    </ClInclude>
-    <ClInclude Include="SDK\Memcury.h">
-      <Filter>SDK</Filter>
-    </ClInclude>
     <ClInclude Include="framework.h">
       <Filter>Erbium\Public</Filter>
     </ClInclude>
@@ -224,6 +200,27 @@
     </ClInclude>
     <ClInclude Include="FortniteGame\Public\FortQuestManager.h">
       <Filter>FortniteGame\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\Includes.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\Memcury.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\Offsets.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\Containers.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\Core.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\Defs.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SDK\Engine.h">
+      <Filter>SDK</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

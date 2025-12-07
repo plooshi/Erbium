@@ -12,7 +12,7 @@
 #include "../Public/FortPhysicsPawn.h"
 #include "../Public/BattleRoyaleGamePhaseLogic.h"
 #include "../../Erbium/Public/GUI.h"
-#include <FortniteGame/Public/FortAthenaCreativePortal.h>
+#include "../Public/FortAthenaCreativePortal.h"
 
 void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena* PlayerController, FVector& Loc, FRotator& Rot)
 {
@@ -1409,9 +1409,9 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 	if (MaxStack > 1)
 	{
 		auto item = WorldInventory->Inventory.ItemInstances.Search([PickupEntry, MaxStack](UFortWorldItem* entry)
-			{ return entry->ItemEntry.ItemDefinition == PickupEntry->ItemDefinition && entry->ItemEntry.Count <= MaxStack; });
+			{ return entry->ItemEntry.ItemDefinition == PickupEntry->ItemDefinition && entry->ItemEntry.Count < MaxStack; });
 		auto itemEntry = WorldInventory->Inventory.ReplicatedEntries.Search([PickupEntry, MaxStack](FFortItemEntry& entry)
-			{ return entry.ItemDefinition == PickupEntry->ItemDefinition && entry.Count <= MaxStack; }, FFortItemEntry::Size());
+			{ return entry.ItemDefinition == PickupEntry->ItemDefinition && entry.Count < MaxStack; }, FFortItemEntry::Size());
 
 		if (item)
 		{
@@ -1468,6 +1468,15 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 		}
 		else
 		{
+			auto itemEntry2 = WorldInventory->Inventory.ReplicatedEntries.Search([PickupEntry, MaxStack](FFortItemEntry& entry)
+				{ return entry.ItemDefinition == PickupEntry->ItemDefinition && entry.Count >= MaxStack; }, FFortItemEntry::Size());
+
+			if (!itemEntry && itemEntry2 && !PickupEntry->ItemDefinition->bAllowMulti)
+			{
+				AFortInventory::SpawnPickup(Pawn->K2_GetActorLocation() + Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), *PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn, PickupEntry->Count, true, true, true, nullptr, FinalLoc);
+				return;
+			}
+
 			if (PickupEntry->Count > MaxStack)
 			{
 				auto OriginalCount = PickupEntry->Count;
@@ -2203,9 +2212,29 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 			if (args.size() == 3)
 				Count = strtol(args[2].c_str(), nullptr, 10);
 
-			auto ItemEntry = AFortInventory::MakeItemEntry(ItemDefinition, Count, 0);
-			PlayerController->InternalPickup(ItemEntry);
-			free(ItemEntry);
+			//auto ItemEntry = AFortInventory::MakeItemEntry(ItemDefinition, Count, 0);
+			//PlayerController->InternalPickup(ItemEntry);
+			//free(ItemEntry);
+			auto Pawn = PlayerController->Pawn;
+
+			FVector FinalLoc = Pawn ? Pawn->K2_GetActorLocation() : FVector();
+
+			FVector ForwardVector = Pawn ? Pawn->GetActorForwardVector() : FVector();
+			ForwardVector.Z = 0.0f;
+			ForwardVector.Normalize();
+
+			FinalLoc = FinalLoc + ForwardVector * 450.f;
+			FinalLoc.Z += 50.f;
+
+			const float RandomAngleVariation = ((float)rand() * 0.00109866634f) - 18.f;
+			const float FinalAngle = RandomAngleVariation * 0.017453292519943295f;
+
+			FinalLoc.X += cos(FinalAngle) * 100.f;
+			FinalLoc.Y += sin(FinalAngle) * 100.f;
+
+			auto Pickup = AFortInventory::SpawnPickup(FinalLoc, ItemDefinition, Count, 0, EFortPickupSourceTypeFlag::GetOther(), EFortPickupSpawnSource::GetUnset(), Pawn);
+
+			Pawn->ServerHandlePickup(Pickup, Pickup->PickupLocationData.FlyTime, FVector(), true);
 			PlayerController->ClientMessage(FString(L"Gave item!"), FName(), 1.f);
 			//PlayerController->WorldInventory->GiveItem(ItemDefinition, Count);
 		}
