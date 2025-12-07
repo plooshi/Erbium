@@ -53,7 +53,7 @@ void ClientThread()
 
 				if (PlayerController && !PlayerController->CheatManager)
 				{
-					PlayerController->CheatManager = (UFortCheatManager*)UGameplayStatics::SpawnObject(PlayerController->CheatClass, PlayerController);
+					PlayerController->CheatManager = (UFortCheatManager*)UGameplayStatics::SpawnObject(PlayerController->CheatClass.Get(), PlayerController);
 					PlayerController->CheatManager->ObjectFlags &= ~0x1000000;
 					TUObjectArray::GetItemByIndex(PlayerController->CheatManager->Index)->Flags &= ~0x4000000;
 				}
@@ -211,7 +211,6 @@ void Client::Init()
 						{
 							if (*(uint8_t*)(CompRef - i - x) == 0x48 && *(uint8_t*)(CompRef - i - x + 1) == 0x8D && *(uint8_t*)(CompRef - i - x + 2) == 0x05)
 							{
-								printf("%llx\n", CompRef - i - x);
 								PerformBuildingEditInteractionAddr = Memcury::Scanner(CompRef - i - x).RelativeOffset(3).Get();
 								break;
 							}
