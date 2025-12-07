@@ -1062,210 +1062,212 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 		}
 	}
 
-
-	auto KillerPlayerState = (AFortPlayerStateAthena*)DeathReport.KillerPlayerState;
-	auto KillerPawn = (AFortPlayerPawnAthena*)DeathReport.KillerPawn;
-	auto KillerPlayerController = KillerPlayerState ? (AFortPlayerControllerAthena*)KillerPlayerState->Owner : nullptr;
-
-	if (PlayerState->HasPawnDeathLocation())
-		PlayerState->PawnDeathLocation = PlayerController->Pawn ? PlayerController->Pawn->K2_GetActorLocation() : FVector();
-
-	if (PlayerState->HasDeathInfo())
+	if (VersionInfo.FortniteVersion > 1.8)
 	{
-		memset(&PlayerState->DeathInfo, 0, FDeathInfo::Size());
-		PlayerState->DeathInfo.bDBNO = PlayerController->Pawn ? PlayerController->Pawn->IsDBNO() : false;
-		if (FDeathInfo::HasKiller())
-			PlayerState->DeathInfo.Killer = KillerPlayerState;
-		if (FDeathInfo::HasDeathLocation())
-			PlayerState->DeathInfo.DeathLocation = PlayerState->HasPawnDeathLocation() ? PlayerState->PawnDeathLocation : (PlayerController->Pawn ? PlayerController->Pawn->K2_GetActorLocation() : FVector());
-		if (FDeathInfo::HasDeathTags())
-			PlayerState->DeathInfo.DeathTags = /*DeathReport.Tags*/ PlayerController->Pawn ? *(FGameplayTagContainer*)(__int64(&PlayerController->Pawn->MoveSoundStimulusBroadcastInterval) + (VersionInfo.FortniteVersion >= 11 && VersionInfo.FortniteVersion < 18 ? 0x18 : 0x10)) : FGameplayTagContainer();
-		if (FDeathInfo::HasDeathClassSlot())
-			PlayerState->DeathInfo.DeathClassSlot = -1;
-		PlayerState->DeathInfo.DeathCause = ToDeathCause(PlayerController->Pawn, DeathReport.Tags, PlayerState->DeathInfo.bDBNO);
-		//PlayerState->DeathInfo.Downer = KillerPlayerState;
-		if (FDeathInfo::HasFinisherOrDowner())
-			PlayerState->DeathInfo.FinisherOrDowner = KillerPlayerState ? KillerPlayerState : PlayerState;
-		if (FDeathInfo::HasFinisherOrDownerTags())
-			PlayerState->DeathInfo.FinisherOrDownerTags = KillerPawn ? KillerPawn->GameplayTags : PlayerController->Pawn->GameplayTags;
-		if (FDeathInfo::HasVictimTags())
-			PlayerState->DeathInfo.VictimTags = PlayerController->Pawn->GameplayTags;
-		if (FDeathInfo::HasDistance())
-			PlayerState->DeathInfo.Distance = PlayerController->Pawn ? (PlayerState->DeathInfo.DeathCause != /*EDeathCause::FallDamage*/ 1 ? (KillerPawn ? KillerPawn->GetDistanceTo(PlayerController->Pawn) : 0) : (PlayerController->MyFortPawn->HasLastFallDistance() ? PlayerController->MyFortPawn->LastFallDistance : 0)) : 0;
-		if (FDeathInfo::HasbInitialized())
-			PlayerState->DeathInfo.bInitialized = true;
-		PlayerState->OnRep_DeathInfo();
-	}
+		auto KillerPlayerState = (AFortPlayerStateAthena*)DeathReport.KillerPlayerState;
+		auto KillerPawn = (AFortPlayerPawnAthena*)DeathReport.KillerPawn;
+		auto KillerPlayerController = KillerPlayerState ? (AFortPlayerControllerAthena*)KillerPlayerState->Owner : nullptr;
 
-	if (KillerPlayerState && KillerPawn && KillerPawn->Controller && KillerPawn->Controller != PlayerController)
-	{
-		if (KillerPlayerState->HasKillScore())
-			KillerPlayerState->KillScore++;
-		else
-			KillerPlayerState->Kills++;
-		KillerPlayerState->OnRep_Kills();
-		if (KillerPlayerState->HasTeamKillScore())
+		if (PlayerState->HasPawnDeathLocation())
+			PlayerState->PawnDeathLocation = PlayerController->Pawn ? PlayerController->Pawn->K2_GetActorLocation() : FVector();
+
+		if (PlayerState->HasDeathInfo())
 		{
-			KillerPlayerState->TeamKillScore++;
-			KillerPlayerState->OnRep_TeamKillScore();
+			memset(&PlayerState->DeathInfo, 0, FDeathInfo::Size());
+			PlayerState->DeathInfo.bDBNO = PlayerController->Pawn ? PlayerController->Pawn->IsDBNO() : false;
+			if (FDeathInfo::HasKiller())
+				PlayerState->DeathInfo.Killer = KillerPlayerState;
+			if (FDeathInfo::HasDeathLocation())
+				PlayerState->DeathInfo.DeathLocation = PlayerState->HasPawnDeathLocation() ? PlayerState->PawnDeathLocation : (PlayerController->Pawn ? PlayerController->Pawn->K2_GetActorLocation() : FVector());
+			if (FDeathInfo::HasDeathTags())
+				PlayerState->DeathInfo.DeathTags = /*DeathReport.Tags*/ PlayerController->Pawn ? *(FGameplayTagContainer*)(__int64(&PlayerController->Pawn->MoveSoundStimulusBroadcastInterval) + (VersionInfo.FortniteVersion >= 11 && VersionInfo.FortniteVersion < 18 ? 0x18 : 0x10)) : FGameplayTagContainer();
+			if (FDeathInfo::HasDeathClassSlot())
+				PlayerState->DeathInfo.DeathClassSlot = -1;
+			PlayerState->DeathInfo.DeathCause = ToDeathCause(PlayerController->Pawn, DeathReport.Tags, PlayerState->DeathInfo.bDBNO);
+			//PlayerState->DeathInfo.Downer = KillerPlayerState;
+			if (FDeathInfo::HasFinisherOrDowner())
+				PlayerState->DeathInfo.FinisherOrDowner = KillerPlayerState ? KillerPlayerState : PlayerState;
+			if (FDeathInfo::HasFinisherOrDownerTags())
+				PlayerState->DeathInfo.FinisherOrDownerTags = KillerPawn ? KillerPawn->GameplayTags : PlayerController->Pawn->GameplayTags;
+			if (FDeathInfo::HasVictimTags())
+				PlayerState->DeathInfo.VictimTags = PlayerController->Pawn->GameplayTags;
+			if (FDeathInfo::HasDistance())
+				PlayerState->DeathInfo.Distance = PlayerController->Pawn ? (PlayerState->DeathInfo.DeathCause != /*EDeathCause::FallDamage*/ 1 ? (KillerPawn ? KillerPawn->GetDistanceTo(PlayerController->Pawn) : 0) : (PlayerController->MyFortPawn->HasLastFallDistance() ? PlayerController->MyFortPawn->LastFallDistance : 0)) : 0;
+			if (FDeathInfo::HasbInitialized())
+				PlayerState->DeathInfo.bInitialized = true;
+			PlayerState->OnRep_DeathInfo();
 		}
 
-		struct Test { AFortPlayerStateAthena* ps; uint8_t p[0x8]; };
-
-		Test t{ PlayerState };
-		KillerPlayerState->ClientReportKill(t);
-		if (KillerPlayerState->HasTeamKillScore())
-			KillerPlayerState->ClientReportTeamKill(KillerPlayerState->TeamKillScore);
-
-		for (auto& Damager : PlayerController->Pawn->Damagers)
+		if (KillerPlayerState && KillerPawn && KillerPawn->Controller && KillerPawn->Controller != PlayerController)
 		{
-			if (Damager.DamageCauser != KillerPlayerController && Damager.DamageCauser->IsA<AFortPlayerControllerAthena>())
+			if (KillerPlayerState->HasKillScore())
+				KillerPlayerState->KillScore++;
+			else
+				KillerPlayerState->Kills++;
+			KillerPlayerState->OnRep_Kills();
+			if (KillerPlayerState->HasTeamKillScore())
 			{
-				FGameplayTagContainer TargetTags{};
-				auto DamagerController = (AFortPlayerControllerAthena*)Damager.DamageCauser;
+				KillerPlayerState->TeamKillScore++;
+				KillerPlayerState->OnRep_TeamKillScore();
+			}
 
-				auto Interface = (IGameplayTagAssetInterface*)PlayerController->Pawn->GetInterface(IGameplayTagAssetInterface::StaticClass());
-				if (Interface)
+			struct Test { AFortPlayerStateAthena* ps; uint8_t p[0x8]; };
+
+			Test t{ PlayerState };
+			KillerPlayerState->ClientReportKill(t);
+			if (KillerPlayerState->HasTeamKillScore())
+				KillerPlayerState->ClientReportTeamKill(KillerPlayerState->TeamKillScore);
+
+			for (auto& Damager : PlayerController->Pawn->Damagers)
+			{
+				if (Damager.DamageCauser != KillerPlayerController && Damager.DamageCauser->IsA<AFortPlayerControllerAthena>())
 				{
-					auto Blud = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface->Vft[0x2];
-					Blud(Interface, &TargetTags);
-					//Interface->GetOwnedGameplayTags(&TargetTags);
+					FGameplayTagContainer TargetTags{};
+					auto DamagerController = (AFortPlayerControllerAthena*)Damager.DamageCauser;
+
+					auto Interface = (IGameplayTagAssetInterface*)PlayerController->Pawn->GetInterface(IGameplayTagAssetInterface::StaticClass());
+					if (Interface)
+					{
+						auto Blud = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface->Vft[0x2];
+						Blud(Interface, &TargetTags);
+						//Interface->GetOwnedGameplayTags(&TargetTags);
+					}
+
+					DamagerController->GetQuestManager(1)->SendStatEvent(DamagerController, EFortQuestObjectiveStatEvent::GetKillContribution(), 1, PlayerController->Pawn, TargetTags);
+
+					TargetTags.GameplayTags.Free();
+					TargetTags.ParentTags.Free();
+				}
+			}
+
+			FGameplayTagContainer TargetTags{};
+
+			auto Interface = (IGameplayTagAssetInterface*)PlayerController->Pawn->GetInterface(IGameplayTagAssetInterface::StaticClass());
+			if (Interface)
+			{
+				auto Blud = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface->Vft[0x2];
+				Blud(Interface, &TargetTags);
+				//Interface->GetOwnedGameplayTags(&TargetTags);
+			}
+
+			KillerPlayerController->GetQuestManager(1)->SendStatEvent(KillerPlayerController, EFortQuestObjectiveStatEvent::GetKill(), 1, PlayerController->Pawn, TargetTags);
+
+			TargetTags.GameplayTags.Free();
+			TargetTags.ParentTags.Free();
+		}
+
+		static auto IsRespawningAllowedFunc = GameState->GetFunction("IsRespawningAllowed");
+
+		bool bRespawnAllowed = false;
+
+		if (!IsRespawningAllowedFunc)
+		{
+			auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount() ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
+
+			// respawn except storm needs to be fixed
+			bRespawnAllowed = Playlist ? Playlist->RespawnType > 0 : false;
+		}
+		else
+			bRespawnAllowed = GameState->Call<bool>(IsRespawningAllowedFunc, PlayerState);
+
+		if (!bRespawnAllowed && (PlayerController->Pawn ? !PlayerController->Pawn->IsDBNO() : true) && PlayerState->HasPlace())
+		{
+			PlayerState->Place = GameState->PlayersLeft;
+			PlayerState->OnRep_Place();
+
+			AFortWeapon* DamageCauser = nullptr;
+			static auto ProjectileBaseClass = FindClass("FortProjectileBase");
+			if (DeathReport.DamageCauser ? DeathReport.DamageCauser->IsA(ProjectileBaseClass) : false)
+			{
+				auto Owner = DeathReport.DamageCauser->Owner;
+
+				if (Owner->Cast<AFortWeapon>())
+					DamageCauser = (AFortWeapon*)Owner;
+				else if (auto Controller = Owner->Cast<AFortPlayerControllerAthena>())
+					DamageCauser = (AFortWeapon*)Controller->Pawn->CurrentWeapon;
+				else if (auto Pawn = Owner->Cast<AFortPlayerPawnAthena>())
+					DamageCauser = (AFortWeapon*)Pawn->CurrentWeapon;
+			}
+			else if (auto Weapon = DeathReport.DamageCauser ? DeathReport.DamageCauser->Cast<AFortWeapon>() : nullptr)
+				DamageCauser = Weapon;
+			if (RemoveFromAlivePlayers_)
+			{
+				((void (*)(AFortGameMode*, AFortPlayerControllerAthena*, AFortPlayerStateAthena*, AFortPlayerPawnAthena*, UFortItemDefinition*, uint8, char))RemoveFromAlivePlayers_)(GameMode, PlayerController, KillerPlayerState == PlayerState ? nullptr : KillerPlayerState, KillerPawn, DamageCauser->IsA<AFortWeapon>() ? DamageCauser->WeaponData : nullptr, PlayerState->HasDeathInfo() ? PlayerState->DeathInfo.DeathCause : 0, 0);
+			}
+
+			if (VersionInfo.FortniteVersion >= 15)
+			{
+				//static auto SpectatingName = FName(L"Spectating");
+				//PlayerController->StateName = SpectatingName;
+				//PlayerController->ClientGotoState(SpectatingName);
+				PlayerController->Pawn->CharacterMovement->ProcessEvent(PlayerController->Pawn->CharacterMovement->GetFunction("DisableMovement"), nullptr);
+			}
+
+			if (PlayerController->Pawn && KillerPlayerState && KillerPlayerState != PlayerState && KillerPlayerState->Place == 1)
+			{
+				/*if (PlayerState->Place == 1)
+				{
+					KillerPlayerState = PlayerState;
+					KillerPawn = (AFortPlayerPawnAthena*)PlayerController->Pawn;
+				}*/
+
+				auto KillerWeapon = DamageCauser ? DamageCauser->WeaponData : nullptr;
+
+
+				KillerPlayerController->PlayWinEffects(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause, false);
+				KillerPlayerController->ClientNotifyWon(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause);
+				KillerPlayerController->ClientNotifyTeamWon(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause);
+
+				if (KillerPlayerState != PlayerState && VersionInfo.FortniteVersion >= 19)
+				{
+					auto Crown = FindObject<UFortItemDefinition>(L"/VictoryCrownsGameplay/Items/AGID_VictoryCrown.AGID_VictoryCrown");
+					KillerPlayerController->WorldInventory->GiveItem(Crown, 1);
 				}
 
-				DamagerController->GetQuestManager(1)->SendStatEvent(DamagerController, EFortQuestObjectiveStatEvent::GetKillContribution(), 1, PlayerController->Pawn, TargetTags);
-
-				TargetTags.GameplayTags.Free();
-				TargetTags.ParentTags.Free();
-			}
-		}
-
-		FGameplayTagContainer TargetTags{};
-
-		auto Interface = (IGameplayTagAssetInterface*)PlayerController->Pawn->GetInterface(IGameplayTagAssetInterface::StaticClass());
-		if (Interface)
-		{
-			auto Blud = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface->Vft[0x2];
-			Blud(Interface, &TargetTags);
-			//Interface->GetOwnedGameplayTags(&TargetTags);
-		}
-
-		KillerPlayerController->GetQuestManager(1)->SendStatEvent(KillerPlayerController, EFortQuestObjectiveStatEvent::GetKill(), 1, PlayerController->Pawn, TargetTags);
-
-		TargetTags.GameplayTags.Free();
-		TargetTags.ParentTags.Free();
-	}
-
-	static auto IsRespawningAllowedFunc = GameState->GetFunction("IsRespawningAllowed");
-
-	bool bRespawnAllowed = false;
-
-	if (!IsRespawningAllowedFunc)
-	{
-        auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount() ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
-		
-		// respawn except storm needs to be fixed
-		bRespawnAllowed = Playlist ? Playlist->RespawnType > 0 : false;
-	}
-	else
-		bRespawnAllowed = GameState->Call<bool>(IsRespawningAllowedFunc, PlayerState);
-
-	if (!bRespawnAllowed && (PlayerController->Pawn ? !PlayerController->Pawn->IsDBNO() : true) && PlayerState->HasPlace())
-	{
-		PlayerState->Place = GameState->PlayersLeft;
-		PlayerState->OnRep_Place();
-
-		AFortWeapon* DamageCauser = nullptr;
-		static auto ProjectileBaseClass = FindClass("FortProjectileBase");
-		if (DeathReport.DamageCauser ? DeathReport.DamageCauser->IsA(ProjectileBaseClass) : false)
-		{
-			auto Owner = DeathReport.DamageCauser->Owner;
-
-			if (Owner->Cast<AFortWeapon>())
-				DamageCauser = (AFortWeapon*)Owner;
-			else if (auto Controller = Owner->Cast<AFortPlayerControllerAthena>())
-				DamageCauser = (AFortWeapon*)Controller->Pawn->CurrentWeapon;
-			else if (auto Pawn = Owner->Cast<AFortPlayerPawnAthena>())
-				DamageCauser = (AFortWeapon*)Pawn->CurrentWeapon;
-		}
-		else if (auto Weapon = DeathReport.DamageCauser ? DeathReport.DamageCauser->Cast<AFortWeapon>() : nullptr)
-			DamageCauser = Weapon;
-		if (RemoveFromAlivePlayers_)
-		{
-			((void (*)(AFortGameMode*, AFortPlayerControllerAthena*, AFortPlayerStateAthena*, AFortPlayerPawnAthena*, UFortItemDefinition*, uint8, char))RemoveFromAlivePlayers_)(GameMode, PlayerController, KillerPlayerState == PlayerState ? nullptr : KillerPlayerState, KillerPawn, DamageCauser->IsA<AFortWeapon>() ? DamageCauser->WeaponData : nullptr, PlayerState->HasDeathInfo() ? PlayerState->DeathInfo.DeathCause : 0, 0);
-		}
-
-		if (VersionInfo.FortniteVersion >= 15)
-		{
-			//static auto SpectatingName = FName(L"Spectating");
-			//PlayerController->StateName = SpectatingName;
-			//PlayerController->ClientGotoState(SpectatingName);
-			PlayerController->Pawn->CharacterMovement->ProcessEvent(PlayerController->Pawn->CharacterMovement->GetFunction("DisableMovement"), nullptr);
-		}
-
-		if (PlayerController->Pawn && KillerPlayerState && KillerPlayerState != PlayerState && KillerPlayerState->Place == 1)
-		{
-			/*if (PlayerState->Place == 1)
-			{
-				KillerPlayerState = PlayerState;
-				KillerPawn = (AFortPlayerPawnAthena*)PlayerController->Pawn;
-			}*/
-			
-			auto KillerWeapon = DamageCauser ? DamageCauser->WeaponData : nullptr;
-
-
-			KillerPlayerController->PlayWinEffects(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause, false);
-			KillerPlayerController->ClientNotifyWon(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause);
-			KillerPlayerController->ClientNotifyTeamWon(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause);
-
-			if (KillerPlayerState != PlayerState && VersionInfo.FortniteVersion >= 19)
-			{
-				auto Crown = FindObject<UFortItemDefinition>(L"/VictoryCrownsGameplay/Items/AGID_VictoryCrown.AGID_VictoryCrown");
-				KillerPlayerController->WorldInventory->GiveItem(Crown, 1);
+				GameState->WinningTeam = KillerPlayerState->TeamIndex;
+				GameState->OnRep_WinningTeam();
+				if (GameState->HasWinningPlayerState())
+				{
+					GameState->WinningPlayerState = KillerPlayerState;
+					GameState->OnRep_WinningPlayerState();
+				}
 			}
 
-			GameState->WinningTeam = KillerPlayerState->TeamIndex;
-			GameState->OnRep_WinningTeam();
-			if (GameState->HasWinningPlayerState())
+		}
+
+		if (FConfiguration::SiphonAmount > 0 && PlayerController->Pawn && KillerPlayerState && KillerPlayerState->AbilitySystemComponent && KillerPawn && KillerPawn->Controller != PlayerController)
+		{
+			auto Handle = KillerPlayerState->AbilitySystemComponent->MakeEffectContext();
+			FGameplayTag Tag;
+			static auto Cue = FName(L"GameplayCue.Shield.PotionConsumed");
+			Tag.TagName = Cue;
+			auto PredictionKey = (FPredictionKey*)malloc(FPredictionKey::Size());
+			memset((PBYTE)PredictionKey, 0, FPredictionKey::Size());
+			KillerPlayerState->AbilitySystemComponent->NetMulticast_InvokeGameplayCueAdded(Tag, *PredictionKey, Handle);
+			KillerPlayerState->AbilitySystemComponent->NetMulticast_InvokeGameplayCueExecuted(Tag, *PredictionKey, Handle);
+			free(PredictionKey);
+
+			auto Health = KillerPawn->GetHealth();
+			auto Shield = KillerPawn->GetShield();
+
+			if (Health == 100)
 			{
-				GameState->WinningPlayerState = KillerPlayerState;
-				GameState->OnRep_WinningPlayerState();
+				Shield += Shield + FConfiguration::SiphonAmount;
 			}
+			else if (Health + FConfiguration::SiphonAmount > 100)
+			{
+				Health = 100;
+				Shield += (Health + FConfiguration::SiphonAmount) - 100;
+			}
+			else if (Health + FConfiguration::SiphonAmount <= 100)
+			{
+				Health += FConfiguration::SiphonAmount;
+			}
+
+			KillerPawn->SetHealth(Health);
+			KillerPawn->SetShield(Shield);
+			//forgot to add this back
 		}
-
-	}
-
-	if (FConfiguration::SiphonAmount > 0 && PlayerController->Pawn && KillerPlayerState && KillerPlayerState->AbilitySystemComponent && KillerPawn && KillerPawn->Controller != PlayerController)
-	{
-		auto Handle = KillerPlayerState->AbilitySystemComponent->MakeEffectContext();
-		FGameplayTag Tag;
-		static auto Cue = FName(L"GameplayCue.Shield.PotionConsumed");
-		Tag.TagName = Cue;
-		auto PredictionKey = (FPredictionKey*)malloc(FPredictionKey::Size());
-		memset((PBYTE)PredictionKey, 0, FPredictionKey::Size());
-		KillerPlayerState->AbilitySystemComponent->NetMulticast_InvokeGameplayCueAdded(Tag, *PredictionKey, Handle);
-		KillerPlayerState->AbilitySystemComponent->NetMulticast_InvokeGameplayCueExecuted(Tag, *PredictionKey, Handle);
-		free(PredictionKey);
-
-		auto Health = KillerPawn->GetHealth();
-		auto Shield = KillerPawn->GetShield();
-
-		if (Health == 100)
-		{
-			Shield += Shield + FConfiguration::SiphonAmount;
-		}
-		else if (Health + FConfiguration::SiphonAmount > 100)
-		{
-			Health = 100;
-			Shield += (Health + FConfiguration::SiphonAmount) - 100;
-		}
-		else if (Health + FConfiguration::SiphonAmount <= 100)
-		{
-			Health += FConfiguration::SiphonAmount;
-		}
-
-		KillerPawn->SetHealth(Health);
-		KillerPawn->SetShield(Shield);
-		//forgot to add this back
 	}
 
 	return ClientOnPawnDiedOG(PlayerController, DeathReport);
@@ -3241,7 +3243,7 @@ void AFortPlayerControllerAthena::PostLoadHook()
 	auto ServerReturnToMainMenuIdx = GetDefaultObj()->GetFunction("ServerReturnToMainMenu")->GetVTableIndex();
 	Utils::Hook<AFortPlayerControllerAthena>(ServerReturnToMainMenuIdx, DefaultFortPC->Vft[ServerReturnToMainMenuIdx]);
 
-	if (VersionInfo.FortniteVersion != 1.72 && VersionInfo.FortniteVersion != 1.8)
+	//if (VersionInfo.FortniteVersion != 1.72 && VersionInfo.FortniteVersion != 1.8)
 	{
 		Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCreateBuildingActor"), ServerCreateBuildingActor);
 		Utils::ExecHook(GetDefaultObj()->GetFunction("ServerBeginEditingBuildingActor"), ServerBeginEditingBuildingActor);
