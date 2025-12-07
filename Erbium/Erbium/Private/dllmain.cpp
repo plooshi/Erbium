@@ -60,6 +60,16 @@ void Main()
     if (VersionInfo.EngineVersion >= 5.1)
     {
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"net.AllowEncryption 0"), nullptr);
+
+        auto DefaultCurieGlobals = FindClass("CurieGlobals")->GetDefaultObj();
+
+        if (DefaultCurieGlobals)
+        {
+            uint32 Offset = DefaultCurieGlobals->GetOffset("bEnableCurie");
+
+            //if (Offset != -1)
+            //    *(bool*)(uintptr_t(DefaultCurieGlobals) + Offset) = false;
+        }
     }
     if (VersionInfo.EngineVersion >= 5.3 && FConfiguration::bEnableIris)
     {
@@ -103,6 +113,12 @@ void Main()
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"Fort.MME.Sliding 0"), nullptr);
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"Fort.MME.Clambering 0"), nullptr);
     }
+
+#ifdef CLIENT
+    Misc::InitClient();
+
+    return;
+#endif
 
     if constexpr (FConfiguration::WebhookURL && *FConfiguration::WebhookURL)
         curl_global_init(CURL_GLOBAL_ALL);

@@ -3081,7 +3081,7 @@ void AFortPlayerControllerAthena::ServerRequestSeatChange_(UObject* Context, FFr
 
 	callOG(PlayerController, Stack.GetCurrentNativeFunction(), ServerRequestSeatChange, TargetSeatIndex);
 
-	if (!NewWeapon && OldWeapon)
+	if (OldWeapon)
 	{
 		auto LastItem = Pawn->HasPreviousWeapon() ? (AFortWeapon*)Pawn->PreviousWeapon : nullptr;
 
@@ -3102,7 +3102,8 @@ void AFortPlayerControllerAthena::ServerRequestSeatChange_(UObject* Context, FFr
 			}
 		}
 	}
-	else if (NewWeapon)
+
+	if (NewWeapon)
 	{
 		auto NewItem = PlayerController->WorldInventory->GiveItem(NewWeapon, 1, AFortInventory::GetStats(NewWeapon)->ClipSize);
 		auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
