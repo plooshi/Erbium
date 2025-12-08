@@ -50,6 +50,7 @@ public:
     DEFINE_PROP(AIDirector, AActor*);
     DEFINE_PROP(AIGoalManager, AActor*);
     DEFINE_PROP(bEnableReplicationGraph, bool);
+    DEFINE_PROP(bAllowSpectateAfterDeath, bool);
 
     DEFINE_FUNC(SpawnDefaultPawnAtTransform, AFortPlayerPawnAthena*);
     DEFINE_FUNC(RestartPlayer, void);

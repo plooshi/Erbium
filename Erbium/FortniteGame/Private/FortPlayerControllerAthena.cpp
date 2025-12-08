@@ -1062,12 +1062,12 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 		}
 	}
 
+	auto KillerPlayerState = (AFortPlayerStateAthena*)DeathReport.KillerPlayerState;
+	auto KillerPawn = (AFortPlayerPawnAthena*)DeathReport.KillerPawn;
+	auto KillerPlayerController = KillerPlayerState ? (AFortPlayerControllerAthena*)KillerPlayerState->Owner : nullptr;
+
 	if (VersionInfo.FortniteVersion > 1.8)
 	{
-		auto KillerPlayerState = (AFortPlayerStateAthena*)DeathReport.KillerPlayerState;
-		auto KillerPawn = (AFortPlayerPawnAthena*)DeathReport.KillerPawn;
-		auto KillerPlayerController = KillerPlayerState ? (AFortPlayerControllerAthena*)KillerPlayerState->Owner : nullptr;
-
 		if (PlayerState->HasPawnDeathLocation())
 			PlayerState->PawnDeathLocation = PlayerController->Pawn ? PlayerController->Pawn->K2_GetActorLocation() : FVector();
 
@@ -1267,6 +1267,19 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 			KillerPawn->SetHealth(Health);
 			KillerPawn->SetShield(Shield);
 			//forgot to add this back
+		}
+	}
+
+	if (VersionInfo.FortniteVersion < 6)
+	{
+		if (GameState->GamePhase > 2)
+		{
+			if (GameMode->bAllowSpectateAfterDeath)
+			{
+				PlayerController->PlayerToSpectateOnDeath = KillerPawn ? KillerPawn : (GameMode->AlivePlayers.Num() > 0 ? ((AFortPlayerControllerAthena*)GameMode->AlivePlayers[rand() % GameMode->AlivePlayers.Num()])->Pawn : nullptr);
+				
+				UKismetSystemLibrary::K2_SetTimer(PlayerController, FString(L"SpectateOnDeath"), 5.f, false);
+			}
 		}
 	}
 
@@ -2349,6 +2362,9 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 
 	auto sendStat = [&]()
 	{
+		if (!ReceivingActor)
+			return;
+
 		FGameplayTagContainer TargetTags{};
 		
 		auto Interface = (IGameplayTagAssetInterface*)ReceivingActor->GetInterface(IGameplayTagAssetInterface::StaticClass());

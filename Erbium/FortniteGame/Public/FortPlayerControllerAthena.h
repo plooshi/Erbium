@@ -224,6 +224,7 @@ public:
     DEFINE_BITFIELD_PROP(bIsFlightSprinting);
     DEFINE_BITFIELD_PROP(bIsCreativeQuickbarEnabled);
     DEFINE_BITFIELD_PROP(bIsCreativeQuickmenuEnabled);
+    DEFINE_PROP(PlayerToSpectateOnDeath, AActor*);
 
     DEFINE_FUNC(GetViewTarget, AActor*);
     DEFINE_FUNC(GetControlRotation, FRotator);

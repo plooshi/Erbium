@@ -907,6 +907,7 @@ namespace SDK
 		DEFINE_STATIC_FUNC(ExecuteConsoleCommand, void);
 		DEFINE_STATIC_FUNC(GetPathName, FString);
 		DEFINE_STATIC_FUNC(GetObjectFromPrimaryAssetId, UObject*);
+		DEFINE_STATIC_FUNC(K2_SetTimer, void);
 
 		/*static void ExecuteConsoleCommand(FString Command)
 		{

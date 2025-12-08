@@ -37,7 +37,8 @@ void Main()
         {
             auto bWaitForServerToBeInitializedBeforeTravelingFeatureEnabledOffset = RuntimeOptions->GetOffset("bWaitForServerToBeInitializedBeforeTravelingFeatureEnabled");
 
-            *(bool*)(__int64(RuntimeOptions) + bWaitForServerToBeInitializedBeforeTravelingFeatureEnabledOffset) = false;
+            if (bWaitForServerToBeInitializedBeforeTravelingFeatureEnabledOffset != -1)
+                *(bool*)(__int64(RuntimeOptions) + bWaitForServerToBeInitializedBeforeTravelingFeatureEnabledOffset) = false;
         }
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"log LogFortUIDirector None"), nullptr);
     }

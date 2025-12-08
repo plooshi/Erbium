@@ -430,7 +430,14 @@ void UFortLootPackage::SpawnFloorLootForContainer(const UClass* ContainerType)
 		{
 			SpawnLootHook(BuildingContainer);
 			//SpawnLoot(BuildingContainer->SearchLootTierGroup, BuildingContainer->K2_GetActorLocation() + BuildingContainer->GetActorForwardVector() * BuildingContainer->LootSpawnLocation_Athena.X + BuildingContainer->GetActorRightVector() * BuildingContainer->LootSpawnLocation_Athena.Y + BuildingContainer->GetActorUpVector() * BuildingContainer->LootSpawnLocation_Athena.Z);
-			BuildingContainer->K2_DestroyActor();
+
+			if (VersionInfo.FortniteVersion > 3.3)
+				BuildingContainer->K2_DestroyActor();
+			else
+			{
+				BuildingContainer->bAlreadySearched = true;
+				BuildingContainer->OnRep_bAlreadySearched();
+			}
 		}
 	}
 
@@ -486,9 +493,29 @@ void OnAuthorityRandomUpgradeApplied(ABuildingContainer* Container, FName& Upgra
 	return OnAuthorityRandomUpgradeAppliedOG(Container, UpgradeTierGroup);
 }
 
+void PostUpdate(ABuildingSMActor* BuildingSMActor)
+{
+	if (auto Container = BuildingSMActor->Cast<ABuildingContainer>())
+	{
+		if (!Container->bStartAlreadySearched_Athena)
+		{
+			Container->bAlreadySearched = true;
+			Container->OnRep_bAlreadySearched();
+		}
+	}
+}
+
+
 bool bDidntFind = false;
 void UFortLootPackage::Hook()
 {
+	if (VersionInfo.FortniteVersion < 3)
+	{
+		auto PostUpdate_ = Memcury::Scanner::FindStringRef(L"ABuildingSMActor::PostUpdate() Building: %s, AltMeshIdx: %d", false, 0, VersionInfo.FortniteVersion >= 19).ScanFor({ 0x40, 0x53 }, false).Get();
+
+		//Utils::Hook(PostUpdate_, PostUpdate);
+	}
+
 	if (VersionInfo.FortniteVersion >= 11.00)
 	{
 		Utils::Hook(FindSpawnLoot(), SpawnLootHook);
