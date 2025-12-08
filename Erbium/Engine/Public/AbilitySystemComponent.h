@@ -15,11 +15,15 @@ public:
     UCLASS_COMMON_MEMBERS(UFortGameplayAbility);
 
     DEFINE_FUNC(K2_ExecuteGameplayCue, void);
+    DEFINE_FUNC(K2_ExecuteGameplayCueWithParams, void);
     DEFINE_FUNC(GetAbilitySystemComponentFromActorInfo, UObject*);
     DEFINE_FUNC(K2_AddGameplayCueWithParams, void);
+    DEFINE_FUNC(K2_AddGameplayCue, void);
 
     DefUHookOg(K2_ExecuteGameplayCue_);
+    DefUHookOg(K2_ExecuteGameplayCueWithParams_);
     DefUHookOg(K2_AddGameplayCueWithParams_);
+    DefUHookOg(K2_AddGameplayCue_);
 };
 
 struct FPredictionKey
@@ -142,8 +146,9 @@ public:
 
     DEFINE_FUNC(ClientActivateAbilityFailed, void);
     DEFINE_FUNC(NetMulticast_InvokeGameplayCueAdded, void);
-    DEFINE_FUNC(NetMulticast_InvokeGameplayCueExecuted, void);
     DEFINE_FUNC(NetMulticast_InvokeGameplayCueAdded_WithParams, void);
+    DEFINE_FUNC(NetMulticast_InvokeGameplayCueExecuted, void);
+    DEFINE_FUNC(NetMulticast_InvokeGameplayCueExecuted_WithParams, void);
     DEFINE_FUNC(MakeEffectContext, FGameplayEffectContextHandle);
     DEFINE_FUNC(BP_ApplyGameplayEffectToSelf, FActiveGameplayEffectHandle);
     DEFINE_FUNC(UpdateActiveGameplayEffectSetByCallerMagnitude, void);
