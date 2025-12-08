@@ -594,6 +594,9 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	else
 		Building = UWorld::SpawnActor<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, PlayerController);
 
+	if (!Building)
+		return;
+
 	 static auto UpgradeLevelOffset = FBuildingClassData::StaticStruct()->GetOffset("UpgradeLevel");
 	Building->CurrentBuildingLevel = VersionInfo.EngineVersion >= 5.3 ? *(uint8*)(__int64(&BuildingClassData) + UpgradeLevelOffset) : *(uint32*)(__int64(&BuildingClassData) + UpgradeLevelOffset);
 	Building->OnRep_CurrentBuildingLevel();
@@ -1066,7 +1069,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 	auto KillerPawn = (AFortPlayerPawnAthena*)DeathReport.KillerPawn;
 	auto KillerPlayerController = KillerPlayerState ? (AFortPlayerControllerAthena*)KillerPlayerState->Owner : nullptr;
 
-	if (VersionInfo.FortniteVersion > 1.8)
+	if (VersionInfo.FortniteVersion > 1.8 || VersionInfo.EngineVersion >= 4.19)
 	{
 		if (PlayerState->HasPawnDeathLocation())
 			PlayerState->PawnDeathLocation = PlayerController->Pawn ? PlayerController->Pawn->K2_GetActorLocation() : FVector();
@@ -1887,6 +1890,9 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 		}
 		else if (command == "spawnbot")
 		{
+			if (!PlayerController->Pawn)
+				return;
+
 			auto CallerController = PlayerController;
 			int Count = 1;
 

@@ -398,6 +398,12 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartNewSafeZonePhase(i
 
 void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 {
+	static auto GamePhaseOffset = this->GetOffset("GamePhase");
+	auto& _GamePhase = *(EAthenaGamePhase*)(__int64(this) + GamePhaseOffset);
+
+	if (_GamePhase >= EAthenaGamePhase::Aircraft)
+		return;
+
 	auto Time = UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
 
 	auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
