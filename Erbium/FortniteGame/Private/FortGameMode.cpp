@@ -1032,7 +1032,9 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
         else if (VersionInfo.EngineVersion <= 4.20)
         {
             auto pattern = VersionInfo.FortniteVersion > 3.2 ? Memcury::Scanner::FindPattern("E8 ? ? ? ? EB 26 40 38 3D ? ? ? ?") : Memcury::Scanner::FindPattern("E8 ? ? ? ? F0 FF 0D ? ? ? ? 0F B6 C3");
-            Utils::Patch<uint8_t>(pattern.RelativeOffset(1).Get(), 0xC3);
+            
+			if (pattern.IsValid())
+				Utils::Patch<uint8_t>(pattern.RelativeOffset(1).Get(), 0xC3);
         }
 
         if (GameState->HasAllPlayerBuildableClassesIndexLookup())
