@@ -169,11 +169,25 @@ void Main()
     UWorld::GetWorld()->OwningGameInstance->LocalPlayers.Remove(0);
     const wchar_t* terrainOpen = L"open Athena_Terrain";
 
-    if (VersionInfo.FortniteVersion >= 12.00)
+    if (wcsstr(FConfiguration::Playlist, L"/MoleGame/Playlists/Playlist_MoleGame"))
+    {
+        UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"Mole.WorstCasePlayerCount 1"), nullptr);
+        terrainOpen = L"open Mole_UnderBase_Parent";
+    }
+    else if (VersionInfo.FortniteVersion >= 12.00 && wcsstr(FConfiguration::Playlist, L"/Game/Athena/Playlists/Creative/Playlist_PlaygroundV2.Playlist_PlaygroundV2"))
         terrainOpen = L"open Creative_NoApollo_Terrain";
     else
     {
-        if (VersionInfo.FortniteVersion >= 11.00)
+        if (VersionInfo.FortniteVersion >= 27.00)
+        {
+            if (VersionInfo.FortniteVersion >= 28.00)
+                terrainOpen = L"open Helios_Terrain";
+        }
+        else if (VersionInfo.FortniteVersion >= 23.00)
+            terrainOpen = L"open Asteria_Terrain";
+        else if (VersionInfo.FortniteVersion >= 19.00)
+            terrainOpen = L"open Artemis_Terrain";
+        else if (VersionInfo.FortniteVersion >= 11.00)
             terrainOpen = L"open Apollo_Terrain";
     }
 
