@@ -2013,13 +2013,12 @@ uint64_t FindEnterAircraft()
                 sRef = uint64_t(Ptr);
                 break;
             }
-            else if (*Ptr == 0x48 && *(Ptr + 1) == 0x8D || *(Ptr + 1) == 0xAC)
+            else if (*Ptr == 0x48 && *(Ptr + 1) == 0x8D && *(Ptr + 2) == 0xAC)
             {
                 sRef = uint64_t(Ptr);
                 break;
             }
         }
-
         for (int i = 0; i < 1000; i++)
         {
             auto Ptr = (uint8_t*)(sRef - i);

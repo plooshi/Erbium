@@ -57,6 +57,21 @@ public:
     DEFINE_BITFIELD_PROP(bForceAutoPickup);
 };
 
+struct alignas(0x08) FInstancedStruct final
+{
+public:
+    UStruct* ScriptStruct;
+    void* Struct;
+};
+
+struct FFortItemComponentData_Pickup
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FFortItemComponentData_Pickup);
+
+    DEFINE_STRUCT_BITFIELD_PROP(bCanBeDroppedFromInventory);
+};
+
 class UFortItemDefinition : public UObject
 {
 public:
@@ -84,6 +99,7 @@ public:
     DEFINE_PROP(ItemDescription, FText);
     DEFINE_PROP(Rarity, uint8);
     DEFINE_BITFIELD_PROP(bSupportsQuickbarFocus);
+    DEFINE_PROP(DataList, TArray<FInstancedStruct>);
 
     DEFINE_FUNC(CreateTemporaryItemInstanceBP, UFortItem*);
     DEFINE_FUNC(GetItemComponentByClass, UObject*);
@@ -115,6 +131,33 @@ public:
             static auto GetMaxStackSizeFn = GetFunction("GetMaxStackSize");
             return Call<int32>(GetMaxStackSizeFn, nullptr);
         }
+    }
+
+    bool CanBeDropped() const
+    {
+        if (HasbCanBeDropped())
+            return bCanBeDropped;
+
+        if (HasDataList())
+        {
+            for (auto& ItemData : DataList)
+            {
+                if (ItemData.ScriptStruct == FFortItemComponentData_Pickup::StaticStruct())
+                {
+                    auto PickupComponentData = (FFortItemComponentData_Pickup*)ItemData.Struct;
+
+                    return PickupComponentData->bCanBeDroppedFromInventory;
+                }
+            }
+        }
+
+
+        auto PickupComponent = GetPickupComponent();
+
+        if (PickupComponent)
+            return PickupComponent->bCanBeDroppedFromInventory;
+        
+        return false;
     }
 };
 

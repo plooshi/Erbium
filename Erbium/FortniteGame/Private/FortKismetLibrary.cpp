@@ -133,14 +133,11 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayer(UObject* Context, FFrame& Stack
 	}
 	auto Item = *ItemP;
 
-	printf("[Inventory] Removing %d of %s\n", AmountToRemove, itemEntry->ItemDefinition->Name.ToString().c_str());
-
 	auto RemoveCount = max(AmountToRemove, 0);
 	itemEntry->Count -= RemoveCount;
 	
 	if (AmountToRemove < 0 || itemEntry->Count <= 0)
 	{
-		printf("[Inventory] Removing item\n");
 		RemoveCount += itemEntry->Count;
 		PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
 	}
@@ -177,14 +174,11 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayerByGuid(UObject* Context, FFrame&
 	}
 	auto Item = *ItemP;
 	
-	printf("[Inventory] Removing %d of %s\n", AmountToRemove, itemEntry->ItemDefinition->Name.ToString().c_str());
-
 	auto RemoveCount = max(AmountToRemove, 0);
 	itemEntry->Count -= RemoveCount;
 
 	if (AmountToRemove < 0 || itemEntry->Count <= 0)
 	{
-		printf("[Inventory] Removing item\n");
 		RemoveCount += itemEntry->Count;
 		PlayerController->WorldInventory->Remove(itemEntry->ItemGuid);
 	}

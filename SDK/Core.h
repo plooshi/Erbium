@@ -296,9 +296,9 @@ namespace SDK
 	class UField : public UObject
 	{
 	public:
-		const UField* FField_GetNext() const
+		const UField*& FField_GetNext() const
 		{
-			return GetFromOffset<UField*>(this, Offsets::FField_Next);
+			return GetFromOffset<const UField*>(this, Offsets::FField_Next);
 		}
 
 		FName& FField_GetName() const
@@ -306,9 +306,9 @@ namespace SDK
 			return GetFromOffset<FName>(this, Offsets::FField_Name);
 		}
 
-		const UField* GetNext() const
+		const UField*& GetNext() const
 		{
-			return GetFromOffset<UField*>(this, 0x28);
+			return GetFromOffset<const UField*>(this, 0x28);
 		}
 
 		FName& GetName() const
@@ -316,7 +316,7 @@ namespace SDK
 			return GetFromOffset<FName>(this, 0x18);
 		}
 
-		const uint8 GetFieldMask() const
+		const uint8& GetFieldMask() const
 		{
 			return GetFromOffset<uint8>(this, Offsets::FieldMask);
 		}
@@ -325,24 +325,24 @@ namespace SDK
 	class UStruct : public UField
 	{
 	public:
-		const UStruct* GetSuper() const
+		const UStruct*& GetSuper() const
 		{
-			return GetFromOffset<UStruct*>(this, Offsets::Super);
+			return GetFromOffset<const UStruct*>(this, Offsets::Super);
 		}
 
-		const int32 GetPropertiesSize() const
+		const int32& GetPropertiesSize() const
 		{
 			return GetFromOffset<int32>(this, Offsets::PropertiesSize);
 		}
 
-		const UField* GetChildProperties() const
+		const UField*& GetChildProperties() const
 		{
-			return GetFromOffset<UField*>(this, 0x50);
+			return GetFromOffset<const UField*>(this, 0x50);
 		}
 
-		const UField* GetChildren() const
+		const UField*& GetChildren() const
 		{
-			return GetFromOffset<UField*>(this, Offsets::Children);
+			return GetFromOffset<const UField*>(this, Offsets::Children);
 		}
 
 
