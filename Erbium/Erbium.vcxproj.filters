@@ -150,9 +150,6 @@
     <ClInclude Include="FortniteGame\Public\FortPhysicsPawn.h">
       <Filter>FortniteGame\Public</Filter>
     </ClInclude>
-    <ClInclude Include="Erbium\Public\GUI.h">
-      <Filter>Erbium\Public</Filter>
-    </ClInclude>
     <ClInclude Include="ImGui\imgui_impl_win32.h">
       <Filter>ImGui</Filter>
     </ClInclude>
@@ -276,9 +273,6 @@
       <Filter>Erbium\Private</Filter>
     </ClCompile>
     <ClCompile Include="Erbium\Private\Finders.cpp">
-      <Filter>Erbium\Private</Filter>
-    </ClCompile>
-    <ClCompile Include="Erbium\Private\GUI.cpp">
       <Filter>Erbium\Private</Filter>
     </ClCompile>
     <ClCompile Include="ImGui\imgui_draw.cpp">

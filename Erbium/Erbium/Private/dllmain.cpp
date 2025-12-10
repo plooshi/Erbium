@@ -8,7 +8,6 @@
 #include <chrono>
 #include "../Public/Configuration.h"
 #include "../Public/Misc.h"
-#include "../Public/GUI.h"
 #include "../../Erbium/Plugins/CrashReporter/Public/CrashReporter.h"
 #include "../../FortniteGame/Public/FortPlayerControllerAthena.h"
 #include "../../Engine/Public/NetDriver.h"
@@ -49,8 +48,6 @@ void Main()
             freopen_s(&s, "stdout.log", "w", stdout);
             freopen_s(&s, "stdout.log", "w+", stderr);
         }
-
-        CreateThread(0, 0, (LPTHREAD_START_ROUTINE)GUI::Init, 0, 0, 0);
     }
 
     if (VersionInfo.EngineVersion >= 5.0)
@@ -122,9 +119,6 @@ void Main()
 
     if constexpr (FConfiguration::WebhookURL && *FConfiguration::WebhookURL)
         curl_global_init(CURL_GLOBAL_ALL);
-
-    sprintf_s(GUI::windowTitle, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Setting up" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Setting up" : "Erbium (FN %.1f, UE %.2f): Setting up"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
-    SetConsoleTitleA(GUI::windowTitle);
 
 
     //if constexpr (!FConfiguration::bGUI)
