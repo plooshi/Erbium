@@ -183,21 +183,6 @@ namespace SDK
 
 		uintptr_t addr = 0;
 
-		if (VersionInfo.FortniteVersion < 14.00)
-			addr = Memcury::Scanner::FindStringRef(L"AccessNoneNoContext").ScanFor({ 0x40, 0x55 }, true, 0, 1, 2000).Get();
-		else if (floor(VersionInfo.FortniteVersion) == 27)
-			addr = Memcury::Scanner::FindPattern("40 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 48 8D 6C 24 ? 48 89 9D ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C5 48 89 85 ? ? ? ? 45 33 E4 4C 89 45 ? 4D 8B F8").Get();
-		else if (VersionInfo.EngineVersion == 5.2 || (std::floor(VersionInfo.FortniteVersion) == 24 && VersionInfo.FortniteVersion >= 24.30))
-			addr = Memcury::Scanner::FindPattern("40 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 48 8D 6C 24 ? 48 89 9D ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C5 48 89 85 ? ? ? ? 45 33 F6").Get();
-		else if (VersionInfo.FortniteVersion >= 23.00)
-		{
-			addr = Memcury::Scanner::FindPattern("48 85 C9 0F 85 ? ? ? ? F7 87 ? ? ? ? ? ? ? ? ? 8B ?").ScanFor({ 0x40, 0x55 }, false).Get();
-			if (!addr)
-				addr = Memcury::Scanner::FindPattern("41 FF 92 ? ? ? ? E9 ? ? ? ? 49 8B C8").ScanFor({ 0x40, 0x55 }, false).Get();
-		}
-		else
-			addr = Memcury::Scanner::FindStringRef(L"UMeshNetworkComponent::ProcessEvent: Invalid mesh network node type: %s", true, 0, VersionInfo.FortniteVersion >= 19.00).ScanFor({ 0xE8 }, true, VersionInfo.FortniteVersion < 19.00 ? 1 : 3, 0, 2000).RelativeOffset(1).Get();
-
 		if (VersionInfo.EngineVersion >= 4.21)
 		{
 			if (VersionInfo.FortniteVersion <= 6.01)
