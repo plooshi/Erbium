@@ -2238,6 +2238,9 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 			//free(ItemEntry);
 			auto Pawn = PlayerController->Pawn;
 
+			if (!Pawn)
+				return;
+
 			FVector FinalLoc = Pawn ? Pawn->K2_GetActorLocation() : FVector();
 
 			FVector ForwardVector = Pawn ? Pawn->GetActorForwardVector() : FVector();

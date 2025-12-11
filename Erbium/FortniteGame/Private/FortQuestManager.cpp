@@ -264,6 +264,9 @@ void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEv
 			if (Row->Type != (uint8_t)StatEvent) // todo: fix this count threshold stuff
 				continue;
 
+			if (!Row->HasAccoladePrimaryAssetId())
+				break;
+			
             auto Accolade = (UFortAccoladeItemDefinition*)UKismetSystemLibrary::GetObjectFromPrimaryAssetId(Row->AccoladePrimaryAssetId);
 
             if (!Accolade)
