@@ -36,6 +36,9 @@ int GetLevel(const FDataTableCategoryHandle& CategoryHandle)
 	
 	for (auto& LootLevelDataPair : (TMap<FName, FFortLootLevelData*>)CategoryHandle.DataTable->RowMap)
 	{
+		if (!LootLevelDataPair.Value())
+			continue;
+
 		if ((FFortLootLevelData::HasCategory() ? LootLevelDataPair.Value()->Category : LootLevelDataPair.Value()->category) != CategoryHandle.RowContents || LootLevelDataPair.Value()->LootLevel > GameState->WorldLevel || LootLevelDataPair.Value()->LootLevel <= Level)
 			continue;
 
@@ -62,9 +65,38 @@ int GetLevel(const FDataTableCategoryHandle& CategoryHandle)
 	return 0;
 }
 
-void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SDK::FName Package, int i, FName TierGroup, int WorldLevel)
+struct FWeaponPickupAmmoCountData
 {
-	TArray<FFortLootPackageData*> LPGroups;
+public:
+	USCRIPTSTRUCT_COMMON_MEMBERS(FWeaponPickupAmmoCountData);
+
+	DEFINE_STRUCT_PROP(AmmoItemDefinitionTag, FGameplayTag);
+	DEFINE_STRUCT_PROP(SpawnCount, FScalableFloat);
+};
+
+struct FHelperGameplayTagToAmmoCountMultiplier
+{
+public:
+	USCRIPTSTRUCT_COMMON_MEMBERS(FHelperGameplayTagToAmmoCountMultiplier);
+
+	DEFINE_STRUCT_PROP(Tag, FGameplayTag);
+	DEFINE_STRUCT_PROP(CountMultiplier, FScalableFloat);
+};
+
+class UFortWeaponPickupSpawnAmmoData : public UObject
+{
+public:
+	UCLASS_COMMON_MEMBERS(UFortWeaponPickupSpawnAmmoData);
+
+	DEFINE_PROP(WeaponPickupAmmoCountArray, TArray<FWeaponPickupAmmoCountData>);
+	DEFINE_PROP(DefaultWeaponAmmoMultiplier, FScalableFloat);
+	DEFINE_PROP(WeaponPickupAmmoMultiplierOverrideArray, TArray<FHelperGameplayTagToAmmoCountMultiplier>);
+	DEFINE_PROP(SourceToAmmoMultiplierOverrideArray, TArray<FHelperGameplayTagToAmmoCountMultiplier>);
+};
+
+void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SDK::FName Package, int i, FName TierGroup, int WorldLevel, ABuildingContainer* Container)
+{
+	TArray<FFortLootPackageData*> LPGroups{};
 
 	for (auto const& Val : LootPackageMap[Package.ComparisonIndex])
 	{
@@ -107,7 +139,103 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 	if (!ItemDefinition)
 		return;
 
-	//auto AmmoDef = VersionInfo.FortniteVersion >= 11.00 && ItemDefinition->IsA(UFortWeaponRangedItemDefinition::StaticClass()) && !((UFortWeaponItemDefinition*)ItemDefinition)->bUsesCustomAmmoType ? ((UFortWeaponItemDefinition*)ItemDefinition)->GetAmmoWorldItemDefinition_BP() : nullptr;
+	FFortItemEntry* AmmoEntry = nullptr;
+
+	if (VersionInfo.FortniteVersion >= 11)
+	{
+		if (auto WorldItemDefinition = ItemDefinition->Cast<UFortWorldItemDefinition>())
+		{
+			auto AmmoDef = WorldItemDefinition->GetAmmoWorldItemDefinition_BP();
+
+			if (auto AmmoDefinition = AmmoDef->Cast<UFortAmmoItemDefinition>())
+			{
+				static auto SpawnAmmoData = FindObject<UFortWeaponPickupSpawnAmmoData>(L"/Game/Athena/Balance/Pickups/FortWeaponPickupSpawnAmmoData.FortWeaponPickupSpawnAmmoData");
+
+				FGameplayTagContainer AmmoTags{};
+
+				auto Interface = (IGameplayTagAssetInterface*)AmmoDefinition->GetInterface(IGameplayTagAssetInterface::StaticClass());
+				if (Interface)
+				{
+					auto GetOwnedGameplayTags = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface->Vft[0x2];
+					GetOwnedGameplayTags(Interface, &AmmoTags);
+					//Interface->GetOwnedGameplayTags(&TargetTags);
+				}
+
+				float AmmoCount = 0.f;
+				for (int i = 0; i < SpawnAmmoData->WeaponPickupAmmoCountArray.Num(); i++)
+				{
+					auto& AmmoCountData = SpawnAmmoData->WeaponPickupAmmoCountArray.Get(i, FWeaponPickupAmmoCountData::Size());
+
+					if (AmmoTags.HasTag(AmmoCountData.AmmoItemDefinitionTag))
+					{
+						AmmoCount = AmmoCountData.SpawnCount.Evaluate((float)WorldLevel);
+						break;
+					}
+				}
+
+				auto Multiplier = SpawnAmmoData->DefaultWeaponAmmoMultiplier.Evaluate((float)WorldLevel);
+
+				FGameplayTagContainer WeaponTags{};
+
+				auto Interface2 = (IGameplayTagAssetInterface*)ItemDefinition->GetInterface(IGameplayTagAssetInterface::StaticClass());
+				if (Interface2)
+				{
+					auto GetOwnedGameplayTags = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface2->Vft[0x2];
+					GetOwnedGameplayTags(Interface2, &WeaponTags);
+					//Interface->GetOwnedGameplayTags(&TargetTags);
+				}
+
+				for (int i = 0; i < SpawnAmmoData->WeaponPickupAmmoMultiplierOverrideArray.Num(); i++)
+				{
+					auto& MultiplierData = SpawnAmmoData->WeaponPickupAmmoMultiplierOverrideArray.Get(i, FHelperGameplayTagToAmmoCountMultiplier::Size());
+
+					if (WeaponTags.HasTag(MultiplierData.Tag))
+					{
+						Multiplier = MultiplierData.CountMultiplier.Evaluate((float)WorldLevel);
+						break;
+					}
+				}
+
+				float	SourceMultiplier = 1.f;
+
+				if (Container)
+				{
+					FGameplayTagContainer SourceTags{};
+
+					auto Interface3 = (IGameplayTagAssetInterface*)Container->GetInterface(IGameplayTagAssetInterface::StaticClass());
+					if (Interface3)
+					{
+						auto GetOwnedGameplayTags = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface3->Vft[0x2];
+						GetOwnedGameplayTags(Interface3, &WeaponTags);
+						//Interface->GetOwnedGameplayTags(&TargetTags);
+					}
+
+					for (int i = 0; i < SpawnAmmoData->SourceToAmmoMultiplierOverrideArray.Num(); i++)
+					{
+						auto& MultiplierData = SpawnAmmoData->SourceToAmmoMultiplierOverrideArray.Get(i, FHelperGameplayTagToAmmoCountMultiplier::Size());
+
+						if (SourceTags.HasTag(MultiplierData.Tag))
+						{
+							SourceMultiplier = MultiplierData.CountMultiplier.Evaluate((float)WorldLevel);
+							break;
+						}
+					}
+					SourceTags.GameplayTags.Free();
+					SourceTags.ParentTags.Free();
+				}
+
+				auto FinalCount = AmmoCount * Multiplier * SourceMultiplier;
+
+				if (FinalCount > 0.f)
+					AmmoEntry = AFortInventory::MakeItemEntry(AmmoDefinition, (int)FinalCount, ItemDefinition->IsA(UFortWorldItemDefinition::StaticClass()) ? std::clamp(GetLevel(ItemDefinition->LootLevelData), ItemDefinition->MinLevel, ItemDefinition->MaxLevel > 0 ? ItemDefinition->MaxLevel : 99999) : 0);
+
+				AmmoTags.GameplayTags.Free();
+				AmmoTags.ParentTags.Free();
+				WeaponTags.GameplayTags.Free();
+				WeaponTags.ParentTags.Free();
+			}
+		}
+	}
 
 	bool found = false;
 	bool foundAmmo = false;
@@ -131,34 +259,36 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 			break;
 		}
 
-		/*if (AmmoDef && LootDrop->ItemDefinition == AmmoDef)
+		if (AmmoEntry && AmmoEntry->ItemDefinition && LootDrop->ItemDefinition == AmmoEntry->ItemDefinition)
 		{
-			LootDrop->Count += AmmoDef->DropCount;
+			LootDrop->Count += AmmoEntry->Count;
 
-			if (LootDrop->Count > AmmoDef->GetMaxStackSize())
-	{
+			if (LootDrop->Count > AmmoEntry->ItemDefinition->GetMaxStackSize())
+	        {
 				auto OGCount = LootDrop->Count;
-				LootDrop->Count = AmmoDef->GetMaxStackSize();
+				LootDrop->Count = AmmoEntry->ItemDefinition->GetMaxStackSize();
 
 				//if (!AFortInventory::IsPrimaryQuickbar(LootDrop->ItemDefinition))
-				LootDrops.Add(AFortInventory::MakeItemEntry(AmmoDef, OGCount - AmmoDef->GetMaxStackSize(), AmmoDef->IsA(UFortWorldItemDefinition::StaticClass()) ? std::clamp(GetLevel(AmmoDef->LootLevelData), AmmoDef->MinLevel, AmmoDef->MaxLevel > 0 ? AmmoDef->MaxLevel : 99999) : 0));
+				LootDrops.Add(AFortInventory::MakeItemEntry(AmmoEntry->ItemDefinition, OGCount - AmmoEntry->ItemDefinition->GetMaxStackSize(), AmmoEntry->ItemDefinition->IsA(UFortWorldItemDefinition::StaticClass()) ? std::clamp(GetLevel(AmmoEntry->ItemDefinition->LootLevelData), AmmoEntry->ItemDefinition->MinLevel, AmmoEntry->ItemDefinition->MaxLevel > 0 ? AmmoEntry->ItemDefinition->MaxLevel : 99999) : 0));
 			}
 
 			//if (Inventory::GetQuickbar(LootDrop.ItemDefinition) == EFortQuickBars::Secondary)
+			free(AmmoEntry);
 			foundAmmo = true;
-		}*/
+		}
 	}
 
 	if (!found && LootPackage->Count > 0)
 		LootDrops.Add(AFortInventory::MakeItemEntry(ItemDefinition, LootPackage->Count, ItemDefinition->IsA(UFortWorldItemDefinition::StaticClass()) ? std::clamp(GetLevel(ItemDefinition->LootLevelData), ItemDefinition->MinLevel, ItemDefinition->MaxLevel > 0 ? ItemDefinition->MaxLevel : 99999) : 0));
 
-	//if (AmmoDef && AmmoDef->DropCount > 0 && !foundAmmo && LootPackage->Count > 0)
-	//	LootDrops.Add(AFortInventory::MakeItemEntry(AmmoDef, AmmoDef->DropCount, AmmoDef->IsA(UFortWorldItemDefinition::StaticClass()) ? std::clamp(GetLevel(AmmoDef->LootLevelData), AmmoDef->MinLevel, AmmoDef->MaxLevel > 0 ? AmmoDef->MaxLevel : 99999) : 0));
+	if (!foundAmmo && AmmoEntry && LootPackage->Count > 0)
+		LootDrops.Add(AmmoEntry);
+	LPGroups.Free();
 }
 
-TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup, int LootTier, int WorldLevel)
+void UFortLootPackage::ChooseLootForContainer(TArray<FFortItemEntry*>& LootDrops, FName TierGroup, int LootTier, int WorldLevel, ABuildingContainer* Container)
 {
-	TArray<FFortLootTierData*> TierDataGroups;
+	TArray<FFortLootTierData*> TierDataGroups{};
 	
 	for (auto const& Val : TierDataMap[TierGroup.ComparisonIndex])
 		if (LootTier == -1 ? true : LootTier == Val->LootTier)
@@ -168,15 +298,15 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 		{ return ((float)rand() / 32767.f) * Total; });
 
 	if (!LootTierData)
-		return {};
+		return;
 	
 	//printf("Picked LootTierData %s\n", LootTierData->LootPackage.ToString().c_str());
 
 	if (LootTierData->NumLootPackageDrops <= 0)
-		return {};
+		return;
 
 	//printf("Selecting %f loot drops from <unk>\n", LootTierData->NumLootPackageDrops);
-	if (VersionInfo.FortniteVersion >= 11)
+	/*if (VersionInfo.FortniteVersion >= 11)
 	{
 		auto& MinArr = LootTierData->LootPackageCategoryMinArray;
 
@@ -185,7 +315,7 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 			MinArr[1] = 1;
 			LootTierData->NumLootPackageDrops++;
 		}
-	}
+	}*/
 
 	int DropCount;
 	if (LootTierData->NumLootPackageDrops < 1.f)
@@ -274,7 +404,6 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 	if (!AmountOfLootDrops)
 		return {};*/
 
-	TArray<FFortItemEntry*> LootDrops;
 	LootDrops.Reserve((int)DropCount);
 
 
@@ -288,8 +417,7 @@ TArray<FFortItemEntry*> UFortLootPackage::ChooseLootForContainer(FName TierGroup
 		SpawnedItems += NumMap[CurrentCategory];
 		CurrentCategory++;
 	}
-
-	return LootDrops;
+	TierDataGroups.Free();
 }
 
 
@@ -344,7 +472,11 @@ bool UFortLootPackage::SpawnLootHook(ABuildingContainer* Container)
 			RealTierGroup = Loot_AthenaAmmoLarge;
 	}
 
-	for (auto& LootDrop : UFortLootPackage::ChooseLootForContainer(RealTierGroup))
+	TArray<FFortItemEntry*> LootDrops{};
+
+	UFortLootPackage::ChooseLootForContainer(LootDrops, RealTierGroup, -1, GameMode->GameState->WorldLevel, Container);
+
+	for (auto& LootDrop : LootDrops)
 	{
 		AFortInventory::SpawnPickup(Container, *LootDrop);
 		free(LootDrop);
@@ -390,7 +522,11 @@ void UFortLootPackage::SpawnLoot(FName& TierGroup, FVector Loc)
 			RealTierGroup = Loot_AthenaAmmoLarge;
 	}
 
-	for (auto& LootDrop : UFortLootPackage::ChooseLootForContainer(RealTierGroup))
+	TArray<FFortItemEntry*> LootDrops{};
+
+	UFortLootPackage::ChooseLootForContainer(LootDrops, RealTierGroup);
+
+	for (auto& LootDrop : LootDrops)
 	{
 		AFortInventory::SpawnPickup(Loc, *LootDrop);
 		free(LootDrop);
@@ -420,7 +556,8 @@ bool ServerOnAttemptInteract(ABuildingContainer* BuildingContainer, AFortPlayerP
 
 void UFortLootPackage::SpawnFloorLootForContainer(const UClass* ContainerType)
 {
-	auto Containers = Utils::GetAll<ABuildingContainer>(ContainerType);
+	TArray<ABuildingContainer*> Containers;
+	Utils::GetAll<ABuildingContainer>(ContainerType, Containers);
 
 	for (auto& BuildingContainer : Containers)
 	{
@@ -449,7 +586,10 @@ void UFortLootPackage::SpawnFloorLootForContainer(const UClass* ContainerType)
 
 void UFortLootPackage::SpawnConsumableActor(ABGAConsumableSpawner* Spawner)
 {
-	auto LootDrops = ChooseLootForContainer(Spawner->SpawnLootTierGroup);
+	return;
+	TArray<FFortItemEntry*> LootDrops{};
+
+	UFortLootPackage::ChooseLootForContainer(LootDrops, Spawner->SpawnLootTierGroup);
 	if (LootDrops.Num() == 0)
 		return;
 

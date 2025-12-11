@@ -648,6 +648,12 @@ namespace UC
 			return -1;
 		}
 
+		~TArray()
+		{
+			//if (Data)
+			//	FMemory::FreeForType<ArrayElementType>(Data);
+		}
+
 	public:
 		inline       ArrayElementType& operator[](int32 Index)
 		{
@@ -696,11 +702,13 @@ namespace UC
 	public:
 		using TArray::TArray;
 
-		constexpr FString(const wchar_t* Str)
+		FString(const wchar_t* Str)
 		{
 			const uint32 NullTerminatedLength = static_cast<uint32>(std::wstring_view(Str).size() + 0x1);
 
-			Data = const_cast<wchar_t*>(Str);
+			//Data = const_cast<wchar_t*>(Str);
+			Data = FMemory::MallocForType<wchar_t>(NullTerminatedLength);
+			memcpy(Data, Str, NullTerminatedLength * sizeof(wchar_t));
 			NumElements = NullTerminatedLength;
 			MaxElements = NullTerminatedLength;
 		}

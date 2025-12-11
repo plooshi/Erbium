@@ -225,7 +225,9 @@ void UFortKismetLibrary::PickLootDrops(UObject* Object, FFrame& Stack, bool* Ret
 		Stack.StepCompiledIn(&OptionalLootTags);
 	Stack.IncrementCode();
 
-	auto LootDrops = UFortLootPackage::ChooseLootForContainer(TierGroupName, ForcedLootTier, WorldLevel);
+	TArray<FFortItemEntry*> LootDrops{};
+
+	UFortLootPackage::ChooseLootForContainer(LootDrops, TierGroupName, ForcedLootTier, WorldLevel);
 
 	for (auto& LootDrop : LootDrops)
 	{

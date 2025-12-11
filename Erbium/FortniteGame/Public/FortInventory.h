@@ -165,6 +165,8 @@ class UFortWorldItemDefinition : public UFortItemDefinition
 {
 public:
     UCLASS_COMMON_MEMBERS(UFortWorldItemDefinition);
+
+    DEFINE_FUNC(GetAmmoWorldItemDefinition_BP, UFortWorldItemDefinition*);
 };
 
 struct FFortItemQuantityPair
@@ -364,8 +366,6 @@ public:
     DEFINE_PROP(EquippedAbilitySet, TSoftObjectPtr<class UFortAbilitySet>);
     DEFINE_BITFIELD_PROP(bUsesCustomAmmoType);
     DEFINE_PROP(WeaponModSlots, TArray<void*>);
-
-    DEFINE_FUNC(GetAmmoWorldItemDefinition_BP, UFortItemDefinition*);
 };
 
 struct FFortRangedWeaponStats

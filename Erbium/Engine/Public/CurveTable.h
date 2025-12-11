@@ -58,6 +58,6 @@ public:
 
         float Out = 0.f;
         UDataTableFunctionLibrary::EvaluateCurveTableRow(Curve.CurveTable, Curve.RowName, i, nullptr, &Out, FString());
-        return Out;
+        return Value * Out;
     }
 };

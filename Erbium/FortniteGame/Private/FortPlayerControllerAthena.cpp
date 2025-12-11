@@ -1131,8 +1131,8 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 					auto Interface = (IGameplayTagAssetInterface*)PlayerController->Pawn->GetInterface(IGameplayTagAssetInterface::StaticClass());
 					if (Interface)
 					{
-						auto Blud = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface->Vft[0x2];
-						Blud(Interface, &TargetTags);
+						auto GetOwnedGameplayTags = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface->Vft[0x2];
+						GetOwnedGameplayTags(Interface, &TargetTags);
 						//Interface->GetOwnedGameplayTags(&TargetTags);
 					}
 
@@ -1148,8 +1148,8 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 			auto Interface = (IGameplayTagAssetInterface*)PlayerController->Pawn->GetInterface(IGameplayTagAssetInterface::StaticClass());
 			if (Interface)
 			{
-				auto Blud = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface->Vft[0x2];
-				Blud(Interface, &TargetTags);
+				auto GetOwnedGameplayTags = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface->Vft[0x2];
+				GetOwnedGameplayTags(Interface, &TargetTags);
 				//Interface->GetOwnedGameplayTags(&TargetTags);
 			}
 
@@ -2327,7 +2327,8 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 		}
 		else if (command == "resetbuilds" || command == "reset")
 		{
-			auto Builds = Utils::GetAll<ABuildingSMActor>();
+			TArray<ABuildingSMActor*> Builds;
+			Utils::GetAll<ABuildingSMActor>(Builds);
 			
 			for (auto& Build : Builds)
 				if (Build->bPlayerPlaced)
@@ -2379,8 +2380,8 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 		auto Interface = (IGameplayTagAssetInterface*)ReceivingActor->GetInterface(IGameplayTagAssetInterface::StaticClass());
 		if (Interface)
 		{
-			auto Blud = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface->Vft[0x2];
-			Blud(Interface, &TargetTags);
+			auto GetOwnedGameplayTags = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface->Vft[0x2];
+			GetOwnedGameplayTags(Interface, &TargetTags);
 			//Interface->GetOwnedGameplayTags(&TargetTags);
 		}
 

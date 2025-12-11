@@ -19,16 +19,20 @@ void Events::StartEvent()
 		if (Event.LoaderClass)
 			if (const UClass* LoaderClass = FindObject<UClass>(Event.LoaderClass))
 			{
-				auto AllLoaders = Utils::GetAll(LoaderClass);
+				TArray<AActor*> AllLoaders;
+				Utils::GetAll(LoaderClass, AllLoaders);
 				LoaderObject = AllLoaders.Num() > 0 ? AllLoaders[0] : nullptr;
+				//AllLoaders.Free();
 			}
 
 		UObject* ScriptingObject = nullptr;
 		if (Event.ScriptingClass)
 			if (const UClass* ScriptingClass = FindObject<UClass>(Event.ScriptingClass))
 			{
-				auto AllLoaders = Utils::GetAll(ScriptingClass);
+				TArray<AActor*> AllLoaders;
+				Utils::GetAll(ScriptingClass, AllLoaders);
 				ScriptingObject = AllLoaders.Num() > 0 ? AllLoaders[0] : nullptr;
+				//AllLoaders.Free();
 			}
 
 		for (auto& EventFunction : Event.EventFunctions)

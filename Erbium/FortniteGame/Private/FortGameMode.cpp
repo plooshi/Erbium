@@ -457,7 +457,8 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
     if (!GameMode->bWorldIsReady)
     {
         static auto WarmupStartClass = FindClass("PlayerStart");
-        auto Starts = Utils::GetAll(WarmupStartClass);
+		TArray<AActor*> Starts;
+		Utils::GetAll(WarmupStartClass, Starts);
         auto StartsNum = Starts.Num();
         Starts.Free();
 
@@ -467,7 +468,9 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
             return;
         }
 
-        static auto AllMapInfos = Utils::GetAll<AFortAthenaMapInfo>();
+		TArray<AFortAthenaMapInfo*> AllMapInfos;
+        Utils::GetAll<AFortAthenaMapInfo>(AllMapInfos);
+
         if (AllMapInfos.Num() > 0 && !GameState->MapInfo)
         {
             *Ret = false;
@@ -520,8 +523,10 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                         if (Event.LoaderClass)
                             if (const UClass* LoaderClass = FindObject<UClass>(Event.LoaderClass))
                             {
-                                auto AllLoaders = Utils::GetAll(LoaderClass);
+				                TArray<AActor*> AllLoaders;
+				                Utils::GetAll(LoaderClass, AllLoaders);
                                 LoaderObject = AllLoaders.Num() > 0 ? AllLoaders[0] : nullptr;
+				                AllLoaders.Free();
                             }
 
                         if (Event.LoaderFuncPath != nullptr && LoaderObject)
@@ -916,7 +921,9 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
             if (GameState->HasDefaultBattleBus())
                 GameState->DefaultBattleBus = BattleBusDef;
 
-            for (auto& Aircraft : Utils::GetAll<AFortAthenaAircraft>())
+			TArray<AFortAthenaAircraft*> Aircrafts;
+			Utils::GetAll<AFortAthenaAircraft>(Aircrafts);
+            for (auto& Aircraft : Aircrafts)
             {
                 Aircraft->DefaultBusSkin = BattleBusDef;
 
@@ -927,6 +934,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                     GetFromOffset<const UObject*>(Aircraft->SpawnedCosmeticActor, Offset) = BattleBusDef;
                 }
             }
+			Aircrafts.Free();
         }
 
         if (GameState->HasMapInfo() && GameState->MapInfo)
@@ -1076,7 +1084,8 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
     if (VersionInfo.EngineVersion >= 4.24 && GameMode->IsA<AFortGameModeAthena>())
     {
         int ReadyPlayers = 0;
-        auto PlayerList = Utils::GetAll<AFortPlayerControllerAthena>();
+		TArray<AFortPlayerControllerAthena*> PlayerList;
+		Utils::GetAll<AFortPlayerControllerAthena>(PlayerList);
 
         for (auto& PlayerController : PlayerList)
         {
@@ -1221,7 +1230,8 @@ void AFortGameMode::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor*
             UFortLootPackage::SpawnFloorLootForContainer(FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_Warmup.Tiered_Athena_FloorLoot_Warmup_C"));
             UFortLootPackage::SpawnFloorLootForContainer(FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_01.Tiered_Athena_FloorLoot_01_C"));
 
-            auto ConsumableSpawners = Utils::GetAll<ABGAConsumableSpawner>();
+            TArray<ABGAConsumableSpawner*> ConsumableSpawners{};
+		    Utils::GetAll<ABGAConsumableSpawner>(ConsumableSpawners);
 
             for (auto& Spawner : ConsumableSpawners)
                 UFortLootPackage::SpawnConsumableActor(Spawner);
@@ -1230,7 +1240,8 @@ void AFortGameMode::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor*
 
             if (AFortAthenaLivingWorldStaticPointProvider::StaticClass())
             {
-                auto Spawners = Utils::GetAll<AFortAthenaLivingWorldStaticPointProvider>();
+		        TArray<AFortAthenaLivingWorldStaticPointProvider*> Spawners;
+		        Utils::GetAll<AFortAthenaLivingWorldStaticPointProvider>(Spawners);
                 UEAllocatedMap<FName, const UClass*> VehicleSpawnerMap =
                 {
                     { FName(L"Athena.Vehicle.SpawnLocation.Motorcycle.Dirtbike"), FindObject<UClass>(L"/Dirtbike/Vehicle/Motorcycle_DirtBike_Vehicle.Motorcycle_DirtBike_Vehicle_C") },
@@ -1276,7 +1287,8 @@ void AFortGameMode::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor*
             // not an else here because they still use spawners for boats, and fully on s27
             if (VersionInfo.FortniteVersion >= 4.23 && std::floor(VersionInfo.FortniteVersion) != 20 && std::floor(VersionInfo.FortniteVersion) != 21) // its auto on s20 & s21
             {
-                auto Spawners = Utils::GetAll<AFortAthenaVehicleSpawner>();
+                TArray<AFortAthenaVehicleSpawner*> Spawners{};
+		        Utils::GetAll<AFortAthenaVehicleSpawner>(Spawners);
 
                 for (auto& Spawner : Spawners)
                 {
@@ -1291,7 +1303,9 @@ void AFortGameMode::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor*
 
             if (VersionInfo.FortniteVersion > 3.4)
             {
-                for (auto& CollectorActor : Utils::GetAll<ABuildingItemCollectorActor>())
+                TArray<ABuildingItemCollectorActor*> Collectors{};
+                Utils::GetAll<ABuildingItemCollectorActor>(Collectors);
+                for (auto& CollectorActor : Collectors)
                 {
                     if (Sum > Weight)
                     {
@@ -1342,7 +1356,9 @@ void AFortGameMode::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor*
                             if (Collection.bUseDefinedOutputItem)
                                 continue;
 
-                            auto LootDrops = UFortLootPackage::ChooseLootForContainer(CollectorActor->DefaultItemLootTierGroupName, Rarity);
+                            TArray<FFortItemEntry*> LootDrops{};
+
+                            UFortLootPackage::ChooseLootForContainer(LootDrops, CollectorActor->DefaultItemLootTierGroupName, Rarity);
 
                             if (Collection.OutputItemEntry.Num() > 0)
                             {
@@ -1375,6 +1391,7 @@ void AFortGameMode::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor*
                     else
                         CollectorActor->K2_DestroyActor();
                 }
+                Collectors.Free();
 
                 Utils::ExecHook((UFunction*)FindObject<UFunction>(L"/Game/Athena/Items/Gameplay/VendingMachine/B_Athena_VendingMachine.B_Athena_VendingMachine_C:VendWobble__FinishedFunc"), VendWobble__FinishedFunc, VendWobble__FinishedFuncOG);
             }
@@ -1679,7 +1696,8 @@ bool AFortGameMode::StartAircraftPhase(AFortGameMode* GameMode, char a2)
         {
             bScuffed = true;
 
-            auto Foundations = Utils::GetAll<ABuildingFoundation>();
+		    TArray<ABuildingFoundation*> Foundations;
+		    Utils::GetAll<ABuildingFoundation>(Foundations);
             auto Foundation = Foundations[rand() % Foundations.Num()];
             
             Foundations.Free();
@@ -1973,7 +1991,7 @@ void (*OnWorldInitDoneOG)(UNavigationSystem* NavSys, char Mode);
 void OnWorldInitDone(UNavigationSystem* NavSys, char Mode)
 {
     printf("OnWorldInitDone\n");
-    NavSys->bAutoCreateNavigationData = true;
+    /*NavSys->bAutoCreateNavigationData = true;
     NavSys->bAllowClientSideNavigation = true;
     NavSys->bSupportRebuilding = true;
 
@@ -1990,6 +2008,7 @@ void OnWorldInitDone(UNavigationSystem* NavSys, char Mode)
     AllNavmeshes[0]->HotSpotManager = HotSpotMgr;
     //printf("NavGraphData: %llx, AllBounds.Num() = %d\n", NavSys->NavGraphData, AllBounds.Num());
     AllBounds.Free();
+    AllNavmeshes.Free();*/
 }
 
 void AFortGameMode::Hook()

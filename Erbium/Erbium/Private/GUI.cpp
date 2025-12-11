@@ -374,13 +374,14 @@ void GUI::Init()
 
             if (ImGui::Button("Reset Builds"))
             {
-                auto Builds = Utils::GetAll<ABuildingSMActor>();
+				TArray<ABuildingSMActor*> Builds;
+				Utils::GetAll<ABuildingSMActor>(Builds);
 
                 for (auto& Build : Builds)
                     if (Build->bPlayerPlaced)
                         Build->K2_DestroyActor();
 
-                Builds.Free();
+                //Builds.Free();
             }
             break;
         case 4:

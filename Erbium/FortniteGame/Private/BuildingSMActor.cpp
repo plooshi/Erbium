@@ -522,7 +522,7 @@ _out:
 
 	for (auto& RemoveBuilding : RemoveBuildings)
 		RemoveBuilding->K2_DestroyActor();
-	RemoveBuildings.Free();
+	//RemoveBuildings.Free();
 
 	static auto K2_SpawnBuildingActor = ABuildingSMActor::GetDefaultObj()->GetFunction("K2_SpawnBuildingActor");
 
