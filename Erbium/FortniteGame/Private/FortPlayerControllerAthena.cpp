@@ -1224,7 +1224,18 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 				if (KillerPlayerState != PlayerState && VersionInfo.FortniteVersion >= 19)
 				{
 					auto Crown = FindObject<UFortItemDefinition>(L"/VictoryCrownsGameplay/Items/AGID_VictoryCrown.AGID_VictoryCrown");
-					KillerPlayerController->WorldInventory->GiveItem(Crown, 1);
+
+					TArray<FFortItemEntryStateValue> StateValues{};
+					auto Value = (FFortItemEntryStateValue*)malloc(FFortItemEntryStateValue::Size());
+					memset((PBYTE)Value, 0, FFortItemEntryStateValue::Size());
+
+					Value->IntValue = 1;
+					Value->StateType = 2;
+					StateValues.Add(*Value, FFortItemEntryStateValue::Size());
+
+					free(Value);
+					KillerPlayerController->WorldInventory->GiveItem(Crown, 1, 0, 0, true, true, 0, StateValues);
+					StateValues.Free();
 				}
 
 				GameState->WinningTeam = KillerPlayerState->TeamIndex;
