@@ -161,6 +161,8 @@ void Client::Init()
 						Playlist->bAllowJoinInProgress = true;
 					if (Playlist->HasbForceRespawnLocationInsideOfVolume())
 						Playlist->bForceRespawnLocationInsideOfVolume = true;
+					if(Playlist->HasbForceCameraFadeOnRespawn())
+						Playlist->bForceCameraFadeOnRespawn = true;
 				}
 				if (VersionInfo.FortniteVersion >= 10)
 				{
