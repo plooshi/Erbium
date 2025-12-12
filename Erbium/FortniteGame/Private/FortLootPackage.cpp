@@ -227,7 +227,7 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 				auto FinalCount = AmmoCount * Multiplier * SourceMultiplier;
 
 				if (FinalCount > 0.f)
-					AmmoEntry = AFortInventory::MakeItemEntry(AmmoDefinition, (int)FinalCount, ItemDefinition->IsA(UFortWorldItemDefinition::StaticClass()) ? std::clamp(GetLevel(ItemDefinition->LootLevelData), ItemDefinition->MinLevel, ItemDefinition->MaxLevel > 0 ? ItemDefinition->MaxLevel : 99999) : 0);
+					AmmoEntry = AFortInventory::MakeItemEntry(AmmoDefinition, (int)FinalCount, AmmoDefinition->IsA(UFortWorldItemDefinition::StaticClass()) ? std::clamp(GetLevel(AmmoDefinition->LootLevelData), AmmoDefinition->MinLevel, AmmoDefinition->MaxLevel > 0 ? AmmoDefinition->MaxLevel : 99999) : 0);
 
 				AmmoTags.GameplayTags.Free();
 				AmmoTags.ParentTags.Free();
