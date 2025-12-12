@@ -36,6 +36,7 @@ public:
     DEFINE_PROP(RespawnTime, FScalableFloat);
     DEFINE_PROP(RespawnType, uint8);
     DEFINE_PROP(bAllowJoinInProgress, bool);
+    DEFINE_PROP(bForceCameraFadeOnRespawn, bool);
     DEFINE_PROP(UIExtensions, TArray<FUIExtension>);
     DEFINE_PROP(bForceRespawnLocationInsideOfVolume, bool);
 };

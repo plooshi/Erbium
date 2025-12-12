@@ -438,7 +438,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 
 	if (bSkipAircraft)
 	{
-		SetGamePhase(EAthenaGamePhase::SafeZones);
+		SetGamePhase(bSkipWarmup ? EAthenaGamePhase::None : EAthenaGamePhase::SafeZones);
 		SetGamePhaseStep(EAthenaGamePhaseStep::StormForming);
 
 		return;
