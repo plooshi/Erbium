@@ -605,6 +605,12 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 
 	Building->bPlayerPlaced = true;
 
+	if (((AFortPlayerStateAthena*)PlayerController->PlayerState)->HasTeamIndex())
+		Building->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+
+	if (Building->HasTeamIndex())
+		Building->TeamIndex = Building->Team;
+
 	Building->InitializeKismetSpawnedBuildingActor(Building, PlayerController, true, nullptr, false);
 	UWorld::FinishSpawnActor(Building, BuildLoc, BuildRot);
 
@@ -614,12 +620,6 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 
 		PayBuildableClassPlacementCost(PlayerController, BuildingClassData);
 	}
-
-	if (((AFortPlayerStateAthena*)PlayerController->PlayerState)->HasTeamIndex()) 
-		Building->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
-	
-	if (Building->HasTeamIndex())
-		Building->TeamIndex = Building->Team;
 }
 
 void SetEditingPlayer(ABuildingSMActor* _this, AFortPlayerStateAthena* NewEditingPlayer)
