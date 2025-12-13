@@ -759,7 +759,6 @@ void AFortPlayerControllerAthena::ServerEditBuildingActor(UObject* Context, FFra
 	if (NewBuild)
 	{
 		NewBuild->bPlayerPlaced = true;
-		NewBuild->ForceNetUpdate();
 	}
 }
 
