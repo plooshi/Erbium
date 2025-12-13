@@ -586,13 +586,13 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	static auto K2_SpawnBuildingActor = ABuildingSMActor::GetDefaultObj()->GetFunction("K2_SpawnBuildingActor");
 
 	ABuildingSMActor* Building = nullptr;
-	if (K2_SpawnBuildingActor)
+	/*if (K2_SpawnBuildingActor)
 	{
 		FTransform SpawnTransform(BuildLoc, BuildRot);
 		Building = ABuildingSMActor::K2_SpawnBuildingActor(PlayerController, BuildingClass, SpawnTransform, PlayerController, nullptr, false, false);
 	}
-	else
-		Building = UWorld::SpawnActor<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, PlayerController);
+	else*/
+		Building = UWorld::SpawnActorUnfinished<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, PlayerController);
 
 	if (!Building)
 		return;
@@ -606,7 +606,7 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	Building->bPlayerPlaced = true;
 
 	Building->InitializeKismetSpawnedBuildingActor(Building, PlayerController, true, nullptr, false);
-	//UWorld::FinishSpawnActor(Building, BuildLoc, BuildRot);
+	UWorld::FinishSpawnActor(Building, BuildLoc, BuildRot);
 
 	if (!PlayerController->bBuildFree && !FConfiguration::bInfiniteMats)
 	{
@@ -690,6 +690,7 @@ void AFortPlayerControllerAthena::ServerBeginEditingBuildingActor(UObject* Conte
 	if (auto EditTool = PlayerController->MyFortPawn->CurrentWeapon->Cast<AFortWeap_EditingTool>())
 	{
 		EditTool->EditActor = Building;
+		EditTool->ForceNetUpdate();
 		EditTool->OnRep_EditActor();
 	}
 }
@@ -758,6 +759,7 @@ void AFortPlayerControllerAthena::ServerEditBuildingActor(UObject* Context, FFra
 	if (NewBuild)
 	{
 		NewBuild->bPlayerPlaced = true;
+		NewBuild->ForceNetUpdate();
 	}
 }
 
@@ -800,6 +802,7 @@ void AFortPlayerControllerAthena::ServerEndEditingBuildingActor(UObject* Context
 	if (auto EditTool = *(AFortWeap_EditingTool**)EditToolPtr)
 	{
 		EditTool->EditActor = nullptr;
+		EditTool->ForceNetUpdate();
 		EditTool->OnRep_EditActor();
 	}
 }

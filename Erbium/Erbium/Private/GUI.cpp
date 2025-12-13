@@ -371,6 +371,7 @@ void GUI::Init()
             ImGui::Checkbox("Keep Inventory", &FConfiguration::bKeepInventory);
 
             ImGui::SliderInt("Siphon Amount:", &FConfiguration::SiphonAmount, 0, 200);
+            ImGui::SliderInt("Tick Rate (dont change unless you know what this is):", &FConfiguration::MaxTickRate, 30, 120);
 
             if (ImGui::Button("Reset Builds"))
             {
