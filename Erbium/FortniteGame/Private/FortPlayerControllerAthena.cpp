@@ -222,6 +222,13 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 		else
 			for (auto& AbilitySet : AFortGameMode::AbilitySets)
 				PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
+
+		if (FConfiguration::bDisableJumpFatigue && FortPawn->HasCharacterMovement())
+		{
+			auto MovementCompAthena = static_cast<UFortMovementComp_CharacterAthena*>(FortPawn->GetCharacterMovement());
+			if (MovementCompAthena->HasJumpPenaltyResetTime())
+				MovementCompAthena->JumpPenaltyResetTime = 0.0f;
+		}
 	}
 	else if (FConfiguration::bLateGame && (!FConfiguration::bKeepInventory || FConfiguration::bLateGame))
 	{

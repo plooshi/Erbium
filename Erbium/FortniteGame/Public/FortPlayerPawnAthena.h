@@ -10,6 +10,14 @@ public:
     DEFINE_PROP(Velocity, FVector);
 };
 
+class UFortMovementComp_CharacterAthena : public UCharacterMovementComponent
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortMovementComp_CharacterAthena);
+
+    DEFINE_PROP(JumpPenaltyResetTime, float);
+};
+
 struct FZiplinePawnState
 {
 public:
