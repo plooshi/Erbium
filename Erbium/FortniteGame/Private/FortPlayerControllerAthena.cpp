@@ -100,7 +100,6 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
 		for (auto& Guid : GuidsToRemove)
 			PlayerController->WorldInventory->Remove(Guid);
 	}
-
 	if (VersionInfo.FortniteVersion >= 18)
 	{
 		if (VersionInfo.FortniteVersion >= 25.20)
@@ -586,13 +585,13 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	static auto K2_SpawnBuildingActor = ABuildingSMActor::GetDefaultObj()->GetFunction("K2_SpawnBuildingActor");
 
 	ABuildingSMActor* Building = nullptr;
-	/*if (K2_SpawnBuildingActor)
+	if (K2_SpawnBuildingActor)
 	{
 		FTransform SpawnTransform(BuildLoc, BuildRot);
 		Building = ABuildingSMActor::K2_SpawnBuildingActor(PlayerController, BuildingClass, SpawnTransform, PlayerController, nullptr, false, false);
 	}
-	else*/
-		Building = UWorld::SpawnActorUnfinished<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, PlayerController);
+	else
+		Building = UWorld::SpawnActor<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, PlayerController);
 
 	if (!Building)
 		return;
@@ -605,14 +604,8 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 
 	Building->bPlayerPlaced = true;
 
-	if (((AFortPlayerStateAthena*)PlayerController->PlayerState)->HasTeamIndex())
-		Building->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
-
-	if (Building->HasTeamIndex())
-		Building->TeamIndex = Building->Team;
-
 	Building->InitializeKismetSpawnedBuildingActor(Building, PlayerController, true, nullptr, false);
-	UWorld::FinishSpawnActor(Building, BuildLoc, BuildRot);
+	//UWorld::FinishSpawnActor(Building, BuildLoc, BuildRot);
 
 	if (!PlayerController->bBuildFree && !FConfiguration::bInfiniteMats)
 	{
@@ -620,6 +613,12 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 
 		PayBuildableClassPlacementCost(PlayerController, BuildingClassData);
 	}
+
+	if (((AFortPlayerStateAthena*)PlayerController->PlayerState)->HasTeamIndex()) 
+		Building->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+	
+	if (Building->HasTeamIndex())
+		Building->TeamIndex = Building->Team;
 }
 
 void SetEditingPlayer(ABuildingSMActor* _this, AFortPlayerStateAthena* NewEditingPlayer)
@@ -690,7 +689,6 @@ void AFortPlayerControllerAthena::ServerBeginEditingBuildingActor(UObject* Conte
 	if (auto EditTool = PlayerController->MyFortPawn->CurrentWeapon->Cast<AFortWeap_EditingTool>())
 	{
 		EditTool->EditActor = Building;
-		EditTool->ForceNetUpdate();
 		EditTool->OnRep_EditActor();
 	}
 }
@@ -801,7 +799,6 @@ void AFortPlayerControllerAthena::ServerEndEditingBuildingActor(UObject* Context
 	if (auto EditTool = *(AFortWeap_EditingTool**)EditToolPtr)
 	{
 		EditTool->EditActor = nullptr;
-		EditTool->ForceNetUpdate();
 		EditTool->OnRep_EditActor();
 	}
 }
@@ -2244,11 +2241,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 			int32 Count = 1;
 
 			if (args.size() == 3)
-			{
 				Count = strtol(args[2].c_str(), nullptr, 10);
-				if (Count <= 0)
-					Count = 1;
-			}
 
 			//auto ItemEntry = AFortInventory::MakeItemEntry(ItemDefinition, Count, 0);
 			//PlayerController->InternalPickup(ItemEntry);

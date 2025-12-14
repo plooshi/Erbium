@@ -167,7 +167,7 @@ void Client::Init()
 				if (VersionInfo.FortniteVersion >= 10)
 				{
 					auto Name = Object->Name.ToString();
-					if (Name.contains("Showdown"))
+					if (Name.contains("Showdown"), ("Playlist_PlaygroundV2"))
 						Playlist->UIExtensions = Name.contains("ShowdownAlt") ? ArenaExtensions : ShowdownExtensions;
 				}
 			}

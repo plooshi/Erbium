@@ -189,6 +189,7 @@ void Main()
             terrainOpen = L"open Artemis_Terrain";
         else if (VersionInfo.FortniteVersion >= 11.00)
             terrainOpen = L"open Apollo_Terrain";
+
     }
 
     UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(terrainOpen), nullptr);

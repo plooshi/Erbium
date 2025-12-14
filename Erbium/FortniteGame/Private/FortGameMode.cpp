@@ -377,6 +377,9 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
         memset((PBYTE)URL, 0, FURL::Size());
         URL->Port = FConfiguration::Port;
 
+
+
+
         auto InitListen = (bool (*)(UNetDriver*, UWorld*, FURL*, bool, FString&)) FindInitListen();
         auto SetWorld = (void (*)(UNetDriver*, UWorld*)) FindSetWorld();
 

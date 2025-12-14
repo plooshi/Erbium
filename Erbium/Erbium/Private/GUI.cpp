@@ -12,6 +12,21 @@
 #include <fstream>
 #pragma comment(lib, "d3d11.lib")
 
+
+#include <string>
+#include <Windows.h>
+
+static inline std::string WideToUTF8(const wchar_t* wstr)
+{
+    if (!wstr) return {};
+
+    int sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, wstr, -1, nullptr, 0, nullptr, nullptr);
+    std::string result(sizeNeeded, 0);
+    WideCharToMultiByte(CP_UTF8, 0, wstr, -1, &result[0], sizeNeeded, nullptr, nullptr);
+    return result;
+}
+// added by ducki67
+
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
 UINT g_ResizeWidth = 0, g_ResizeHeight = 0;
@@ -266,7 +281,31 @@ void GUI::Init()
         switch (SelectedUI)
         {
         case 0:
+            // server info + more yap -ducki67
+            ImGui::BeginChild("ServerInfo", ImVec2(245,125), true, ImGuiWindowFlags_ChildWindow/*,ImGuiWindowFlags_AlwaysHorizontallScrollbar */);
+
+
+
             ImGui::Text((std::string("Status: ") + (gsStatus == NotReady ? "Setting up the server..." : (gsStatus == Joinable ? "Joinable!" : "Match Started."))).c_str());
+            ImGui::Text("GS Port: %d", FConfiguration::Port);
+            ImGui::Text("MaxTickRate: %.1f", FConfiguration::MaxTickRate);
+            ImGui::Spacing();
+            ImGui::Separator();
+            {
+                std::string playlist = WideToUTF8(FConfiguration::Playlist);
+
+                // Extract text after last '.'  :)) -ducki67
+                size_t pos = playlist.rfind('.');
+                if (pos != std::string::npos)
+                    playlist = playlist.substr(pos + 1);
+
+                ImGui::Text("Playlist: %s", playlist.c_str());
+            };
+
+			ImGui::EndChild();
+            
+            ImGui::Spacing();
+
 
             if (gsStatus <= Joinable)
                 ImGui::Checkbox("Lategame", &FConfiguration::bLateGame);
@@ -371,7 +410,6 @@ void GUI::Init()
             ImGui::Checkbox("Keep Inventory", &FConfiguration::bKeepInventory);
 
             ImGui::SliderInt("Siphon Amount:", &FConfiguration::SiphonAmount, 0, 200);
-            ImGui::SliderInt("Tick Rate (dont change unless you know what this is):", &FConfiguration::MaxTickRate, 30, 120);
 
             if (ImGui::Button("Reset Builds"))
             {
