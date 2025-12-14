@@ -19,6 +19,8 @@
 #include <fstream>
 
 
+#include <string> // for yappo
+
 
 void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena* PlayerController, FVector& Loc, FRotator& Rot)
 {
@@ -1560,7 +1562,8 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 		PlayerController->ClientMessage(FString(LR"(Command List:
 
      cheat dumpplaylits - Dumps all available playlists to DumpedPlaylists.txt
-	 cheat dumpitems - Dumps all available items to DumpedItems.txt
+	 cheat dumpitems - Dumps all available items to DumpedItems.txt 
+     cheat loadout - Gives a set of LateGame loadout (uses LG lootpol)
     cheat startaircraft - Starts the battle bus
     cheat resumesafezone - Resumes the storm
     cheat pausesafezone - Pauses the storm
@@ -1726,6 +1729,48 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 
 				PlayerController->ClientMessage(FString(L"God mode disabled!"), FName(), 1);
 			}
+		}
+		else if (command == "loadout")
+		{
+			// same shi from lategame BUT if any1 wants to use it then ig sure
+			auto Shotgun = LateGame::GetShotgun();
+			auto AssaultRifle = LateGame::GetAssaultRifle();
+			auto Sniper = LateGame::GetSniper();
+			auto Heal = LateGame::GetHeal();
+			auto HealSlot2 = LateGame::GetHeal();
+
+			int ShotgunClipSize = 0;
+			int AssaultRifleClipSize = 0;
+			int SniperClipSize = 0;
+			int HealClipSize = 0;
+			int HealSlot2ClipSize = 0;
+
+			if (auto Weapon = Shotgun.Item->IsA<UFortGadgetItemDefinition>() ? ((UFortGadgetItemDefinition*)Shotgun.Item)->GetWeaponItemDefinition() : Shotgun.Item->Cast<UFortWeaponItemDefinition>())
+				ShotgunClipSize = AFortInventory::GetStats(Weapon)->ClipSize;
+			if (auto Weapon = AssaultRifle.Item->IsA<UFortGadgetItemDefinition>() ? ((UFortGadgetItemDefinition*)AssaultRifle.Item)->GetWeaponItemDefinition() : AssaultRifle.Item->Cast<UFortWeaponItemDefinition>())
+				AssaultRifleClipSize = AFortInventory::GetStats(Weapon)->ClipSize;
+			if (auto Weapon = Sniper.Item->IsA<UFortGadgetItemDefinition>() ? ((UFortGadgetItemDefinition*)Sniper.Item)->GetWeaponItemDefinition() : Sniper.Item->Cast<UFortWeaponItemDefinition>())
+				SniperClipSize = AFortInventory::GetStats(Weapon)->ClipSize;
+			if (auto Weapon = Heal.Item->IsA<UFortGadgetItemDefinition>() ? ((UFortGadgetItemDefinition*)Heal.Item)->GetWeaponItemDefinition() : Heal.Item->Cast<UFortWeaponItemDefinition>())
+				HealClipSize = AFortInventory::GetStats(Weapon)->ClipSize;
+			if (auto Weapon = HealSlot2.Item->IsA<UFortGadgetItemDefinition>() ? ((UFortGadgetItemDefinition*)HealSlot2.Item)->GetWeaponItemDefinition() : HealSlot2.Item->Cast<UFortWeaponItemDefinition>())
+				HealSlot2ClipSize = AFortInventory::GetStats(Weapon)->ClipSize;
+
+			PlayerController->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Assault), 250);
+			PlayerController->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Shotgun), 50);
+			PlayerController->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Submachine), 400);
+			PlayerController->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Rocket), 6);
+			PlayerController->WorldInventory->GiveItem(LateGame::GetAmmo(EAmmoType::Sniper), 20);
+
+			PlayerController->WorldInventory->GiveItem(Shotgun.Item, Shotgun.Count, ShotgunClipSize);
+			PlayerController->WorldInventory->GiveItem(AssaultRifle.Item, AssaultRifle.Count, AssaultRifleClipSize);
+			PlayerController->WorldInventory->GiveItem(Sniper.Item, Sniper.Count, SniperClipSize);
+			PlayerController->WorldInventory->GiveItem(Heal.Item, Heal.Count, HealClipSize);
+			PlayerController->WorldInventory->GiveItem(HealSlot2.Item, HealSlot2.Count, HealSlot2ClipSize);
+
+			// yappo to players
+
+			PlayerController->ClientMessage(FString(L"Granted a set of LateGame loadout!!"), FName(), 1.f);
 		}
 
 		// added by ducki67
