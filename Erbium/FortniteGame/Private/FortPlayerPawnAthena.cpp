@@ -73,7 +73,7 @@ void AFortPlayerPawnAthena::ServerHandlePickup_(UObject* Context, FFrame& Stack)
 	Pawn->IncomingPickups.Add(Pickup);*/
 	auto SetPickupTarget = (void(*&)(AFortPickupAthena*, AFortPlayerPawnAthena*, float, FVector, bool))SetPickupTarget_;
 
-	SetPickupTarget(Pickup, Pawn, InFlyTime / Pawn->PickupSpeedMultiplier, InStartDirection, bPlayPickupSound);
+	SetPickupTarget(Pickup, Pawn, InFlyTime / (Pawn->HasPickupSpeedMultiplier() ? Pawn->PickupSpeedMultiplier : 1), InStartDirection, bPlayPickupSound);
 }
 
 void AFortPlayerPawnAthena::ServerHandlePickupInfo(UObject* Context, FFrame& Stack)
@@ -126,7 +126,48 @@ void AFortPlayerPawnAthena::ServerHandlePickupInfo(UObject* Context, FFrame& Sta
 
 	auto SetPickupTarget = (void(*&)(AFortPickupAthena*, AFortPlayerPawnAthena*, float, FVector&, bool))SetPickupTarget_;
 
-	SetPickupTarget(Pickup, Pawn, FlyTime / Pawn->PickupSpeedMultiplier, Direction, bPlayPickupSound);
+	SetPickupTarget(Pickup, Pawn, FlyTime / (Pawn->HasPickupSpeedMultiplier() ? Pawn->PickupSpeedMultiplier : 1), Direction, bPlayPickupSound);
+	/*Pickup->SetLifeSpan(5.f);
+	Pickup->PickupLocationData.bPlayPickupSound = bPlayPickupSound;
+	Pickup->PickupLocationData.PickupGuid = Pickup->PrimaryPickupItemEntry.ItemGuid;
+	Pickup->PickupLocationData.PickupTarget = Pawn;
+	Pickup->PickupLocationData.FlyTime /= Pawn->PickupSpeedMultiplier;
+	//Pickup->PickupLocationData.StartDirection = Params.Direction.QuantizeNormal();
+	Pickup->OnRep_PickupLocationData();
+
+	Pickup->bPickedUp = true;
+	Pickup->OnRep_bPickedUp();
+
+
+	Pawn->IncomingPickups.Add(Pickup);*/
+}
+
+
+void AFortPlayerPawnAthena::ServerHandlePickupWithRequestedSwap(UObject* Context, FFrame& Stack)
+{
+	AFortPickupAthena* Pickup;
+	FGuid Swap;
+	float InFlyTime;
+	FVector InStartDirection;
+	bool bPlayPickupSound;
+	Stack.StepCompiledIn(&Pickup);
+	Stack.StepCompiledIn(&Swap);
+	Stack.StepCompiledIn(&InFlyTime);
+	Stack.StepCompiledIn(&InStartDirection);
+	Stack.StepCompiledIn(&bPlayPickupSound);
+	Stack.IncrementCode();
+
+	auto Pawn = (AFortPlayerPawnAthena*)Context;
+
+	if (!Pawn || !Pickup || Pickup->bPickedUp)
+		return;
+	auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
+
+	PlayerController->bTryPickupSwap = true;
+
+	auto SetPickupTarget = (void(*&)(AFortPickupAthena*, AFortPlayerPawnAthena*, float, FVector&, bool))SetPickupTarget_;
+
+	SetPickupTarget(Pickup, Pawn, InFlyTime / (Pawn->HasPickupSpeedMultiplier() ? Pawn->PickupSpeedMultiplier : 1), InStartDirection, bPlayPickupSound);
 	/*Pickup->SetLifeSpan(5.f);
 	Pickup->PickupLocationData.bPlayPickupSound = bPlayPickupSound;
 	Pickup->PickupLocationData.PickupGuid = Pickup->PrimaryPickupItemEntry.ItemGuid;
@@ -185,7 +226,7 @@ bool AFortPlayerPawnAthena::FinishedTargetSpline(void* _Pickup)
 			PlayerController->WorldInventory->Remove(entry->ItemGuid);
 			auto Item = PlayerController->WorldInventory->GiveItem(Pickup->PrimaryPickupItemEntry);
 			PlayerController->ServerExecuteInventoryItem(Item->ItemEntry.ItemGuid);
-			if (VersionInfo.FortniteVersion < 3)
+			/*if (VersionInfo.FortniteVersion < 3)
 			{
 				auto& QuickBar = (AFortInventory::IsPrimaryQuickbar(Item->ItemEntry.ItemDefinition) || Item->ItemEntry.ItemDefinition->ItemType == EFortItemType::GetWeaponHarvest()) ? PlayerController->QuickBars->PrimaryQuickBar : PlayerController->QuickBars->SecondaryQuickBar;
 				int i = 0;
@@ -202,7 +243,7 @@ bool AFortPlayerPawnAthena::FinishedTargetSpline(void* _Pickup)
 				}
 			}
 			else
-				PlayerController->ClientEquipItem(Item->ItemEntry.ItemGuid, true);
+				PlayerController->ClientEquipItem(Item->ItemEntry.ItemGuid, true);*/
 		}
 		else
 			AFortInventory::SpawnPickup(PlayerController->GetViewTarget()->K2_GetActorLocation(), Pickup->PrimaryPickupItemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn, -1, true, true, true, nullptr, FinalLoc);
@@ -230,9 +271,12 @@ void AFortPlayerPawnAthena::ServerSendZiplineState(UObject* Context, FFrame& Sta
 
 	auto Zipline = Pawn->GetActiveZipline();
 
+	auto PreviousState = Pawn->ZiplineState;
+
 	memcpy((PBYTE)&Pawn->ZiplineState, (const PBYTE)&State, FZiplinePawnState::Size());
 
-	((void (*)(AFortPlayerPawnAthena*)) OnRep_ZiplineState)(Pawn);
+	if (OnRep_ZiplineState)
+		((void (*)(AFortPlayerPawnAthena*)) OnRep_ZiplineState)(Pawn);
 
 	if (State.bJumped)
 	{
@@ -489,6 +533,7 @@ void AFortPlayerPawnAthena::PostLoadHook()
 	else
 	{
 		Utils::ExecHook(GetDefaultObj()->GetFunction("ServerHandlePickup"), ServerHandlePickup_);
+		Utils::ExecHook(GetDefaultObj()->GetFunction("ServerHandlePickupWithRequestedSwap"), ServerHandlePickupWithRequestedSwap);
 	}
 
 	Utils::Hook(FindFinishedTargetSpline(), FinishedTargetSpline, FinishedTargetSplineOG);

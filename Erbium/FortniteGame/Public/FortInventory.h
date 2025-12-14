@@ -57,6 +57,21 @@ public:
     DEFINE_BITFIELD_PROP(bForceAutoPickup);
 };
 
+struct alignas(0x08) FInstancedStruct final
+{
+public:
+    UStruct* ScriptStruct;
+    void* Struct;
+};
+
+struct FFortItemComponentData_Pickup
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FFortItemComponentData_Pickup);
+
+    DEFINE_STRUCT_BITFIELD_PROP(bCanBeDroppedFromInventory);
+};
+
 class UFortItemDefinition : public UObject
 {
 public:
@@ -78,11 +93,17 @@ public:
     DEFINE_PROP(ItemType, uint8);
     DEFINE_PROP(DisplayName, FText);
     DEFINE_PROP(ShortDescription, FText);
+    DEFINE_PROP(Description, FText);
+    DEFINE_PROP(ItemName, FText);
+    DEFINE_PROP(ItemShortDescription, FText);
+    DEFINE_PROP(ItemDescription, FText);
     DEFINE_PROP(Rarity, uint8);
     DEFINE_BITFIELD_PROP(bSupportsQuickbarFocus);
+    DEFINE_PROP(DataList, TArray<FInstancedStruct>);
 
     DEFINE_FUNC(CreateTemporaryItemInstanceBP, UFortItem*);
     DEFINE_FUNC(GetItemComponentByClass, UObject*);
+    DEFINE_FUNC(GetRichDescription, FText);
 
     UFortItemComponent_Pickup* GetPickupComponent() const
     {
@@ -111,12 +132,41 @@ public:
             return Call<int32>(GetMaxStackSizeFn, nullptr);
         }
     }
+
+    bool CanBeDropped() const
+    {
+        if (HasbCanBeDropped())
+            return bCanBeDropped;
+
+        if (HasDataList())
+        {
+            for (auto& ItemData : DataList)
+            {
+                if (ItemData.ScriptStruct == FFortItemComponentData_Pickup::StaticStruct())
+                {
+                    auto PickupComponentData = (FFortItemComponentData_Pickup*)ItemData.Struct;
+
+                    return PickupComponentData->bCanBeDroppedFromInventory;
+                }
+            }
+        }
+
+
+        auto PickupComponent = GetPickupComponent();
+
+        if (PickupComponent)
+            return PickupComponent->bCanBeDroppedFromInventory;
+        
+        return false;
+    }
 };
 
 class UFortWorldItemDefinition : public UFortItemDefinition
 {
 public:
     UCLASS_COMMON_MEMBERS(UFortWorldItemDefinition);
+
+    DEFINE_FUNC(GetAmmoWorldItemDefinition_BP, UFortWorldItemDefinition*);
 };
 
 struct FFortItemQuantityPair
@@ -316,8 +366,6 @@ public:
     DEFINE_PROP(EquippedAbilitySet, TSoftObjectPtr<class UFortAbilitySet>);
     DEFINE_BITFIELD_PROP(bUsesCustomAmmoType);
     DEFINE_PROP(WeaponModSlots, TArray<void*>);
-
-    DEFINE_FUNC(GetAmmoWorldItemDefinition_BP, UFortItemDefinition*);
 };
 
 struct FFortRangedWeaponStats

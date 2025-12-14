@@ -20,18 +20,18 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Erbium
-          path: ./x64/Release
+          path: |
+            ./x64/Release/Erbium.dll
+            ./x64/Release/Erbium.pdb
           if-no-files-found: warn
           retention-days: 90
-          
-      - name: Compile ErbiumClient
-        working-directory: ${{env.GITHUB_WORKSPACE}}
-        run: msbuild . /t:Build /p:Configuration="Z - Client"
 
       - name: Upload Compiled ErbiumClient DLL
         uses: actions/upload-artifact@v4
         with:
           name: ErbiumClient
-          path: ./x64/Client
+          path: |
+            ./x64/Release/ErbiumClient.dll
+            ./x64/Release/ErbiumClient.pdb
           if-no-files-found: warn
           retention-days: 90

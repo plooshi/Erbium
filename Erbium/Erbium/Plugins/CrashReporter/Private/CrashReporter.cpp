@@ -24,11 +24,12 @@ void FreezeOtherThreads()
                     if (te.th32ThreadID != currentThr && te.th32OwnerProcessID == currentPrc)
                     {
                         auto thr = OpenThread(THREAD_ALL_ACCESS, false, te.th32ThreadID);
-                        CONTEXT thrCtx{};
-                        GetThreadContext(thr, &thrCtx);
 
-                        SuspendThread(thr);
-                        CloseHandle(thr);
+                        if (thr != INVALID_HANDLE_VALUE)
+                        {
+                            SuspendThread(thr);
+                            CloseHandle(thr);
+                        }
                     }
                 }
                 te.dwSize = sizeof(te);
@@ -89,10 +90,10 @@ LONG WINAPI ErbiumUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo)
     reportStream << "[CrashReporter] Caught unhandled exception (Code: ";
     char code[9];
 
-#define NAMED_EX(x) case x: reportStream << #x; break;
-
     switch (ExceptionInfo->ExceptionRecord->ExceptionCode)
     {
+#define NAMED_EX(x) case x: reportStream << #x; break;
+
         NAMED_EX(EXCEPTION_ACCESS_VIOLATION);
         NAMED_EX(EXCEPTION_ARRAY_BOUNDS_EXCEEDED);
         NAMED_EX(EXCEPTION_BREAKPOINT);
@@ -112,6 +113,8 @@ LONG WINAPI ErbiumUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo)
         NAMED_EX(EXCEPTION_PRIV_INSTRUCTION);
         NAMED_EX(EXCEPTION_SINGLE_STEP);
         NAMED_EX(EXCEPTION_STACK_OVERFLOW);
+
+#undef NAMED_EX
     default:
         snprintf(code, 9, "%08x", ExceptionInfo->ExceptionRecord->ExceptionCode);
         reportStream << code;
@@ -146,7 +149,7 @@ LONG WINAPI ErbiumUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo)
         auto contextCpy = *ExceptionInfo->ContextRecord;
         contextCpy.ContextFlags = CONTEXT_ALL;
 
-        auto result = StackWalk64
+        auto result = StackWalk
         (
             IMAGE_FILE_MACHINE_AMD64,
             currentPrc,

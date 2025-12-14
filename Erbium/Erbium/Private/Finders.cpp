@@ -986,6 +986,9 @@ uint64_t FindFinishedTargetSpline()
 
             if (!FinishedTargetSpline)
                 FinishedTargetSpline = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 55 57 41 56 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 44 8B 81").Get();
+
+            if (!FinishedTargetSpline)
+                FinishedTargetSpline = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 55 57 41 56 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 44 8B 89").Get();
         }
         else if (VersionInfo.EngineVersion == 5.2)
             FinishedTargetSpline = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 55 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 44 8B 81 ? ? ? ? 48 8B D9 BE").Get();
@@ -1085,7 +1088,7 @@ uint64_t FindReplaceBuildingActor()
         if (!sRef.Get())
             return ReplaceBuildingActor = Memcury::Scanner::FindPattern("4C 89 44 24 ? 55 56 57 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 45").Get();
 
-        return ReplaceBuildingActor = sRef.ScanFor(VersionInfo.EngineVersion == 4.20 || (VersionInfo.EngineVersion == 4.21 && VersionInfo.EngineVersion < 6.30) || VersionInfo.EngineVersion >= 4.27 ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x4C, 0x8B }, false, 0, 1, 1000).Get();
+        return ReplaceBuildingActor = sRef.ScanFor(VersionInfo.EngineVersion == 4.20 || (VersionInfo.EngineVersion == 4.21 && VersionInfo.FortniteVersion < 6.30) || VersionInfo.EngineVersion >= 4.27 ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x4C, 0x8B }, false, 0, 1, 1000).Get();
     }
 
     return ReplaceBuildingActor;
@@ -1138,6 +1141,9 @@ uint64_t FindKickPlayer()
 
         if (!fr)
             fr = Memcury::Scanner::FindPattern("48 89 5C ?? ?? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 45 ?? 45 33 FF 48 8B FA 41 8B DF").Get();
+
+        if (!fr)
+            fr = Memcury::Scanner::FindPattern("48 89 5C ?? ?? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 45 ?? 45 33 ED 48 8B FA 41 8B DD").Get();
 
         if (!fr)
             fr = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 45 33 ED 48 8B FA 41 8B DD").Get();
@@ -2007,13 +2013,12 @@ uint64_t FindEnterAircraft()
                 sRef = uint64_t(Ptr);
                 break;
             }
-            else if (*Ptr == 0x48 && *(Ptr + 1) == 0x8D || *(Ptr + 1) == 0xAC)
+            else if (*Ptr == 0x48 && *(Ptr + 1) == 0x8D && *(Ptr + 2) == 0xAC)
             {
                 sRef = uint64_t(Ptr);
                 break;
             }
         }
-
         for (int i = 0; i < 1000; i++)
         {
             auto Ptr = (uint8_t*)(sRef - i);
@@ -2755,7 +2760,7 @@ uint64_t FindSetPickupTarget()
     if (!sRef.IsValid())
         sRef = Memcury::Scanner::FindStringRef(L"Attempted to spawn non-world item %s!", false, 0, VersionInfo.FortniteVersion >= 17, false);
 
-    for (int i = 0; i < 2000; i++)
+    for (int i = 0; i < 0x1500; i++)
     {
         auto Ptr = (uint8_t*)(sRef.Get() - i);
 
@@ -3057,6 +3062,11 @@ void FindNullsAndRetTrues()
                 break;
             }
         }
+    }
+
+    if (VersionInfo.FortniteVersion >= 23)
+    {
+        NullFuncs.push_back(Memcury::Scanner::FindStringRef(L"STAT_FortCurieVoxelFirePropagationManager_IgniteGrassInBounds").ScanFor({ 0x48, 0x8B, 0xC4 }, false).Get());
     }
 
     if (VersionInfo.EngineVersion < 5.0)

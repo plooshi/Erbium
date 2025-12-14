@@ -232,7 +232,7 @@ void GUI::Init()
                 ImGui::EndTabItem();
             }
 
-            if (gsStatus == 2)
+            if (gsStatus == StartedMatch)
             {
                 if (ImGui::BeginTabItem("Zones"))
                 {
@@ -266,12 +266,12 @@ void GUI::Init()
         switch (SelectedUI)
         {
         case 0:
-            ImGui::Text((std::string("Status: ") + (gsStatus == 0 ? "Setting up the server..." : (gsStatus == 1 ? "Joinable!" : "Match Started."))).c_str());
+            ImGui::Text((std::string("Status: ") + (gsStatus == NotReady ? "Setting up the server..." : (gsStatus == Joinable ? "Joinable!" : "Match Started."))).c_str());
 
-            if (gsStatus <= 1)
+            if (gsStatus <= Joinable)
                 ImGui::Checkbox("Lategame", &FConfiguration::bLateGame);
 
-            if (gsStatus == 1 && ImGui::Button("Start Bus Early"))
+            if (gsStatus == Joinable && ImGui::Button("Start Bus Early"))
             {
                 if (UFortGameStateComponent_BattleRoyaleGamePhaseLogic::GetDefaultObj())
                 {
@@ -371,16 +371,18 @@ void GUI::Init()
             ImGui::Checkbox("Keep Inventory", &FConfiguration::bKeepInventory);
 
             ImGui::SliderInt("Siphon Amount:", &FConfiguration::SiphonAmount, 0, 200);
+            ImGui::SliderInt("Tick Rate (dont change unless you know what this is):", &FConfiguration::MaxTickRate, 30, 120);
 
             if (ImGui::Button("Reset Builds"))
             {
-                auto Builds = Utils::GetAll<ABuildingSMActor>();
+				TArray<ABuildingSMActor*> Builds;
+				Utils::GetAll<ABuildingSMActor>(Builds);
 
                 for (auto& Build : Builds)
                     if (Build->bPlayerPlaced)
                         Build->K2_DestroyActor();
 
-                Builds.Free();
+                //Builds.Free();
             }
             break;
         case 4:
@@ -404,7 +406,7 @@ void GUI::Init()
                         continue;
                     auto Item = (UFortWorldItemDefinition*)Object;
 
-                    FString Name = UKismetTextLibrary::Conv_TextToString(Item->DisplayName);
+                    FString Name = UKismetTextLibrary::Conv_TextToString(Item->HasDisplayName() ? Item->DisplayName : Item->ItemName);
 
                     ss << "- " << UKismetSystemLibrary::GetPathName(Item).ToString() << "\n";
                     ss << "-     Name: " << (Name.GetData() ? Name.ToString() : "None") << "\n";

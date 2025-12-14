@@ -5,12 +5,12 @@ VisualStudioVersion = 17.14.36203.30
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Erbium", "Erbium\Erbium.vcxproj", "{2051ADAA-20C5-44E1-8BFF-ADEF59D059BA}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ErbiumClient", "ErbiumClient\ErbiumClient.vcxproj", "{67DC4B26-C7E7-465E-B81E-31A2FF16372C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
-		Z - Client|x64 = Z - Client|x64
-		Z - Client|x86 = Z - Client|x86
 		Z - Debug|x64 = Z - Debug|x64
 		Z - Debug|x86 = Z - Debug|x86
 	EndGlobalSection
@@ -19,14 +19,18 @@ Global
 		{2051ADAA-20C5-44E1-8BFF-ADEF59D059BA}.Release|x64.Build.0 = Release|x64
 		{2051ADAA-20C5-44E1-8BFF-ADEF59D059BA}.Release|x86.ActiveCfg = Release|Win32
 		{2051ADAA-20C5-44E1-8BFF-ADEF59D059BA}.Release|x86.Build.0 = Release|Win32
-		{2051ADAA-20C5-44E1-8BFF-ADEF59D059BA}.Z - Client|x64.ActiveCfg = Z - Client|x64
-		{2051ADAA-20C5-44E1-8BFF-ADEF59D059BA}.Z - Client|x64.Build.0 = Z - Client|x64
-		{2051ADAA-20C5-44E1-8BFF-ADEF59D059BA}.Z - Client|x86.ActiveCfg = Z - Client|Win32
-		{2051ADAA-20C5-44E1-8BFF-ADEF59D059BA}.Z - Client|x86.Build.0 = Z - Client|Win32
-		{2051ADAA-20C5-44E1-8BFF-ADEF59D059BA}.Z - Debug|x64.ActiveCfg = Release|x64
-		{2051ADAA-20C5-44E1-8BFF-ADEF59D059BA}.Z - Debug|x64.Build.0 = Release|x64
+		{2051ADAA-20C5-44E1-8BFF-ADEF59D059BA}.Z - Debug|x64.ActiveCfg = Debug|x64
+		{2051ADAA-20C5-44E1-8BFF-ADEF59D059BA}.Z - Debug|x64.Build.0 = Debug|x64
 		{2051ADAA-20C5-44E1-8BFF-ADEF59D059BA}.Z - Debug|x86.ActiveCfg = Debug|Win32
 		{2051ADAA-20C5-44E1-8BFF-ADEF59D059BA}.Z - Debug|x86.Build.0 = Debug|Win32
+		{67DC4B26-C7E7-465E-B81E-31A2FF16372C}.Release|x64.ActiveCfg = Release|x64
+		{67DC4B26-C7E7-465E-B81E-31A2FF16372C}.Release|x64.Build.0 = Release|x64
+		{67DC4B26-C7E7-465E-B81E-31A2FF16372C}.Release|x86.ActiveCfg = Release|Win32
+		{67DC4B26-C7E7-465E-B81E-31A2FF16372C}.Release|x86.Build.0 = Release|Win32
+		{67DC4B26-C7E7-465E-B81E-31A2FF16372C}.Z - Debug|x64.ActiveCfg = Debug|x64
+		{67DC4B26-C7E7-465E-B81E-31A2FF16372C}.Z - Debug|x64.Build.0 = Debug|x64
+		{67DC4B26-C7E7-465E-B81E-31A2FF16372C}.Z - Debug|x86.ActiveCfg = Release|Win32
+		{67DC4B26-C7E7-465E-B81E-31A2FF16372C}.Z - Debug|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

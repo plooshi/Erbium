@@ -11,7 +11,7 @@ public:
     TSoftObjectPtr<UDataTable> LootPackageData;
 };
 
-struct Scuff
+struct CountThresholdMap
 {
 public:
     uint8_t Padding[0x20];
@@ -30,8 +30,8 @@ public:
 struct FFortGameFeatureLootTableData_UE53
 {
 public:
-    Scuff LootTierData;
-    Scuff LootPackageData;
+    CountThresholdMap LootTierData;
+    CountThresholdMap LootPackageData;
 };
 
 
@@ -93,6 +93,27 @@ static T* PickWeighted(TArray<T*>& Map, float (*RandFunc)(float), bool bCheckZer
     return nullptr;
 }
 
+template <typename T>
+static T* PickWeighted(std::vector<T*>& Map, float (*RandFunc)(float), bool bCheckZero = true)
+{
+    float TotalWeight = std::accumulate(Map.begin(), Map.end(), 0.0f, [&](float acc, T*& p)
+        { return acc + p->Weight; });
+    float RandomNumber = RandFunc(TotalWeight);
+
+    for (auto& Element : Map)
+    {
+        float Weight = Element->Weight;
+        if (bCheckZero && Weight == 0)
+            continue;
+
+        if (RandomNumber <= Weight) return Element;
+
+        RandomNumber -= Weight;
+    }
+
+    return nullptr;
+}
+
 class UBGAConsumableWrapperItemDefinition : public UFortItemDefinition
 {
 public:
@@ -112,8 +133,8 @@ public:
 class UFortLootPackage
 {
 public:
-    static void SetupLDSForPackage(TArray<FFortItemEntry*>&, SDK::FName, int, FName, int WorldLevel = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState)->WorldLevel);
-    static TArray<FFortItemEntry*> ChooseLootForContainer(FName, int = -1, int = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState)->WorldLevel);
+    static void SetupLDSForPackage(TArray<FFortItemEntry*>&, SDK::FName, int, FName, int WorldLevel = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState)->WorldLevel, ABuildingContainer* = nullptr);
+    static void ChooseLootForContainer(TArray<FFortItemEntry*>&, FName, int = -1, int = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState)->WorldLevel, ABuildingContainer* = nullptr);
     static void SpawnFloorLootForContainer(const UClass*);
     static bool SpawnLootHook(ABuildingContainer*);
     static void SpawnLoot(FName&, FVector);

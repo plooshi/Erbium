@@ -117,6 +117,29 @@ void UFortGameplayAbility::K2_AddGameplayCueWithParams_(UObject* Context, FFrame
     free(PredictionKey);
 }
 
+void UFortGameplayAbility::K2_AddGameplayCue_(UObject* Context, FFrame& Stack)
+{
+    auto& GameplayCueTag = Stack.StepCompiledInRef<FGameplayTag>();
+    auto& EffectContext = Stack.StepCompiledInRef<FGameplayEffectContextHandle>();
+    bool bRemoveOnAbilityEnd;
+
+    Stack.StepCompiledIn(&bRemoveOnAbilityEnd);
+    Stack.IncrementCode();
+
+    auto Ability = (UFortGameplayAbility*)Context;
+    callOG(Ability, Stack.GetCurrentNativeFunction(), K2_AddGameplayCue, GameplayCueTag, EffectContext, bRemoveOnAbilityEnd);
+
+    auto PredictionKey = (FPredictionKey*)malloc(FPredictionKey::Size());
+    memset((PBYTE)PredictionKey, 0, FPredictionKey::Size());
+
+    auto AbilitySystemComponent = (UAbilitySystemComponent*)Ability->GetAbilitySystemComponentFromActorInfo();
+
+    if (AbilitySystemComponent)
+        AbilitySystemComponent->NetMulticast_InvokeGameplayCueAdded(GameplayCueTag, *PredictionKey, EffectContext);
+
+    free(PredictionKey);
+}
+
 void UFortGameplayAbility::K2_ExecuteGameplayCue_(UObject* Context, FFrame& Stack)
 {
     auto& GameplayCueTag = Stack.StepCompiledInRef<FGameplayTag>();
@@ -138,6 +161,26 @@ void UFortGameplayAbility::K2_ExecuteGameplayCue_(UObject* Context, FFrame& Stac
     free(PredictionKey);
 }
 
+void UFortGameplayAbility::K2_ExecuteGameplayCueWithParams_(UObject* Context, FFrame& Stack)
+{
+    auto& GameplayCueTag = Stack.StepCompiledInRef<FGameplayTag>();
+    auto& GameplayCueParameter = Stack.StepCompiledInRef<FGameplayCueParameters>();
+    Stack.IncrementCode();
+
+    auto Ability = (UFortGameplayAbility*)Context;
+    callOG(Ability, Stack.GetCurrentNativeFunction(), K2_ExecuteGameplayCueWithParams, GameplayCueTag, GameplayCueParameter);
+
+    auto PredictionKey = (FPredictionKey*)malloc(FPredictionKey::Size());
+    memset((PBYTE)PredictionKey, 0, FPredictionKey::Size());
+
+    auto AbilitySystemComponent = (UAbilitySystemComponent*)Ability->GetAbilitySystemComponentFromActorInfo();
+
+    //AbilitySystemComponent->NetMulticast_InvokeGameplayCueAdded(GameplayCueTag, *PredictionKey, EffectContext);
+    if (AbilitySystemComponent)
+        AbilitySystemComponent->NetMulticast_InvokeGameplayCueExecuted_WithParams(GameplayCueTag, *PredictionKey, GameplayCueParameter);
+
+    free(PredictionKey);
+}
 
 void UAbilitySystemComponent::Hook()
 {
@@ -172,6 +215,8 @@ void UAbilitySystemComponent::Hook()
     if (VersionInfo.FortniteVersion >= 8)
     {
         Utils::ExecHook(UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_ExecuteGameplayCue"), UFortGameplayAbility::K2_ExecuteGameplayCue_, UFortGameplayAbility::K2_ExecuteGameplayCue_OG);
+        Utils::ExecHook(UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_ExecuteGameplayCueWithParams"), UFortGameplayAbility::K2_ExecuteGameplayCueWithParams_, UFortGameplayAbility::K2_ExecuteGameplayCueWithParams_OG);
+        Utils::ExecHook(UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_AddGameplayCue"), UFortGameplayAbility::K2_AddGameplayCue_, UFortGameplayAbility::K2_AddGameplayCue_OG);
         Utils::ExecHook(UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_AddGameplayCueWithParams"), UFortGameplayAbility::K2_AddGameplayCueWithParams_, UFortGameplayAbility::K2_AddGameplayCueWithParams_OG);
     }
 }

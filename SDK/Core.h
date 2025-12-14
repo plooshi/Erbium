@@ -152,7 +152,6 @@ namespace SDK
 		operator bool() const {
 			return IsValid();
 		}
-
 	};
 
 	class ParamPair
@@ -748,7 +747,7 @@ namespace SDK
 		}
 	};
 
-	class TUObjectArray 
+	class TUObjectArray
 	{
 	public:
 		static const int32 Num()
@@ -1251,8 +1250,8 @@ namespace SDK
 		TSoftClassPtr(UClass* Obj)
 		{
 			WeakPtr = FWeakObjectPtr(Obj);
-			if (VersionInfo.FortniteVersion )
-			ObjectID.AssetPathName = FName(0);
+			if (VersionInfo.FortniteVersion)
+				ObjectID.AssetPathName = FName(0);
 		}
 
 		UClass* Get()
@@ -1303,11 +1302,12 @@ namespace SDK
 	{
 		auto DefaultObj = UObject::StaticClass()->GetDefaultObj();
 
-		for (int i = 0; i < 0x100; i++)
-			if (__int64(DefaultObj->Vft[i]) == PEAddr)
-			{
-				Offsets::ProcessEventVft = i;
-				break;
-			}
+		if (DefaultObj)
+			for (int i = 0; i < 0x100; i++)
+				if (__int64(DefaultObj->Vft[i]) == PEAddr)
+				{
+					Offsets::ProcessEventVft = i;
+					break;
+				}
 	}
 }

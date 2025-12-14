@@ -52,8 +52,11 @@ AFortAthenaCreativePortal* AFortAthenaCreativePortal::Create(AFortPlayerControll
 
 	printf("[Creative] Assigned portal %s to %s\n", Portal->Name.ToString().c_str(), PlayerController->Name.ToString().c_str());
 
-	Portal->bIsPublishedPortal = false;
-	Portal->OnRep_PublishedPortal();
+	if (Portal->HasbIsPublishedPortal())
+	{
+		Portal->bIsPublishedPortal = false;
+		Portal->OnRep_PublishedPortal();
+	}
 
 	Portal->OwningPlayer = PlayerState->UniqueId;
 	Portal->OnRep_OwningPlayer();
@@ -78,7 +81,7 @@ AFortAthenaCreativePortal* AFortAthenaCreativePortal::Create(AFortPlayerControll
 		LevelSaveComponent->RestrictedPlotDefinition = RestrictedPlotDefinition;
 		if (LevelSaveComponent->HasPlotPermissions())
 			LevelSaveComponent->PlotPermissions.Permission = 1;
-		else
+		else if (Portal->LinkedVolume->HasPlayspace())
 		{
 			auto PermissionComponent = (UPlayspaceComponent_CreativeToolsPermission*)Portal->LinkedVolume->Playspace->GetComponentByClass(UPlayspaceComponent_CreativeToolsPermission::StaticClass());
 
@@ -92,7 +95,7 @@ AFortAthenaCreativePortal* AFortAthenaCreativePortal::Create(AFortPlayerControll
 	LevelStreamComponent->SetPlayset(IslandPlayset);
 	
 	static auto SettingsMachineClass = FindObject<UClass>("/Game/Athena/Items/Gameplay/MinigameSettingsControl/MinigameSettingsMachine.MinigameSettingsMachine_C");
-	auto SettingsMachine = UWorld::SpawnActor<AMinigameSettingsMachine_C>(SettingsMachineClass, FVector{}, {}, Portal->LinkedVolume);
+	auto SettingsMachine = UWorld::SpawnActor<AMinigameSettingsMachine_C>(SettingsMachineClass, Portal->LinkedVolume->K2_GetActorLocation(), {}, Portal->LinkedVolume);
 
 	if (SettingsMachine)
 	{
@@ -101,6 +104,8 @@ AFortAthenaCreativePortal* AFortAthenaCreativePortal::Create(AFortPlayerControll
 			SettingsMachine->SettingsVolume = Portal->LinkedVolume;
 			SettingsMachine->OnRep_SettingsVolume();
 		}
+		if (SettingsMachine->HasCreativeLinkComponent())
+			SettingsMachine->CreativeLinkComponent = (UFortCreativeVolumeLinkComponent*)Portal->LinkedVolume->GetComponentByClass(UFortCreativeVolumeLinkComponent::StaticClass());
 
 		auto MinigameVolumeComponent = (UFortMinigameVolumeComponent*)Portal->LinkedVolume->GetComponentByClass(UFortMinigameVolumeComponent::StaticClass());
 		if (MinigameVolumeComponent)
@@ -158,7 +163,11 @@ void AFortAthenaCreativePortal::TeleportPlayerToLinkedVolume(UObject* Context, F
 	}
 
 	if (PlayerController->HasbIsCreativeQuickbarEnabled())
+	{
+		auto OldbIsCreativeQuickbarEnabled = PlayerController->bIsCreativeQuickbarEnabled;
 		PlayerController->bIsCreativeQuickbarEnabled = true;
+		PlayerController->OnRep_IsCreativeQuickbarEnabled(OldbIsCreativeQuickbarEnabled);
+	}
 	if (PlayerController->HasbIsCreativeQuickmenuEnabled())
 		PlayerController->bIsCreativeQuickmenuEnabled = true;
 	if (PlayerController->HasbIsCreativeModeEnabled())

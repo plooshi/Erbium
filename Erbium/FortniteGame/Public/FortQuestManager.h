@@ -19,6 +19,7 @@ public:
     DEFINE_STRUCT_PROP(MaxCount, int32);
     DEFINE_STRUCT_PROP(Condition, FString);
     DEFINE_STRUCT_PROP(AccoladePrimaryAssetId, FPrimaryAssetId);
+    DEFINE_STRUCT_PROP(bOnceOnly, bool);
 };
 
 class EFortQuestObjectiveStatEvent
@@ -79,15 +80,35 @@ public:
     int32 Count;
 };
 
+class UFortQuestItemDefinition : public UFortItem
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortQuestItemDefinition);
+};
+
+class UFortQuestItem : public UFortItem
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortQuestItem);
+
+    DEFINE_PROP(ItemDefinition, UFortQuestItemDefinition*);
+
+    DEFINE_FUNC(HasCompletedQuest, bool);
+};
+
+
 class UFortQuestManager : public UObject
 {
 public:
     UCLASS_COMMON_MEMBERS(UFortQuestManager);
 
-    void SendStatEvent(AActor* PlayerController, long long StatEvent, int32 Count, UObject* TargetObject = nullptr, FGameplayTagContainer TargetTags = FGameplayTagContainer(), FGameplayTagContainer AdditionalSourceTags = FGameplayTagContainer(), bool* QuestActive = nullptr, bool* QuestCompleted = nullptr);
+    DEFINE_PROP(CurrentQuests, TArray<UFortQuestItem*>);
 
     DEFINE_FUNC(GetSourceAndContextTags, void);
     DEFINE_FUNC(GetPlayerControllerBP, AActor*);
+
+    void SendStatEvent(AActor* PlayerController, long long StatEvent, int32 Count, UObject* TargetObject = nullptr, FGameplayTagContainer TargetTags = FGameplayTagContainer(), FGameplayTagContainer AdditionalSourceTags = FGameplayTagContainer(), bool* QuestActive = nullptr, bool* QuestCompleted = nullptr);
+
 
     InitPostLoadHooks;
 };

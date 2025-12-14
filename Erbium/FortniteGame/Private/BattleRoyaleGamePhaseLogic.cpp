@@ -398,10 +398,16 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartNewSafeZonePhase(i
 
 void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 {
+	static auto GamePhaseOffset = this->GetOffset("GamePhase");
+	auto& _GamePhase = *(EAthenaGamePhase*)(__int64(this) + GamePhaseOffset);
+
+	if (_GamePhase >= EAthenaGamePhase::Aircraft)
+		return;
+
 	auto Time = UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
 
 	auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
-	auto Playlist = VersionInfo.FortniteVersion >= 3.5 ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
+    auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount() ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
 	
     if constexpr (FConfiguration::WebhookURL && *FConfiguration::WebhookURL)
     {
@@ -423,7 +429,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 
         curl_easy_cleanup(curl);
     }
-	GUI::gsStatus = 2;
+	GUI::gsStatus = StartedMatch;
 	sprintf_s(GUI::windowTitle, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Match started" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Match started" : "Erbium (FN %.1f, UE %.2f): Match started"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
 	SetConsoleTitleA(GUI::windowTitle);
 

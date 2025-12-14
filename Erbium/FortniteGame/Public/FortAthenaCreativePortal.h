@@ -2,12 +2,19 @@
 #include "../../pch.h"
 #include "FortPlayerControllerAthena.h"
 
+class UFortCreativeVolumeLinkComponent : public UActorComponent
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortCreativeVolumeLinkComponent);
+};
+
 class AFortMinigameSettingsBuilding : public AActor
 {
 public:
     UCLASS_COMMON_MEMBERS(AFortMinigameSettingsBuilding);
     
     DEFINE_PROP(SettingsVolume, AActor*);
+    DEFINE_PROP(CreativeLinkComponent, UFortCreativeVolumeLinkComponent*);
 
     DEFINE_FUNC(OnRep_SettingsVolume, void);
     

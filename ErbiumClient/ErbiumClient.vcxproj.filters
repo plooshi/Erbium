@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="ErbiumClient">
+      <UniqueIdentifier>{2a95123d-8afc-464a-a144-bc5e1b4bd259}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ErbiumClient\Public">
+      <UniqueIdentifier>{12ccf323-ec61-43fd-9ca5-b42017765603}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ErbiumClient\Private">
+      <UniqueIdentifier>{bf8a8013-2503-4be0-ab66-20ff33e3ec13}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h">
+      <Filter>ErbiumClient\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="ErbiumClient\Public\FortPlaylistAthena.h">
+      <Filter>ErbiumClient\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="ErbiumClient\Public\FortPlayerControllerAthena.h">
+      <Filter>ErbiumClient\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="ErbiumClient\Public\Client.h">
+      <Filter>ErbiumClient\Public</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp">
+      <Filter>ErbiumClient\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="ErbiumClient\Private\dllmain.cpp">
+      <Filter>ErbiumClient\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="ErbiumClient\Private\Client.cpp">
+      <Filter>ErbiumClient\Private</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

@@ -32,6 +32,7 @@ public:
 	DEFINE_STATIC_FUNC(SetTimeOfDay, void);
 	DEFINE_STATIC_FUNC(DoesItemDefinitionHaveGameplayTag, bool);
 	DEFINE_STATIC_FUNC(SetTimeOfDaySpeed, void);
+	DEFINE_STATIC_FUNC(SpawnProjectileWithParams, void);
 	//DEFINE_STATIC_FUNC(K2_GetResourceItemDefinition, UFortItemDefinition*);
 
 	static const UFortItemDefinition* K2_GetResourceItemDefinition(EFortResourceType Type)

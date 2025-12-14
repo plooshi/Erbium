@@ -66,23 +66,21 @@ public:
         VirtualProtect(LPVOID(ptr), sizeof(_Is), og, &og);
     }
 
-    static TArray<AActor*> GetAll(const UClass* Class)
+    static void GetAllInternal(const UClass* Class, TArray<AActor*>& ret)
     {
-        TArray<AActor*> ret;
         UGameplayStatics::GetAllActorsOfClass(UWorld::GetWorld(), Class, &ret);
-        return ret;
     }
 
     template <typename _At = AActor>
-    __forceinline static TArray<_At*> GetAll(const UClass* Class)
+    __forceinline static void GetAll(const UClass* Class, TArray<_At*>& ret)
     {
-        return GetAll(Class);
+        return GetAllInternal(Class, *(TArray<AActor*>*)&ret);
     }
 
     template <typename _At = AActor>
-    __forceinline static TArray<_At*> GetAll()
+    __forceinline static void GetAll(TArray<_At*>& ret)
     {
-        return GetAll(_At::StaticClass());
+        GetAllInternal(_At::StaticClass(), *(TArray<AActor*>*)&ret);
     }
 
     template <typename _Ot = void*>

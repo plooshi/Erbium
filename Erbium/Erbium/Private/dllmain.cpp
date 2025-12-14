@@ -21,7 +21,6 @@
 
 void Main()
 {
-#ifndef CLIENT
     if constexpr (!FConfiguration::bGUI)
         AllocConsole();
 
@@ -40,10 +39,8 @@ void Main()
         FCrashReporter::Register();
 
     printf("Initializing SDK...\n");
-#endif
     SDK::Init();
 
-#ifndef CLIENT
     if constexpr (FConfiguration::bGUI)
     {
         if constexpr (FConfiguration::bUseStdoutLog)
@@ -55,7 +52,6 @@ void Main()
 
         CreateThread(0, 0, (LPTHREAD_START_ROUTINE)GUI::Init, 0, 0, 0);
     }
-#endif
 
     if (VersionInfo.EngineVersion >= 5.0)
     {
@@ -65,17 +61,15 @@ void Main()
     {
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"net.AllowEncryption 0"), nullptr);
 
-#ifndef CLIENT
         auto DefaultCurieGlobals = FindClass("CurieGlobals")->GetDefaultObj();
 
         if (DefaultCurieGlobals)
         {
             uint32 Offset = DefaultCurieGlobals->GetOffset("bEnableCurie");
 
-            if (Offset != -1)
-                *(bool*)(uintptr_t(DefaultCurieGlobals) + Offset) = false;
+            //if (Offset != -1)
+            //    *(bool*)(uintptr_t(DefaultCurieGlobals) + Offset) = false;
         }
-#endif
     }
     if (VersionInfo.EngineVersion >= 5.3 && FConfiguration::bEnableIris)
     {
@@ -93,7 +87,6 @@ void Main()
                 *(uint32_t*)IrisBool = true;
         }
 
-#ifndef CLIENT
         if (VersionInfo.FortniteVersion >= 29)
         {
             auto ReplicationBridgeConfig = UObjectReplicationBridgeConfig::GetDefaultObj();
@@ -110,7 +103,6 @@ void Main()
                 }
             }
         }
-#endif
         //UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"net.Iris.UseIrisReplication 1"), nullptr);
     }
     if (VersionInfo.EngineVersion >= 5.4)

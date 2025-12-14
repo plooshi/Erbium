@@ -37,6 +37,7 @@ public:
     DEFINE_PROP(ReplicatedLootTier, int32);
     DEFINE_PROP(LootFinalLocation, FVector);
     DEFINE_BITFIELD_PROP(bDestroyContainerOnSearch);
+    DEFINE_BITFIELD_PROP(bStartAlreadySearched_Athena);
 
     DEFINE_FUNC(OnRep_bAlreadySearched, void);
     DEFINE_FUNC(BounceContainer, void);

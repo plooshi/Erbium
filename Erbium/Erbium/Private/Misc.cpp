@@ -6,6 +6,8 @@
 #include "../../FortniteGame/Public/FortPlayerControllerAthena.h"
 #include "../../Engine/Public/NetDriver.h"
 #include "../../FortniteGame/Public/FortGameMode.h"
+#include "../../FortniteGame/Public/FortWeapon.h"
+#include "../../FortniteGame/Public/FortKismetLibrary.h"
 
 int Misc::GetNetMode() 
 {
@@ -25,7 +27,7 @@ void* Misc::SendRequestNow(void* Arg1, void* MCPData, int)
 float Misc::GetMaxTickRate(UEngine* Engine, float DeltaTime, bool bAllowFrameRateSmoothing)
 {
 	// improper, DS is supposed to do hitching differently
-	return FConfiguration::MaxTickRate;
+	return (float)FConfiguration::MaxTickRate;
 	//return std::clamp(1.f / DeltaTime, 1.f, FConfiguration::MaxTickRate);
 }
 
@@ -78,172 +80,6 @@ void* SelectReset(void* a1)
 		CompleteBuildingEditInteraction(a1);
 
 	return result;
-}
-
-void ClientThread()
-{
-	bool bPressed = false;
-	while (true)
-	{
-		if (UWorld::GetWorld() && UWorld::GetWorld()->OwningGameInstance)
-		{
-			auto& LocalPlayers = UWorld::GetWorld()->OwningGameInstance->LocalPlayers;
-
-			if (LocalPlayers.Num() > 0)
-			{
-				auto PlayerController = (AFortPlayerControllerAthena*)LocalPlayers[0]->PlayerController;
-
-				if (PlayerController && !PlayerController->CheatManager)
-				{
-					PlayerController->CheatManager = (UFortCheatManager*)UGameplayStatics::SpawnObject(PlayerController->CheatClass, PlayerController);
-					PlayerController->CheatManager->ObjectFlags &= ~0x1000000;
-					TUObjectArray::GetItemByIndex(PlayerController->CheatManager->Index)->Flags &= ~0x4000000;
-				}
-			}
-		}
-
-		if (!bPressed && GetAsyncKeyState(VK_F3))
-		{
-			bPressed = true;
-
-			bEOREnabled ^= 1;
-		}
-		/*else if (!bPressed && GetAsyncKeyState(VK_F2))
-		{
-			bPressed = true;
-			//bEnableResetOnRelease ^= 1;
-		}*/
-		else if (!GetAsyncKeyState(VK_F3)/* && !GetAsyncKeyState(VK_F2)*/)
-			bPressed = false;
-
-		Sleep(33); // thread runs at 30tps	
-	}
-}
-
-void Misc::InitClient()
-{
-	UEngine::GetEngine()->GameViewport->ViewportConsole = UGameplayStatics::SpawnObject(UEngine::GetEngine()->ConsoleClass, UEngine::GetEngine()->GameViewport);
-	
-	auto PrimarySlot = uint8_t(EPlaylistUIExtensionSlot::StaticEnum() ? EPlaylistUIExtensionSlot::GetPrimary() : EUIExtensionSlot::GetPrimary());
-
-	if (VersionInfo.FortniteVersion >= 10 || FConfiguration::bForceRespawns)
-	{
-		TArray<FUIExtension> ArenaExtensions, ShowdownExtensions;
-
-		if (VersionInfo.FortniteVersion >= 10)
-		{
-			FUIExtension ArenaUIExtension{};
-			ArenaUIExtension.Slot = PrimarySlot;
-			if (VersionInfo.FortniteVersion < 23)
-				ArenaUIExtension.WidgetClass.ObjectID.AssetPathName = FName(L"/Game/UI/Competitive/Arena/ArenaScoringHUD.ArenaScoringHUD_C");
-			else
-			{
-				auto& PackageName = *(FName*)(__int64(&ArenaUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.2 ? 0xC : 0x8));
-				auto& AssetName = *(FName*)(__int64(&ArenaUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.2 ? 0x10 : 0xC));
-
-				PackageName = FName(L"/Game/UI/Competitive/Arena/ArenaScoringHUD");
-				AssetName = FName(L"ArenaScoringHUD_C");
-			}
-
-			FUIExtension ShowdownUIExtension{};
-			ShowdownUIExtension.Slot = PrimarySlot;
-			if (VersionInfo.FortniteVersion < 23)
-				ShowdownUIExtension.WidgetClass.ObjectID.AssetPathName = FName(L"/Game/UI/Frontend/Showdown/ShowdownScoringHUD.ShowdownScoringHUD_C");
-			else
-			{
-				auto& PackageName = *(FName*)(__int64(&ShowdownUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.2 ? 0xC : 0x8));
-				auto& AssetName = *(FName*)(__int64(&ShowdownUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.2 ? 0x10 : 0xC));
-
-				PackageName = FName(L"/Game/UI/Frontend/Showdown/ShowdownScoringHUD");
-				AssetName = FName(L"ShowdownScoringHUD_C");
-			}
-
-			ArenaExtensions.Add(ArenaUIExtension);
-			ShowdownExtensions.Add(ShowdownUIExtension);
-		}
-
-		auto PlaylistClass = FindClass("FortPlaylistAthena");
-
-		for (int i = 0; i < TUObjectArray::Num(); i++)
-		{
-			auto Object = TUObjectArray::GetObjectByIndex(i);
-
-			if (Object && Object->IsA((UClass*)PlaylistClass))
-			{
-				auto Playlist = (UFortPlaylistAthena*)Object;
-
-				if (FConfiguration::bForceRespawns)
-				{
-					if (Playlist->HasbRespawnInAir())
-						Playlist->bRespawnInAir = true;
-					if (Playlist->HasRespawnHeight())
-					{
-						Playlist->RespawnHeight.Curve.CurveTable = nullptr;
-						Playlist->RespawnHeight.Curve.RowName = FName();
-						Playlist->RespawnHeight.Value = 20000;
-					}
-					if (Playlist->HasRespawnTime())
-					{
-						Playlist->RespawnTime.Curve.CurveTable = nullptr;
-						Playlist->RespawnTime.Curve.RowName = FName();
-						Playlist->RespawnTime.Value = 3;
-					}
-					Playlist->RespawnType = 1; // InfiniteRespawns
-					if (Playlist->HasbAllowJoinInProgress())
-						Playlist->bAllowJoinInProgress = true;
-					if (Playlist->HasbForceRespawnLocationInsideOfVolume())
-						Playlist->bForceRespawnLocationInsideOfVolume = true;
-				}
-				if (VersionInfo.FortniteVersion >= 10)
-				{
-					auto Name = Object->Name.ToString();
-					if (Name.contains("Showdown"))
-						Playlist->UIExtensions = Name.contains("ShowdownAlt") ? ArenaExtensions : ShowdownExtensions;
-				}
-			}
-		}
-	}
-
-	if (VersionInfo.FortniteVersion < 20)
-	{
-		auto SelectEditAddr = Memcury::Scanner::FindStringRef(L"EditModeInputComponent0").ScanFor({ 0x48, 0x8D, 0x05 }, true, 1).RelativeOffset(3).Get();
-		auto SelectResetAddr = Memcury::Scanner::FindStringRef(L"EditModeInputComponent0").ScanFor({ 0x48, 0x8D, 0x05 }, true, 2).RelativeOffset(3).Get();
-
-		auto sRef = Memcury::Scanner::FindStringRef("CompleteBuildingEditInteraction", true, VersionInfo.EngineVersion >= 4.27).Get();
-		uintptr_t CompleteBuildingEditInteractionLea = 0;
-
-		for (int i = 1; i < 2000; i++)
-		{
-			if (*(uint8_t*)(sRef - i) == 0x4C && *(uint8_t*)(sRef - i + 1) == 0x8D)
-			{
-				CompleteBuildingEditInteractionLea = sRef - i;
-				break;
-			}
-			else if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8D)
-			{
-				CompleteBuildingEditInteractionLea = sRef - i;
-				break;
-			}
-		}
-
-		CompleteBuildingEditInteraction = (char (*)(void*)) Memcury::Scanner(CompleteBuildingEditInteractionLea).RelativeOffset(3).Get();
-
-		MH_Initialize();
-
-		if (VersionInfo.FortniteVersion < 11)
-			Utils::Hook(SelectEditAddr, SelectEdit, SelectEditOG);
-		if (VersionInfo.FortniteVersion < 24.40)
-			Utils::Hook(SelectResetAddr, SelectReset, SelectResetOG);
-
-		MH_EnableHook(MH_ALL_HOOKS);
-	}
-
-	if (FConfiguration::bForceRespawns)
-	{
-
-	}
-
-	CreateThread(0, 0, (LPTHREAD_START_ROUTINE)ClientThread, 0, 0, 0);
 }
 
 class UIpNetDriver : public UNetDriver
@@ -406,15 +242,99 @@ __int64 CrashSomething(__int64 a1, __int64 a2)
 	return CrashSomethingOG(a1, a2);
 }
 
+class AFortLightweightProjectileManager : public AActor
+{
+public:
+	UCLASS_COMMON_MEMBERS(AFortLightweightProjectileManager);
+};
+
+class AFortLightweightProjectileConfig : public AActor
+{
+public:
+	UCLASS_COMMON_MEMBERS(AFortLightweightProjectileConfig);
+
+	DEFINE_PROP(Speed, FScalableFloat);
+	DEFINE_PROP(GravityScale, FScalableFloat);
+};
+
+struct FSpawnProjectileParams
+{
+public:
+	USCRIPTSTRUCT_COMMON_MEMBERS(FSpawnProjectileParams);
+
+	DEFINE_STRUCT_PROP(SpawnLocation, FVector);
+	DEFINE_STRUCT_PROP(SpawnDirection, FRotator);
+	DEFINE_STRUCT_PROP(OptionalAssociatedItemDef, UFortItemDefinition*);
+	DEFINE_STRUCT_PROP(InitialSpeed, float);
+	DEFINE_STRUCT_PROP(MaxSpeed, float);
+	DEFINE_STRUCT_PROP(GravityScale, float);
+};
+
+class AFortProjectileAthena : public AActor
+{
+public:
+	UCLASS_COMMON_MEMBERS(AFortProjectileAthena);
+};
+
+void (*TestOG)(AFortLightweightProjectileManager* ProjectileManager, TWeakObjectPtr<AFortPlayerPawnAthena> WeakPawn, TWeakObjectPtr<AFortWeapon> WeakWeapon, TSubclassOf<AFortLightweightProjectileConfig>& ConfigClass, FVector Location, FVector Direction, uint8_t Type, int a8, int a9);
+void Test(AFortLightweightProjectileManager* ProjectileManager, TWeakObjectPtr<AFortPlayerPawnAthena> WeakPawn, TWeakObjectPtr<AFortWeapon> WeakWeapon, TSubclassOf<AFortLightweightProjectileConfig>& ConfigClass, FVector Location, FVector Direction, uint8_t Type, int a8, int a9)
+{
+	TestOG(ProjectileManager, WeakPawn, WeakWeapon, ConfigClass, Location, Direction, Type, a8, a9);
+
+	auto Config = (AFortLightweightProjectileConfig*)ConfigClass->GetDefaultObj();
+
+	auto Params = (FSpawnProjectileParams*)malloc(FSpawnProjectileParams::Size());
+	memset(Params, 0, FSpawnProjectileParams::Size());
+
+	Params->SpawnLocation = Location;
+
+	const double RAD_TO_DEG = 57.29577951308232;
+
+	auto Weapon = WeakWeapon.Get();
+
+	auto Pitch = asin(Direction.Z) * RAD_TO_DEG;
+	auto Yaw = atan2(Direction.Y, Direction.X) * RAD_TO_DEG;
+	Params->SpawnDirection.Pitch = Pitch;
+	Params->SpawnDirection.Yaw = Yaw;
+	Params->SpawnDirection.Roll = 0;
+	Params->OptionalAssociatedItemDef = Weapon->WeaponData;
+	Params->InitialSpeed = Config->Speed.Evaluate();
+	Params->MaxSpeed = Params->InitialSpeed;
+	Params->GravityScale = Config->GravityScale.Evaluate();
+
+	UFortKismetLibrary::SpawnProjectileWithParams(AFortProjectileAthena::StaticClass(), Weapon, *Params);
+	free(Params);
+}
+
+struct FTickFunction
+{
+public:
+	USCRIPTSTRUCT_COMMON_MEMBERS(FTickFunction);
+
+	DEFINE_STRUCT_BITFIELD_PROP(bAllowTickOnDedicatedServer);
+};
+
+void (*Test2OG)(FTickFunction* _this, ULevel* Level);
+void Test2(FTickFunction* _this, ULevel* Level)
+{
+	if (!_this->bAllowTickOnDedicatedServer)
+	{
+		return;
+	}
+	return Test2OG(_this, Level);
+}
+
 void Misc::Hook()
 {
-	if (VersionInfo.FortniteVersion == 23.00 || (VersionInfo.FortniteVersion >= 25 && VersionInfo.FortniteVersion != 28.30 && VersionInfo.FortniteVersion != 29.40) || VersionInfo.FortniteVersion >= 30)
+	if (VersionInfo.FortniteVersion == 23.00 || (VersionInfo.FortniteVersion >= 24.30 && VersionInfo.FortniteVersion != 28.30 && VersionInfo.FortniteVersion != 29.40) || VersionInfo.FortniteVersion >= 30)
 	{
 		auto AttemptDeriveFromURL = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 4C 8B C1").Get();
 		if (!AttemptDeriveFromURL)
 			AttemptDeriveFromURL = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 48 8B D1").Get();
 		if (!AttemptDeriveFromURL)
 			AttemptDeriveFromURL = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 4C 8B D1").Get();
+		if (!AttemptDeriveFromURL)
+			AttemptDeriveFromURL = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 4C 8B D1").Get();
 
 		Utils::Hook(AttemptDeriveFromURL, GetNetMode);
 		PatchAllNetModes(AttemptDeriveFromURL);
@@ -503,13 +423,17 @@ void Misc::Hook()
 		Utils::Patch<uint8_t>(patchPoint + 2, 0x1);
 	}
 
-	if (VersionInfo.FortniteVersion >= 25)
+	if (VersionInfo.FortniteVersion >= 24.30)
 	{
-		auto sig = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC ? 4C 8D B1 ? ? ? ? 33 DB 49 8D 7E").Get();
+		auto sig = VersionInfo.EngineVersion == 5.3 ? Memcury::Scanner::FindPattern("40 53 48 83 EC ? 48 8B DA 49 8B D0 E8 ? ? ? ? 48 85 C0 0F 85 ? ? ? ? 48 39 83").Get() : Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC ? 4C 8D B1 ? ? ? ? 33 DB 49 8D 7E").Get();
 
 		if (!sig)
 			sig = Memcury::Scanner::FindPattern("40 53 48 83 EC ? 48 8B DA 48 8B D1 48 81 C1 ? ? ? ? E8 ? ? ? ? 48 85 C0 74 ? 4C 8B 0B 45 33 C0").Get();
 		
 		Utils::Hook(sig, CrashSomething, CrashSomethingOG);
 	}
+
+	//Utils::Hook(ImageBase + 0x1CE85F4, Test);
+	//Utils::Hook(ImageBase + 0x2788BEC, Test, TestOG);
+	//Utils::Hook(Memcury::Scanner::FindPattern("48 89 5C 24 ?? 57 48 83 EC ?? 48 8B DA 48 8B F9 E8 ?? ?? ?? ?? 84 C0 75 ?? 48 83 79").Get(), Test2, Test2OG);
 }

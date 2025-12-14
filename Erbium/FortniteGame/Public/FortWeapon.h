@@ -31,6 +31,7 @@ public:
     DEFINE_PROP(EquippedAbilityHandles, TArray<FGameplayAbilitySpecHandle>);
     DEFINE_PROP(EquippedAbilitySetHandles, TArray<FFortAbilitySetHandle>);
     DEFINE_PROP(MountedWeaponInfoRepped, FMountedWeaponInfoRepped);
+    DEFINE_BITFIELD_PROP(bCompletedWeaponLoad);
 
     DEFINE_FUNC(ServerReleaseWeaponAbility, void);
     DEFINE_FUNC(OnRep_MountedWeaponInfoRepped, void);

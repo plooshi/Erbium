@@ -8,8 +8,8 @@ void Events::StartEvent()
 	if (VersionInfo.FortniteVersion < 4.4) return; // no other events from what i know of?
 
 	auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
-	auto Playlist = VersionInfo.FortniteVersion >= 4.0 ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
-
+    auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount() ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
+	
 	for (auto& Event : EventsArray)
 	{
 		if (Event.EventVersion != VersionInfo.FortniteVersion)
@@ -19,16 +19,20 @@ void Events::StartEvent()
 		if (Event.LoaderClass)
 			if (const UClass* LoaderClass = FindObject<UClass>(Event.LoaderClass))
 			{
-				auto AllLoaders = Utils::GetAll(LoaderClass);
+				TArray<AActor*> AllLoaders;
+				Utils::GetAll(LoaderClass, AllLoaders);
 				LoaderObject = AllLoaders.Num() > 0 ? AllLoaders[0] : nullptr;
+				//AllLoaders.Free();
 			}
 
 		UObject* ScriptingObject = nullptr;
 		if (Event.ScriptingClass)
 			if (const UClass* ScriptingClass = FindObject<UClass>(Event.ScriptingClass))
 			{
-				auto AllLoaders = Utils::GetAll(ScriptingClass);
+				TArray<AActor*> AllLoaders;
+				Utils::GetAll(ScriptingClass, AllLoaders);
 				ScriptingObject = AllLoaders.Num() > 0 ? AllLoaders[0] : nullptr;
+				//AllLoaders.Free();
 			}
 
 		for (auto& EventFunction : Event.EventFunctions)

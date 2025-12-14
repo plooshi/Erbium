@@ -503,18 +503,18 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 	if (Driver->ClientConnections.Num() > 0)
 		ServerReplicateActors(Driver, DeltaSeconds);
 
-    if (GUI::gsStatus == 1 && VersionInfo.FortniteVersion >= 11.00)
+    if (GUI::gsStatus == Joinable && VersionInfo.FortniteVersion >= 11.00)
     { 
         auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
 		auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
 		static auto bSkipAircraft = GameState->HasCurrentPlaylistInfo() && GameState->CurrentPlaylistInfo.BasePlaylist ? GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft : false;
 		auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
-		if (!bSkipAircraft && GameMode->MatchState == FName(L"InProgress") && GameState->WarmupCountdownEndTime <= Time)
+		if (!bSkipAircraft && GameState->HasWarmupCountdownEndTime() && GameMode->MatchState == FName(L"InProgress") && GameState->WarmupCountdownEndTime <= Time)
         {
             UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
         }
 	}
-	else if (GUI::gsStatus == 2 && (FConfiguration::bAutoRestart || (FConfiguration::WebhookURL && *FConfiguration::WebhookURL) || (VersionInfo.FortniteVersion >= 18 && VersionInfo.FortniteVersion < 25.20)))
+	else if (GUI::gsStatus == StartedMatch && (FConfiguration::bAutoRestart || (FConfiguration::WebhookURL && *FConfiguration::WebhookURL) || (VersionInfo.FortniteVersion >= 18 && VersionInfo.FortniteVersion < 25.20)))
 	{
 		auto WorldNetDriver = UWorld::GetWorld()->NetDriver;
 		auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
@@ -538,7 +538,7 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 
 					sprintf_s(version, VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "%.2f" : "%.1f", VersionInfo.FortniteVersion);
 
-    				auto Playlist = VersionInfo.FortniteVersion >= 3.5 ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
+    				auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount() ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
 					auto payload = UEAllocatedString("{\"embeds\": [{\"title\": \"Match has ended!\", \"fields\": [{\"name\":\"Version\",\"value\":\"") + version + "\"}, {\"name\":\"Playlist\",\"value\":\"" + (Playlist ? Playlist->PlaylistName.ToString() : "Playlist_DefaultSolo") + "\"}], \"color\": " + "\"7237230\", \"footer\": {\"text\":\"Erbium\", \"icon_url\":\"https://cdn.discordapp.com/attachments/1341168629378584698/1436803905119064105/L0WnFa.png.png?ex=6910ef69&is=690f9de9&hm=01a0888b46647959b38ee58df322048ab49e2a5a678e52d4502d9c5e3978d805&\"}, \"timestamp\":\"" + iso8601() + "\"}] }";
 
 					curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload.c_str());
@@ -587,18 +587,18 @@ void UNetDriver::TickFlush__RepGraph(UNetDriver* Driver, float DeltaSeconds)
 			((void (*)(UObject*, float)) ServerReplicateActors_)(Driver->ReplicationDriver, DeltaSeconds);
 
 
-		if (GUI::gsStatus == 1 && VersionInfo.FortniteVersion >= 11.00)
+		if (GUI::gsStatus == Joinable && VersionInfo.FortniteVersion >= 11.00)
 		{
 			auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
 			auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
 			auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 			static auto bSkipAircraft = GameState->HasCurrentPlaylistInfo() && GameState->CurrentPlaylistInfo.BasePlaylist ? GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft : false;
-			if (!bSkipAircraft && GameMode->MatchState == FName(L"InProgress") && GameState->WarmupCountdownEndTime <= Time)
+			if (!bSkipAircraft && GameState->HasWarmupCountdownEndTime() && GameMode->MatchState == FName(L"InProgress") && GameState->WarmupCountdownEndTime <= Time)
 			{
 				UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
 			}
 		}
-		else if (GUI::gsStatus == 2 && (FConfiguration::bAutoRestart || (FConfiguration::WebhookURL && *FConfiguration::WebhookURL) || VersionInfo.FortniteVersion >= 18))
+		else if (GUI::gsStatus == StartedMatch && (FConfiguration::bAutoRestart || (FConfiguration::WebhookURL && *FConfiguration::WebhookURL) || VersionInfo.FortniteVersion >= 18))
 		{
 			auto WorldNetDriver = UWorld::GetWorld()->NetDriver;
 			auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
@@ -622,7 +622,7 @@ void UNetDriver::TickFlush__RepGraph(UNetDriver* Driver, float DeltaSeconds)
 
 						sprintf_s(version, VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "%.2f" : "%.1f", VersionInfo.FortniteVersion);
 
-    					auto Playlist = VersionInfo.FortniteVersion >= 3.5 ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
+        				auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount() ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
 						auto payload = UEAllocatedString("{\"embeds\": [{\"title\": \"Match has ended!\", \"fields\": [{\"name\":\"Version\",\"value\":\"") + version + "\"}, {\"name\":\"Playlist\",\"value\":\"" + (Playlist ? Playlist->PlaylistName.ToString() : "Playlist_DefaultSolo") + "\"}], \"color\": " + "\"7237230\", \"footer\": {\"text\":\"Erbium\", \"icon_url\":\"https://cdn.discordapp.com/attachments/1341168629378584698/1436803905119064105/L0WnFa.png.png?ex=6910ef69&is=690f9de9&hm=01a0888b46647959b38ee58df322048ab49e2a5a678e52d4502d9c5e3978d805&\"}, \"timestamp\":\"" + iso8601() + "\"}] }";
 
 						curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload.c_str());
@@ -724,18 +724,18 @@ void UNetDriver::TickFlush__Iris(UNetDriver* Driver, float DeltaSeconds)
 		}
 	}
 
-	if (GUI::gsStatus == 1 && VersionInfo.FortniteVersion < 25.20)
+	if (GUI::gsStatus == Joinable && VersionInfo.FortniteVersion < 25.20)
 	{
 		auto Time = (float)UGameplayStatics::GetTimeSeconds(UWorld::GetWorld());
 		auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
 		auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
 		static auto bSkipAircraft = GameState->HasCurrentPlaylistInfo() && GameState->CurrentPlaylistInfo.BasePlaylist ? GameState->CurrentPlaylistInfo.BasePlaylist->bSkipAircraft : false;
-		if (!bSkipAircraft && GameMode->MatchState == FName(L"InProgress") && GameState->WarmupCountdownEndTime <= Time)
+		if (!bSkipAircraft && GameState->HasWarmupCountdownEndTime() && GameMode->MatchState == FName(L"InProgress") && GameState->WarmupCountdownEndTime <= Time)
 		{
 			UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
 		}
 	}
-	else if (GUI::gsStatus == 2 && (FConfiguration::bAutoRestart || (FConfiguration::WebhookURL && *FConfiguration::WebhookURL) || VersionInfo.FortniteVersion < 25.20))
+	else if (GUI::gsStatus == StartedMatch && (FConfiguration::bAutoRestart || (FConfiguration::WebhookURL && *FConfiguration::WebhookURL) || VersionInfo.FortniteVersion < 25.20))
 	{
 		auto WorldNetDriver = UWorld::GetWorld()->NetDriver;
 		auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
@@ -759,7 +759,8 @@ void UNetDriver::TickFlush__Iris(UNetDriver* Driver, float DeltaSeconds)
 
 					sprintf_s(version, VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "%.2f" : "%.1f", VersionInfo.FortniteVersion);
 
-					auto Playlist = VersionInfo.FortniteVersion >= 3.5 ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
+					
+        			auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount() ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
 					auto payload = UEAllocatedString("{\"embeds\": [{\"title\": \"Match has ended!\", \"fields\": [{\"name\":\"Version\",\"value\":\"") + version + "\"}, {\"name\":\"Playlist\",\"value\":\"" + (Playlist ? Playlist->PlaylistName.ToString() : "Playlist_DefaultSolo") + "\"}], \"color\": " + "\"7237230\", \"footer\": {\"text\":\"Erbium\", \"icon_url\":\"https://cdn.discordapp.com/attachments/1341168629378584698/1436803905119064105/L0WnFa.png.png?ex=6910ef69&is=690f9de9&hm=01a0888b46647959b38ee58df322048ab49e2a5a678e52d4502d9c5e3978d805&\"}, \"timestamp\":\"" + iso8601() + "\"}] }";
 
 					curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload.c_str());
@@ -862,12 +863,12 @@ void UNetDriver::PostLoadHook()
 		NetworkObjectListOffset = 0x708;
 		ReplicationFrameOffset = 0x428;
 	}
-	else if (VersionInfo.FortniteVersion >= 23 && VersionInfo.FortniteVersion < 25)
+	else if (VersionInfo.FortniteVersion >= 23 && VersionInfo.FortniteVersion < 24.30)
 	{
 		ReplicationFrameOffset = VersionInfo.FortniteVersion == 24.20 ? 0x438 : 0x440;
 		NetworkObjectListOffset = VersionInfo.FortniteVersion < 24 ? 0x720 : 0x730;
 	}
-	else if (VersionInfo.FortniteVersion >= 25 && VersionInfo.FortniteVersion < 28)
+	else if (VersionInfo.FortniteVersion >= 24.30 && VersionInfo.FortniteVersion < 28)
 	{
 		NetworkObjectListOffset = VersionInfo.FortniteVersion < 25.11 ? 0x738 : 0x750;
 		ReplicationFrameOffset = VersionInfo.FortniteVersion < 25.11 ? 0x440 : 0x458;
@@ -923,7 +924,7 @@ void UNetDriver::PostLoadHook()
 	}
 	else if (VersionInfo.FortniteVersion >= 23)
 	{
-		DestroyedStartupOrDormantActorsOffset = std::floor(VersionInfo.FortniteVersion) == 24 ? 0x2f8 : 0x300;
+		DestroyedStartupOrDormantActorsOffset = std::floor(VersionInfo.FortniteVersion) == 24 && VersionInfo.FortniteVersion < 24.30 ? 0x2f8 : 0x300;
 		DestroyedStartupOrDormantActorGUIDsOffset = VersionInfo.EngineVersion == 5.2 ? 0x14a8 : 0x14b0;
 		ClientVisibleLevelNamesOffset = DestroyedStartupOrDormantActorGUIDsOffset + (VersionInfo.FortniteVersion < 24 ? 0x190 : 0x1e0);
 	}

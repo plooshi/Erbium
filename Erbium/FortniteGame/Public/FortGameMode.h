@@ -48,7 +48,7 @@ public:
     DEFINE_PROP(MatchState, FName);
     DEFINE_PROP(bEnableDBNO, bool);
     DEFINE_PROP(bEnableReplicationGraph, bool);
-    DEFINE_PROP(AIDirector, AActor*);
+    DEFINE_PROP(bAllowSpectateAfterDeath, bool);
 
     DEFINE_FUNC(SpawnDefaultPawnAtTransform, AFortPlayerPawnAthena*);
     DEFINE_FUNC(RestartPlayer, void);
