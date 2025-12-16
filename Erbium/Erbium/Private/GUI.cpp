@@ -384,6 +384,15 @@ void GUI::Init()
 
                 //Builds.Free();
             }
+
+            if (ImGui::Button("Destroy floor loot"))
+            {
+                TArray<AActor*> Pickups;
+                UGameplayStatics::GetAllActorsOfClass(UWorld::GetWorld(), AFortPickupAthena::StaticClass(), &Pickups);
+
+                for (auto& Pickup : Pickups)
+                    Pickup->K2_DestroyActor();
+            }
             break;
         case 4:
             static auto PlaylistClass = UFortPlaylistAthena::StaticClass();
