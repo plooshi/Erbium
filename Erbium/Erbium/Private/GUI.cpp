@@ -382,16 +382,18 @@ void GUI::Init()
                     if (Build->bPlayerPlaced)
                         Build->K2_DestroyActor();
 
-                //Builds.Free();
+                Builds.Free();
             }
 
-            if (ImGui::Button("Destroy floor loot"))
+            if (ImGui::Button("Destroy Floor Loot"))
             {
-                TArray<AActor*> Pickups;
-                UGameplayStatics::GetAllActorsOfClass(UWorld::GetWorld(), AFortPickupAthena::StaticClass(), &Pickups);
-
+				TArray<AFortPickupAthena*> Pickups;
+				Utils::GetAll<AFortPickupAthena>(Pickups);
+				
                 for (auto& Pickup : Pickups)
                     Pickup->K2_DestroyActor();
+
+				Pickups.Free();
             }
             break;
         case 4:
