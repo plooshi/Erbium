@@ -15,9 +15,9 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 	auto GameMode = ((AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode);
 	auto Controller = (AFortPlayerControllerAthena*)InstigatedBy;
 
-	auto bIsWeakspot = Damage == 100.f && Actor->IsA<ABuildingSMActor>() && ((AFortWeapon*)DamageCauser)->WeaponData->IsA(UFortWeaponMeleeItemDefinition::StaticClass());
+	/*auto bIsWeakspot = Damage == 100.f && Actor->IsA<ABuildingSMActor>() && DamageCauser->IsA<AFortWeapon>() && ((AFortWeapon*)DamageCauser)->WeaponData->IsA(UFortWeaponMeleeItemDefinition::StaticClass());
 
-	/*if (bIsWeakspot)
+	if (bIsWeakspot)
 	{
 		FGameplayTagContainer TargetTags{};
 
