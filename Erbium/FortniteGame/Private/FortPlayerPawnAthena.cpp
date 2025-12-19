@@ -529,7 +529,7 @@ void AFortPlayerPawnAthena::EndSkydiving(AFortPlayerPawnAthena* Pawn)
 
 	auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
 
-	if (PlayerController)
+	if (PlayerController && Pawn->bIsSkydiving)
 		PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetLand(), 1, Pawn);
 }
 

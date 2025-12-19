@@ -100,6 +100,7 @@ public:
     DEFINE_PROP(Damagers, TArray<FDamagerInfo>);
     DEFINE_PROP(LastReplicatedEmoteExecuted, UObject*);
     DEFINE_PROP(Mesh, UActorComponent*);
+    DEFINE_BITFIELD_PROP(bIsSkydiving);
 
     DEFINE_FUNC(BeginSkydiving, void);
     DEFINE_FUNC(GetHealth, float);
