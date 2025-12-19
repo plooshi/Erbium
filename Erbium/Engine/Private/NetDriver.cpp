@@ -552,7 +552,7 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 					TerminateProcess(GetCurrentProcess(), 0);
 			}
 		}
-		else if (Driver == WorldNetDriver && VersionInfo.FortniteVersion >= 18)
+		else if (Driver == WorldNetDriver && VersionInfo.FortniteVersion >= 18 && VersionInfo.FortniteVersion < 25.20)
 		{
 			for (auto& UncastedPlayer : GameMode->AlivePlayers)
 			{

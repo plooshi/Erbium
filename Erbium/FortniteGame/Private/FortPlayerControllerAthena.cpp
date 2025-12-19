@@ -2247,7 +2247,11 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 			int32 Count = 1;
 
 			if (args.size() == 3)
+			{
 				Count = strtol(args[2].c_str(), nullptr, 10);
+				if (Count <= 0)
+					Count = 1;
+			}
 
 			//auto ItemEntry = AFortInventory::MakeItemEntry(ItemDefinition, Count, 0);
 			//PlayerController->InternalPickup(ItemEntry);
