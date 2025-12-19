@@ -16,12 +16,89 @@ public:
     DEFINE_PROP(WeaponDefinition, UFortItemDefinition*);
 };
 
+class UCustomCharacterPart : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UCustomCharacterPart);
+
+    DEFINE_PROP(CharacterPartType, uint8);
+};
+
+class UAthenaCharacterPartItemDefinition : public UFortItemDefinition
+{
+public:
+    UCLASS_COMMON_MEMBERS(UAthenaCharacterPartItemDefinition);
+
+    DEFINE_PROP(CharacterParts, TArray<UCustomCharacterPart*>);
+};
+
+class UFortHeroSpecialization : UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortHeroSpecialization);
+
+    DEFINE_PROP(CharacterParts, TArray<TSoftObjectPtr<UCustomCharacterPart>>);
+};
+
+class UFortHeroType : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortHeroType);
+
+    DEFINE_PROP(Specializations, TArray<TSoftObjectPtr<UFortHeroSpecialization>>);
+};
+
+class UAthenaCharacterItemDefinition : public UFortItemDefinition
+{
+public:
+    UCLASS_COMMON_MEMBERS(UAthenaCharacterItemDefinition);
+
+    DEFINE_PROP(HeroDefinition, UFortHeroType*);
+};
+
+struct FPartVariantDef
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FPartVariantDef);
+
+    DEFINE_STRUCT_PROP(CustomizationVariantTag, FGameplayTag);
+    DEFINE_STRUCT_PROP(VariantParts, TArray<TSoftObjectPtr<UCustomCharacterPart>>);
+};
+
+class UFortCosmeticCharacterPartVariant : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortCosmeticCharacterPartVariant);
+
+    DEFINE_PROP(PartOptions, TArray<FPartVariantDef>);
+};
+
+class UAthenaCosmeticItemDefinition : public UFortItemDefinition
+{
+public:
+    UCLASS_COMMON_MEMBERS(UAthenaCosmeticItemDefinition);
+
+    DEFINE_PROP(ItemVariants, TArray<UObject*>);
+};
+
+struct FMcpVariantChannelInfo
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FMcpVariantChannelInfo);
+
+    DEFINE_STRUCT_PROP(ItemVariantIsUsedFor, UAthenaCosmeticItemDefinition*);
+    DEFINE_STRUCT_PROP(ActiveVariantTag, FGameplayTag);
+};
+
 struct FFortAthenaLoadout
 {
 public:
     USCRIPTSTRUCT_COMMON_MEMBERS(FFortAthenaLoadout);
 
+    DEFINE_STRUCT_PROP(Character, UAthenaCharacterItemDefinition*);
+    DEFINE_STRUCT_PROP(Backpack, UAthenaCharacterPartItemDefinition*);
     DEFINE_STRUCT_PROP(Pickaxe, UAthenaPickaxeItemDefinition*);
+    DEFINE_STRUCT_PROP(CharacterVariantChannels, TArray<FMcpVariantChannelInfo>);
 };
 
 struct FFortPlayerDeathReport

@@ -322,7 +322,9 @@ void AFortPlayerPawnAthena::OnCapsuleBeginOverlap_(UObject* Context, FFrame& Sta
 
 	auto Pawn = (AFortPlayerPawnAthena*)Context;
 
-	if (!Pawn || !Pawn->Controller)
+	static auto FortPCClass = FindClass("FortPlayerController");
+
+	if (!Pawn || !Pawn->Controller || !Pawn->Controller->IsA(FortPCClass))
 		return callOG(Pawn, Stack.GetCurrentNativeFunction(), OnCapsuleBeginOverlap, OverlappedComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
 	auto Pickup = OtherActor->Cast<AFortPickupAthena>();
@@ -521,6 +523,17 @@ void AFortPlayerPawnAthena::EmoteStopped_(UObject* Context, FFrame& Stack)
 	return callOG(Pawn, Stack.GetCurrentNativeFunction(), EmoteStopped, MontageItemDef);
 }
 
+void AFortPlayerPawnAthena::EndSkydiving(AFortPlayerPawnAthena* Pawn)
+{
+	EndSkydivingOG(Pawn);
+
+	auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
+
+	if (PlayerController)
+		PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetLand(), 1, Pawn);
+}
+
+
 void AFortPlayerPawnAthena::PostLoadHook()
 {
 	OnRep_ZiplineState = FindOnRep_ZiplineState();
@@ -545,4 +558,9 @@ void AFortPlayerPawnAthena::PostLoadHook()
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerOnExitVehicle"), ServerOnExitVehicle_, ServerOnExitVehicle_OG);
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("EmoteStopped"), EmoteStopped_, EmoteStopped_OG);
+
+	auto EndSkydivingFn = GetDefaultObj()->GetFunction("EndSkydiving");
+
+	if (EndSkydivingFn)
+		Utils::Hook<AFortPlayerPawnAthena>(EndSkydivingFn->GetVTableIndex(), EndSkydiving, EndSkydivingOG);
 }

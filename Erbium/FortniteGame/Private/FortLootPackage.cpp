@@ -136,6 +136,8 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 
 
 	auto ItemDefinition = LootPackage->ItemDefinition.Get();
+
+	printf("[Looting::LDS] ItemDefinition: %s\n", ItemDefinition ? ItemDefinition->Name.ToString().c_str() : "[none]");
 	if (!ItemDefinition)
 		return;
 
@@ -609,6 +611,9 @@ void UFortLootPackage::SpawnConsumableActor(ABGAConsumableSpawner* Spawner)
 void (*OnAuthorityRandomUpgradeAppliedOG)(ABuildingContainer*, FName&);
 void OnAuthorityRandomUpgradeApplied(ABuildingContainer* Container, FName& UpgradeTierGroup)
 {
+	if (!Container->HasChosenRandomUpgrade()) // 15.10 what
+		return OnAuthorityRandomUpgradeAppliedOG(Container, UpgradeTierGroup);
+
 	auto ChosenRandomUpgrade = Container->ChosenRandomUpgrade;
 
 	if (Container->HasAlternateMeshes())
@@ -638,8 +643,14 @@ void OnAuthorityRandomUpgradeApplied(ABuildingContainer* Container, FName& Upgra
 
 void PostUpdate(ABuildingSMActor* BuildingSMActor)
 {
+	static auto Chest = FindObject<UClass>(L"/Game/Building/ActorBlueprints/Containers/Tiered_Chest_6_Parent.Tiered_Chest_6_Parent_C");
+	static auto AmmoCrate = FindObject<UClass>(L"/Game/Building/ActorBlueprints/Containers/Tiered_Short_Ammo_3_Parent.Tiered_Short_Ammo_3_Parent_C");
+
 	if (auto Container = BuildingSMActor->Cast<ABuildingContainer>())
 	{
+		if (Container->IsA(Chest) || Container->IsA(AmmoCrate))
+			return;
+
 		if (!Container->bStartAlreadySearched_Athena)
 		{
 			Container->bAlreadySearched = true;
@@ -656,7 +667,7 @@ void UFortLootPackage::Hook()
 	{
 		auto PostUpdate_ = Memcury::Scanner::FindStringRef(L"ABuildingSMActor::PostUpdate() Building: %s, AltMeshIdx: %d", false, 0, VersionInfo.FortniteVersion >= 19).ScanFor({ 0x40, 0x53 }, false).Get();
 
-		//Utils::Hook(PostUpdate_, PostUpdate);
+		Utils::Hook(PostUpdate_, PostUpdate);
 	}
 
 	if (VersionInfo.FortniteVersion >= 11.00)

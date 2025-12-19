@@ -1187,7 +1187,7 @@ namespace SDK
 						if (SubPathString.Num() > 0)
 							FullPath += L":" + SubPathString.ToWString();
 
-						WeakPtr = Ret = FindObject(FullPath.c_str(), Class);
+						WeakPtr = Ret = FindObject(FullPath.c_str(), Class);	
 					}
 				}
 				else if (ObjectID.AssetPathName.ComparisonIndex > 0)

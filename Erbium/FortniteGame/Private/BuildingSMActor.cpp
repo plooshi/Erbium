@@ -13,6 +13,27 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 {
 	auto GameState = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState);
 	auto GameMode = ((AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode);
+	auto Controller = (AFortPlayerControllerAthena*)InstigatedBy;
+
+	auto bIsWeakspot = Damage == 100.f && Actor->IsA<ABuildingSMActor>() && ((AFortWeapon*)DamageCauser)->WeaponData->IsA(UFortWeaponMeleeItemDefinition::StaticClass());
+
+	/*if (bIsWeakspot)
+	{
+		FGameplayTagContainer TargetTags{};
+
+		auto Interface = (IGameplayTagAssetInterface*)Actor->GetInterface(IGameplayTagAssetInterface::StaticClass());
+		if (Interface)
+		{
+			auto GetOwnedGameplayTags = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface->Vft[0x2];
+			GetOwnedGameplayTags(Interface, &TargetTags);
+			//Interface->GetOwnedGameplayTags(&TargetTags);
+		}
+
+		// add Quest.MetaData.HitWeakSpot to source tags
+
+		if (Controller)
+			Controller->GetQuestManager(1)->SendStatEvent(Controller, EFortQuestObjectiveStatEvent::GetComplexCustom(), 1, Actor, TargetTags);
+	}*/
 
 	if (!InstigatedBy || !Actor->IsA<ABuildingSMActor>() || Actor->bPlayerPlaced || Actor->GetHealth() == 1 || (Actor->HasbAllowResourceDrop() && !Actor->bAllowResourceDrop))
 		return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
@@ -61,7 +82,6 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
 		}
 	}
 
-	auto Controller = (AFortPlayerControllerAthena*)InstigatedBy;
 	if (ResCount > 0)
 	{
 		auto ItemP = Controller->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* entry)

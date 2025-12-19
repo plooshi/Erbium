@@ -896,7 +896,8 @@ namespace SDK
 	struct FPrimaryAssetId
 	{
 	public:
-		uint8_t Padding[0x10];
+		FName PrimaryAssetType;
+		uint8_t Padding[0x8];
 	};
 
 	class UKismetSystemLibrary : public SDK::UObject

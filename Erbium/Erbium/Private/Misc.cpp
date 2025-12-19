@@ -324,6 +324,206 @@ void Test2(FTickFunction* _this, ULevel* Level)
 	return Test2OG(_this, Level);
 }
 
+void Ohio(ABuildingProp_LockDevice* _this, AFortPlayerControllerAthena* ControllerInstigator)
+{
+	printf("Called[LockProp: %s]\n", _this->Name.ToString().c_str());
+}
+
+bool Listen()
+{
+	printf("UWorld::Listen\n");
+	auto World = UWorld::GetWorld();
+	auto Engine = UEngine::GetEngine();
+	auto NetDriverName = FName(L"GameNetDriver");
+	auto GameMode = (AFortGameModeAthena*)World->AuthorityGameMode;
+
+	if (GameMode->HasbEnableReplicationGraph())
+		GameMode->bEnableReplicationGraph = true;
+
+	UNetDriver* NetDriver = nullptr;
+	if (VersionInfo.FortniteVersion >= 16.00)
+	{
+		void* WorldCtx = ((void* (*)(UEngine*, UWorld*)) FindGetWorldContext())(Engine, World);
+		World->NetDriver = NetDriver = ((UNetDriver * (*)(UEngine*, void*, FName, int)) FindCreateNetDriverWorldContext())(Engine, WorldCtx, NetDriverName, 0);
+	}
+	else
+		World->NetDriver = NetDriver = ((UNetDriver * (*)(UEngine*, UWorld*, FName)) FindCreateNetDriver())(Engine, World, NetDriverName);
+
+	if (!NetDriver)
+		return false;
+
+	if (VersionInfo.FortniteVersion >= 20)
+		NetDriver->NetServerMaxTickRate = 30;
+
+	NetDriver->NetDriverName = NetDriverName;
+	NetDriver->World = World;
+
+	if (VersionInfo.EngineVersion >= 5.3 && FConfiguration::bEnableIris)
+	{
+		*(bool*)(__int64(&NetDriver->ReplicationDriver) + 0x11) = true;
+	}
+
+	NetDriver->NetDriverName = NetDriverName;
+	NetDriver->World = World;
+
+	auto InitListen = (bool (*)(UNetDriver*, UWorld*, FURL*, bool, FString&)) FindInitListen();
+	auto SetWorld = (void (*)(UNetDriver*, UWorld*)) FindSetWorld();
+
+	SetWorld(NetDriver, World);
+	for (int i = 0; i < World->LevelCollections.Num(); i++)
+	{
+		auto& LevelCollection = World->LevelCollections.Get(i, FLevelCollection::Size());
+
+		LevelCollection.NetDriver = NetDriver;
+	}
+
+	auto URL = (FURL*)malloc(FURL::Size());
+	memset((PBYTE)URL, 0, FURL::Size());
+	URL->Port = FConfiguration::Port;
+
+
+	FString Err;
+	if (!InitListen(NetDriver, World, URL, false, Err))
+	{
+		printf("Failed to listen!");
+
+		free(URL);
+
+		return false;
+	}
+	SetWorld(NetDriver, World);
+
+	free(URL);
+
+	return true;
+}
+
+struct FFortBotCosmeticItemSetDataTableRow
+{
+public:
+	USCRIPTSTRUCT_COMMON_MEMBERS(FFortBotCosmeticItemSetDataTableRow);
+
+	DEFINE_STRUCT_PROP(SetTag, FGameplayTag);
+	DEFINE_STRUCT_PROP(CharacterAssetId, FPrimaryAssetId);
+	DEFINE_STRUCT_PROP(BackpackAssetId, FPrimaryAssetId);
+	DEFINE_STRUCT_PROP(Weight, float);
+};
+
+class UFortAthenaAIBotCosmeticLibraryData : public UObject
+{
+public:
+	UCLASS_COMMON_MEMBERS(UFortAthenaAIBotCosmeticLibraryData);
+
+	DEFINE_PROP(PredefineSetsDataTable, TSoftObjectPtr<UDataTable>);
+};
+
+class UFortAthenaAIBotCharacterCustomization : public UObject
+{
+public:
+	UCLASS_COMMON_MEMBERS(UFortAthenaAIBotCharacterCustomization);
+
+	DEFINE_PROP(CustomizationLoadout, FFortAthenaLoadout);
+};
+
+class UFortAthenaAIBotCustomizationData : public UObject
+{
+public:
+	UCLASS_COMMON_MEMBERS(UFortAthenaAIBotCustomizationData);
+
+	DEFINE_PROP(CosmeticCustomizationLibrary, TSoftObjectPtr<UFortAthenaAIBotCosmeticLibraryData>);
+	DEFINE_PROP(OverrideCosmeticMode, uint8_t);
+	DEFINE_PROP(CharacterCustomization, UFortAthenaAIBotCharacterCustomization*);
+};
+
+template <typename T>
+std::pair<FName, T*> PickWeighted(UEAllocatedMap<FName, T*>& Map, float (*RandFunc)(float), bool bCheckZero = true)
+{
+	float TotalWeight = std::accumulate(Map.begin(), Map.end(), 0.0f, [&](float acc, std::pair<FName, T*> p)
+		{ return acc + p.second->Weight; });
+	float RandomNumber = RandFunc(TotalWeight);
+
+	for (auto& Element : Map)
+	{
+		float Weight = Element.second->Weight;
+		if (bCheckZero && Weight == 0)
+			continue;
+
+		if (RandomNumber <= Weight) return Element;
+
+		RandomNumber -= Weight;
+	}
+
+	std::pair<FName, T*> None;
+	return None;
+}
+
+void InitializeCosmeticLoadout(UFortAthenaAIBotCustomizationData* BotData, AFortPlayerPawnAthena* Pawn, FFortAthenaLoadout& OutLoadout, FGameplayTag* PredefinedCosmeticSetTag)
+{
+	OutLoadout = BotData->CharacterCustomization->CustomizationLoadout;
+
+	if (BotData->OverrideCosmeticMode == 1)
+	{
+		UEAllocatedMap<FName, FFortBotCosmeticItemSetDataTableRow*> LibraryRowMap;
+		FName& CosmeticTag = PredefinedCosmeticSetTag->TagName;
+
+		for (auto& [Key, Val] : (TMap<FName, FFortBotCosmeticItemSetDataTableRow*>&)BotData->CosmeticCustomizationLibrary->PredefineSetsDataTable->RowMap)
+			if (Val->SetTag.TagName == CosmeticTag)
+				LibraryRowMap[Key] = Val;
+
+		auto LibraryRowPair = PickWeighted(LibraryRowMap, [](float Total)
+			{ return ((float)rand() / 32767) * Total; });
+		auto& LibraryRow = LibraryRowPair.second;
+
+		OutLoadout.Character = (UAthenaCharacterItemDefinition*)UKismetSystemLibrary::GetObjectFromPrimaryAssetId(LibraryRow->CharacterAssetId);
+		if (LibraryRow->BackpackAssetId.PrimaryAssetType.IsValid())
+			OutLoadout.Backpack = (UAthenaCharacterPartItemDefinition*) UKismetSystemLibrary::GetObjectFromPrimaryAssetId(LibraryRow->BackpackAssetId);
+	}
+
+	UEAllocatedMap<uint8_t, const UCustomCharacterPart*> PartMap;
+
+	if (auto HeroDefinition = OutLoadout.Character->HeroDefinition)
+		for (auto& SoftSpec : HeroDefinition->Specializations)
+		{
+			auto Specialization = SoftSpec.Get();
+
+			if (Specialization)
+				for (auto& PartSoft : Specialization->CharacterParts)
+				{
+					auto Part = PartSoft.Get();
+
+					PartMap[Part->CharacterPartType] = Part;
+				}
+		}
+
+	if (OutLoadout.Backpack)
+		for (auto& Part : OutLoadout.Backpack->CharacterParts)
+			PartMap[Part->CharacterPartType] = Part;
+
+	for (int i = 0; i < OutLoadout.CharacterVariantChannels.Num(); i++)
+	{
+		auto& VariantChannel = OutLoadout.CharacterVariantChannels.Get(i, FMcpVariantChannelInfo::Size());
+		auto CosmeticForVariant = (UAthenaCosmeticItemDefinition*)VariantChannel.ItemVariantIsUsedFor;
+
+		for (auto& ItemVariant : CosmeticForVariant->ItemVariants)
+			if (auto PartVariant = ItemVariant->Cast<UFortCosmeticCharacterPartVariant>())
+				for (int i = 0; i < PartVariant->PartOptions.Num(); i++)
+				{
+					auto& PartOption = PartVariant->PartOptions.Get(i, FPartVariantDef::Size());
+
+					if (VariantChannel.ActiveVariantTag.TagName == PartOption.CustomizationVariantTag.TagName)
+						for (auto& PartSoft : PartOption.VariantParts)
+						{
+							auto Part = PartSoft.Get();
+
+							PartMap[Part->CharacterPartType] = Part;
+						}
+				}
+	}
+
+	for (auto& [PartType, Part] : PartMap)
+		Pawn->ServerChoosePart(PartType, Part);
+}
+
 void Misc::Hook()
 {
 	if (VersionInfo.FortniteVersion == 23.00 || (VersionInfo.FortniteVersion >= 24.30 && VersionInfo.FortniteVersion != 28.30 && VersionInfo.FortniteVersion != 29.40) || VersionInfo.FortniteVersion >= 30)
@@ -436,4 +636,37 @@ void Misc::Hook()
 	//Utils::Hook(ImageBase + 0x1CE85F4, Test);
 	//Utils::Hook(ImageBase + 0x2788BEC, Test, TestOG);
 	//Utils::Hook(Memcury::Scanner::FindPattern("48 89 5C 24 ?? 57 48 83 EC ?? 48 8B DA 48 8B F9 E8 ?? ?? ?? ?? 84 C0 75 ?? 48 83 79").Get(), Test2, Test2OG);
+	/*if (ABuildingProp_LockDevice::StaticClass())
+	{
+		auto Fn = ABuildingProp_LockDevice::GetDefaultObj()->GetFunction("UnlockObject");
+
+		Utils::Hook<ABuildingProp_LockDevice>(Fn->GetVTableIndex(), Ohio);
+	}
+
+	auto ListenCall = FindListenCall();
+
+	if (ListenCall)
+	{
+		auto OverrideFunc = __int64(DefaultObjImpl("FortHUDContext")->GetFunction("EnterCameraMode")->ExecFunction);
+
+		Utils::Hook(OverrideFunc, Listen);
+
+		auto NewRel = uint32(OverrideFunc - (ListenCall + 5));
+
+		Utils::Patch<uint32>(ListenCall + 1, NewRel);
+	}*/
+
+	if (VersionInfo.FortniteVersion >= 11 && VersionInfo.FortniteVersion < 16)
+	{
+		auto NearGetOverrideCosmeticLoadout = Memcury::Scanner::FindPattern("4D 8B CD 4C 8D 45 ? 48 8B D6");
+		auto Rel32 = NearGetOverrideCosmeticLoadout.ScanFor({ 0xE8 }).Get();
+
+		auto OverrideFunc = __int64(DefaultObjImpl("FortHUDContext")->GetFunction("EnterCursorMode")->ExecFunction);
+
+		Utils::Hook(OverrideFunc, InitializeCosmeticLoadout);
+
+		auto NewRel = uint32(OverrideFunc - (Rel32 + 5));
+
+		Utils::Patch<uint32>(Rel32 + 1, NewRel);
+	}
 }

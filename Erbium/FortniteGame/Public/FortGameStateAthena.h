@@ -122,6 +122,7 @@ public:
     DEFINE_PROP(LlamaQuantityMin, FScalableFloat);
     DEFINE_PROP(LlamaQuantityMax, FScalableFloat);
     DEFINE_PROP(LlamaClass, UClass*);
+    DEFINE_PROP(SupplyDropClass, TSubclassOf<UObject>);
 
     DEFINE_FUNC(GetMapCenter, FVector);
 };
@@ -181,6 +182,16 @@ public:
     DEFINE_PROP(NavGraphData, UObject*);
 
     DEFINE_FUNC(OnNavigationBoundsUpdated, void);
+};
+
+class UFortServerBotManagerAthena : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortServerBotManagerAthena);
+
+    DEFINE_PROP(CachedGameState, AActor*);
+    DEFINE_PROP(CachedGameMode, AActor*);
+    DEFINE_PROP(CachedBotMutator, AActor*);
 };
 
 class AFortGameStateAthena : public AActor

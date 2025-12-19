@@ -1219,9 +1219,12 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 				auto KillerWeapon = DamageCauser ? DamageCauser->WeaponData : nullptr;
 
 
-				KillerPlayerController->PlayWinEffects(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause, false);
-				KillerPlayerController->ClientNotifyWon(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause);
-				KillerPlayerController->ClientNotifyTeamWon(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause);
+				if (VersionInfo.FortniteVersion >= 16)
+				{
+					KillerPlayerController->PlayWinEffects(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause, false);
+					KillerPlayerController->ClientNotifyWon(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause);
+					KillerPlayerController->ClientNotifyTeamWon(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause);
+				}
 
 				if (KillerPlayerState != PlayerState && VersionInfo.FortniteVersion >= 19)
 				{
@@ -1392,7 +1395,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 			{
 				if (!MyFortPawn || !MyFortPawn->CurrentWeapon)
 					return;
-
+				
 				if (AFortInventory::IsPrimaryQuickbar(((AFortWeapon*)MyFortPawn->CurrentWeapon)->WeaponData))
 				{
 					auto itemEntry = WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
@@ -2560,12 +2563,17 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 		CollectorActor->Call(CollectorActor->GetFunction("BlueprintOnInteract"), Pawn);
 		//CollectorActor->PlayVendFX();
 	}
+	else if (auto LockDevice = ReceivingActor->Cast<ABuildingProp_LockDevice>())
+	{
+		LockDevice->CurrentLockState = 1;
+		LockDevice->OnRep_CurrentLockState();
+	}
 
 	ServerAttemptInteract_OG(Context, Stack);
 	sendStat();
 	//return bIsComp ? (void)callOG(((UFortControllerComponent_Interaction*)Context), Stack.GetCurrentNativeFunction(), ServerAttemptInteract, ReceivingActor, InteractComponent, InteractType, OptionalObjectData, InteractionBeingAttempted, RequestID) : callOG(PlayerController, Stack.GetCurrentNativeFunction(), ServerAttemptInteract, ReceivingActor, InteractComponent, InteractType, OptionalObjectData, InteractionBeingAttempted, RequestID);
 }
-
+ 
 void AFortPlayerControllerAthena::ServerDropAllItems(UObject* Context, FFrame& Stack)
 {
 	UFortItemDefinition* IgnoreItemDef;

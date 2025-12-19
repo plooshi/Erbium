@@ -56,6 +56,7 @@ void Main()
     if (VersionInfo.EngineVersion >= 5.0)
     {
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"log LogFortUIDirector None"), nullptr);
+        UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"log LogFortUIManager None"), nullptr);
     }
     if (VersionInfo.EngineVersion >= 5.1)
     {

@@ -1038,7 +1038,7 @@ uint64_t FindPickTeam()
         if (!Addr.Get())
             Addr = Memcury::Scanner::FindStringRef(L"PickTeam for [%s] used beacon value [%s]", true, 0, VersionInfo.FortniteVersion >= 19);
 
-        PickTeam = Addr.ScanFor(VersionInfo.FortniteVersion <= 4.1 ? std::vector<uint8_t>{ 0x48, 0x89, 0x6C } : (VersionInfo.FortniteVersion >= 16 ? std::vector<uint8_t>{ 0x48, 0x89, 0x5C } : std::vector<uint8_t>{ 0x40, 0x55 }), false, 0, 1, 1000).Get();
+        PickTeam = Addr.ScanFor(VersionInfo.FortniteVersion <= 4.1 ? std::vector<uint8_t>{ 0x48, 0x89, 0x6C } : (VersionInfo.FortniteVersion >= 16 ? std::vector<uint8_t>{ 0x48, 0x89, 0x5C } : std::vector<uint8_t>{ 0x40, 0x55 }), false).Get();
     }
 
     return PickTeam;
@@ -2799,6 +2799,37 @@ uint64 FindInitializePlayerGameplayAbilities()
     }
 
     return 0;
+}
+
+uint64 FindListenCall()
+{
+    static uint64_t ListenCall = 0;
+    static bool bInitialized = false;
+
+    if (!bInitialized)
+    {
+        bInitialized = true;
+
+        if (VersionInfo.FortniteVersion <= 6 || VersionInfo.FortniteVersion > 16)
+            return ListenCall = 0;
+
+        auto sRef = Memcury::Scanner::FindStringRef(L"LoadMap: failed to Listen(%s)");
+
+        if (!sRef.IsValid())
+            return ListenCall = 0;
+
+        for (int i = 0; i < 0x100; i++)
+        {
+            auto Ptr = (uint8_t*)(sRef.Get() - i);
+
+            if (*Ptr == 0xE8 && *(Ptr + 5) == 0x84 && *(Ptr + 6) == 0xC0)
+                return ListenCall = uint64_t(Ptr);
+        }
+
+        return 0;
+    }
+
+    return ListenCall;
 }
 
 void FindNullsAndRetTrues()

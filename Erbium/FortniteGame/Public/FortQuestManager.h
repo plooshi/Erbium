@@ -33,6 +33,11 @@ public:
     DEFINE_ENUM_PROP(Win);
     DEFINE_ENUM_PROP(KillContribution);
     DEFINE_ENUM_PROP(ComplexCustom);
+    DEFINE_ENUM_PROP(Emote);
+    DEFINE_ENUM_PROP(Spray);
+    DEFINE_ENUM_PROP(Toy);
+    DEFINE_ENUM_PROP(Land);
+    DEFINE_ENUM_PROP(Damage);
 };
 
 class IGameplayTagAssetInterface : public IInterface

@@ -179,7 +179,7 @@ void SetupPlaylist(AFortGameMode* GameMode, AFortGameStateAthena* GameState)
                 {
                     bEvent = true;
                     if (VersionInfo.FortniteVersion == 7.30)
-                        ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.PleasentParkFestivus"));
+                        ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.PleasentParkFestivus"));
 
                     break;
                 }
@@ -197,51 +197,10 @@ void SetupPlaylist(AFortGameMode* GameMode, AFortGameStateAthena* GameState)
         }
 
         if (VersionInfo.FortniteVersion == 7.30 && !bEvent)
-            ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Apollo_POI_Foundations.Apollo_POI_Foundations.PersistentLevel.PleasentParkDefault"));
+            ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.PleasentParkDefault"));
 
-
-        auto AdditionalPlaylistLevelsStreamed__Off = GameState->GetOffset("AdditionalPlaylistLevelsStreamed");
-        auto AdditionalLevelStruct = FAdditionalLevelStreamed::StaticStruct();
-        if (Playlist->HasAdditionalLevels())
-            for (auto& Level : Playlist->AdditionalLevels)
-            {
-                bool Success = false;
-                ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
-                if (AdditionalLevelStruct)
-                {
-                    auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
-                    memset((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
-                    level->bIsServerOnly = false;
-                    level->LevelName = Level.ObjectID.AssetPathName;
-                    if (Success)
-                        GameState->AdditionalPlaylistLevelsStreamed.Add(*level, FAdditionalLevelStreamed::Size());
-                    free(level);
-                }
-                else
-                    GetFromOffset<TArray<FName>>(GameState, AdditionalPlaylistLevelsStreamed__Off).Add(Level.ObjectID.AssetPathName);
-            }
-
-        if (Playlist->HasAdditionalLevelsServerOnly())
-            for (auto& Level : Playlist->AdditionalLevelsServerOnly)
-            {
-                bool Success = false;
-                ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
-
-                if (AdditionalLevelStruct)
-                {
-                    auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
-                    memset((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
-                    level->bIsServerOnly = true;
-                    level->LevelName = Level.ObjectID.AssetPathName;
-                    if (Success)
-                        GameState->AdditionalPlaylistLevelsStreamed.Add(*level, FAdditionalLevelStreamed::Size());
-                    free(level);
-                }
-                else
-                    GetFromOffset<TArray<FName>>(GameState, AdditionalPlaylistLevelsStreamed__Off).Add(Level.ObjectID.AssetPathName);
-            }
-        if (GameState->HasAdditionalPlaylistLevelsStreamed())
-            GameState->OnRep_AdditionalPlaylistLevelsStreamed();
+        //if (GameState->HasAdditionalPlaylistLevelsStreamed())
+        //    GameState->OnRep_AdditionalPlaylistLevelsStreamed();
     }
     else
     {
@@ -336,64 +295,118 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
     {
         setup = true;
 
-        // if u listen before setting playlist it behaves the same as using proper listening iirc
-        auto World = UWorld::GetWorld();
-        auto Engine = UEngine::GetEngine();
-        auto NetDriverName = FName(L"GameNetDriver");
-
-        if (GameMode->HasbEnableReplicationGraph())
-            GameMode->bEnableReplicationGraph = true;
-
-        UNetDriver* NetDriver = nullptr;
-        if (VersionInfo.FortniteVersion >= 16.00)
+        //if (!FindListenCall())
         {
-            void* WorldCtx = ((void* (*)(UEngine*, UWorld*)) FindGetWorldContext())(Engine, World);
-            World->NetDriver = NetDriver = ((UNetDriver * (*)(UEngine*, void*, FName, int)) FindCreateNetDriverWorldContext())(Engine, WorldCtx, NetDriverName, 0);
-        }
-        else
-            World->NetDriver = NetDriver = ((UNetDriver * (*)(UEngine*, UWorld*, FName)) FindCreateNetDriver())(Engine, World, NetDriverName);
-        if (VersionInfo.FortniteVersion >= 20)
-            NetDriver->NetServerMaxTickRate = 30;
+            auto World = UWorld::GetWorld();
+            auto Engine = UEngine::GetEngine();
+            auto NetDriverName = FName(L"GameNetDriver");
 
-        NetDriver->NetDriverName = NetDriverName;
-        NetDriver->World = World;
+            if (GameMode->HasbEnableReplicationGraph())
+                GameMode->bEnableReplicationGraph = true;
 
-        if (VersionInfo.EngineVersion >= 5.3 && FConfiguration::bEnableIris)
-        {
-            *(bool*)(__int64(&NetDriver->ReplicationDriver) + 0x11) = true;
-        }
+            UNetDriver* NetDriver = nullptr;
+            if (VersionInfo.FortniteVersion >= 16.00)
+            {
+                void* WorldCtx = ((void* (*)(UEngine*, UWorld*)) FindGetWorldContext())(Engine, World);
+                World->NetDriver = NetDriver = ((UNetDriver * (*)(UEngine*, void*, FName, int)) FindCreateNetDriverWorldContext())(Engine, WorldCtx, NetDriverName, 0);
+            }
+            else
+                World->NetDriver = NetDriver = ((UNetDriver * (*)(UEngine*, UWorld*, FName)) FindCreateNetDriver())(Engine, World, NetDriverName);
+            if (VersionInfo.FortniteVersion >= 20)
+                NetDriver->NetServerMaxTickRate = 30;
 
-        NetDriver->NetDriverName = NetDriverName;
-        NetDriver->World = World;
+            NetDriver->NetDriverName = NetDriverName;
+            NetDriver->World = World;
 
-        for (int i = 0; i < World->LevelCollections.Num(); i++)
-        {
-            auto& LevelCollection = World->LevelCollections.Get(i, FLevelCollection::Size());
+            if (VersionInfo.EngineVersion >= 5.3 && FConfiguration::bEnableIris)
+            {
+                *(bool*)(__int64(&NetDriver->ReplicationDriver) + 0x11) = true;
+            }
 
-            LevelCollection.NetDriver = NetDriver;
-        }
+            NetDriver->NetDriverName = NetDriverName;
+            NetDriver->World = World;
 
-        auto URL = (FURL*)malloc(FURL::Size());
-        memset((PBYTE)URL, 0, FURL::Size());
-        URL->Port = FConfiguration::Port;
+            for (int i = 0; i < World->LevelCollections.Num(); i++)
+            {
+                auto& LevelCollection = World->LevelCollections.Get(i, FLevelCollection::Size());
 
-        auto InitListen = (bool (*)(UNetDriver*, UWorld*, FURL*, bool, FString&)) FindInitListen();
-        auto SetWorld = (void (*)(UNetDriver*, UWorld*)) FindSetWorld();
+                LevelCollection.NetDriver = NetDriver;
+            }
 
-        SetWorld(NetDriver, World);
-        FString Err;
-        if (InitListen(NetDriver, World, URL, false, Err))
+            auto URL = (FURL*)malloc(FURL::Size());
+            memset((PBYTE)URL, 0, FURL::Size());
+            URL->Port = FConfiguration::Port;
+
+            auto InitListen = (bool (*)(UNetDriver*, UWorld*, FURL*, bool, FString&)) FindInitListen();
+            auto SetWorld = (void (*)(UNetDriver*, UWorld*)) FindSetWorld();
+
             SetWorld(NetDriver, World);
-        else
-            printf("Failed to listen!");
+            FString Err;
+            if (InitListen(NetDriver, World, URL, false, Err))
+                SetWorld(NetDriver, World);
+            else
+                printf("Failed to listen!");
 
-        free(URL);
+            free(URL);
+        }
 
         if (GameMode->HasWarmupRequiredPlayerCount())
             GameMode->WarmupRequiredPlayerCount = 1;
 
-        if (VersionInfo.FortniteVersion >= 4.0)
-            SetupPlaylist(GameMode, GameState);
+        //if (VersionInfo.FortniteVersion >= 4.0)
+       //     SetupPlaylist(GameMode, GameState);
+
+        auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
+
+        if (!Playlist)
+            Playlist = FindObject<UFortPlaylistAthena>(L"/Game/Athena/Playlists/Playlist_DefaultSolo.Playlist_DefaultSolo");
+
+        if (Playlist)
+        {
+            auto AdditionalPlaylistLevelsStreamed__Off = GameState->GetOffset("AdditionalPlaylistLevelsStreamed");
+            auto AdditionalLevelStruct = FAdditionalLevelStreamed::StaticStruct();
+            if (Playlist->HasAdditionalLevels())
+                for (auto& Level : Playlist->AdditionalLevels)
+                {
+                    bool Success = false;
+                    ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
+                    if (AdditionalLevelStruct)
+                    {
+                        auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
+                        memset((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
+                        level->bIsServerOnly = false;
+                        level->LevelName = Level.ObjectID.AssetPathName;
+                        if (Success)
+                            GameState->AdditionalPlaylistLevelsStreamed.Add(*level, FAdditionalLevelStreamed::Size());
+                        free(level);
+                    }
+                    else
+                        GetFromOffset<TArray<FName>>(GameState, AdditionalPlaylistLevelsStreamed__Off).Add(Level.ObjectID.AssetPathName);
+                }
+
+            if (Playlist->HasAdditionalLevelsServerOnly())
+                for (auto& Level : Playlist->AdditionalLevelsServerOnly)
+                {
+                    printf("Stream %s\n", Level.ObjectID.AssetPathName.ToString().c_str());
+                    bool Success = false;
+                    ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
+
+                    if (AdditionalLevelStruct)
+                    {
+                        printf("fr\n");
+
+                        auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
+                        memset((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
+                        level->bIsServerOnly = true;
+                        level->LevelName = Level.ObjectID.AssetPathName;
+                        if (Success)
+                            GameState->AdditionalPlaylistLevelsStreamed.Add(*level, FAdditionalLevelStreamed::Size());
+                        free(level);
+                    }
+                    else
+                        GetFromOffset<TArray<FName>>(GameState, AdditionalPlaylistLevelsStreamed__Off).Add(Level.ObjectID.AssetPathName);
+                }
+        }
         
         if (VersionInfo.EngineVersion >= 4.27 && std::floor(VersionInfo.FortniteVersion) != 20) // on 20 it does some weird stuff
         {
@@ -410,6 +423,20 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
         GameMode->AIDirector = UWorld::SpawnActor(AIDirectorClass, FVector{}, GameMode);
         if (GameMode->AIDirector)
             GameMode->AIDirector->Call(GameMode->AIDirector->GetFunction("Activate"));
+
+        if (UFortServerBotManagerAthena::StaticClass())
+        {
+            if (auto BotManager = (UFortServerBotManagerAthena*)UGameplayStatics::SpawnObject(UFortServerBotManagerAthena::StaticClass(), GameMode))
+            {
+                GameMode->ServerBotManager = BotManager;
+                BotManager->CachedGameState = GameState;
+                BotManager->CachedGameMode = GameMode;
+            }
+            else
+            {
+                printf("BotManager is nullptr!\n");
+            }
+        }
 
         auto GoalManagerClass = GameMode->HasWarmupRequiredPlayerCount() ? FindClass("FortAIGoalManager") : FindObject<UClass>("/Game/AI/GoalSelection/AIGoalManager.AIGoalManager_C");
 
@@ -480,10 +507,10 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
 
         
 
-        if (VersionInfo.FortniteVersion >= 3.5 && VersionInfo.FortniteVersion <= 4.0)
+        //if (VersionInfo.FortniteVersion >= 3.5 && VersionInfo.FortniteVersion <= 4.0)
             SetupPlaylist(GameMode, GameState);
-        else if (VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.26)
-            GameState->OnRep_CurrentPlaylistInfo();
+        //else if (VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.26)
+        //    GameState->OnRep_CurrentPlaylistInfo();
 
         if (VersionInfo.FortniteVersion >= 25.20 && GameState->HasMapInfo() && GameState->MapInfo)
         {
@@ -870,7 +897,11 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
         else if (VersionInfo.FortniteVersion == 1.11 || VersionInfo.FortniteVersion == 7.30 || VersionInfo.FortniteVersion == 11.31 || VersionInfo.FortniteVersion == 15.10 || VersionInfo.FortniteVersion == 19.01 || VersionInfo.FortniteVersion == 28.01)
         {
             BattleBusDef = FindObject<UObject>(L"/Game/Athena/Items/Cosmetics/BattleBuses/BBID_WinterBus.BBID_WinterBus");
-            SupplyDropClass = FindObject<UClass>(L"/Game/Athena/SupplyDrops/AthenaSupplyDrop_Holiday.AthenaSupplyDrop_Holiday_C");
+
+            if (VersionInfo.FortniteVersion == 1.11)
+                SupplyDropClass = FindObject<UClass>(L"/Game/Athena/SupplyDrops/B_AthenaSupplyDrop_Gift.B_AthenaSupplyDrop_Gift_C");
+            else
+                SupplyDropClass = FindObject<UClass>(L"/Game/Athena/SupplyDrops/AthenaSupplyDrop_Holiday.AthenaSupplyDrop_Holiday_C");
         }
         else if (VersionInfo.FortniteVersion == 23.10)
         {
@@ -940,8 +971,13 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
         if (GameState->HasMapInfo() && GameState->MapInfo)
         {
             if (SupplyDropClass)
-                for (auto& Info : GameState->MapInfo->SupplyDropInfoList)
-                    Info->SupplyDropClass = SupplyDropClass;
+            {
+                if (GameState->MapInfo->HasSupplyDropInfoList())
+                    for (auto& Info : GameState->MapInfo->SupplyDropInfoList)
+                        Info->SupplyDropClass = SupplyDropClass;
+                else
+                    GameState->MapInfo->SupplyDropClass = SupplyDropClass;
+            }
 
             if (VersionInfo.FortniteVersion >= 3.4)
             {
