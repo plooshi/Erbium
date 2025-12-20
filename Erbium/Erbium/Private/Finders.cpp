@@ -553,7 +553,7 @@ uint64_t FindServerReplicateActors()
         case 9:
         case 8:
         case 7:
-            if (VersionInfo.FortniteVersion >= 7.40 && VersionInfo.FortniteVersion < 8.30)
+            if (VersionInfo.FortniteVersion >= 7.40 && VersionInfo.FortniteVersion <= 8.40 && VersionInfo.FortniteVersion != 8.30)
                 ServerReplicateActorsVft = 0x57;
             else
                 ServerReplicateActorsVft = 0x56;
