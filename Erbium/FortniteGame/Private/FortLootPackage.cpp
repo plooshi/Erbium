@@ -137,7 +137,6 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 
 	auto ItemDefinition = LootPackage->ItemDefinition.Get();
 
-	printf("[Looting::LDS] ItemDefinition: %s\n", ItemDefinition ? ItemDefinition->Name.ToString().c_str() : "[none]");
 	if (!ItemDefinition)
 		return;
 

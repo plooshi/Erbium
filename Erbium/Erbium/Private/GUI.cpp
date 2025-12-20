@@ -268,8 +268,8 @@ void GUI::Init()
         switch (SelectedUI)
         {
         case 0:
-
-            ImGui::BeginChild("ServerInfo", ImVec2(245 * main_scale, 130 * main_scale), ImGuiChildFlags_Borders/*, ImGuiWindowFlags_ChildWindow | ImGuiWindowFlags_AlwaysHorizontallScrollbar */);
+            if (gsStatus >= Joinable)
+                ImGui::BeginChild("ServerInfo", ImVec2(245 * main_scale, 130 * main_scale), ImGuiChildFlags_Borders/*, ImGuiWindowFlags_ChildWindow | ImGuiWindowFlags_AlwaysHorizontallScrollbar */);
             ImGui::Text((std::string("Status: ") + (gsStatus == NotReady ? "Setting up the server..." : (gsStatus == Joinable ? "Joinable!" : "Match Started"))).c_str());
             if (gsStatus >= Joinable)
             {
@@ -283,10 +283,13 @@ void GUI::Init()
                     FString Name = UKismetTextLibrary::Conv_TextToString(Playlist->UIDisplayName);
                     ImGui::Text((UEAllocatedString("Playlist: ") + Name.ToString()).c_str());
                 }
+                ImGui::Text((std::string("Running for ") + std::to_string((int)floor(UGameplayStatics::GetTimeSeconds(GameMode))) + "s").c_str());
             }
-            ImGui::Text((std::string("Running for ") + std::to_string((int)floor(UGameplayStatics::GetTimeSeconds(GameMode))) + "s").c_str());
-            ImGui::EndChild();
-            ImGui::Spacing();
+            if (gsStatus >= Joinable)
+            {
+                ImGui::EndChild();
+                ImGui::Spacing();
+            }
 
             if (gsStatus <= Joinable)
                 ImGui::Checkbox("Lategame", &FConfiguration::bLateGame);
