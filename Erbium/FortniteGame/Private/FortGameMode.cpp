@@ -387,13 +387,11 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
             if (Playlist->HasAdditionalLevelsServerOnly())
                 for (auto& Level : Playlist->AdditionalLevelsServerOnly)
                 {
-                    printf("Stream %s\n", Level.ObjectID.AssetPathName.ToString().c_str());
                     bool Success = false;
                     ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
 
                     if (AdditionalLevelStruct)
                     {
-                        printf("fr\n");
 
                         auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
                         memset((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
@@ -578,7 +576,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
             }
         }
 
-        auto AbilitySet = VersionInfo.FortniteVersion >= 8.30 ? FindObject<UFortAbilitySet>(L"/Game/Abilities/Player/Generic/Traits/DefaultPlayer/GAS_AthenaPlayer.GAS_AthenaPlayer") : FindObject<UFortAbilitySet>(L"/Game/Abilities/Player/Generic/Traits/DefaultPlayer/GAS_DefaultPlayer.GAS_DefaultPlayer");
+        auto AbilitySet = VersionInfo.FortniteVersion > 8.30 ? FindObject<UFortAbilitySet>(L"/Game/Abilities/Player/Generic/Traits/DefaultPlayer/GAS_AthenaPlayer.GAS_AthenaPlayer") : FindObject<UFortAbilitySet>(L"/Game/Abilities/Player/Generic/Traits/DefaultPlayer/GAS_DefaultPlayer.GAS_DefaultPlayer");
         AbilitySet->AddToRoot();
         AbilitySets.Add(AbilitySet);
 

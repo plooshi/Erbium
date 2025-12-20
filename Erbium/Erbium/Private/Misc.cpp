@@ -659,14 +659,24 @@ void Misc::Hook()
 	if (VersionInfo.FortniteVersion >= 11 && VersionInfo.FortniteVersion < 16)
 	{
 		auto NearGetOverrideCosmeticLoadout = Memcury::Scanner::FindPattern("4D 8B CD 4C 8D 45 ? 48 8B D6");
-		auto Rel32 = NearGetOverrideCosmeticLoadout.ScanFor({ 0xE8 }).Get();
 
-		auto OverrideFunc = __int64(DefaultObjImpl("FortHUDContext")->GetFunction("EnterCursorMode")->ExecFunction);
+		if (!NearGetOverrideCosmeticLoadout.IsValid())
+			NearGetOverrideCosmeticLoadout = Memcury::Scanner::FindPattern("4C 8D 45 ? 48 8B D3 48 8B CF E8 ? ? ? ? 0F B6 57");
 
-		Utils::Hook(OverrideFunc, InitializeCosmeticLoadout);
+		if (!NearGetOverrideCosmeticLoadout.IsValid())
+			NearGetOverrideCosmeticLoadout = Memcury::Scanner::FindPattern("4C 8D 45 ? 48 8B D3 48 8B CF E8 ? ? ? ? 0F B6 4F");
 
-		auto NewRel = uint32(OverrideFunc - (Rel32 + 5));
+		if (NearGetOverrideCosmeticLoadout.IsValid())
+		{
+			auto Rel32 = NearGetOverrideCosmeticLoadout.ScanFor({ 0xE8 }).Get();
 
-		Utils::Patch<uint32>(Rel32 + 1, NewRel);
+			auto OverrideFunc = __int64(DefaultObjImpl("FortHUDContext")->GetFunction("EnterCursorMode")->ExecFunction);
+
+			Utils::Hook(OverrideFunc, InitializeCosmeticLoadout);
+
+			auto NewRel = uint32(OverrideFunc - (Rel32 + 5));
+
+			Utils::Patch<uint32>(Rel32 + 1, NewRel);
+		}
 	}
 }

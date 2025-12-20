@@ -21,6 +21,14 @@ public:
     DEFINE_STRUCT_PROP(VehicleWeapon, UFortWeaponItemDefinition*);
 };
 
+struct FAthenaCarPlayerSlot
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FAthenaCarPlayerSlot);
+
+    DEFINE_STRUCT_NEWOBJ_PROP(Player, AFortPlayerPawnAthena);
+};
+
 class UFortVehicleSeatWeaponComponent : public UActorComponent
 {
 public:
@@ -29,12 +37,41 @@ public:
     DEFINE_PROP(WeaponSeatDefinitions, TArray<FWeaponSeatDefinition>);
 };
 
+class UFortVehicleSeatComponent : public UActorComponent
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortVehicleSeatComponent);
+
+    DEFINE_PROP(PlayerSlots, TArray<FAthenaCarPlayerSlot>);
+
+    int32 FindSeatIndex(AFortPlayerPawnAthena* Pawn)
+    {
+        for (int i = 0; i < PlayerSlots.Num(); i++)
+        {
+            auto& PlayerSlot = PlayerSlots.Get(i, FAthenaCarPlayerSlot::Size());
+
+            if (PlayerSlot.Player == Pawn)
+                return i;
+        }
+
+        return -1;
+    }
+};
+
 class AFortAthenaVehicle : public AActor
 {
 public:
     UCLASS_COMMON_MEMBERS(AFortAthenaVehicle);
 
-    DEFINE_FUNC(FindSeatIndex, int32);
+    //DEFINE_FUNC(FindSeatIndex, int32);
+};
+
+class AFortCharacterVehicle : public AActor
+{
+public:
+    UCLASS_COMMON_MEMBERS(AFortCharacterVehicle);
+
+    DEFINE_PROP(OverrideAbilitySystemComponent, UAbilitySystemComponent*);
 };
 
 struct FNetTowhookAttachState

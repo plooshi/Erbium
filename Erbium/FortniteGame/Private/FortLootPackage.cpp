@@ -142,7 +142,7 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 
 	FFortItemEntry* AmmoEntry = nullptr;
 
-	if (VersionInfo.FortniteVersion >= 11)
+	if (VersionInfo.FortniteVersion >= 11 && VersionInfo.FortniteVersion != 19.40)
 	{
 		if (auto WorldItemDefinition = ItemDefinition->Cast<UFortWorldItemDefinition>())
 		{
@@ -150,7 +150,7 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 
 			if (auto AmmoDefinition = AmmoDef->Cast<UFortAmmoItemDefinition>())
 			{
-				static auto SpawnAmmoData = FindObject<UFortWeaponPickupSpawnAmmoData>(L"/Game/Athena/Balance/Pickups/FortWeaponPickupSpawnAmmoData.FortWeaponPickupSpawnAmmoData");
+				auto SpawnAmmoData = FindObject<UFortWeaponPickupSpawnAmmoData>(L"/Game/Athena/Balance/Pickups/FortWeaponPickupSpawnAmmoData.FortWeaponPickupSpawnAmmoData");
 
 				FGameplayTagContainer AmmoTags{};
 
@@ -307,7 +307,7 @@ void UFortLootPackage::ChooseLootForContainer(TArray<FFortItemEntry*>& LootDrops
 		return;
 
 	//printf("Selecting %f loot drops from <unk>\n", LootTierData->NumLootPackageDrops);
-	/*if (VersionInfo.FortniteVersion >= 11)
+	if (VersionInfo.FortniteVersion == 19.40)
 	{
 		auto& MinArr = LootTierData->LootPackageCategoryMinArray;
 
@@ -316,7 +316,7 @@ void UFortLootPackage::ChooseLootForContainer(TArray<FFortItemEntry*>& LootDrops
 			MinArr[1] = 1;
 			LootTierData->NumLootPackageDrops++;
 		}
-	}*/
+	}
 
 	int DropCount;
 	if (LootTierData->NumLootPackageDrops < 1.f)

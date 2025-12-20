@@ -443,15 +443,32 @@ void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack
 		GetVehicleFunc = Pawn->GetFunction("BP_GetVehicle");
 	auto Vehicle = Pawn->Call<AFortAthenaVehicle*>(GetVehicleFunc);
 
-	if (!Vehicle)
-		return;
+	UFortVehicleSeatWeaponComponent* SeatWeaponComponent = nullptr;
+
+	if (Vehicle)
+		SeatWeaponComponent = (UFortVehicleSeatWeaponComponent*)Vehicle->GetComponentByClass(UFortVehicleSeatWeaponComponent::StaticClass());
+	else if (auto CharacterVehicle = Pawn->Cast<AFortCharacterVehicle>())
+		SeatWeaponComponent = (UFortVehicleSeatWeaponComponent*)CharacterVehicle->GetComponentByClass(UFortVehicleSeatWeaponComponent::StaticClass());
+
+	if (!SeatWeaponComponent)
+	{
+		printf("nop %s\n", Pawn->Class->Name.ToString().c_str());
+		if (VersionInfo.FortniteVersion >= 29)
+			return callOG(Pawn, Stack.GetCurrentNativeFunction(), ServerOnExitVehicle, VehicleExitData);
+		else
+			return callOG(Pawn, Stack.GetCurrentNativeFunction(), ServerOnExitVehicle, ExitForceBehavior, bDestroyVehicleWhenForced);
+	}
+
+	UFortVehicleSeatComponent* SeatComponent = nullptr;
+
+	if (Vehicle)
+		SeatComponent = (UFortVehicleSeatComponent*)Vehicle->GetComponentByClass(UFortVehicleSeatComponent::StaticClass());
+	else if (auto CharacterVehicle = Pawn->Cast<AFortCharacterVehicle>())
+		SeatComponent = (UFortVehicleSeatComponent*)CharacterVehicle->GetComponentByClass(UFortVehicleSeatComponent::StaticClass());
 
 	auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
 
-
-	auto SeatIdx = Vehicle->FindSeatIndex(PlayerController->MyFortPawn);
-
-	UFortVehicleSeatWeaponComponent* SeatWeaponComponent = (UFortVehicleSeatWeaponComponent*)Vehicle->GetComponentByClass(UFortVehicleSeatWeaponComponent::StaticClass());
+	auto SeatIdx = SeatComponent->FindSeatIndex(Pawn);
 
 	UFortWeaponItemDefinition* Weapon = nullptr;
 	if (SeatWeaponComponent)
