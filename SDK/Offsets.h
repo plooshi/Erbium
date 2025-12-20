@@ -222,7 +222,7 @@ namespace SDK
 			Offsets::StepExplicitProperty = Memcury::Scanner::FindPattern("41 8B 40 ? 4D 8B C8 48 0F BA E0").Get();
 		else if (VersionInfo.EngineVersion == 5.3)
 			Offsets::StepExplicitProperty = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 68 ? 48 89 70 ? 48 89 78 ? 41 54 41 56 41 57 48 83 EC ? 41 8B 40 ? 49 8B D8 48 8B F2").Get();
-		else if (VersionInfo.FortniteVersion >= 20.40)
+		else if (VersionInfo.FortniteVersion >= 20.20)
 			Offsets::StepExplicitProperty = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 41 8B 40 ? 49 8B D8 48 8B F2").Get();
 		else
 			Offsets::StepExplicitProperty = Memcury::Scanner::FindPattern("41 8B 40 ? 4D 8B C8").Get();
@@ -383,8 +383,8 @@ namespace SDK
 		Offsets::Children = VersionInfo.EngineVersion >= 4.22 ? 0x48 : 0x38;
 		Offsets::FField_Next = VersionInfo.FortniteVersion >= 24.30 ? 0x18 : 0x20;
 		Offsets::FField_Name = VersionInfo.FortniteVersion >= 24.30 ? 0x20 : 0x28;
-		Offsets::FFrame_PropertyChainForCompiledIn = VersionInfo.FortniteVersion >= 20.40 ? 0x88 : 0x80;
-		Offsets::FFrame_CurrentNativeFunction = VersionInfo.FortniteVersion >= 20.40 ? 0x90 : 0x88;
+		Offsets::FFrame_PropertyChainForCompiledIn = VersionInfo.FortniteVersion >= 20.20 ? 0x88 : 0x80;
+		Offsets::FFrame_CurrentNativeFunction = VersionInfo.FortniteVersion >= 20.20 ? 0x90 : 0x88;
 		Offsets::FFrame_Next = VersionInfo.FortniteVersion >= 24.30 ? 0x18 : (VersionInfo.FortniteVersion >= 12.10 ? 0x20 : 0x28);
 
 		if (VersionInfo.EngineVersion < 4.22)

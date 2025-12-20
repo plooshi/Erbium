@@ -822,7 +822,8 @@ namespace Memcury
                         {
                             if (PE::Address(&scanBytes[i + q]).RelativeOffset(2).GetAs<void*>() == Pointer)
                             {
-                                add = PE::Address(&scanBytes[i + q]);
+                                auto sub = (scanBytes[i + q - 1] & 0xFB) == 0x48;
+                                add = PE::Address(&scanBytes[i + q - sub]);
 
                                 // LOG_INFO(LogDev, "2add: 0x{:x}", add.Get() - __int64(GetModuleHandleW(0)));
 
@@ -1042,7 +1043,7 @@ namespace Memcury
 
                                             if (leaT == string)
                                             {
-                                                add = PE::Address(&scanBytes[i + q]);
+                                                add = PE::Address(&scanBytes[i + q - 1]);
 
                                                 if (++aa > useRefNum)
                                                     goto _out;
@@ -1056,7 +1057,7 @@ namespace Memcury
                                             {
                                                 if (memcmp(string, lea, slen) == 0)
                                                 {
-                                                    add = PE::Address(&scanBytes[i + q]);
+                                                    add = PE::Address(&scanBytes[i + q - 1]);
 
                                                     if (++aa > useRefNum)
                                                         goto _out;
@@ -1066,7 +1067,7 @@ namespace Memcury
                                             {
                                                 if (memcmp(string, lea, slen) == 0)
                                                 {
-                                                    add = PE::Address(&scanBytes[i + q]);
+                                                    add = PE::Address(&scanBytes[i + q - 1]);
 
                                                     if (++aa > useRefNum)
                                                         goto _out;
@@ -1119,7 +1120,7 @@ namespace Memcury
 
                            auto beginFunc = Scanner(add.Get() - i - sub);
 
-                           auto ref = FindPointerRef(beginFunc.GetAs<void*>());
+                           auto ref = FindPointerRef(beginFunc.GetAs<void*>(), 0, true);
 
                            if (ref.Get())
                                return ref;

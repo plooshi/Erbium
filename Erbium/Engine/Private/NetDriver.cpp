@@ -911,7 +911,7 @@ void UNetDriver::PostLoadHook()
 		ClientWorldPackageNameOffset = 0x1818;
 	else if (VersionInfo.FortniteVersion >= 24)
 		ClientWorldPackageNameOffset = 0x1820;
-	else if (VersionInfo.FortniteVersion >= 20.40)
+	else if (VersionInfo.FortniteVersion >= 20.20)
 		ClientWorldPackageNameOffset = 0x16b8;
 	else if (VersionInfo.FortniteVersion >= 20)
 		ClientWorldPackageNameOffset = 0x1698;
@@ -937,7 +937,7 @@ void UNetDriver::PostLoadHook()
 	else if (VersionInfo.FortniteVersion >= 20)
 	{
 		DestroyedStartupOrDormantActorsOffset = 0x2f0;
-		DestroyedStartupOrDormantActorGUIDsOffset = 0x1468;
+		DestroyedStartupOrDormantActorGUIDsOffset = VersionInfo.FortniteVersion >= 20.20 ? 0x1488 : 0x1468;
 		ClientVisibleLevelNamesOffset = DestroyedStartupOrDormantActorGUIDsOffset + 0xa0;
 	}
 
