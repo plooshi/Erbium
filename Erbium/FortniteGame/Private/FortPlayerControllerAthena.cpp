@@ -2588,6 +2588,7 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 	}
 	else if (auto LockDevice = ReceivingActor->Cast<ABuildingProp_LockDevice>())
 	{
+		printf("yo %s\n", LockDevice->LockableObject->Name.ToString().c_str());
 		LockDevice->CurrentLockState = 1;
 		LockDevice->OnRep_CurrentLockState();
 	}

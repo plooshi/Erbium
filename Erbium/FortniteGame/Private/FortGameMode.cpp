@@ -1988,7 +1988,8 @@ void SpawnInitialSafeZone(AFortGameMode* GameMode)
 void (*UpdateSafeZonesPhaseOG)(AFortGameMode* GameMode);
 void UpdateSafeZonesPhase(AFortGameMode* GameMode)
 {
-    if (GameMode->bSafeZoneActive && UGameplayStatics::GetTimeSeconds(GameMode) >= GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime && !GameMode->bSafeZonePaused && GameMode->SafeZoneIndicator->SafeZonePhases.IsValidIndex(GameMode->SafeZoneIndicator->CurrentPhase + 1))
+    auto& Array = GameMode->SafeZoneIndicator->HasSafeZonePhases() ? GameMode->SafeZoneIndicator->SafeZonePhases : Phases;
+    if (GameMode->bSafeZoneActive && UGameplayStatics::GetTimeSeconds(GameMode) >= GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime && !GameMode->bSafeZonePaused && Array.IsValidIndex(GameMode->SafeZoneIndicator->CurrentPhase + 1))
         StartNewSafeZonePhase(GameMode, GameMode->SafeZoneIndicator->CurrentPhase + 1);
 
     return UpdateSafeZonesPhaseOG(GameMode);

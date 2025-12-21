@@ -82,6 +82,7 @@ public:
     UCLASS_COMMON_MEMBERS(ABuildingProp_LockDevice);
 
     DEFINE_PROP(CurrentLockState, uint8);
+    DEFINE_PROP(LockableObject, UObject*);
 
     DEFINE_FUNC(OnRep_CurrentLockState, void);
 };
