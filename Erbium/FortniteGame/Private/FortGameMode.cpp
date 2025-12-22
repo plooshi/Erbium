@@ -377,7 +377,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
             ShowFoundation(FindObject<ABuildingFoundation>(L"/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.SLAB_4"));
 
         bool bEvent = false;
-        if (Playlist->HasGameplayTagContainer())
+        if (Playlist && Playlist->HasGameplayTagContainer())
         {
             for (int i = 0; i < Playlist->GameplayTagContainer.GameplayTags.Num(); i++)
             {
