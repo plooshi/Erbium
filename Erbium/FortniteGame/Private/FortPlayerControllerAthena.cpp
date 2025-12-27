@@ -1703,13 +1703,13 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 			float MinValue = bUseMin ? 1.f : 100.f;
 			auto& Health = PlayerController->MyFortPawn->HealthSet->Health;
 
-			if (VersionInfo.FortniteVersion >= 21)
+			/*if (VersionInfo.FortniteVersion >= 21)
 			{
 				PlayerController->Pawn->bCanBeDamaged ^= 1;
 				PlayerController->ClientMessage(FString(L"Toggled god mode!"), FName(), 1.f);
 				return;
 			}
-			else if (Health.Minimum != MinValue)
+			else */if (Health.Minimum != MinValue)
 			{
 				Health.Minimum = MinValue;
 				PlayerController->MyFortPawn->HealthSet->OnRep_Health(Health);
