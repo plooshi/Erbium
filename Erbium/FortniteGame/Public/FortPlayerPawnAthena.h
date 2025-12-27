@@ -119,7 +119,7 @@ public:
     DEFINE_FUNC(OnRep_PlayerState, void);
     DEFINE_FUNC(ServerSetAttachment, void);
     DEFINE_FUNC(GetActiveZipline, AFortAscenderZipline*);
-    DEFINE_FUNC(ServerOnExitVehicle, void);
+    DEFINE_FUNC(ServerOnExitVehicle, AActor*);
     DEFINE_FUNC(SetInVortex, void);
     DEFINE_FUNC(ClientInternalEquipWeapon, void);
     DEFINE_FUNC(ServerInternalEquipWeapon, void);
@@ -127,6 +127,9 @@ public:
     DEFINE_FUNC(OnRep_LastReplicatedEmoteExecuted, void);
     DEFINE_FUNC(EmoteStopped, void);
     DEFINE_FUNC(ServerChoosePart, void);
+    DEFINE_FUNC(ServerThrowCarriedPlayer, void);
+    DEFINE_FUNC(LocalThrowCarriedPlayer, void);
+    DEFINE_FUNC(GetVehicleActor, AActor*);
 
     DefUHookOg(ServerHandlePickup_);
     DefUHookOg(ServerHandlePickupInfo);
@@ -135,11 +138,12 @@ public:
     DefUHookOg(OnCapsuleBeginOverlap_);
     static void MovingEmoteStopped(UObject*, FFrame&);
     DefUHookOg(Athena_MedConsumable_Triggered);
-    DefUHookOg(ServerOnExitVehicle_);
+    DefUHookOgRet(AActor*, ServerOnExitVehicle_);
     DefUHookOg(EmoteStopped_);
     static void ServerHandlePickupWithRequestedSwap(UObject*, FFrame&);
     DefHookOg(void, EndSkydiving, AFortPlayerPawnAthena*);
     DefUHookOg(ServerReviveFromDBNO);
+    DefUHookOg(ServerThrowCarriedPlayer_);
 
     InitPostLoadHooks;
 };

@@ -420,7 +420,7 @@ void AFortPlayerPawnAthena::Athena_MedConsumable_Triggered(UObject* Context, FFr
 	return Athena_MedConsumable_TriggeredOG(Context, Stack);
 }
 
-void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack)
+void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack, AActor** Ret)
 {
 	struct FVehicleExitData { uint8_t Pad[0x30]; };
 
@@ -438,33 +438,27 @@ void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack
 	Stack.IncrementCode();
 
 	auto Pawn = (AFortPlayerPawnAthena*)Context;
-	static auto GetVehicleFunc = Pawn->GetFunction("GetVehicle");
+
+	static auto GetVehicleFunc = Pawn->GetFunction("GetVehicleActor");
 	if (!GetVehicleFunc)
-		GetVehicleFunc = Pawn->GetFunction("BP_GetVehicle");
-	auto Vehicle = Pawn->Call<AFortAthenaVehicle*>(GetVehicleFunc);
+		GetVehicleFunc = Pawn->GetFunction("GetVehicle");
+	auto Vehicle = Pawn->Call<AActor*>(GetVehicleFunc);
 
-	UFortVehicleSeatWeaponComponent* SeatWeaponComponent = nullptr;
+	if (!Vehicle && Pawn->IsA<AFortCharacterVehicle>())
+		Vehicle = Pawn;
 
-	if (Vehicle)
-		SeatWeaponComponent = (UFortVehicleSeatWeaponComponent*)Vehicle->GetComponentByClass(UFortVehicleSeatWeaponComponent::StaticClass());
-	else if (auto CharacterVehicle = Pawn->Cast<AFortCharacterVehicle>())
-		SeatWeaponComponent = (UFortVehicleSeatWeaponComponent*)CharacterVehicle->GetComponentByClass(UFortVehicleSeatWeaponComponent::StaticClass());
+	UFortVehicleSeatWeaponComponent* SeatWeaponComponent = (UFortVehicleSeatWeaponComponent*)Vehicle->GetComponentByClass(UFortVehicleSeatWeaponComponent::StaticClass());
 
 	if (!SeatWeaponComponent)
 	{
-		printf("nop %s\n", Pawn->Class->Name.ToString().c_str());
+		printf("nop %s\n", Pawn ? Pawn->Class->Name.ToString().c_str() : nullptr);
 		if (VersionInfo.FortniteVersion >= 29)
 			return callOG(Pawn, Stack.GetCurrentNativeFunction(), ServerOnExitVehicle, VehicleExitData);
 		else
 			return callOG(Pawn, Stack.GetCurrentNativeFunction(), ServerOnExitVehicle, ExitForceBehavior, bDestroyVehicleWhenForced);
 	}
 
-	UFortVehicleSeatComponent* SeatComponent = nullptr;
-
-	if (Vehicle)
-		SeatComponent = (UFortVehicleSeatComponent*)Vehicle->GetComponentByClass(UFortVehicleSeatComponent::StaticClass());
-	else if (auto CharacterVehicle = Pawn->Cast<AFortCharacterVehicle>())
-		SeatComponent = (UFortVehicleSeatComponent*)CharacterVehicle->GetComponentByClass(UFortVehicleSeatComponent::StaticClass());
+	UFortVehicleSeatComponent* SeatComponent = (UFortVehicleSeatComponent*)Vehicle->GetComponentByClass(UFortVehicleSeatComponent::StaticClass());
 
 	auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
 
@@ -484,7 +478,7 @@ void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack
 			break;
 		}
 
-
+		//printf("Weapon: %s\n", Weapon ? Weapon->Name.ToString().c_str() : "<null>");
 		if (Weapon)
 		{
 			auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([Weapon](FFortItemEntry& entry)
@@ -495,9 +489,9 @@ void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack
 		}
 	}
 	if (VersionInfo.FortniteVersion >= 29)
-		callOG(Pawn, Stack.GetCurrentNativeFunction(), ServerOnExitVehicle, VehicleExitData);
+		*Ret = callOGWithRet(Pawn, Stack.GetCurrentNativeFunction(), ServerOnExitVehicle, VehicleExitData);
 	else
-		callOG(Pawn, Stack.GetCurrentNativeFunction(), ServerOnExitVehicle, ExitForceBehavior, bDestroyVehicleWhenForced);
+		*Ret = callOGWithRet(Pawn, Stack.GetCurrentNativeFunction(), ServerOnExitVehicle, ExitForceBehavior, bDestroyVehicleWhenForced);
 
 	if (Weapon)
 	{
@@ -510,11 +504,13 @@ void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack
 		}
 		else
 		{
+			printf("yo\n");
 			auto pickaxeEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([](FFortItemEntry& entry)
 				{ return entry.ItemDefinition->IsA<UFortWeaponMeleeItemDefinition>(); }, FFortItemEntry::Size());
 
 			if (pickaxeEntry)
 			{
+				printf("yo2\n");
 				PlayerController->ServerExecuteInventoryItem(pickaxeEntry->ItemGuid);
 				PlayerController->ClientEquipItem(pickaxeEntry->ItemGuid, true);
 			}
@@ -557,7 +553,16 @@ void AFortPlayerPawnAthena::ServerReviveFromDBNO(UObject* Context, FFrame& Stack
 
 	Stack.StepCompiledIn(&EventInstigator);
 	Stack.IncrementCode();
-	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+	auto Pawn = (AFortPlayerPawnAthena*)Context;
+}
+
+void AFortPlayerPawnAthena::ServerThrowCarriedPlayer_(UObject* Context, FFrame& Stack)
+{
+	Stack.IncrementCode();
+	auto Pawn = (AFortPlayerPawnAthena*)Context;
+
+	callOG(Pawn, Stack.GetCurrentNativeFunction(), ServerThrowCarriedPlayer);
+	Pawn->LocalThrowCarriedPlayer();
 }
 
 
@@ -593,4 +598,5 @@ void AFortPlayerPawnAthena::PostLoadHook()
 
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerReviveFromDBNO"), ServerReviveFromDBNO);
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerThrowCarriedPlayer"), ServerThrowCarriedPlayer_, ServerThrowCarriedPlayer_OG);
 }
