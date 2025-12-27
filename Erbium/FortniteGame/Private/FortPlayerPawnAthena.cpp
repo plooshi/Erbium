@@ -447,6 +447,9 @@ void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack
 	if (!Vehicle && Pawn->IsA<AFortCharacterVehicle>())
 		Vehicle = Pawn;
 
+	if (!Vehicle)
+		return;
+
 	UFortVehicleSeatWeaponComponent* SeatWeaponComponent = (UFortVehicleSeatWeaponComponent*)Vehicle->GetComponentByClass(UFortVehicleSeatWeaponComponent::StaticClass());
 
 	if (!SeatWeaponComponent)
