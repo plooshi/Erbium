@@ -77,7 +77,7 @@ void Main()
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"log LogIris None"), nullptr);
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"log LogIrisRpc None"), nullptr);
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"log LogIrisBridge None"), nullptr);
-        auto IrisBool = Memcury::Scanner::FindPattern("83 3D ? ? ? ? ? 0F 8E ? ? ? ? 49 8B B9").RelativeOffset(2, 1).Get();
+        /*auto IrisBool = Memcury::Scanner::FindPattern("83 3D ? ? ? ? ? 0F 8E ? ? ? ? 49 8B B9").RelativeOffset(2, 1).Get();
         if (IrisBool)
             *(uint32_t*)IrisBool = true;
         else
@@ -86,7 +86,11 @@ void Main()
 
             if (IrisBool)
                 *(uint32_t*)IrisBool = true;
-        }
+        }*/
+        auto IrisBool = FindCVar<uint32_t>(L"net.Iris.UseIrisReplication");
+
+        if (IrisBool)
+            *IrisBool = true;
 
         if (VersionInfo.FortniteVersion >= 29)
         {
@@ -109,10 +113,26 @@ void Main()
     if (VersionInfo.EngineVersion >= 5.4)
     {
         // sprint fix
+        auto SprintCVar = FindCVar<uint32_t>(L"Fort.MME.TacticalSprint");
+        auto HurdleCVar = FindCVar<uint32_t>(L"Fort.MME.Hurdle");
+        auto SlideCVar = FindCVar<uint32_t>(L"Fort.MME.Sliding");
+        auto MantleCVar = FindCVar<uint32_t>(L"Fort.MME.Clambering");
+
+        //if (SprintCVar)
+        //    *SprintCVar = false;
+
+        if (HurdleCVar)
+            *HurdleCVar = false;
+
+        if (SlideCVar)
+            *SlideCVar = false;
+
+        if (MantleCVar)
+            *MantleCVar = false;
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"Fort.MME.TacticalSprint 0"), nullptr);
-        UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"Fort.MME.Hurdle 0"), nullptr);
+        /*UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"Fort.MME.Hurdle 0"), nullptr);
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"Fort.MME.Sliding 0"), nullptr);
-        UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"Fort.MME.Clambering 0"), nullptr);
+        UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"Fort.MME.Clambering 0"), nullptr);*/
     }
 
 #ifdef CLIENT

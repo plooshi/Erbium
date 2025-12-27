@@ -703,9 +703,12 @@ void SendClientMoveAdjustments(UNetDriver* Driver)
 
 void UNetDriver::TickFlush__Iris(UNetDriver* Driver, float DeltaSeconds)
 {
-	auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
-	if (GamePhaseLogic)
-		GamePhaseLogic->Tick();
+	if (VersionInfo.FortniteVersion >= 25.20)
+	{
+		auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
+		if (GamePhaseLogic)
+			GamePhaseLogic->Tick();
+	}
 
 	if (Driver->ClientConnections.Num() > 0)
 	{

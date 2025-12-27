@@ -75,6 +75,44 @@ uint64 FindPickSupplyDropLocation();
 uint64 FindSetPickupTarget();
 uint64 FindInitializePlayerGameplayAbilities();
 uint64 FindListenCall();
+template <typename CVarT>
+CVarT* FindCVar(const wchar_t* CVarStr)
+{
+    auto sRef = Memcury::Scanner::FindStringRef(CVarStr);
+
+    if (!sRef.IsValid())
+        return nullptr;
+
+    uint64_t BeforeVars = 0;
+
+    for (int i = 0; i < 2000; i++)
+    {
+        auto Ptr = (uint8_t*)(sRef.Get() - i);
+
+        if (*Ptr == 0x48 && *(Ptr + 1) == 0x83 && *(Ptr + 2) == 0xEC)
+        {
+            BeforeVars = uint64_t(Ptr);
+            break;
+        }
+        else if (*Ptr == 0x48 && *(Ptr + 1) == 0x81 && *(Ptr + 2) == 0xEC)
+        {
+            BeforeVars = uint64_t(Ptr);
+            break;
+        }
+    }
+
+
+    for (int i = 0; i < 2000; i++)
+    {
+        auto Ptr = (uint8_t*)(BeforeVars + i);
+
+        if (*Ptr == 0x4C && *(Ptr + 1) == 0x8D && *(Ptr + 2) == 0x05)
+            return Memcury::Scanner(Ptr).RelativeOffset(3).GetAs<CVarT*>();
+    }
+
+    return nullptr;
+}
+
 
 inline std::vector<uint64_t> NullFuncs = {};
 inline std::vector<uint64_t> RetTrueFuncs = {};

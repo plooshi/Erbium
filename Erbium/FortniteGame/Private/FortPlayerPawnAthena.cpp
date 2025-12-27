@@ -551,6 +551,16 @@ void AFortPlayerPawnAthena::EndSkydiving(AFortPlayerPawnAthena* Pawn)
 }
 
 
+void AFortPlayerPawnAthena::ServerReviveFromDBNO(UObject* Context, FFrame& Stack)
+{
+	AFortPlayerControllerAthena* EventInstigator;
+
+	Stack.StepCompiledIn(&EventInstigator);
+	Stack.IncrementCode();
+	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+}
+
+
 void AFortPlayerPawnAthena::PostLoadHook()
 {
 	OnRep_ZiplineState = FindOnRep_ZiplineState();
@@ -580,4 +590,7 @@ void AFortPlayerPawnAthena::PostLoadHook()
 
 	if (EndSkydivingFn)
 		Utils::Hook<AFortPlayerPawnAthena>(EndSkydivingFn->GetVTableIndex(), EndSkydiving, EndSkydivingOG);
+
+
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerReviveFromDBNO"), ServerReviveFromDBNO);
 }

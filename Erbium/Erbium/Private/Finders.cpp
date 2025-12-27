@@ -2270,6 +2270,9 @@ uint64 FindUpdateIrisReplicationViews()
 
         if (!UpdateIrisReplicationViews)
             UpdateIrisReplicationViews = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 0F 10 0D").Get();
+
+        if (!UpdateIrisReplicationViews)
+            UpdateIrisReplicationViews = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 0F 29 70 ? 0F 29 78 ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 45 33 FF").Get();
     }
 
     return UpdateIrisReplicationViews;
@@ -2292,6 +2295,9 @@ uint64 FindPreSendUpdate()
 
         if (!PreSendUpdate)
             PreSendUpdate = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 48 89 7C 24 ? 55 48 8B EC 48 83 EC ? 8B 02 48 8B F9").Get();
+
+        if (!PreSendUpdate)
+            PreSendUpdate = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 48 8B 71 ? 0F 57 C0").Get();
 
         if (!PreSendUpdate)
             PreSendUpdate = Memcury::Scanner::FindPattern("4C 8B DC 49 89 4B ? 55").Get();
@@ -3025,29 +3031,28 @@ void FindNullsAndRetTrues()
 
     if (VersionInfo.FortniteVersion >= 16.00)
     {
-        auto RequestExitWithStatus = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC 40 41 B9 ? ? ? ? 0F B6 F9 44 38 0D ? ? ? ? 0F B6 DA 72 24 89 5C 24 30 48 8D 05 ? ? ? ? 89 7C 24 28 4C 8D 05 ? ? ? ? 33 D2 48 89 44 24 ? 33 C9 E8 ? ? ? ?").Get();
-        if (!RequestExitWithStatus)
-            RequestExitWithStatus = Memcury::Scanner::FindPattern("4C 8B DC 49 89 5B 08 49 89 6B 10 49 89 73 18 49 89 7B 20 41 56 48 83 EC 30 80 3D ? ? ? ? ? 49 8B").Get();
-        if (!RequestExitWithStatus)
-            RequestExitWithStatus = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 18 88 50 10 88 48 08 57 48 83 EC 30").Get();
+        auto RequestExit = Memcury::Scanner::FindPattern("40 53 48 83 EC ? 80 3D ? ? ? ? ? 0F B6 D9 72 ? 48 8D 05 ? ? ? ? 89 5C 24 ? 41 B9 ? ? ? ? 48 89 44 24 ? 4C 8D 05 ? ? ? ? 33 D2 33 C9 E8 ? ? ? ? 48 8D 0D").Get();
+        if (!RequestExit)
+            RequestExit = Memcury::Scanner::FindPattern("88 4C 24 ? 53 48 83 EC ? 80 3D ? ? ? ? ? 8A D9").Get();
+        if (!RequestExit)
+            RequestExit = Memcury::Scanner::FindPattern("40 53 48 83 EC ? 41 B9 ? ? ? ? 0F B6 D9").Get();
+        if (!RequestExit)
+            RequestExit = Memcury::Scanner::FindPattern("40 53 48 83 EC ? 80 3D ? ? ? ? ? 0F B6 D9").Get();
+        if (!RequestExit)
+            RequestExit = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 33 DB 0F B6 F9").Get();
 
-        if (!RequestExitWithStatus)
-        {
-            auto RequestExit = Memcury::Scanner::FindPattern("40 53 48 83 EC ? 80 3D ? ? ? ? ? 0F B6 D9 72 ? 48 8D 05 ? ? ? ? 89 5C 24 ? 41 B9 ? ? ? ? 48 89 44 24 ? 4C 8D 05 ? ? ? ? 33 D2 33 C9 E8 ? ? ? ? 48 8D 0D").Get();
-            if (!RequestExit)
-                RequestExit = Memcury::Scanner::FindPattern("88 4C 24 ? 53 48 83 EC ? 80 3D ? ? ? ? ? 8A D9").Get();
-            if (!RequestExit)
-                RequestExit = Memcury::Scanner::FindPattern("40 53 48 83 EC ? 41 B9 ? ? ? ? 0F B6 D9").Get();
-            if (!RequestExit)
-                RequestExit = Memcury::Scanner::FindPattern("40 53 48 83 EC ? 80 3D ? ? ? ? ? 0F B6 D9").Get();
-            if (!RequestExit)
-                RequestExit = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 33 DB 0F B6 F9").Get();
-
-            if (RequestExit)
-                NullFuncs.push_back(RequestExit);
-        }
+        if (RequestExit)
+            NullFuncs.push_back(RequestExit);
         else
+        {
+            auto RequestExitWithStatus = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC 40 41 B9 ? ? ? ? 0F B6 F9 44 38 0D ? ? ? ? 0F B6 DA 72 24 89 5C 24 30 48 8D 05 ? ? ? ? 89 7C 24 28 4C 8D 05 ? ? ? ? 33 D2 48 89 44 24 ? 33 C9 E8 ? ? ? ?").Get();
+            if (!RequestExitWithStatus)
+                RequestExitWithStatus = Memcury::Scanner::FindPattern("4C 8B DC 49 89 5B 08 49 89 6B 10 49 89 73 18 49 89 7B 20 41 56 48 83 EC 30 80 3D ? ? ? ? ? 49 8B").Get();
+            if (!RequestExitWithStatus)
+                RequestExitWithStatus = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 18 88 50 10 88 48 08 57 48 83 EC 30").Get();
+
             NullFuncs.push_back(RequestExitWithStatus);
+        }
     }
 
     if (VersionInfo.EngineVersion >= 4.21)

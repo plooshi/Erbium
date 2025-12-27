@@ -139,6 +139,7 @@ public:
     DefUHookOg(EmoteStopped_);
     static void ServerHandlePickupWithRequestedSwap(UObject*, FFrame&);
     DefHookOg(void, EndSkydiving, AFortPlayerPawnAthena*);
+    DefUHookOg(ServerReviveFromDBNO);
 
     InitPostLoadHooks;
 };

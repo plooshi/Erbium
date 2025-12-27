@@ -3242,9 +3242,6 @@ void AFortPlayerControllerAthena::ServerLoadingScreenDropped_(UObject* Context, 
 	Stack.IncrementCode();
 	auto PlayerController = (AFortPlayerControllerAthena*)Context;
 
-	if (wcsstr(FConfiguration::Playlist, L"/Game/Athena/Playlists/Creative/Playlist_PlaygroundV2.Playlist_PlaygroundV2"))
-		AFortAthenaCreativePortal::Create(PlayerController);
-
 	callOG(PlayerController, Stack.GetCurrentNativeFunction(), ServerLoadingScreenDropped);
 }
 
