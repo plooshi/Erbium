@@ -9,11 +9,19 @@
 #include "../../FortniteGame/Public/FortWeapon.h"
 #include "../../FortniteGame/Public/FortKismetLibrary.h"
 
+enum ENetMode
+{
+    NM_Standalone,
+    NM_DedicatedServer,
+    NM_ListenServer,
+    NM_Client,
+    NM_MAX,
+};
+
 int Misc::GetNetMode() 
 {
-	return 1;
+	return ENetMode::NM_DedicatedServer;
 }
-
 
 void* Misc::SendRequestNow(void* Arg1, void* MCPData, int)
 {
