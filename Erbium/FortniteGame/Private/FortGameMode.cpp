@@ -251,7 +251,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
             NetDriver->NetDriverName = NetDriverName;
             NetDriver->World = World;
 
-            if (VersionInfo.EngineVersion >= 5.2 && FConfiguration::bEnableIris)
+            if (VersionInfo.EngineVersion >= 5.3 && FConfiguration::bEnableIris)
             {
                 *(bool*)(__int64(&NetDriver->ReplicationDriver) + 0x11) = true;
             }

@@ -11,7 +11,7 @@ struct FConfiguration
     static inline auto SiphonAmount = 50; // set to 0 to disable
     static inline auto bInfiniteMats = false;
     static inline auto bInfiniteAmmo = false;
-    static inline auto bForceRespawns = false; // build your client with this too!
+    static inline auto bForceRespawns = true; // build your client with this too!
     static inline auto bJoinInProgress = false;
     static inline auto bAutoRestart = false;
     static inline auto bKeepInventory = false;
