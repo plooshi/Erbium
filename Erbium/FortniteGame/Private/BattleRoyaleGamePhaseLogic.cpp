@@ -704,7 +704,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 						bool bInZone = IsInCurrentSafeZone(Player->MyFortPawn->K2_GetActorLocation(), false);
 
 						if (!IsInCurrentSafeZone__Ptr)
-							bInZone = true; // ill do this later (25.20)
+							bInZone = GameMode->IsInCurrentSafeZone(Player->MyFortPawn->K2_GetActorLocation(), false);
 
 						if (Pawn->bIsInsideSafeZone != bInZone || Pawn->bIsInAnyStorm != !bInZone)
 						{
