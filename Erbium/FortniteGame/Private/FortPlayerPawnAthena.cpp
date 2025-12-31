@@ -447,6 +447,14 @@ void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack
 	if (!Vehicle && Pawn->IsA<AFortCharacterVehicle>())
 		Vehicle = Pawn;
 
+	if (!Vehicle)
+	{
+		if (VersionInfo.FortniteVersion >= 29)
+			return callOG(Pawn, Stack.GetCurrentNativeFunction(), ServerOnExitVehicle, VehicleExitData);
+		else
+			return callOG(Pawn, Stack.GetCurrentNativeFunction(), ServerOnExitVehicle, ExitForceBehavior, bDestroyVehicleWhenForced);
+	}
+
 	UFortVehicleSeatWeaponComponent* SeatWeaponComponent = (UFortVehicleSeatWeaponComponent*)Vehicle->GetComponentByClass(UFortVehicleSeatWeaponComponent::StaticClass());
 
 	if (!SeatWeaponComponent)

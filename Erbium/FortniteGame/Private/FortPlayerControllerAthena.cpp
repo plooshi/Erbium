@@ -3112,6 +3112,9 @@ void AFortPlayerControllerAthena::ServerRequestSeatChange_(UObject* Context, FFr
 	if (!Vehicle && Pawn->IsA<AFortCharacterVehicle>())
 		Vehicle = Pawn;
 
+	if (!Vehicle)
+		return callOG(PlayerController, Stack.GetCurrentNativeFunction(), ServerRequestSeatChange, TargetSeatIndex);
+	
 	UFortVehicleSeatWeaponComponent* SeatWeaponComponent = (UFortVehicleSeatWeaponComponent*)Vehicle->GetComponentByClass(UFortVehicleSeatWeaponComponent::StaticClass());
 	if (!SeatWeaponComponent)
 		return callOG(PlayerController, Stack.GetCurrentNativeFunction(), ServerRequestSeatChange, TargetSeatIndex);
