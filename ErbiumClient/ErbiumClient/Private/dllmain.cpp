@@ -66,6 +66,8 @@ void Main()
         if (IrisBool)
             *IrisBool = true;
 
+        ForceIris(__int64(IrisBool));
+
         //UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"net.Iris.UseIrisReplication 1"), nullptr);
     }
     if (VersionInfo.EngineVersion >= 5.4)

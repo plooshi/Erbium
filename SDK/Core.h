@@ -235,7 +235,7 @@ namespace SDK
 			return ObjectFlags & 0x10;
 		}
 
-		uint32 GetOffset(const char* Name, uint64_t CastFlags = 0) const
+		__declspec(noinline) uint32 GetOffset(const char* Name, uint64_t CastFlags = 0) const
 		{
 			auto Prop = GetProperty(Name, CastFlags);
 			if (!Prop) return -1;

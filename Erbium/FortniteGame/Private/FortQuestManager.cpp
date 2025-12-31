@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "../Public/FortQuestManager.h"
 #include "../Public/FortGameMode.h"
+#include <unordered_set>
 
 struct FParseConditionResult
 {
@@ -229,7 +230,7 @@ void GiveAccolade(AFortPlayerControllerAthena* PlayerController, UFortAccoladeIt
 }
 
 std::unordered_map<AActor*, std::unordered_map<int32_t, int32_t>> CountThresholdMap;
-std::set<UFortAccoladeItemDefinition*> OnlyOnceMap;
+std::unordered_set<UFortAccoladeItemDefinition*> OnlyOnceMap;
 
 void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEvent, int32 Count, UObject* TargetObject, FGameplayTagContainer TargetTags, FGameplayTagContainer AdditionalSourceTags, bool* QuestActive, bool* QuestCompleted)
 {

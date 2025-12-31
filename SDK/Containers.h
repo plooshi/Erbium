@@ -462,7 +462,7 @@ namespace UC
 	template <class X, class Y>
 	using UEAllocatedMap = std::map<X, Y, std::less<X>, TMemoryAllocator<std::pair<const X, Y>>>;
 	template <class X, class Y>
-	using UEAllocatedUnorderedMap = std::unordered_map<X, Y, std::less<X>, TMemoryAllocator<std::pair<const X, Y>>>;
+	using UEAllocatedUnorderedMap = std::unordered_map<X, Y, std::hash<X>, std::equal_to<X>, TMemoryAllocator<std::pair<const X, Y>>>;
 	using UEAllocatedStringStream = std::basic_stringstream<char, std::char_traits<char>, TMemoryAllocator<char>>;
 	using UEAllocatedWStringStream = std::basic_stringstream<wchar_t, std::char_traits<wchar_t>, TMemoryAllocator<wchar_t>>;
 

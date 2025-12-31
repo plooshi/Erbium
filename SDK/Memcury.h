@@ -881,7 +881,7 @@ namespace Memcury
 
         // Supports wide and normal strings both std and pointers
         template <typename T = const wchar_t*>
-        static auto FindStringRef(T string, bool bWarnIfNotFound = true, int useRefNum = 0, bool bIsInFunc = false, bool bSkunky = false) -> Scanner
+        static __declspec(noinline) auto FindStringRef(T string, bool bWarnIfNotFound = true, int useRefNum = 0, bool bIsInFunc = false, bool bSkunky = false) -> Scanner
         {
             PE::Address add{ nullptr };
 

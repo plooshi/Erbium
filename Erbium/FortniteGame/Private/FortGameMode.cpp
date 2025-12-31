@@ -188,7 +188,7 @@ void VendWobble__FinishedFunc(UObject* Context, FFrame& Stack)
     return VendWobble__FinishedFuncOG(Context, Stack);
 }
 
-std::map<int, float> WeightMap;
+std::unordered_map<int, float> WeightMap;
 float Sum = 0;
 float Weight;
 float TotalWeight;
@@ -407,6 +407,12 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
         if (VersionInfo.FortniteVersion == 7.30 && !bEvent)
             ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.PleasentParkDefault"));
 
+
+        if (VersionInfo.FortniteVersion == 17.50)
+        {
+            ShowFoundation(FindObject<ABuildingFoundation>(L"/Game/Athena/Apollo/Maps/Apollo_Mother.Apollo_Mother.PersistentLevel.farmbase_2"));
+            ShowFoundation(FindObject<ABuildingFoundation>(L"/Game/Athena/Apollo/Maps/Apollo_Mother.Apollo_Mother.PersistentLevel.Farm_Phase_03"));
+        }
 
         if (VersionInfo.EngineVersion >= 4.27 && std::floor(VersionInfo.FortniteVersion) != 20) // on 20 it does some weird stuff
         {
@@ -698,7 +704,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                 }
             };
 
-        auto AddToPackages = [&](const UDataTable* Table, UEAllocatedMap<int32, FFortLootPackageData*>& TempArr)
+        auto AddToPackages = [&](const UDataTable* Table, std::unordered_map<int32, FFortLootPackageData*>& TempArr)
             {
                 if (!Table)
                     return;
@@ -740,7 +746,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
         for (auto& Val : LootTierDataTempArr)
             TierDataMap[Val->TierGroup.ComparisonIndex].Add(Val);
 
-        UEAllocatedMap<int32, FFortLootPackageData*> LootPackageTempArr;
+        std::unordered_map<int32, FFortLootPackageData*> LootPackageTempArr;
         auto LootPackages = Playlist ? Playlist->LootPackages.Get() : nullptr;
         if (!LootPackages)
             LootPackages = FindObject<UDataTable>(GameMode->HasWarmupRequiredPlayerCount() ? L"/Game/Items/Datatables/AthenaLootPackages_Client.AthenaLootPackages_Client" : L"/Game/Items/Datatables/LootPackages_Client.LootPackages_Client");
@@ -810,7 +816,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
 
                     if (LootPackageData)
                     {
-                        UEAllocatedMap<int32, FFortLootPackageData*> LPTempData;
+                        std::unordered_map<int32, FFortLootPackageData*> LPTempData;
 
                         AddToPackages(LootPackageData, LPTempData);
 

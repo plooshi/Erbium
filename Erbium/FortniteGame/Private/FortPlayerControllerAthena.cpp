@@ -1529,7 +1529,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 		GiveOrSwap();
 }
 
-std::map<std::string, std::vector<FVector>> Waypoints;
+std::unordered_map<std::string, std::vector<FVector>> Waypoints;
 
 extern uint64_t ApplyCharacterCustomization;
 extern uint64_t NotifyGameMemberAdded_;
