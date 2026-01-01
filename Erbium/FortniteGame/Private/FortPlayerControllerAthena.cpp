@@ -3270,6 +3270,35 @@ void AFortPlayerControllerAthena::ServerCreativeSetFlightSprint(UObject* Context
 	PlayerController->OnRep_IsFlightSprinting();
 }
 
+struct FIndicatedActorData
+{
+	// doesnt matter rn
+	uint8_t Padding[0x150];
+};
+
+void AddActorsToIndicatedList(UObject* Context, FFrame& Stack)
+{
+	AFortPlayerControllerAthena* InstigatingController;
+	bool bAddAsUnique;
+	bool bAllowOwningPlayer;
+	bool bReplaceExistingEntry;
+	bool bRefreshExistingEntry;
+
+	Stack.StepCompiledIn(&InstigatingController);
+	auto& IndicatedActors = Stack.StepCompiledInRef<TArray<AActor*>>();
+	auto& IndicatedActorData = Stack.StepCompiledInRef<FIndicatedActorData>();
+	Stack.StepCompiledIn(&bAddAsUnique);
+	Stack.StepCompiledIn(&bAllowOwningPlayer);
+	Stack.StepCompiledIn(&bReplaceExistingEntry);
+	Stack.StepCompiledIn(&bRefreshExistingEntry);
+	Stack.IncrementCode();
+
+	for (auto& IndicatedActor : IndicatedActors)
+	{
+		printf("Indicate the frickin %s\n", IndicatedActor->Name.ToString().c_str());
+	}
+}
+
 void AFortPlayerControllerAthena::PostLoadHook()
 {
 	if (VersionInfo.FortniteVersion >= 27)
@@ -3395,4 +3424,9 @@ void AFortPlayerControllerAthena::PostLoadHook()
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCreativeSetFlightSpeedIndex"), ServerCreativeSetFlightSpeedIndex);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCreativeSetFlightSprint"), ServerCreativeSetFlightSprint);
+
+	auto DefaultIndicatedActorLibrary = DefaultObjImpl("FortIndicatedActorManagementLibrary");
+
+	if (DefaultIndicatedActorLibrary)
+		Utils::ExecHook(DefaultIndicatedActorLibrary->GetFunction("AddActorsToIndicatedList"), AddActorsToIndicatedList);
 }

@@ -232,26 +232,10 @@ void GiveAccolade(AFortPlayerControllerAthena* PlayerController, UFortAccoladeIt
 std::unordered_map<AActor*, std::unordered_map<int32_t, int32_t>> CountThresholdMap;
 std::unordered_set<UFortAccoladeItemDefinition*> OnlyOnceMap;
 
-void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEvent, int32 Count, UObject* TargetObject, FGameplayTagContainer TargetTags, FGameplayTagContainer AdditionalSourceTags, bool* QuestActive, bool* QuestCompleted)
+void UFortQuestManager::SendStatEvent__Internal(AActor* PlayerController, long long StatEvent, int32 Count, UObject* TargetObject, FGameplayTagContainer TargetTags, FGameplayTagContainer SourceTags, FGameplayTagContainer ContextTags, bool* QuestActive, bool* QuestCompleted)
 {
     if (!this)
         return;
-
-	FGameplayTagContainer PlayerSourceTags;
-	FGameplayTagContainer ContextTags;
-
-	GetSourceAndContextTags(&PlayerSourceTags, &ContextTags);
-
-	printf("[QuestManager] SendStatEvent (Event: %lld)\n", StatEvent);
-
-	auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
-	auto GameState = (AFortGameStateAthena*)GameMode->GameState;
-
-    auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount() ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
-    
-	if (Playlist && Playlist->HasGameplayTagContainer())
-		ContextTags.AppendTags(Playlist->GameplayTagContainer);
-	AdditionalSourceTags.AppendTags(PlayerSourceTags);
 
 	static auto XPTable = FindObject<UDataTable>(L"/Game/Athena/Items/Quests/AthenaObjectiveStatXPTable.AthenaObjectiveStatXPTable");
     auto FortPC = (AFortPlayerControllerAthena*)PlayerController;
@@ -279,7 +263,7 @@ void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEv
 			if (!TargetTags.HasAll(Row->TargetTags))
 				continue;
 
-			if (!AdditionalSourceTags.HasAll(Row->SourceTags))
+			if (!SourceTags.HasAll(Row->SourceTags))
 				continue;
 
 			if (!ContextTags.HasAll(Row->ContextTags))
@@ -288,13 +272,13 @@ void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEv
 			if (FFortQuestObjectiveStatXPTableRow::HasExcludeTargetTags() && TargetTags.HasAny(Row->ExcludeTargetTags))
 				continue;
 
-			if (FFortQuestObjectiveStatXPTableRow::HasExcludeSourceTags() && AdditionalSourceTags.HasAny(Row->ExcludeSourceTags))
+			if (FFortQuestObjectiveStatXPTableRow::HasExcludeSourceTags() && SourceTags.HasAny(Row->ExcludeSourceTags))
 				continue;
 
 			if (FFortQuestObjectiveStatXPTableRow::HasExcludeContextTags() && ContextTags.HasAny(Row->ExcludeContextTags))
 				continue;
 
-            if (!IsConditionMet(Row->Condition, TargetTags, AdditionalSourceTags, ContextTags))
+            if (!IsConditionMet(Row->Condition, TargetTags, SourceTags, ContextTags))
                 continue;
 
             if (PlayerController)
@@ -339,6 +323,32 @@ void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEv
     }
 }
 
+bool bHasQueueStatEvent = false;
+
+void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEvent, int32 Count, UObject* TargetObject, FGameplayTagContainer TargetTags, FGameplayTagContainer AdditionalSourceTags, bool* QuestActive, bool* QuestCompleted)
+{
+    if (bHasQueueStatEvent)
+        return;
+
+    FGameplayTagContainer PlayerSourceTags;
+    FGameplayTagContainer ContextTags;
+
+    GetSourceAndContextTags(&PlayerSourceTags, &ContextTags);
+
+    printf("[QuestManager] SendStatEvent (Event: %lld)\n", StatEvent);
+
+    auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+    auto GameState = (AFortGameStateAthena*)GameMode->GameState;
+
+    auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount() ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
+
+    if (Playlist && Playlist->HasGameplayTagContainer())
+        ContextTags.AppendTags(Playlist->GameplayTagContainer);
+    AdditionalSourceTags.AppendTags(PlayerSourceTags);
+
+    return SendStatEvent__Internal(PlayerController, StatEvent, Count, TargetObject, TargetTags, AdditionalSourceTags, ContextTags, QuestActive, QuestCompleted);
+}
+
 bool bHasQuestActive = false;
 bool bHasQuestCompleted = false;
 void SendComplexCustomStatEvent(UObject* Context, FFrame& Stack)
@@ -367,6 +377,20 @@ void SendComplexCustomStatEvent(UObject* Context, FFrame& Stack)
     QuestManager->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetComplexCustom(), Count, TargetObject, TargetTags, AdditionalSourceTags);
 }
 
+void QueueStatEvent(UFortQuestManager* QuestManager, uint8_t InType, UObject* InTargetObject, FGameplayTagContainer* InTargetTags, FGameplayTagContainer* InSourceTags, FGameplayTagContainer* InContextTags, void* InObjectiveStat, FName InObjectiveBackendName, int InCount)
+{
+    printf("[QuestManager] QueueStatEvent (Event: %d)\n", InType);
+
+    auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+    auto GameState = (AFortGameStateAthena*)GameMode->GameState;
+
+    auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount() ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
+
+    if (Playlist && Playlist->HasGameplayTagContainer())
+        (*InContextTags).AppendTags(Playlist->GameplayTagContainer);
+
+    return QuestManager->SendStatEvent__Internal(QuestManager->GetPlayerControllerBP(), InType, InCount, InTargetObject, *InTargetTags, *InSourceTags, *InContextTags, nullptr, nullptr);
+}
 
 void UFortQuestManager::PostLoadHook()
 {
@@ -382,4 +406,9 @@ void UFortQuestManager::PostLoadHook()
         }
 
     Utils::ExecHook(SendComplexCustomStatEventFn, SendComplexCustomStatEvent);
+
+    auto QueueStatEventAddr = FindQueueStatEvent();
+
+    bHasQueueStatEvent = QueueStatEventAddr != 0;
+    Utils::Hook(QueueStatEventAddr, QueueStatEvent);
 }
