@@ -1521,8 +1521,6 @@ void AFortGameMode::HandlePostSafeZonePhaseChanged(AFortGameMode* GameMode, int 
 
     if (VersionInfo.FortniteVersion >= 13.00)
     {
-
-
         static bool bSetDurations = false;
         if (!bSetDurations)
         {
