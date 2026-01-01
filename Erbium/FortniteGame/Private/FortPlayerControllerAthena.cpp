@@ -3161,7 +3161,7 @@ void AFortPlayerControllerAthena::ServerRequestSeatChange_(UObject* Context, FFr
 
 	callOG(PlayerController, Stack.GetCurrentNativeFunction(), ServerRequestSeatChange, TargetSeatIndex);
 
-	if (OldWeapon)
+	if (OldWeapon && !NewWeapon)
 	{
 		auto LastItem = Pawn->HasPreviousWeapon() ? (AFortWeapon*)Pawn->PreviousWeapon : nullptr;
 
@@ -3199,6 +3199,7 @@ void AFortPlayerControllerAthena::ServerRequestSeatChange_(UObject* Context, FFr
 
 		if (Weapon)
 		{
+			printf("[Vehicles] Setting up MountedWeaponInfoRepped\n");
 			auto RepWeaponInfo = (FMountedWeaponInfoRepped*)malloc(FMountedWeaponInfoRepped::Size());
 
 			if (RepWeaponInfo->HasHostVehicleCached())

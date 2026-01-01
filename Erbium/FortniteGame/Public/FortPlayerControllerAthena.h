@@ -220,6 +220,29 @@ public:
     UCLASS_COMMON_MEMBERS(IFortInventoryInterface);
 };
 
+struct fr {
+    uint32_t a;
+};
+class UFortMovementMode_BaseExtLogic : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortMovementMode_BaseExtLogic);
+
+    DEFINE_PROP(LogicID, fr);
+    DEFINE_PROP(OwnerPawn, TWeakObjectPtr<class AFortPlayerPawnAthena>);
+    DEFINE_PROP(OwnerMovementComponent, TWeakObjectPtr<class UObject>);
+    DEFINE_PROP(OwnerAbilitySystemComponent, TWeakObjectPtr<class UAbilitySystemComponent>);
+};
+
+class UFortMovementComp_Character : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortMovementComp_Character);
+
+    DEFINE_PROP(ActiveMovementModeExtension, UObject*);
+    DEFINE_PROP(PawnOwner, AFortPlayerPawnAthena*);
+};
+
 inline const UCurveTable* GameData = nullptr;
 class AFortPlayerControllerAthena : public AActor
 {

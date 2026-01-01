@@ -459,7 +459,7 @@ std::pair<FName, T*> PickWeighted(UEAllocatedMap<FName, T*>& Map, float (*RandFu
 
 void InitializeCosmeticLoadout(UFortAthenaAIBotCustomizationData* BotData, AFortPlayerPawnAthena* Pawn, FFortAthenaLoadout& OutLoadout, FGameplayTag* PredefinedCosmeticSetTag)
 {
-	OutLoadout = BotData->CharacterCustomization->CustomizationLoadout;
+	//auto OutLoadout = BotData->CharacterCustomization->CustomizationLoadout;
 
 	if (BotData->OverrideCosmeticMode == 1)
 	{
@@ -476,24 +476,30 @@ void InitializeCosmeticLoadout(UFortAthenaAIBotCustomizationData* BotData, AFort
 
 		OutLoadout.Character = (UAthenaCharacterItemDefinition*)UKismetSystemLibrary::GetObjectFromPrimaryAssetId(LibraryRow->CharacterAssetId);
 		if (LibraryRow->BackpackAssetId.PrimaryAssetType.IsValid())
-			OutLoadout.Backpack = (UAthenaCharacterPartItemDefinition*) UKismetSystemLibrary::GetObjectFromPrimaryAssetId(LibraryRow->BackpackAssetId);
+			OutLoadout.Backpack = (UAthenaCharacterPartItemDefinition*)UKismetSystemLibrary::GetObjectFromPrimaryAssetId(LibraryRow->BackpackAssetId);
+	}
+	else
+	{
+		OutLoadout.Character = BotData->CharacterCustomization->CustomizationLoadout.Character;
+		OutLoadout.Backpack = BotData->CharacterCustomization->CustomizationLoadout.Backpack;
 	}
 
 	UEAllocatedMap<uint8_t, const UCustomCharacterPart*> PartMap;
 
-	if (auto HeroDefinition = OutLoadout.Character->HeroDefinition)
-		for (auto& SoftSpec : HeroDefinition->Specializations)
-		{
-			auto Specialization = SoftSpec.Get();
+	if (OutLoadout.Character)
+		if (auto HeroDefinition = OutLoadout.Character->HeroDefinition)
+			for (auto& SoftSpec : HeroDefinition->Specializations)
+			{
+				auto Specialization = SoftSpec.Get();
 
-			if (Specialization)
-				for (auto& PartSoft : Specialization->CharacterParts)
-				{
-					auto Part = PartSoft.Get();
+				if (Specialization)
+					for (auto& PartSoft : Specialization->CharacterParts)
+					{
+						auto Part = PartSoft.Get();
 
-					PartMap[Part->CharacterPartType] = Part;
-				}
-		}
+						PartMap[Part->CharacterPartType] = Part;
+					}
+			}
 
 	if (OutLoadout.Backpack)
 		for (auto& Part : OutLoadout.Backpack->CharacterParts)
