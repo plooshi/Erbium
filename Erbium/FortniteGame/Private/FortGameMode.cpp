@@ -303,7 +303,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                 for (auto& Level : Playlist->AdditionalLevels)
                 {
                     bool Success = false;
-                    ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
+                    //ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
                     if (AdditionalLevelStruct)
                     {
                         auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
@@ -322,7 +322,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                 for (auto& Level : Playlist->AdditionalLevelsServerOnly)
                 {
                     bool Success = false;
-                    ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
+                    //ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
 
                     if (AdditionalLevelStruct)
                     {
@@ -338,6 +338,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                     else
                         GetFromOffset<TArray<FName>>(GameState, AdditionalPlaylistLevelsStreamed__Off).Add(Level.ObjectID.AssetPathName);
                 }
+            GameState->OnRep_AdditionalPlaylistLevelsStreamed();
         }
 
         // misc C1 poi things
@@ -994,11 +995,6 @@ void AFortGameMode::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor*
         return;
 
     auto GameState = GameMode->GameState;
-
-    if (!NewPlayer->WorldInventory)
-        return;
-
-    auto Num = NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Num();
     AFortPlayerPawnAthena* Pawn = nullptr;
 
     Pawn = (AFortPlayerPawnAthena*)UWorld::SpawnActor(GameMode->GetDefaultPawnClassForController(NewPlayer), StartSpot->GetTransform(), NewPlayer, 3);
@@ -1020,7 +1016,9 @@ void AFortGameMode::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor*
         Pawn = GameMode->SpawnDefaultPawnAtTransform(NewPlayer, Transform);
     }*/
 
+    *Ret = Pawn;
 
+    auto Num = NewPlayer->WorldInventory ? NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Num() : 0;
     if (Num == 0)
     {
         if (VersionInfo.FortniteVersion <= 1.91 && VersionInfo.FortniteVersion != 1.1 && VersionInfo.FortniteVersion != 1.11 && NewPlayer->HasStrongMyHero())
@@ -1085,8 +1083,6 @@ void AFortGameMode::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor*
 
         NewPlayer->WorldInventory->Update(nullptr);*/
     }
-
-    *Ret = Pawn;
 }
 
 
