@@ -45,8 +45,8 @@ FLateGameItem LateGame::GetShotgun()
             }
             else if (VersionInfo.FortniteVersion >= 25.11)
             {
-                Shotguns.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/ChronoWeaponGameplay/Items/Weapons/ChronoShotgun/WID_Shotgun_Chrono_Athena_SR.WID_Shotgun_Chrono_Athena_SR")));
-                Shotguns.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/ChronoWeaponGameplay/Items/Weapons/ChronoShotgun/WID_Shotgun_Chrono_Athena_VR.WID_Shotgun_Chrono_Athena_VR")));
+                Shotguns.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/ChronoWeaponGameplay/Items/ChronoShotgun/WID_Shotgun_Chrono_Athena_SR.WID_Shotgun_Chrono_Athena_SR")));
+                Shotguns.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/ChronoWeaponGameplay/Items/ChronoShotgun/WID_Shotgun_Chrono_Athena_VR.WID_Shotgun_Chrono_Athena_VR")));
             }
 
             if (VersionInfo.FortniteVersion >= 24 && VersionInfo.FortniteVersion < 26.00)
@@ -88,6 +88,16 @@ FLateGameItem LateGame::GetAssaultRifle()
                 AssaultRifles.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/MusterCoreWeapons/Items/Weapons/MusterScopedAR/WID_Assault_MusterScoped_Athena_SR.WID_Assault_MusterScoped_Athena_SR")));
                 AssaultRifles.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/MusterCoreWeapons/Items/Weapons/MusterScopedAR/WID_Assault_MusterScoped_Athena_VR.WID_Assault_MusterScoped_Athena_VR")));
             }
+            else if (VersionInfo.FortniteVersion >= 26.00)
+            {
+                AssaultRifles.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/HopscotchWeaponsGameplay/Items/FlipmagAR/WID_Assault_FlipMag_Athena_SR.WID_Assault_FlipMag_Athena_SR")));
+                AssaultRifles.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/HopscotchWeaponsGameplay/Items/FlipmagAR/WID_Assault_FlipMag_Athena_VR.WID_Assault_FlipMag_Athena_VR")));
+            }
+            else if (VersionInfo.FortniteVersion >= 25.00)
+            {
+                AssaultRifles.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/ChronoWeaponGameplay/Items/PanRifle/WID_Assault_Chrono_Pan_Rifle_Athena_SR.WID_Assault_Chrono_Pan_Rifle_Athena_SR")));
+                AssaultRifles.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/ChronoWeaponGameplay/Items/PanRifle/WID_Assault_Chrono_Pan_Rifle_Athena_VR.WID_Assault_Chrono_Pan_Rifle_Athena_VR")));
+            }
 
             AssaultRifles.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Assault_AutoHigh_Athena_SR_Ore_T03.WID_Assault_AutoHigh_Athena_SR_Ore_T03")));
             AssaultRifles.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Assault_AutoHigh_Athena_VR_Ore_T03.WID_Assault_AutoHigh_Athena_VR_Ore_T03")));
@@ -114,15 +124,27 @@ FLateGameItem LateGame::GetAssaultRifle()
 }
 
 
-FLateGameItem LateGame::GetSniper()
+FLateGameItem LateGame::GetUtility()
 {
-    static UEAllocatedVector<FLateGameItem> Snipers
+    static UEAllocatedVector<FLateGameItem> Utilities
     {
         FLateGameItem(1, FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Sniper_BoltAction_Scope_Athena_SR_Ore_T03.WID_Sniper_BoltAction_Scope_Athena_SR_Ore_T03")), // bolt
         FLateGameItem(1, FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Pistol_Scavenger_Athena_VR_Ore_T03.WID_Pistol_Scavenger_Athena_VR_Ore_T03")) // tac smg
     };
 
-    return Snipers[rand() % Snipers.size()];
+    static bool bAdded = false;
+    if (!bAdded)
+    {
+        bAdded = true;
+
+        if (VersionInfo.FortniteVersion >= 24.20 && VersionInfo.FortniteVersion < 25)
+        {
+            auto ODMGear = FLateGameItem(3, FindObject<UFortWeaponRangedItemDefinition>(L"/DryBox/Items/NyxGlass/AGID_NyxGlass.AGID_NyxGlass"));
+            Utilities.push_back(ODMGear);
+        }
+    }
+
+    return Utilities[rand() % Utilities.size()];
 }
 
 FLateGameItem LateGame::GetHeal()
@@ -146,6 +168,13 @@ FLateGameItem LateGame::GetHeal()
 
         if (SlurpJuice.Item)
             Heals.push_back(SlurpJuice);
+
+        if (VersionInfo.FortniteVersion >= 19 && VersionInfo.FortniteVersion < 27)
+        {
+            auto MedMist = FLateGameItem(2, FindObject<UFortItemDefinition>(L"/FlipperGameplay/Items/HealSpray/WID_Athena_HealSpray.WID_Athena_HealSpray"));
+
+            Heals.push_back(MedMist);
+        }
     }
 
     return Heals[rand() % Heals.size()];

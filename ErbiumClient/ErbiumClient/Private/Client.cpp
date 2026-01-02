@@ -94,40 +94,34 @@ void Client::Init()
 
 		TArray<FUIExtension> ArenaExtensions, ShowdownExtensions;
 
-		if (VersionInfo.FortniteVersion >= 10)
+		FUIExtension ArenaUIExtension{};
+		ArenaUIExtension.Slot = PrimarySlot;
+		if (VersionInfo.FortniteVersion < 23)
+			ArenaUIExtension.WidgetClass.ObjectID.AssetPathName = FName(L"/Game/UI/Competitive/Arena/ArenaScoringHUD.ArenaScoringHUD_C");
+		else
 		{
-			FUIExtension ArenaUIExtension{};
-			ArenaUIExtension.Slot = PrimarySlot;
-			if (VersionInfo.FortniteVersion < 23)
-				ArenaUIExtension.WidgetClass.ObjectID.AssetPathName = FName(L"/Game/UI/Competitive/Arena/ArenaScoringHUD.ArenaScoringHUD_C");
-			else
-			{
-				auto& PackageName = *(FName*)(__int64(&ArenaUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.3 ? 0xC : 0x8));
-				auto& AssetName = *(FName*)(__int64(&ArenaUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.3 ? 0x10 : 0xC));
-				auto& SubPathString = *(FString*)(__int64(&ArenaUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.3 ? 0x14 : 0x10));
+			auto& PackageName = *(FName*)(__int64(&ArenaUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.3 ? 0xC : 0x8));
+			auto& AssetName = *(FName*)(__int64(&ArenaUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.3 ? 0x10 : 0xC));
+			auto& SubPathString = *(FString*)(__int64(&ArenaUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.3 ? 0x14 : 0x10));
 
-				PackageName = FName(L"/Game/UI/Competitive/Arena/ArenaScoringHUD");
-				AssetName = FName(L"ArenaScoringHUD_C");
-				SubPathString = FString();
-			}
+			PackageName = FName(L"/Game/UI/Competitive/Arena/ArenaScoringHUD");
+			AssetName = FName(L"ArenaScoringHUD_C");
+			SubPathString = FString();
+		}
 
-			FUIExtension ShowdownUIExtension{};
-			ShowdownUIExtension.Slot = PrimarySlot;
-			if (VersionInfo.FortniteVersion < 23)
-				ShowdownUIExtension.WidgetClass.ObjectID.AssetPathName = FName(L"/Game/UI/Frontend/Showdown/ShowdownScoringHUD.ShowdownScoringHUD_C");
-			else
-			{
-				auto& PackageName = *(FName*)(__int64(&ShowdownUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.3 ? 0xC : 0x8));
-				auto& AssetName = *(FName*)(__int64(&ShowdownUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.3 ? 0x10 : 0xC));
-				auto& SubPathString = *(FString*)(__int64(&ShowdownUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.3 ? 0x14 : 0x10));
+		FUIExtension ShowdownUIExtension{};
+		ShowdownUIExtension.Slot = PrimarySlot;
+		if (VersionInfo.FortniteVersion < 23)
+			ShowdownUIExtension.WidgetClass.ObjectID.AssetPathName = FName(L"/Game/UI/Frontend/Showdown/ShowdownScoringHUD.ShowdownScoringHUD_C");
+		else
+		{
+			auto& PackageName = *(FName*)(__int64(&ShowdownUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.3 ? 0xC : 0x8));
+			auto& AssetName = *(FName*)(__int64(&ShowdownUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.3 ? 0x10 : 0xC));
+			auto& SubPathString = *(FString*)(__int64(&ShowdownUIExtension.WidgetClass) + (VersionInfo.EngineVersion < 5.3 ? 0x14 : 0x10));
 
-				PackageName = FName(L"/Game/UI/Frontend/Showdown/ShowdownScoringHUD");
-				AssetName = FName(L"ShowdownScoringHUD_C");
-				SubPathString = FString();
-			}
-
-			ArenaExtensions.Add(ArenaUIExtension);
-			ShowdownExtensions.Add(ShowdownUIExtension);
+			PackageName.ComparisonIndex = FName(L"/Game/UI/Frontend/Showdown/ShowdownScoringHUD").ComparisonIndex;
+			AssetName.ComparisonIndex = FName(L"ShowdownScoringHUD_C").ComparisonIndex;
+			SubPathString = FString();
 		}
 
 		auto PlaylistClass = FindClass("FortPlaylistAthena");
@@ -168,7 +162,7 @@ void Client::Init()
 				{
 					auto Name = Object->Name.ToString();
 					if (Name.contains("Showdown"))
-						Playlist->UIExtensions = Name.contains("ShowdownAlt") ? ArenaExtensions : ShowdownExtensions;
+						Playlist->UIExtensions.Add(Name.contains("ShowdownAlt") ? ArenaUIExtension : ShowdownUIExtension);
 				}
 			}
 		}

@@ -2982,12 +2982,32 @@ auto FindCmpRef(void* Pointer) -> Memcury::Scanner
 
     int aa = 0;
 
+    __m128i t = _mm_set1_epi8((char)0x39);
     __m128i t2 = _mm_set1_epi8((char)0x83);
     DWORD i = 0;
 
     for (; i < textSection.GetSectionSize() - (textSection.GetSectionSize() % 16); i += 16)
     {
         auto bytes = _mm_load_si128((const __m128i*)(scanBytes + i));
+        int offset = _mm_movemask_epi8(_mm_cmpeq_epi8(bytes, t));
+
+        if (offset != 0)
+        {
+            for (int q = 0; q < 16; q++)
+            {
+                int c = offset & (1 << q);
+                if (c)
+                {
+                    if (Memcury::PE::Address(&scanBytes[i + q]).RelativeOffset(2).GetAs<void*>() == Pointer)
+                    {
+                        add = Memcury::PE::Address(&scanBytes[i + q]);
+
+                        goto _ret;
+                    }
+                }
+            }
+        }
+
         int offset2 = _mm_movemask_epi8(_mm_cmpeq_epi8(bytes, t2));
 
         if (offset2 != 0)
@@ -3001,12 +3021,13 @@ auto FindCmpRef(void* Pointer) -> Memcury::Scanner
                     {
                         add = Memcury::PE::Address(&scanBytes[i + q]);
 
-                        break;
+                        goto _ret;
                     }
                 }
             }
         }
     }
+_ret:
 
 
     return Memcury::Scanner(add);
