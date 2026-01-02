@@ -55,7 +55,7 @@ FLateGameItem LateGame::GetShotgun()
                 Shotguns.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/RadicalWeaponsGameplay/Weapons/RadicalShotgunPump/WID_Shotgun_RadicalPump_Athena_VR.WID_Shotgun_RadicalPump_Athena_VR")));
             }
             
-            Shotguns.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/MusterCoreWeapons/Items/Weapons/MusterDPSShotgun/WID_Shotgun_Breach_Athena_X.WID_Shotgun_Breach_Athena_X")));
+            Shotguns.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/MusterCoreWeapons/Items/Weapons/Exotics/WID_Shotgun_Breach_Athena_X.WID_Shotgun_Breach_Athena_X")));
 
             //Shotguns.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Shotgun_Standard_Athena_SR_Ore_T03.WID_Shotgun_Standard_Athena_VR_Ore_T03")));
             //Shotguns.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Shotgun_Standard_Athena_VR_Ore_T03.WID_Shotgun_Standard_Athena_SR_Ore_T03")));
