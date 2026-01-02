@@ -275,6 +275,50 @@ void UFortKismetLibrary::K2_SpawnPickupInWorldWithClassAndItemEntry(UObject* Con
 	free(Entry);
 }
 
+class ABuildingWall : public AActor
+{
+public:
+	UCLASS_COMMON_MEMBERS(ABuildingWall);
+
+	DEFINE_BITFIELD_PROP(bDoorOpen);
+	
+	DEFINE_FUNC(OnRep_bDoorOpen, void);
+};
+
+auto SetIsDoorOpen = (void(*)(ABuildingWall*, uint8_t, AFortPlayerPawnAthena*))nullptr;
+void UFortKismetLibrary::OpenActor_(UObject* Context, FFrame& Stack)
+{
+	AActor* OpenableInterfaceActor;
+	AFortPlayerControllerAthena* OptionalControllerInstigator;
+	bool bRequestFastOpen = false;
+
+	Stack.StepCompiledIn(&OpenableInterfaceActor);
+	Stack.StepCompiledIn(&OptionalControllerInstigator);
+	Stack.StepCompiledIn(&bRequestFastOpen);
+	Stack.IncrementCode();
+
+	printf("OpenActor %s %s\n", OpenableInterfaceActor->Name.ToString().c_str(), OptionalControllerInstigator ? OptionalControllerInstigator->Name.ToString().c_str() : "<nullptr>");
+	if (auto Wall = OpenableInterfaceActor->Cast<ABuildingWall>())
+		SetIsDoorOpen(Wall, bRequestFastOpen ? 1 : 0, OptionalControllerInstigator ? OptionalControllerInstigator->Pawn : nullptr);
+	else
+		return callOG(UFortKismetLibrary::GetDefaultObj(), Stack.GetCurrentNativeFunction(), OpenActor, OpenableInterfaceActor, OptionalControllerInstigator, bRequestFastOpen);
+}
+
+void UFortKismetLibrary::CloseActor_(UObject* Context, FFrame& Stack)
+{
+	AActor* OpenableInterfaceActor;
+	AFortPlayerControllerAthena* OptionalControllerInstigator;
+
+	Stack.StepCompiledIn(&OpenableInterfaceActor);
+	Stack.StepCompiledIn(&OptionalControllerInstigator);
+	Stack.IncrementCode();
+
+	printf("CloseActor %s %s\n", OpenableInterfaceActor->Name.ToString().c_str(), OptionalControllerInstigator ? OptionalControllerInstigator->Name.ToString().c_str() : "<nullptr>");
+	if (auto Wall = OpenableInterfaceActor->Cast<ABuildingWall>())
+		SetIsDoorOpen(Wall, 3, OptionalControllerInstigator ? OptionalControllerInstigator->Pawn : nullptr);
+	else
+		return callOG(UFortKismetLibrary::GetDefaultObj(), Stack.GetCurrentNativeFunction(), CloseActor, OpenableInterfaceActor, OptionalControllerInstigator);
+}
 
 void UFortKismetLibrary::Hook()
 {
@@ -349,4 +393,8 @@ void UFortKismetLibrary::PostLoadHook()
 	Utils::ExecHook(K2_RemoveItemFromPlayerFn, K2_RemoveItemFromPlayer);
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("K2_RemoveItemFromPlayerByGuid"), K2_RemoveItemFromPlayerByGuid);
+
+	SetIsDoorOpen = decltype(SetIsDoorOpen)(FindSetIsDoorOpen());
+	Utils::ExecHook(GetDefaultObj()->GetFunction("OpenActor"), OpenActor_, OpenActor_OG);
+	Utils::ExecHook(GetDefaultObj()->GetFunction("CloseActor"), CloseActor_, CloseActor_OG);
 }

@@ -33,6 +33,8 @@ public:
 	DEFINE_STATIC_FUNC(DoesItemDefinitionHaveGameplayTag, bool);
 	DEFINE_STATIC_FUNC(SetTimeOfDaySpeed, void);
 	DEFINE_STATIC_FUNC(SpawnProjectileWithParams, void);
+	DEFINE_STATIC_FUNC(OpenActor, void);
+	DEFINE_STATIC_FUNC(CloseActor, void);
 	//DEFINE_STATIC_FUNC(K2_GetResourceItemDefinition, UFortItemDefinition*);
 
 	static const UFortItemDefinition* K2_GetResourceItemDefinition(EFortResourceType Type)
@@ -65,6 +67,8 @@ public:
 	static void SpawnItemVariantPickupInWorld(UObject*, FFrame&, AFortPickupAthena**);
 	static void PickLootDrops(UObject*, FFrame&, bool*);
 	static void K2_SpawnPickupInWorldWithClassAndItemEntry(UObject*, FFrame&, AFortPickupAthena**);
+	DefUHookOg(OpenActor_);
+	DefUHookOg(CloseActor_);
 
 	InitHooks;
 	InitPostLoadHooks;

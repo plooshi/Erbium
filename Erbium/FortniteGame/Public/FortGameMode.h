@@ -70,6 +70,7 @@ public:
     DefUHookOg(HandleStartingNewPlayer_);
     DefHookOg(bool, StartAircraftPhase, AFortGameMode*, char);
     DefUHookOg(OnAircraftExitedDropZone_);
+    DefHookOg(void, FinishWorldInitialization, AFortGameMode*, AActor*);
     
     InitHooks;
     InitPostLoadHooks;

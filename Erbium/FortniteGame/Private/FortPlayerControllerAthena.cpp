@@ -594,6 +594,9 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	else*/
 		Building = UWorld::SpawnActorUnfinished<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, PlayerController);
 
+		Building->InitializeKismetSpawnedBuildingActor(Building, PlayerController, true, nullptr, false);
+		UWorld::FinishSpawnActor(Building, BuildLoc, BuildRot);
+
 	if (!Building)
 		return;
 
@@ -605,14 +608,12 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 
 	Building->bPlayerPlaced = true;
 
+
 	if (((AFortPlayerStateAthena*)PlayerController->PlayerState)->HasTeamIndex())
 		Building->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
 
 	if (Building->HasTeamIndex())
 		Building->TeamIndex = Building->Team;
-
-	Building->InitializeKismetSpawnedBuildingActor(Building, PlayerController, true, nullptr, false);
-	UWorld::FinishSpawnActor(Building, BuildLoc, BuildRot);
 
 	if (!PlayerController->bBuildFree && !FConfiguration::bInfiniteMats)
 	{

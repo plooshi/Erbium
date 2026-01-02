@@ -76,6 +76,8 @@ uint64 FindSetPickupTarget();
 uint64 FindInitializePlayerGameplayAbilities();
 uint64 FindListenCall();
 uint64 FindQueueStatEvent();
+uint64 FindFinishWorldInitialization();
+uint64 FindSetIsDoorOpen();
 
 template <typename CVarT>
 CVarT* FindCVar(const wchar_t* CVarStr)
