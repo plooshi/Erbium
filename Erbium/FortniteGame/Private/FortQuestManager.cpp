@@ -327,7 +327,7 @@ bool bHasQueueStatEvent = false;
 
 void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEvent, int32 Count, UObject* TargetObject, FGameplayTagContainer TargetTags, FGameplayTagContainer AdditionalSourceTags, bool* QuestActive, bool* QuestCompleted)
 {
-    if (bHasQueueStatEvent)
+    if (bHasQueueStatEvent || !this)
         return;
 
     FGameplayTagContainer PlayerSourceTags;

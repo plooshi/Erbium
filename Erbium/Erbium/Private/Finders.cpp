@@ -3040,17 +3040,18 @@ uint64 FindSetIsDoorOpen()
     }
     printf("CVarRef: %llx\n", SetIsDoorOpenPart - ImageBase);
 
-    for (int i = 0; i < 2000; i++)
-    {
-        auto Ptr = (uint8_t*)(SetIsDoorOpenPart - i);
+    if (SetIsDoorOpenPart)
+        for (int i = 0; i < 2000; i++)
+        {
+            auto Ptr = (uint8_t*)(SetIsDoorOpenPart - i);
 
-        if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4)
-            return uint64_t(Ptr);
-        else if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
-            return uint64_t(Ptr);
-        else if (*Ptr == 0x40 && *(Ptr + 1) == 0x55)
-            return uint64_t(Ptr);
-    }
+            if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4)
+                return uint64_t(Ptr);
+            else if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
+                return uint64_t(Ptr);
+            else if (*Ptr == 0x40 && *(Ptr + 1) == 0x55)
+                return uint64_t(Ptr);
+        }
 
     return 0;
 }
