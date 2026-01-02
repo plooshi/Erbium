@@ -286,7 +286,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
         if (GameMode->HasWarmupRequiredPlayerCount())
             GameMode->WarmupRequiredPlayerCount = 1;
 
-        if (VersionInfo.FortniteVersion > 4.0 && (VersionInfo.EngineVersion < 4.22 || VersionInfo.EngineVersion >= 4.26))
+        if (VersionInfo.FortniteVersion > 4.0 && (VersionInfo.EngineVersion != 4.25))
             SetupPlaylist(GameMode, GameState);
 
 
@@ -515,8 +515,8 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
 
         if ((VersionInfo.FortniteVersion >= 3.5 && VersionInfo.FortniteVersion <= 4.0))
             SetupPlaylist(GameMode, GameState);
-        //else if (VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.26)
-        //    GameState->OnRep_CurrentPlaylistInfo();
+        else if (VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.25)
+            GameState->OnRep_CurrentPlaylistInfo();
 
         if (VersionInfo.FortniteVersion >= 25.20 && GameState->HasMapInfo() && GameState->MapInfo)
         {
@@ -1682,7 +1682,7 @@ void AFortGameMode::FinishWorldInitialization(AFortGameMode* _this, AActor* Worl
     auto GameMode = (AFortGameModeAthena*)_this;
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 
-    if ((VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.26))
+    if (VersionInfo.EngineVersion == 4.25)
         SetupPlaylist(GameMode, GameState);
 
     printf("[GameMode] FinishWorldInitialization\n");
