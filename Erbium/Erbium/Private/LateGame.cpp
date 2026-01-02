@@ -51,8 +51,8 @@ FLateGameItem LateGame::GetShotgun()
 
             if (VersionInfo.FortniteVersion >= 24 && VersionInfo.FortniteVersion < 26.00)
             {
-                Shotguns.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/MusterCoreWeapons/Items/Weapons/MusterPumpShotgun/WID_Shotgun_MusterPump_Athena_UC.WID_Shotgun_MusterPump_Athena_UC")));
-                Shotguns.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/MusterCoreWeapons/Items/Weapons/MusterPumpShotgun/WID_Shotgun_MusterPump_Athena_VR.WID_Shotgun_MusterPump_Athena_VR")));
+                Shotguns.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/RadicalWeaponsGameplay/Weapons/RadicalShotgunPump/WID_Shotgun_RadicalPump_Athena_SR.WID_Shotgun_RadicalPump_Athena_SR")));
+                Shotguns.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/RadicalWeaponsGameplay/Weapons/RadicalShotgunPump/WID_Shotgun_RadicalPump_Athena_VR.WID_Shotgun_RadicalPump_Athena_VR")));
             }
             
             Shotguns.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/MusterCoreWeapons/Items/Weapons/MusterDPSShotgun/WID_Shotgun_Breach_Athena_X.WID_Shotgun_Breach_Athena_X")));
@@ -85,7 +85,7 @@ FLateGameItem LateGame::GetAssaultRifle()
         {
             if (VersionInfo.FortniteVersion < 25.00)
             {
-                AssaultRifles.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/MusterCoreWeapons/Items/Weapons/MusterScopedAR/WID_Assault_MusterScoped_Athena_UC.WID_Assault_MusterScoped_Athena_UC")));
+                AssaultRifles.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/MusterCoreWeapons/Items/Weapons/MusterScopedAR/WID_Assault_MusterScoped_Athena_SR.WID_Assault_MusterScoped_Athena_SR")));
                 AssaultRifles.push_back(FLateGameItem(1, FindObject<UFortItemDefinition>(L"/MusterCoreWeapons/Items/Weapons/MusterScopedAR/WID_Assault_MusterScoped_Athena_VR.WID_Assault_MusterScoped_Athena_VR")));
             }
 
