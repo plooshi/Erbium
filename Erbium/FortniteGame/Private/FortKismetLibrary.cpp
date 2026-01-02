@@ -285,7 +285,7 @@ public:
 	DEFINE_FUNC(OnRep_bDoorOpen, void);
 };
 
-auto SetIsDoorOpen = (void(*)(ABuildingWall*, uint8_t, AFortPlayerPawnAthena*))nullptr;
+auto SetIsDoorOpen = (void(*)(AActor*, uint8_t, AFortPlayerPawnAthena*))nullptr;
 void UFortKismetLibrary::OpenActor_(UObject* Context, FFrame& Stack)
 {
 	AActor* OpenableInterfaceActor;
@@ -298,8 +298,8 @@ void UFortKismetLibrary::OpenActor_(UObject* Context, FFrame& Stack)
 	Stack.IncrementCode();
 
 	printf("OpenActor %s %s\n", OpenableInterfaceActor->Name.ToString().c_str(), OptionalControllerInstigator ? OptionalControllerInstigator->Name.ToString().c_str() : "<nullptr>");
-	if (auto Wall = OpenableInterfaceActor->Cast<ABuildingWall>())
-		SetIsDoorOpen(Wall, bRequestFastOpen ? 1 : 0, OptionalControllerInstigator ? OptionalControllerInstigator->Pawn : nullptr);
+	if (SetIsDoorOpen && OpenableInterfaceActor->IsA<ABuildingWall>())
+		SetIsDoorOpen(OpenableInterfaceActor, bRequestFastOpen ? 1 : 0, OptionalControllerInstigator ? OptionalControllerInstigator->Pawn : nullptr);
 	else
 		return callOG(UFortKismetLibrary::GetDefaultObj(), Stack.GetCurrentNativeFunction(), OpenActor, OpenableInterfaceActor, OptionalControllerInstigator, bRequestFastOpen);
 }
@@ -314,8 +314,8 @@ void UFortKismetLibrary::CloseActor_(UObject* Context, FFrame& Stack)
 	Stack.IncrementCode();
 
 	printf("CloseActor %s %s\n", OpenableInterfaceActor->Name.ToString().c_str(), OptionalControllerInstigator ? OptionalControllerInstigator->Name.ToString().c_str() : "<nullptr>");
-	if (auto Wall = OpenableInterfaceActor->Cast<ABuildingWall>())
-		SetIsDoorOpen(Wall, 3, OptionalControllerInstigator ? OptionalControllerInstigator->Pawn : nullptr);
+	if (SetIsDoorOpen && OpenableInterfaceActor->IsA<ABuildingWall>())
+		SetIsDoorOpen(OpenableInterfaceActor, 3, OptionalControllerInstigator ? OptionalControllerInstigator->Pawn : nullptr);
 	else
 		return callOG(UFortKismetLibrary::GetDefaultObj(), Stack.GetCurrentNativeFunction(), CloseActor, OpenableInterfaceActor, OptionalControllerInstigator);
 }
