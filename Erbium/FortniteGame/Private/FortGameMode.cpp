@@ -994,6 +994,10 @@ void AFortGameMode::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor*
         return;
 
     auto GameState = GameMode->GameState;
+
+    if (!NewPlayer->WorldInventory)
+        return;
+
     auto Num = NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Num();
     AFortPlayerPawnAthena* Pawn = nullptr;
 
