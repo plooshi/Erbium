@@ -3021,7 +3021,7 @@ uint64 FindSetIsDoorOpen()
 
     auto CVarRef = FindCmpRef(CVar);
 
-    if (!CVarRef)
+    if (!CVarRef.IsValid())
         return 0;
 
     printf("CVarRef: %llx\n", CVarRef.Get() - ImageBase);
