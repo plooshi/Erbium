@@ -303,7 +303,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                 for (auto& Level : Playlist->AdditionalLevels)
                 {
                     bool Success = false;
-                    //ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
+                    ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
                     if (AdditionalLevelStruct)
                     {
                         auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
@@ -322,7 +322,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                 for (auto& Level : Playlist->AdditionalLevelsServerOnly)
                 {
                     bool Success = false;
-                    //ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
+                    ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
 
                     if (AdditionalLevelStruct)
                     {
@@ -338,7 +338,6 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                     else
                         GetFromOffset<TArray<FName>>(GameState, AdditionalPlaylistLevelsStreamed__Off).Add(Level.ObjectID.AssetPathName);
                 }
-            GameState->OnRep_AdditionalPlaylistLevelsStreamed();
         }
 
         // misc C1 poi things
