@@ -391,7 +391,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartNewSafeZonePhase(i
 			{
 				auto PlayerController = (AFortPlayerControllerAthena*)UncastedPlayer;
 
-				PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetStormPhase(), 1);
+				PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetStormPhase(), 1, false);
 			}
 	}
 }

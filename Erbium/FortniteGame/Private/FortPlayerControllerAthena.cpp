@@ -534,6 +534,7 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 		return;
 
 	UFortWorldItem* Item = nullptr;
+	auto Resource = UFortKismetLibrary::K2_GetResourceItemDefinition(((ABuildingSMActor*)BuildingClass->GetDefaultObj())->ResourceType);
 	if (!FConfiguration::bInfiniteMats)
 	{
 		auto CanAffordToPlaceBuildableClass = (bool(*)(AFortPlayerControllerAthena*, FBuildingClassData)) CanAffordToPlaceBuildableClass_;
@@ -545,7 +546,6 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 		}
 		else if (!PlayerController->bBuildFree)
 		{
-			auto Resource = UFortKismetLibrary::K2_GetResourceItemDefinition(((ABuildingSMActor*)BuildingClass->GetDefaultObj())->ResourceType);
 
 			auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* entry)
 				{ return entry->ItemEntry.ItemDefinition == Resource; });
@@ -600,7 +600,7 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	if (!Building)
 		return;
 
-	 static auto UpgradeLevelOffset = FBuildingClassData::StaticStruct()->GetOffset("UpgradeLevel");
+	static auto UpgradeLevelOffset = FBuildingClassData::StaticStruct()->GetOffset("UpgradeLevel");
 	Building->CurrentBuildingLevel = VersionInfo.EngineVersion >= 5.3 ? *(uint8*)(__int64(&BuildingClassData) + UpgradeLevelOffset) : *(uint32*)(__int64(&BuildingClassData) + UpgradeLevelOffset);
 	Building->OnRep_CurrentBuildingLevel();
 
@@ -621,6 +621,18 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 
 		PayBuildableClassPlacementCost(PlayerController, BuildingClassData);
 	}
+
+	FGameplayTagContainer TargetTags{};
+
+	auto Interface = (IGameplayTagAssetInterface*)Building->GetInterface(IGameplayTagAssetInterface::StaticClass());
+	if (Interface)
+	{
+		auto GetOwnedGameplayTags = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface->Vft[0x2];
+		GetOwnedGameplayTags(Interface, &TargetTags);
+		//Interface->GetOwnedGameplayTags(&TargetTags);
+	}
+
+	PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetBuild(), 1, Building);
 }
 
 void SetEditingPlayer(ABuildingSMActor* _this, AFortPlayerStateAthena* NewEditingPlayer)
@@ -943,9 +955,15 @@ void AFortPlayerControllerAthena::ServerPlayEmoteItem(UObject* Context, FFrame& 
 	{
 		static auto SprayAbilityClass = FindObject<UClass>(L"/Game/Abilities/Sprays/GAB_Spray_Generic.GAB_Spray_Generic_C");
 		AbilityToUse = SprayAbilityClass->GetDefaultObj();
+
+		PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetSpray(), 1, true, nullptr);
 	}
 	else if (auto ToyAsset = Asset->Cast<UAthenaToyItemDefinition>())
+	{
 		AbilityToUse = ToyAsset->ToySpawnAbility->GetDefaultObj();
+
+		PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetToy(), 1, true, nullptr);
+	}
 	else if (auto DanceAsset = Asset->Cast<UAthenaDanceItemDefinition>())
 	{
 		static auto HasbMovingEmote = PlayerController->MyFortPawn->HasbMovingEmote();
@@ -973,6 +991,8 @@ void AFortPlayerControllerAthena::ServerPlayEmoteItem(UObject* Context, FFrame& 
 			static auto EmoteAbilityClass = FindObject<UClass>(L"/Game/Abilities/Emotes/GAB_Emote_Generic.GAB_Emote_Generic_C");
 			AbilityToUse = EmoteAbilityClass->GetDefaultObj();
 		}
+
+		PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetEmote(), 1, true, nullptr);
 	}
 
 	if (AbilityToUse)
@@ -1142,7 +1162,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 						//Interface->GetOwnedGameplayTags(&TargetTags);
 					}
 
-					DamagerController->GetQuestManager(1)->SendStatEvent(DamagerController, EFortQuestObjectiveStatEvent::GetKillContribution(), 1, PlayerController->Pawn, TargetTags);
+					DamagerController->GetQuestManager(1)->SendStatEvent(DamagerController, EFortQuestObjectiveStatEvent::GetKillContribution(), 1, false, PlayerController->Pawn, TargetTags);
 
 					TargetTags.GameplayTags.Free();
 					TargetTags.ParentTags.Free();
@@ -1159,7 +1179,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 				//Interface->GetOwnedGameplayTags(&TargetTags);
 			}
 
-			KillerPlayerController->GetQuestManager(1)->SendStatEvent(KillerPlayerController, EFortQuestObjectiveStatEvent::GetKill(), 1, PlayerController->Pawn, TargetTags);
+			KillerPlayerController->GetQuestManager(1)->SendStatEvent(KillerPlayerController, EFortQuestObjectiveStatEvent::GetKill(), 1, false, PlayerController->Pawn, TargetTags);
 
 			TargetTags.GameplayTags.Free();
 			TargetTags.ParentTags.Free();
@@ -1393,6 +1413,21 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 	FinalLoc.X += cos(FinalAngle) * 100.f;
 	FinalLoc.Y += sin(FinalAngle) * 100.f;
 
+	auto _SendStat = [&](int Count)
+	{
+		FGameplayTagContainer TargetTags{};
+
+		auto Interface = (IGameplayTagAssetInterface*)PickupEntry->ItemDefinition->GetInterface(IGameplayTagAssetInterface::StaticClass());
+		if (Interface)
+		{
+			auto GetOwnedGameplayTags = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface->Vft[0x2];
+			GetOwnedGameplayTags(Interface, &TargetTags);
+			//Interface->GetOwnedGameplayTags(&TargetTags);
+		}
+
+		GetQuestManager(1)->SendStatEvent(this, EFortQuestObjectiveStatEvent::GetCollect(), Count, true, (UObject*)PickupEntry->ItemDefinition, TargetTags);
+	};
+
 	auto GiveOrSwap = [&]()
 		{
 			if (ItemCount >= 5 && AFortInventory::IsPrimaryQuickbar(PickupEntry->ItemDefinition))
@@ -1430,16 +1465,24 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 						ClientEquipItem(Item->ItemEntry.ItemGuid, true);
 				}
 				else
+				{
 					AFortInventory::SpawnPickup(Pawn->K2_GetActorLocation() + Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), *PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn, -1, true, true, true, nullptr, FinalLoc);
+					return;
+				}
 			}
 			else
 				WorldInventory->GiveItem(*PickupEntry, PickupEntry->Count, true);
+
+			_SendStat(PickupEntry->Count);
 		};
 
 	auto GiveOrSwapStack = [&](int32 OriginalCount)
 		{
 			if (PickupEntry->ItemDefinition->bAllowMultipleStacks && ItemCount < 5)
+			{
 				WorldInventory->GiveItem(*PickupEntry, OriginalCount - MaxStack, true);
+				_SendStat(PickupEntry->Count);
+			}
 			else
 				AFortInventory::SpawnPickup(Pawn->K2_GetActorLocation() + Pawn->GetActorForwardVector() * 70.f + FVector(0, 0, 50), *PickupEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), MyFortPawn, OriginalCount - MaxStack, true, true, true, nullptr, FinalLoc);
 		};
@@ -1466,6 +1509,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 				break;
 			}*/
 
+			auto TheRealOriginalCount = itemEntry->Count;
 			if ((itemEntry->Count += PickupEntry->Count) > MaxStack)
 			{
 				auto OriginalCount = itemEntry->Count;
@@ -1500,7 +1544,9 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 			}
 
 
+			auto Gained = itemEntry->Count - TheRealOriginalCount;
 
+			_SendStat(Gained);
 			(*item)->ItemEntry.Count = itemEntry->Count;
 			WorldInventory->UpdateEntry(*itemEntry);
 		}
@@ -2409,7 +2455,7 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 			//Interface->GetOwnedGameplayTags(&TargetTags);
 		}
 
-		PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetInteract(), 1, ReceivingActor, TargetTags);
+		PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetInteract(), 1, false, ReceivingActor, TargetTags);
 
 		//TargetTags.GameplayTags.Free();
 		//TargetTags.ParentTags.Free();
@@ -3294,10 +3340,43 @@ void AddActorsToIndicatedList(UObject* Context, FFrame& Stack)
 	Stack.StepCompiledIn(&bRefreshExistingEntry);
 	Stack.IncrementCode();
 
+	printf("AddActorsToIndicatedList\n");
 	for (auto& IndicatedActor : IndicatedActors)
 	{
 		printf("Indicate the frickin %s\n", IndicatedActor->Name.ToString().c_str());
 	}
+}
+
+void AFortPlayerControllerAthena::ServerAwardVehicleTrickPoints_(UObject* Context, FFrame& Stack)
+{
+	int32 InPoints;
+	int32 InAirTimeX1000;
+	int32 NumberOfTricks = 0;
+	float AirDistance = 0.f;
+	float AirHeight = 0.f;
+
+	Stack.StepCompiledIn(&InPoints);
+	Stack.StepCompiledIn(&InAirTimeX1000);
+	Stack.StepCompiledIn(&NumberOfTricks);
+	Stack.StepCompiledIn(&AirDistance);
+	Stack.StepCompiledIn(&AirHeight);
+	auto PlayerController = (AFortPlayerControllerAthena*)Context;
+
+	callOG(PlayerController, Stack.GetCurrentNativeFunction(), ServerAwardVehicleTrickPoints, InPoints, InAirTimeX1000, NumberOfTricks, AirDistance, AirHeight);
+
+	FGameplayTagContainer TargetTags{};
+
+	auto Interface = (IGameplayTagAssetInterface*)PlayerController->Pawn->GetInterface(IGameplayTagAssetInterface::StaticClass());
+	if (Interface)
+	{
+		auto GetOwnedGameplayTags = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface->Vft[0x2];
+		GetOwnedGameplayTags(Interface, &TargetTags);
+		//Interface->GetOwnedGameplayTags(&TargetTags);
+	}
+
+	auto RealAirTime = (float)InAirTimeX1000 * 0.001f;
+	PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetEarnVehicleTrickPoints(), InPoints, false, PlayerController, TargetTags);
+	PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetVehicleAirTime(), (int)RealAirTime, false, PlayerController, TargetTags);
 }
 
 void AFortPlayerControllerAthena::PostLoadHook()
@@ -3425,6 +3504,7 @@ void AFortPlayerControllerAthena::PostLoadHook()
 
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCreativeSetFlightSpeedIndex"), ServerCreativeSetFlightSpeedIndex);
 	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCreativeSetFlightSprint"), ServerCreativeSetFlightSprint);
+	Utils::ExecHook(GetDefaultObj()->GetFunction("ServerAwardVehicleTrickPoints"), ServerAwardVehicleTrickPoints_, ServerAwardVehicleTrickPoints_OG);
 
 	auto DefaultIndicatedActorLibrary = DefaultObjImpl("FortIndicatedActorManagementLibrary");
 

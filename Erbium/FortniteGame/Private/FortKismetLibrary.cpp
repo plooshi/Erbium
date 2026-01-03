@@ -121,6 +121,7 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayer(UObject* Context, FFrame& Stack
 		*Ret = 0;
 		return;
 	}
+	printf(__FUNCTION__ " %s %d\n", ItemDefinition->Name.ToString().c_str(), AmountToRemove);
 
 	auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* entry)
 		{ return entry->ItemEntry.ItemDefinition == ItemDefinition; });
@@ -167,6 +168,8 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayerByGuid(UObject* Context, FFrame&
 		{ return entry->ItemEntry.ItemGuid == ItemGuid; });
 	auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
 		{ return entry.ItemGuid == ItemGuid; }, FFortItemEntry::Size());
+
+	printf(__FUNCTION__ " %s %d\n", itemEntry->ItemDefinition->Name.ToString().c_str(), AmountToRemove);
 	if (!ItemP)
 	{
 		*Ret = 0;

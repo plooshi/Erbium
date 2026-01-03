@@ -229,6 +229,7 @@ void GiveAccolade(AFortPlayerControllerAthena* PlayerController, UFortAccoladeIt
     }
 }
 
+std::unordered_map<UFortQuestManager*, std::unordered_set<UFortQuestItemDefinition*>> OncePerMatchMap;
 void ProgressQuest(UFortQuestManager* _this, AFortPlayerControllerAthena* PlayerController, UFortQuestItem* QuestItem, FName BackendName, int Count)
 {
     auto QuestDefinition = QuestItem->ItemDefinition;
@@ -236,6 +237,16 @@ void ProgressQuest(UFortQuestManager* _this, AFortPlayerControllerAthena* Player
 
     if (!QuestObjectivePtr)
         return; // if this somehow happens, we are just fucked
+
+    if (QuestDefinition->HasbAthenaUpdateObjectiveOncePerMatch() && QuestDefinition->bAthenaUpdateObjectiveOncePerMatch)
+    {
+        auto& OncePerMatchSet = OncePerMatchMap[_this];
+        if (OncePerMatchSet.contains(QuestDefinition))
+            return;
+
+        OncePerMatchSet.emplace(QuestDefinition);
+    }
+
     auto QuestObjective = *QuestObjectivePtr;
 
     auto AcheivedCount = QuestObjective->AchievedCount;
@@ -256,8 +267,31 @@ void ProgressQuest(UFortQuestManager* _this, AFortPlayerControllerAthena* Player
         }
     }
 
-    printf("[Quests] Completed: %s\n", (AcheivedCount + Count == QuestObjective->RequiredCount) ? "true" : "false");
+    printf("[Quests] %s Completed: %s\n", BackendName.ToString().c_str(), (AcheivedCount + Count == QuestObjective->RequiredCount) ? "true" : "false");
+    // keep it the same damnit
     _this->SelfCompletedUpdatedQuest(PlayerController, QuestDefinition, BackendName, AcheivedCount + Count, Count, nullptr, AcheivedCount + Count == QuestObjective->RequiredCount, bAllObjectivesCompleted);
+
+    if (!UFortQuestManager::SelfCompletedUpdatedQuest__Ptr)
+        _this->HandleQuestUpdated(PlayerController, QuestDefinition, BackendName, AcheivedCount + Count, Count, nullptr, AcheivedCount + Count == QuestObjective->RequiredCount, bAllObjectivesCompleted);
+
+    if (!UFortQuestManager::HandleQuestUpdated__Ptr)
+        _this->HandleQuestObjectiveUpdated(PlayerController, QuestDefinition, BackendName, AcheivedCount + Count, Count, nullptr, AcheivedCount + Count == QuestObjective->RequiredCount, bAllObjectivesCompleted);
+    if (!UFortQuestManager::HandleQuestObjectiveUpdated__Ptr)
+    {
+        UFortQuestManagerComponent_Athena* QuestManagerComp = nullptr;
+
+        for (auto& Component : _this->Components)
+        {
+            if (auto CastedComp = Component->Cast<UFortQuestManagerComponent_Athena>())
+            {
+                QuestManagerComp = CastedComp;
+                break;
+            }
+        }
+        
+        if (QuestManagerComp)
+            QuestManagerComp->HandleQuestObjectiveUpdated(PlayerController, QuestDefinition, BackendName, AcheivedCount + Count, Count, nullptr, AcheivedCount + Count == QuestObjective->RequiredCount, bAllObjectivesCompleted);
+    }
     if (PlayerController->HasXPComponent())
     {
         PlayerController->XPComponent->QuestObjectiveUpdated(PlayerController, QuestDefinition, BackendName, Count, AcheivedCount + Count == QuestObjective->RequiredCount, bAllObjectivesCompleted);
@@ -392,7 +426,52 @@ void UFortQuestManager::SendStatEvent__Internal(AActor* PlayerController, long l
             }
             else
             {
-                printf("[Quests] Method 2\n");
+                if (FFortMcpQuestObjectiveInfo::HasInlineObjectiveStats())
+                {
+                    for (int i = 0; i < Objective.InlineObjectiveStats.Num(); i++)
+                    {
+                        auto& ObjectiveStat = Objective.InlineObjectiveStats.Get(i, FFortQuestObjectiveStat::Size());
+
+                        if (ObjectiveStat.Type != StatEvent)
+                            continue;
+
+                        bool bFound = true;
+                        for (int i = 0; i < ObjectiveStat.TagConditions.Num(); i++)
+                        {
+                            auto& Condition = ObjectiveStat.TagConditions.Get(i, FInlineObjectiveStatTagCheckEntry::Size());
+
+                            auto& Tag = FInlineObjectiveStatTagCheckEntry::HasTag() ? Condition.Tag : Condition.tag;
+
+                            bool bHasTag = false;
+                            switch (Condition.Type)
+                            {
+                            case Target:
+                                bHasTag = TargetTags.HasTag(Tag);
+                                break;
+                            case Source:
+                                bHasTag = SourceTags.HasTag(Tag);
+                                break;
+                            case Context:
+                                bHasTag = ContextTags.HasTag(Tag);
+                                break;
+                            }
+
+                            if (Condition.Require ? !bHasTag : bHasTag)
+                            {
+                                bFound = false;
+                                break;
+                            }
+                        }
+
+                        if (!bFound)
+                            continue;
+
+                        if (!IsConditionMet(ObjectiveStat.Condition, TargetTags, SourceTags, ContextTags))
+                            continue;
+
+                        ProgressQuest(this, FortPC, Quest, Objective.BackendName, Count);
+                    }
+                }
             }
         }
     }
@@ -400,9 +479,9 @@ void UFortQuestManager::SendStatEvent__Internal(AActor* PlayerController, long l
 
 bool bHasQueueStatEvent = false;
 
-void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEvent, int32 Count, UObject* TargetObject, FGameplayTagContainer TargetTags, FGameplayTagContainer AdditionalSourceTags, bool* QuestActive, bool* QuestCompleted)
+void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEvent, int32 Count, bool bAllowQueueStatEvent, UObject* TargetObject, FGameplayTagContainer TargetTags, FGameplayTagContainer AdditionalSourceTags, bool* QuestActive, bool* QuestCompleted)
 {
-    if (bHasQueueStatEvent || !this)
+    if ((bHasQueueStatEvent && !bAllowQueueStatEvent) || !this)
         return;
 
     FGameplayTagContainer PlayerSourceTags;
@@ -449,7 +528,8 @@ void SendComplexCustomStatEvent(UObject* Context, FFrame& Stack)
     auto PlayerController = (AFortPlayerControllerAthena*)QuestManager->GetPlayerControllerBP();
 
     printf("SendComplexCustomStatEvent\n");
-    QuestManager->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetComplexCustom(), Count, TargetObject, TargetTags, AdditionalSourceTags);
+    if (VersionInfo.FortniteVersion != 11.31) // js crashes idk why
+        QuestManager->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetComplexCustom(), Count, false, TargetObject, TargetTags, AdditionalSourceTags);
 }
 
 void QueueStatEvent(UFortQuestManager* QuestManager, uint8_t InType, UObject* InTargetObject, FGameplayTagContainer* InTargetTags, FGameplayTagContainer* InSourceTags, FGameplayTagContainer* InContextTags, void* InObjectiveStat, FName InObjectiveBackendName, int InCount)
@@ -469,21 +549,25 @@ void QueueStatEvent(UFortQuestManager* QuestManager, uint8_t InType, UObject* In
 
 void UFortQuestManager::PostLoadHook()
 {
-    auto SendComplexCustomStatEventFn = GetDefaultObj()->GetFunction("SendComplexCustomStatEvent");
-
-    if (SendComplexCustomStatEventFn)
-        for (auto& Param : SendComplexCustomStatEventFn->GetParamsNamed().NameOffsetMap)
-        {
-            if (Param.Name == "QuestActive")
-                bHasQuestActive = true;
-            else if (Param.Name == "QuestCompleted")
-                bHasQuestCompleted = true;
-        }
-
-    Utils::ExecHook(SendComplexCustomStatEventFn, SendComplexCustomStatEvent);
 
     auto QueueStatEventAddr = FindQueueStatEvent();
 
     bHasQueueStatEvent = QueueStatEventAddr != 0;
     Utils::Hook(QueueStatEventAddr, QueueStatEvent);
+
+    if (!bHasQueueStatEvent)
+    {
+        auto SendComplexCustomStatEventFn = GetDefaultObj()->GetFunction("SendComplexCustomStatEvent");
+
+        if (SendComplexCustomStatEventFn)
+            for (auto& Param : SendComplexCustomStatEventFn->GetParamsNamed().NameOffsetMap)
+            {
+                if (Param.Name == "QuestActive")
+                    bHasQuestActive = true;
+                else if (Param.Name == "QuestCompleted")
+                    bHasQuestCompleted = true;
+            }
+
+        Utils::ExecHook(SendComplexCustomStatEventFn, SendComplexCustomStatEvent);
+    }
 }

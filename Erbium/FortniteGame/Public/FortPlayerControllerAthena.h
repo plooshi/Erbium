@@ -365,6 +365,7 @@ public:
     DEFINE_FUNC(ClientCreativePhoneCreated, void);
     DEFINE_FUNC(GetQuestManager, UFortQuestManager*);
     DEFINE_FUNC(OnRep_IsCreativeQuickbarEnabled, void);
+    DEFINE_FUNC(ServerAwardVehicleTrickPoints, void);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);
@@ -393,6 +394,7 @@ public:
     DefUHookOg(ServerLoadingScreenDropped_);
     static void ServerCreativeSetFlightSpeedIndex(UObject*, FFrame&);
     static void ServerCreativeSetFlightSprint(UObject*, FFrame&);
+    DefUHookOg(ServerAwardVehicleTrickPoints_);
 
     InitPostLoadHooks;
 };

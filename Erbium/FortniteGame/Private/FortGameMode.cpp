@@ -1215,7 +1215,7 @@ void AFortGameMode::HandlePostSafeZonePhaseChanged(AFortGameMode* GameMode, int 
         {
             auto PlayerController = (AFortPlayerControllerAthena*)UncastedPlayer;
 
-            PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetStormPhase(), 1);
+            PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetStormPhase(), 1, false);
         }
     }
 }
@@ -1595,7 +1595,7 @@ void StartNewSafeZonePhase(AFortGameMode* GameMode, int NewSafeZonePhase, bool b
             {
                 auto PlayerController = (AFortPlayerControllerAthena*)UncastedPlayer;
 
-                PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetStormPhase(), 1);
+                PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetStormPhase(), 1, false);
             }
     }
 }

@@ -38,6 +38,11 @@ public:
     DEFINE_ENUM_PROP(Toy);
     DEFINE_ENUM_PROP(Land);
     DEFINE_ENUM_PROP(Damage);
+    DEFINE_ENUM_PROP(EarnVehicleTrickPoints);
+    DEFINE_ENUM_PROP(VehicleAirTime);
+    DEFINE_ENUM_PROP(Visit);
+    DEFINE_ENUM_PROP(Build);
+    DEFINE_ENUM_PROP(Collect);
 };
 
 class IGameplayTagAssetInterface : public IInterface
@@ -95,7 +100,34 @@ public:
     DEFINE_STRUCT_PROP(SourceTagContainer, FGameplayTagContainer);
     DEFINE_STRUCT_PROP(ContextTagContainer, FGameplayTagContainer);
     DEFINE_STRUCT_PROP(Condition, FString);
+};
 
+enum EInlineObjectiveStatTagCheckEntryType : uint8
+{
+    Target = 0,
+    Source = 1,
+    Context = 2
+};
+
+struct FInlineObjectiveStatTagCheckEntry
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FInlineObjectiveStatTagCheckEntry);
+
+    DEFINE_STRUCT_PROP(Tag, FGameplayTag);
+    DEFINE_STRUCT_PROP(tag, FGameplayTag);
+    DEFINE_STRUCT_PROP(Type, EInlineObjectiveStatTagCheckEntryType);
+    DEFINE_STRUCT_BITFIELD_PROP(Require);
+};
+
+struct FFortQuestObjectiveStat
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FFortQuestObjectiveStat);
+
+    DEFINE_STRUCT_PROP(Type, uint8);
+    DEFINE_STRUCT_PROP(Condition, FString);
+    DEFINE_STRUCT_PROP(TagConditions, TArray<FInlineObjectiveStatTagCheckEntry>);
 };
 
 struct FFortMcpQuestObjectiveInfo
@@ -105,6 +137,7 @@ public:
 
     DEFINE_STRUCT_PROP(BackendName, FName);
     DEFINE_STRUCT_PROP(ObjectiveStatHandle, FDataTableRowHandle);
+    DEFINE_STRUCT_PROP(InlineObjectiveStats, TArray<FFortQuestObjectiveStat>);
 };
 
 class UFortQuestItemDefinition : public UFortItem
@@ -113,6 +146,8 @@ public:
     UCLASS_COMMON_MEMBERS(UFortQuestItemDefinition);
 
     DEFINE_PROP(Objectives, TArray<FFortMcpQuestObjectiveInfo>);
+    DEFINE_BITFIELD_PROP(bAthenaUpdateObjectiveOncePerMatch);
+    DEFINE_BITFIELD_PROP(bAthenaMustCompleteInSingleMatch);
 };
 
 class UFortQuestObjectiveInfo : public UObject
@@ -137,6 +172,14 @@ public:
     DEFINE_FUNC(HasCompletedObjectiveWithName, bool);
 };
 
+class UFortQuestManagerComponent_Athena : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortQuestManagerComponent_Athena);
+
+    DEFINE_FUNC(HandleQuestObjectiveUpdated, void);
+};
+
 
 class UFortQuestManager : public UObject
 {
@@ -144,13 +187,16 @@ public:
     UCLASS_COMMON_MEMBERS(UFortQuestManager);
 
     DEFINE_PROP(CurrentQuests, TArray<UFortQuestItem*>);
+    DEFINE_PROP(Components, TArray<UObject*>);
 
     DEFINE_FUNC(GetSourceAndContextTags, void);
     DEFINE_FUNC(GetPlayerControllerBP, AActor*);
     DEFINE_FUNC(SelfCompletedUpdatedQuest, void);
+    DEFINE_FUNC(HandleQuestUpdated, void);
+    DEFINE_FUNC(HandleQuestObjectiveUpdated, void);
 
     void SendStatEvent__Internal(AActor* PlayerController, long long StatEvent, int32 Count, UObject* TargetObject, FGameplayTagContainer TargetTags, FGameplayTagContainer SourceTags, FGameplayTagContainer ContextTags, bool* QuestActive, bool* QuestCompleted);
-    void SendStatEvent(AActor* PlayerController, long long StatEvent, int32 Count, UObject* TargetObject = nullptr, FGameplayTagContainer TargetTags = FGameplayTagContainer(), FGameplayTagContainer AdditionalSourceTags = FGameplayTagContainer(), bool* QuestActive = nullptr, bool* QuestCompleted = nullptr);
+    void SendStatEvent(AActor* PlayerController, long long StatEvent, int32 Count, bool bAllowQueueStatEvent, UObject* TargetObject = nullptr, FGameplayTagContainer TargetTags = FGameplayTagContainer(), FGameplayTagContainer AdditionalSourceTags = FGameplayTagContainer(), bool* QuestActive = nullptr, bool* QuestCompleted = nullptr);
 
 
     InitPostLoadHooks;
