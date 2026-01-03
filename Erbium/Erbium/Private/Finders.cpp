@@ -2535,7 +2535,7 @@ uint64_t FindCanAffordToPlaceBuildableClass()
             {
                 auto Ptr = (uint8_t*)(sRef.Get() - i);
 
-                if (*Ptr == 0x40 && (*(Ptr + 1) == 0x57 || *(Ptr + 1) == 0x55 || *(Ptr + 1) == 0x53))
+                if (*Ptr == 0x40 && (*(Ptr + 1) == 0x57 || *(Ptr + 1) == 0x55 || *(Ptr + 1) == 0x53 || *(Ptr + 1) == 0x56))
                     return uint64_t(Ptr);
             }
         }

@@ -411,15 +411,18 @@ void UFortQuestManager::SendStatEvent__Internal(AActor* PlayerController, long l
                     if (Row->Type != StatEvent)
                         continue;
 
-                    printf("USA is not in europe\n");
+                    //printf("USA is not in europe %s %d\n", Objective.BackendName.ToString().c_str(), Row->TargetTagContainer.GameplayTags.Num());
                     if (!TargetTags.HasAll(Row->TargetTagContainer))
                         continue;
+                    //printf("Passed TT\n");
 
                     if (!SourceTags.HasAll(Row->SourceTagContainer))
                         continue;
+                    //printf("Passed ST\n");
 
-                    if (!ContextTags.HasAll(Row->ContextTagContainer))
+                    if (VersionInfo.FortniteVersion >= 10 && !ContextTags.HasAll(Row->ContextTagContainer))
                         continue;
+                    //printf("Passed CT\n");
 
                     if (!IsConditionMet(Row->Condition, TargetTags, SourceTags, ContextTags))
                         continue;
@@ -429,7 +432,7 @@ void UFortQuestManager::SendStatEvent__Internal(AActor* PlayerController, long l
                 }
             }
             else
-            {
+             {
                 if (FFortMcpQuestObjectiveInfo::HasInlineObjectiveStats())
                 {
                     for (int i = 0; i < Objective.InlineObjectiveStats.Num(); i++)

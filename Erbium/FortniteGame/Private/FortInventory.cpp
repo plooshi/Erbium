@@ -410,13 +410,6 @@ AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, FFortItemEntry& Entr
         FinalLocation = FinalLoc;
     NewPickup->TossPickup(FinalLocation, Pawn, -1, Toss, true, (uint8)SourceTypeFlag, (uint8)SpawnSource);
 
-    if (VersionInfo.FortniteVersion < 6)
-    {
-        static auto ProjectileMovementClass = FindClass("ProjectileMovementComponent");
-        NewPickup->MovementComponent = UGameplayStatics::SpawnObject(ProjectileMovementClass, NewPickup);
-        //NewPickup->MovementComponent->ObjectFlags &= ~0x1000000;
-    }
-
     if (SpawnSource != -1)
         NewPickup->bTossedFromContainer = SpawnSource == EFortPickupSpawnSource::GetChest() || SpawnSource == EFortPickupSpawnSource::GetAmmoBox();
     if (NewPickup->bTossedFromContainer)
@@ -495,18 +488,6 @@ AFortPickupAthena* AFortInventory::SpawnPickup(ABuildingContainer* Container, FF
         auto FinalLoc = Loc + (Container->GetActorForwardVector() * Container->LootFinalLocation.X) + (Container->GetActorRightVector() * Container->LootFinalLocation.Y) + (Container->GetActorUpVector() * Container->LootFinalLocation.Z);
 
         NewPickup->TossPickup(Loc, Pawn, -1, true, true, EFortPickupSourceTypeFlag::GetContainer(), EFortPickupSpawnSource::GetChest());
-    }
-
-    if (VersionInfo.FortniteVersion < 6)
-    {
-        static auto ProjectileMovementClass = FindClass("ProjectileMovementComponent");
-        auto NewMovementComp = UGameplayStatics::SpawnObject(ProjectileMovementClass, NewPickup);
-        if (NewMovementComp)
-        {
-            NewPickup->MovementComponent = NewMovementComp;
-            NewPickup->MovementComponent->ObjectFlags &= ~0x1000000;
-        }
-        //
     }
 
 

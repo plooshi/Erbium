@@ -633,6 +633,9 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
 	}
 
 	PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetBuild(), 1, Building);
+
+	TargetTags.GameplayTags.Free();
+	TargetTags.ParentTags.Free();
 }
 
 void SetEditingPlayer(ABuildingSMActor* _this, AFortPlayerStateAthena* NewEditingPlayer)
@@ -1426,6 +1429,9 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
 		}
 
 		GetQuestManager(1)->SendStatEvent(this, EFortQuestObjectiveStatEvent::GetCollect(), Count, true, (UObject*)PickupEntry->ItemDefinition, TargetTags);
+		
+		TargetTags.GameplayTags.Free();
+		TargetTags.ParentTags.Free();
 	};
 
 	auto GiveOrSwap = [&]()
@@ -3374,9 +3380,26 @@ void AFortPlayerControllerAthena::ServerAwardVehicleTrickPoints_(UObject* Contex
 		//Interface->GetOwnedGameplayTags(&TargetTags);
 	}
 
+	static auto GetVehicleFunc = PlayerController->Pawn->GetFunction("GetVehicleActor");
+	if (!GetVehicleFunc)
+		GetVehicleFunc = PlayerController->Pawn->GetFunction("GetVehicle");
+	auto Vehicle = PlayerController->Pawn->Call<AActor*>(GetVehicleFunc);
+
+	auto VehicleInterface = (IGameplayTagAssetInterface*)Vehicle->GetInterface(IGameplayTagAssetInterface::StaticClass());
+	if (VehicleInterface)
+	{
+		auto GetOwnedGameplayTags = (void(*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))VehicleInterface->Vft[0x2];
+		GetOwnedGameplayTags(VehicleInterface, &TargetTags);
+		//Interface->GetOwnedGameplayTags(&TargetTags);
+	}
+
+
 	auto RealAirTime = (float)InAirTimeX1000 * 0.001f;
 	PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetEarnVehicleTrickPoints(), InPoints, false, PlayerController, TargetTags);
 	PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetVehicleAirTime(), (int)RealAirTime, false, PlayerController, TargetTags);
+
+	TargetTags.GameplayTags.Free();
+	TargetTags.ParentTags.Free();
 }
 
 void AFortPlayerControllerAthena::PostLoadHook()
