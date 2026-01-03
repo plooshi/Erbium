@@ -381,6 +381,9 @@ void UFortQuestManager::SendStatEvent__Internal(AActor* PlayerController, long l
 		}
 	}
 
+    if (VersionInfo.FortniteVersion < 12 && StatEvent == EFortQuestObjectiveStatEvent::GetComplexCustom())
+        return; // js crashes idk why
+
     for (auto& Quest : CurrentQuests)
     {
         if (Quest->HasCompletedQuest())
@@ -529,8 +532,7 @@ void SendComplexCustomStatEvent(UObject* Context, FFrame& Stack)
     auto PlayerController = (AFortPlayerControllerAthena*)QuestManager->GetPlayerControllerBP();
 
     printf("SendComplexCustomStatEvent\n");
-    if (VersionInfo.FortniteVersion != 11.31) // js crashes idk why
-        QuestManager->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetComplexCustom(), Count, false, TargetObject, TargetTags, AdditionalSourceTags);
+       QuestManager->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetComplexCustom(), Count, false, TargetObject, TargetTags, AdditionalSourceTags);
 }
 
 void QueueStatEvent(UFortQuestManager* QuestManager, uint8_t InType, UObject* InTargetObject, FGameplayTagContainer* InTargetTags, FGameplayTagContainer* InSourceTags, FGameplayTagContainer* InContextTags, void* InObjectiveStat, FName InObjectiveBackendName, int InCount)
