@@ -273,10 +273,9 @@ void ProgressQuest(UFortQuestManager* _this, AFortPlayerControllerAthena* Player
 
     if (!UFortQuestManager::SelfCompletedUpdatedQuest__Ptr)
         _this->HandleQuestUpdated(PlayerController, QuestDefinition, BackendName, AcheivedCount + Count, Count, nullptr, AcheivedCount + Count == QuestObjective->RequiredCount, bAllObjectivesCompleted);
-
-    if (!UFortQuestManager::HandleQuestUpdated__Ptr)
+    else if (!UFortQuestManager::HandleQuestUpdated__Ptr)
         _this->HandleQuestObjectiveUpdated(PlayerController, QuestDefinition, BackendName, AcheivedCount + Count, Count, nullptr, AcheivedCount + Count == QuestObjective->RequiredCount, bAllObjectivesCompleted);
-    if (!UFortQuestManager::HandleQuestObjectiveUpdated__Ptr)
+    else if (!UFortQuestManager::HandleQuestObjectiveUpdated__Ptr)
     {
         UFortQuestManagerComponent_Athena* QuestManagerComp = nullptr;
 
@@ -292,6 +291,7 @@ void ProgressQuest(UFortQuestManager* _this, AFortPlayerControllerAthena* Player
         if (QuestManagerComp)
             QuestManagerComp->HandleQuestObjectiveUpdated(PlayerController, QuestDefinition, BackendName, AcheivedCount + Count, Count, nullptr, AcheivedCount + Count == QuestObjective->RequiredCount, bAllObjectivesCompleted);
     }
+
     if (PlayerController->HasXPComponent())
     {
         PlayerController->XPComponent->QuestObjectiveUpdated(PlayerController, QuestDefinition, BackendName, Count, AcheivedCount + Count == QuestObjective->RequiredCount, bAllObjectivesCompleted);
@@ -408,6 +408,7 @@ void UFortQuestManager::SendStatEvent__Internal(AActor* PlayerController, long l
                     if (Row->Type != StatEvent)
                         continue;
 
+                    printf("USA is not in europe\n");
                     if (!TargetTags.HasAll(Row->TargetTagContainer))
                         continue;
 
