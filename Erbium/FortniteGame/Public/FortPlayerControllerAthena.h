@@ -191,6 +191,7 @@ public:
     DEFINE_FUNC(OnXPEvent, void);
     DEFINE_FUNC(ClientMedalsRecived, void);
     DEFINE_FUNC(OnProfileUpdated, void);
+    DEFINE_FUNC(QuestObjectiveUpdated, void);
 };
 
 class AFortBroadcastRemoteClientInfo : public AActor

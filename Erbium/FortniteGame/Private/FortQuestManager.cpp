@@ -229,6 +229,41 @@ void GiveAccolade(AFortPlayerControllerAthena* PlayerController, UFortAccoladeIt
     }
 }
 
+void ProgressQuest(UFortQuestManager* _this, AFortPlayerControllerAthena* PlayerController, UFortQuestItem* QuestItem, FName BackendName, int Count)
+{
+    auto QuestDefinition = QuestItem->ItemDefinition;
+    auto QuestObjectivePtr = QuestItem->Objectives.Search([&](UFortQuestObjectiveInfo* Obj) { return Obj->BackendName == BackendName; });
+
+    if (!QuestObjectivePtr)
+        return; // if this somehow happens, we are just fucked
+    auto QuestObjective = *QuestObjectivePtr;
+
+    auto AcheivedCount = QuestObjective->AchievedCount;
+
+    bool bAllObjectivesCompleted = AcheivedCount + Count == QuestObjective->RequiredCount;
+
+    if (bAllObjectivesCompleted)
+    {
+        for (auto& Objective : QuestItem->Objectives)
+        {
+            if (Objective == QuestObjective)
+                continue;
+
+            bAllObjectivesCompleted = Objective->AchievedCount == Objective->RequiredCount;
+
+            if (!bAllObjectivesCompleted)
+                break;
+        }
+    }
+
+    printf("[Quests] Completed: %s\n", (AcheivedCount + Count == QuestObjective->RequiredCount) ? "true" : "false");
+    _this->SelfCompletedUpdatedQuest(PlayerController, QuestDefinition, BackendName, AcheivedCount + Count, Count, nullptr, AcheivedCount + Count == QuestObjective->RequiredCount, bAllObjectivesCompleted);
+    if (PlayerController->HasXPComponent())
+    {
+        PlayerController->XPComponent->QuestObjectiveUpdated(PlayerController, QuestDefinition, BackendName, Count, AcheivedCount + Count == QuestObjective->RequiredCount, bAllObjectivesCompleted);
+    }
+}
+
 std::unordered_map<AActor*, std::unordered_map<int32_t, int32_t>> CountThresholdMap;
 std::unordered_set<UFortAccoladeItemDefinition*> OnlyOnceMap;
 
@@ -320,6 +355,46 @@ void UFortQuestManager::SendStatEvent__Internal(AActor* PlayerController, long l
         auto QuestDefinition = Quest->ItemDefinition;
 
 
+        for (int i = 0; i < QuestDefinition->Objectives.Num(); i++)
+        {
+            auto& Objective = QuestDefinition->Objectives.Get(i, FFortMcpQuestObjectiveInfo::Size());
+
+            if (Quest->HasCompletedObjectiveWithName(Objective.BackendName))
+                continue;
+
+            if (Objective.ObjectiveStatHandle.RowName.IsValid() && Objective.ObjectiveStatHandle.DataTable)
+            {
+                for (auto& [Key, Value] : Objective.ObjectiveStatHandle.DataTable->RowMap)
+                {
+                    if (Key != Objective.ObjectiveStatHandle.RowName)
+                        continue;
+
+                    auto Row = (FFortQuestObjectiveStatTableRow*)Value;
+
+                    if (Row->Type != StatEvent)
+                        continue;
+
+                    if (!TargetTags.HasAll(Row->TargetTagContainer))
+                        continue;
+
+                    if (!SourceTags.HasAll(Row->SourceTagContainer))
+                        continue;
+
+                    if (!ContextTags.HasAll(Row->ContextTagContainer))
+                        continue;
+
+                    if (!IsConditionMet(Row->Condition, TargetTags, SourceTags, ContextTags))
+                        continue;
+
+                    printf("[Quests] Update: %s\n", Objective.BackendName.ToString().c_str());
+                    ProgressQuest(this, FortPC, Quest, Objective.BackendName, Count);
+                }
+            }
+            else
+            {
+                printf("[Quests] Method 2\n");
+            }
+        }
     }
 }
 
