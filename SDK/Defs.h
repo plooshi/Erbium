@@ -7,6 +7,8 @@
                              (std::is_same_v<__VA_ARGS__, uint8> ? 0x1000000020040 : \
                              (std::is_base_of_v<UObject, std::remove_pointer_t<__VA_ARGS__>> ? 0x10000 : 0)))))
 
+std::vector<void(*)()> _Inits;
+
 #define UCLASS_COMMON_MEMBERS(__Class)                                                                                                                               \
 	static const SDK::UClass* StaticClass()                                                                                                                          \
 	{                                                                                                                                                                \

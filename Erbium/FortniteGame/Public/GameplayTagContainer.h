@@ -58,6 +58,7 @@ public:
 			}
 
 			if (!Found)
+			{
 				for (int x = 0; x < ParentTags.Num(); x++)
 				{
 					auto& Tag2 = ParentTags.Get(x, FGameplayTag::Size());
@@ -68,6 +69,7 @@ public:
 						break;
 					}
 				}
+			}
 
 			if (!Found) 
 				return false;

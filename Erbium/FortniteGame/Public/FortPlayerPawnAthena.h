@@ -101,6 +101,8 @@ public:
     DEFINE_PROP(LastReplicatedEmoteExecuted, UObject*);
     DEFINE_PROP(Mesh, UActorComponent*);
     DEFINE_BITFIELD_PROP(bIsSkydiving);
+    DEFINE_BITFIELD_PROP(bIsSkydivingFromBus);
+    DEFINE_PROP(RegisteredMovementModeExtentionLogic, TMap<uint32, UObject*>);
 
     DEFINE_FUNC(BeginSkydiving, void);
     DEFINE_FUNC(GetHealth, float);

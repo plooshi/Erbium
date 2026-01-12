@@ -76,9 +76,9 @@ void SetupPlaylist(AFortGameMode* GameMode, AFortGameStateAthena* GameState)
                 Playlist->RespawnTime.Curve.RowName = FName();
                 Playlist->RespawnTime.Value = 3;
             }
-            Playlist->RespawnType = 1; // InfiniteRespawns
-            if (Playlist->HasbForceRespawnLocationInsideOfVolume())
-                Playlist->bForceRespawnLocationInsideOfVolume = true;
+            Playlist->RespawnType = 2; // InfiniteRespawnExceptStorm
+            //if (Playlist->HasbForceRespawnLocationInsideOfVolume())
+            //    Playlist->bForceRespawnLocationInsideOfVolume = true;
         }
         if (FConfiguration::bJoinInProgress)
         {
@@ -188,7 +188,7 @@ void VendWobble__FinishedFunc(UObject* Context, FFrame& Stack)
     return VendWobble__FinishedFuncOG(Context, Stack);
 }
 
-std::map<int, float> WeightMap;
+std::unordered_map<int, float> WeightMap;
 float Sum = 0;
 float Weight;
 float TotalWeight;
@@ -251,7 +251,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
             NetDriver->NetDriverName = NetDriverName;
             NetDriver->World = World;
 
-            if (VersionInfo.EngineVersion >= 5.2 && FConfiguration::bEnableIris)
+            if (VersionInfo.EngineVersion >= 5.3 && FConfiguration::bEnableIris)
             {
                 *(bool*)(__int64(&NetDriver->ReplicationDriver) + 0x11) = true;
             }
@@ -286,7 +286,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
         if (GameMode->HasWarmupRequiredPlayerCount())
             GameMode->WarmupRequiredPlayerCount = 1;
 
-        if (VersionInfo.FortniteVersion >= 4.0 && (VersionInfo.EngineVersion < 4.22 || VersionInfo.EngineVersion >= 4.26))
+        if (VersionInfo.FortniteVersion > 4.0/* && (VersionInfo.EngineVersion != 4.25)*/)
             SetupPlaylist(GameMode, GameState);
 
 
@@ -408,6 +408,12 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
             ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.PleasentParkDefault"));
 
 
+        if (VersionInfo.FortniteVersion == 17.50)
+        {
+            //ShowFoundation(FindObject<ABuildingFoundation>(L"/Game/Athena/Apollo/Maps/Apollo_Mother.Apollo_Mother.PersistentLevel.farmbase_2"));
+            ShowFoundation(FindObject<ABuildingFoundation>(L"/Game/Athena/Apollo/Maps/Apollo_Mother.Apollo_Mother.PersistentLevel.Farm_Phase_03"));
+        }
+
         if (VersionInfo.EngineVersion >= 4.27 && std::floor(VersionInfo.FortniteVersion) != 20) // on 20 it does some weird stuff
         {
             auto MeshNetworkSubsystem = TUObjectArray::FindFirstObject("MeshNetworkSubsystem");
@@ -507,10 +513,10 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
 
 
 
-        if ((VersionInfo.FortniteVersion >= 3.5 && VersionInfo.FortniteVersion <= 4.0) || (VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.26))
+        if ((VersionInfo.FortniteVersion >= 3.5 && VersionInfo.FortniteVersion <= 4.0))
             SetupPlaylist(GameMode, GameState);
-        //else if (VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.26)
-        //    GameState->OnRep_CurrentPlaylistInfo();
+        else if (VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.26)
+            GameState->OnRep_CurrentPlaylistInfo();
 
         if (VersionInfo.FortniteVersion >= 25.20 && GameState->HasMapInfo() && GameState->MapInfo)
         {
@@ -642,207 +648,6 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                 }
             }
 
-        auto AddToTierData = [&](const UDataTable* Table, TArray<FFortLootTierData*>& TempArr)
-            {
-                if (!Table)
-                    return;
-
-                Table->AddToRoot();
-                if (VersionInfo.FortniteVersion >= 20)
-                {
-                    if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
-                        for (auto& ParentTable : CompositeTable->ParentTables)
-                            if (ParentTable)
-                                for (auto& [Key, Val] : *(TMap<int32, FFortLootTierData*>*) (__int64(ParentTable) + 0x30))
-                                    TempArr.Add(Val);
-
-                    for (auto& [Key, Val] : *(TMap<int32, FFortLootTierData*>*) (__int64(Table) + 0x30))
-                    {
-                        bool bFound = false;
-
-                        for (auto& TierData : TempArr)
-                            if (TierData->TierGroup == Val->TierGroup && TierData->LootPackage == Val->LootPackage)
-                            {
-                                TierData = Val;
-                                bFound = true;
-                                break;
-                            }
-
-                        if (!bFound)
-                            TempArr.Add(Val);
-                    }
-                }
-                else
-                {
-                    if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
-                        for (auto& ParentTable : CompositeTable->ParentTables)
-                            if (ParentTable)
-                                for (auto& [Key, Val] : (TMap<FName, FFortLootTierData*>) ParentTable->RowMap)
-                                    TempArr.Add(Val);
-
-                    for (auto& [Key, Val] : (TMap<FName, FFortLootTierData*>) Table->RowMap)
-                    {
-                        bool bFound = false;
-
-                        for (auto& TierData : TempArr)
-                            if (TierData->TierGroup == Val->TierGroup && TierData->LootPackage == Val->LootPackage)
-                            {
-                                TierData = Val;
-                                bFound = true;
-                                break;
-                            }
-
-                        if (!bFound)
-                            TempArr.Add(Val);
-                    }
-                }
-            };
-
-        auto AddToPackages = [&](const UDataTable* Table, UEAllocatedMap<int32, FFortLootPackageData*>& TempArr)
-            {
-                if (!Table)
-                    return;
-
-                Table->AddToRoot();
-                if (VersionInfo.FortniteVersion >= 20)
-                {
-                    if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
-                        for (auto& ParentTable : CompositeTable->ParentTables)
-                            if (ParentTable)
-                                for (auto& [Key, Val] : *(TMap<int32, FFortLootPackageData*>*) (__int64(ParentTable) + 0x30))
-                                    TempArr[Key] = Val;
-
-                    for (auto& [Key, Val] : *(TMap<int32, FFortLootPackageData*>*) (__int64(Table) + 0x30))
-                        TempArr[Key] = Val;
-                }
-                else
-                {
-                    if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
-                        for (auto& ParentTable : CompositeTable->ParentTables)
-                            if (ParentTable)
-                                for (auto& [Key, Val] : (TMap<FName, FFortLootPackageData*>) ParentTable->RowMap)
-                                    TempArr[Key.ComparisonIndex] = Val;
-
-                    for (auto& [Key, Val] : (TMap<FName, FFortLootPackageData*>) Table->RowMap)
-                    {
-                        TempArr[Key.ComparisonIndex] = Val;
-                    }
-                }
-            };
-
-        TArray<FFortLootTierData*> LootTierDataTempArr;
-        auto LootTierData = Playlist ? Playlist->LootTierData.Get() : nullptr;
-        if (!LootTierData)
-            LootTierData = FindObject<UDataTable>(GameMode->HasWarmupRequiredPlayerCount() ? L"/Game/Items/Datatables/AthenaLootTierData_Client.AthenaLootTierData_Client" : L"/Game/Items/Datatables/LootTierData_Client.LootTierData_Client");
-        if (LootTierData)
-            AddToTierData(LootTierData, LootTierDataTempArr);
-
-        for (auto& Val : LootTierDataTempArr)
-            TierDataMap[Val->TierGroup.ComparisonIndex].Add(Val);
-
-        UEAllocatedMap<int32, FFortLootPackageData*> LootPackageTempArr;
-        auto LootPackages = Playlist ? Playlist->LootPackages.Get() : nullptr;
-        if (!LootPackages)
-            LootPackages = FindObject<UDataTable>(GameMode->HasWarmupRequiredPlayerCount() ? L"/Game/Items/Datatables/AthenaLootPackages_Client.AthenaLootPackages_Client" : L"/Game/Items/Datatables/LootPackages_Client.LootPackages_Client");
-        if (LootPackages)
-            AddToPackages(LootPackages, LootPackageTempArr);
-
-        for (auto& [_, Val] : LootPackageTempArr)
-            LootPackageMap[Val->LootPackageID.ComparisonIndex].Add(Val);
-
-        auto GameFeatureDataClass = FindClass("FortGameFeatureData");
-        if (GameFeatureDataClass)
-            for (int i = 0; i < TUObjectArray::Num(); i++)
-            {
-                auto Object = TUObjectArray::GetObjectByIndex(i);
-
-                if (!Object || !Object->Class || Object->IsDefaultObject())
-                    continue;
-
-                if (Object->IsA(GameFeatureDataClass))
-                {
-                    static auto DefaultLootTableDataOffset = Object->GetOffset("DefaultLootTableData");
-                    static auto PlaylistOverrideLootTableDataOffset = Object->GetOffset("PlaylistOverrideLootTableData");
-
-                    auto& LootTableData = GetFromOffset<FFortGameFeatureLootTableData>(Object, DefaultLootTableDataOffset);
-                    auto& LootTableDataUE53 = GetFromOffset<FFortGameFeatureLootTableData_UE53>(Object, DefaultLootTableDataOffset);
-                    auto& PlaylistOverrideLootTableData = GetFromOffset<TMap<FGameplayTag, FFortGameFeatureLootTableData>>(Object, PlaylistOverrideLootTableDataOffset);
-                    auto& PlaylistOverrideLootTableDataLWC = GetFromOffset<TMap<int32, FFortGameFeatureLootTableData>>(Object, PlaylistOverrideLootTableDataOffset);
-                    auto& PlaylistOverrideLootTableDataUE53 = GetFromOffset<TMap<int32, FFortGameFeatureLootTableData_UE53>>(Object, PlaylistOverrideLootTableDataOffset);
-                    auto LTDFeatureData = VersionInfo.EngineVersion >= 5.3 ? LootTableDataUE53.LootTierData.Get() : LootTableData.LootTierData.Get();
-                    auto LootPackageData = VersionInfo.EngineVersion >= 5.3 ? LootTableDataUE53.LootPackageData.Get() : LootTableData.LootPackageData.Get();
-
-                    if (LTDFeatureData)
-                    {
-                        TArray<FFortLootTierData*> LTDTempData;
-
-                        AddToTierData(LTDFeatureData, LTDTempData);
-
-                        if (Playlist)
-                        {
-                            if (VersionInfo.EngineVersion >= 5.3)
-                            {
-                                /*for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
-                                    for (auto& Override : PlaylistOverrideLootTableDataUE52)
-                                        if (Tag.TagName.ComparisonIndex == Override.First)
-                                            AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);*/
-                            }
-                            else if (VersionInfo.FortniteVersion < 20.00)
-                            {
-                                for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
-                                    for (auto& Override : PlaylistOverrideLootTableData)
-                                        if (Tag.TagName == Override.First.TagName)
-                                            AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);
-                            }
-                            else
-                                for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
-                                    for (auto& Override : PlaylistOverrideLootTableDataLWC)
-                                        if (Tag.TagName.ComparisonIndex == Override.First)
-                                            AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);
-                        }
-
-                        //for (auto& [_, Val] : LTDTempData)
-                        //    TierDataAllGroups.Add(Val);
-
-                        for (auto& Val : LTDTempData)
-                            TierDataMap[Val->TierGroup.ComparisonIndex].Add(Val);
-                    }
-
-                    if (LootPackageData)
-                    {
-                        UEAllocatedMap<int32, FFortLootPackageData*> LPTempData;
-
-                        AddToPackages(LootPackageData, LPTempData);
-
-                        if (Playlist)
-                        {
-                            if (VersionInfo.EngineVersion >= 5.3)
-                            {
-                                /*for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
-                                    for (auto& Override : PlaylistOverrideLootTableDataUE52)
-                                        if (Tag.TagName.ComparisonIndex == Override.First)
-                                            AddToPackages(Override.Second.LootPackageData.Get(), LPTempData);*/
-                            }
-                            else if (VersionInfo.FortniteVersion < 20.00)
-                            {
-                                for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
-                                    for (auto& Override : PlaylistOverrideLootTableData)
-                                        if (Tag.TagName == Override.First.TagName)
-                                            AddToPackages(Override.Second.LootPackageData.Get(), LPTempData);
-                            }
-                            else
-                                for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
-                                    for (auto& Override : PlaylistOverrideLootTableDataLWC)
-                                        if (Tag.TagName.ComparisonIndex == Override.First)
-                                            AddToPackages(Override.Second.LootPackageData.Get(), LPTempData);
-                        }
-
-
-                        for (auto& [_, Val] : LPTempData)
-                            LootPackageMap[Val->LootPackageID.ComparisonIndex].Add(Val);
-                    }
-                }
-            }
 
         /*if (floor(VersionInfo.FortniteVersion) != 20)
         {
@@ -1189,7 +994,6 @@ void AFortGameMode::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor*
         return;
 
     auto GameState = GameMode->GameState;
-    auto Num = NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Num();
     AFortPlayerPawnAthena* Pawn = nullptr;
 
     Pawn = (AFortPlayerPawnAthena*)UWorld::SpawnActor(GameMode->GetDefaultPawnClassForController(NewPlayer), StartSpot->GetTransform(), NewPlayer, 3);
@@ -1211,7 +1015,9 @@ void AFortGameMode::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor*
         Pawn = GameMode->SpawnDefaultPawnAtTransform(NewPlayer, Transform);
     }*/
 
+    *Ret = Pawn;
 
+    auto Num = NewPlayer->WorldInventory ? NewPlayer->WorldInventory->Inventory.ReplicatedEntries.Num() : 0;
     if (Num == 0)
     {
         if (VersionInfo.FortniteVersion <= 1.91 && VersionInfo.FortniteVersion != 1.1 && VersionInfo.FortniteVersion != 1.11 && NewPlayer->HasStrongMyHero())
@@ -1257,182 +1063,6 @@ void AFortGameMode::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor*
             }
             //NewPlayer->XPComponent->OnProfileUpdated();
         }
-
-        static bool bFinalSetup = false;
-        if (!bFinalSetup)
-        {
-            bFinalSetup = true;
-
-            UFortLootPackage::SpawnFloorLootForContainer(FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_Warmup.Tiered_Athena_FloorLoot_Warmup_C"));
-            UFortLootPackage::SpawnFloorLootForContainer(FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_01.Tiered_Athena_FloorLoot_01_C"));
-
-            TArray<ABGAConsumableSpawner*> ConsumableSpawners{};
-            Utils::GetAll<ABGAConsumableSpawner>(ConsumableSpawners);
-
-            for (auto& Spawner : ConsumableSpawners)
-                UFortLootPackage::SpawnConsumableActor(Spawner);
-
-            ConsumableSpawners.Free();
-
-            if (AFortAthenaLivingWorldStaticPointProvider::StaticClass())
-            {
-                TArray<AFortAthenaLivingWorldStaticPointProvider*> Spawners;
-                Utils::GetAll<AFortAthenaLivingWorldStaticPointProvider>(Spawners);
-                UEAllocatedMap<FName, const UClass*> VehicleSpawnerMap =
-                {
-                    { FName(L"Athena.Vehicle.SpawnLocation.Motorcycle.Dirtbike"), FindObject<UClass>(L"/Dirtbike/Vehicle/Motorcycle_DirtBike_Vehicle.Motorcycle_DirtBike_Vehicle_C") },
-                    { FName(L"Athena.Vehicle.SpawnLocation.Motorcycle.Sportbike"), FindObject<UClass>(L"/Sportbike/Vehicle/Motorcycle_Sport_Vehicle.Motorcycle_Sport_Vehicle_C") },
-                    { FName(L"Athena.Vehicle.SpawnLocation.Valet.BasicCar.Taxi"), FindObject<UClass>(L"/Valet/TaxiCab/Valet_TaxiCab_Vehicle.Valet_TaxiCab_Vehicle_C") },
-                    { FName(L"Athena.Vehicle.SpawnLocation.Valet.BasicCar.Modded"), FindObject<UClass>(L"/ModdedBasicCar/Vehicle/Valet_BasicCar_Vehicle_SuperSedan.Valet_BasicCar_Vehicle_SuperSedan_C") },
-                    { FName(L"Athena.Vehicle.SpawnLocation.Valet.BasicTruck.Upgraded"), FindObject<UClass>(L"/Valet/BasicTruck/Valet_BasicTruck_Vehicle_Upgrade.Valet_BasicTruck_Vehicle_Upgrade_C") },
-                    { FName(L"Athena.Vehicle.SpawnLocation.Valet.BigRig.Upgraded"), FindObject<UClass>(L"/Valet/BigRig/Valet_BigRig_Vehicle_Upgrade.Valet_BigRig_Vehicle_Upgrade_C") },
-                    { FName(L"Athena.Vehicle.SpawnLocation.Valet.SportsCar.Upgraded"), FindObject<UClass>(L"/Valet/SportsCar/Valet_SportsCar_Vehicle_Upgrade.Valet_SportsCar_Vehicle_Upgrade_C") },
-                    { FName(L"Athena.Vehicle.SpawnLocation.Valet.BasicCar.Upgraded"), FindObject<UClass>(L"/Valet/BasicCar/Valet_BasicCar_Vehicle_Upgrade.Valet_BasicCar_Vehicle_Upgrade_C") }
-                };
-
-                for (auto& Spawner : Spawners)
-                {
-                    const UClass* VehicleClass = nullptr;
-                    for (int i = 0; i < Spawner->FiltersTags.GameplayTags.Num(); i++)
-                    {
-                        auto& Tag = Spawner->FiltersTags.GameplayTags.Get(i, FGameplayTag::Size());
-
-                        if (VehicleSpawnerMap.contains(Tag.TagName))
-                        {
-                            VehicleClass = VehicleSpawnerMap[Tag.TagName];
-                            break;
-                        }
-                    }
-
-                    if (VehicleClass)
-                    {
-                        auto Vehicle = UWorld::SpawnActor<AFortAthenaVehicle>(VehicleClass, Spawner->K2_GetActorLocation(), Spawner->K2_GetActorRotation());
-
-                        if (auto Car = Vehicle->Cast<AFortDagwoodVehicle>())
-                            Car->SetFuel(100.f);
-                        //printf("Spawned a %s\n", Spawner->Name.ToString().c_str());
-                    }
-                    else
-                    {
-                        for (auto& Tag : Spawner->FiltersTags.GameplayTags)
-                            printf("Fix: Tag: %s\n", Tag.TagName.ToString().c_str());
-                    }
-                }
-                Spawners.Free();
-            }
-            // not an else here because they still use spawners for boats, and fully on s27
-            if (VersionInfo.FortniteVersion >= 4.23 && std::floor(VersionInfo.FortniteVersion) != 20 && std::floor(VersionInfo.FortniteVersion) != 21) // its auto on s20 & s21
-            {
-                TArray<AFortAthenaVehicleSpawner*> Spawners{};
-                Utils::GetAll<AFortAthenaVehicleSpawner>(Spawners);
-
-                for (auto& Spawner : Spawners)
-                {
-                    auto Vehicle = UWorld::SpawnActor<AFortAthenaVehicle>(Spawner->GetVehicleClass(), Spawner->K2_GetActorLocation(), Spawner->K2_GetActorRotation());
-
-                    if (auto Car = Vehicle->Cast<AFortDagwoodVehicle>())
-                        Car->SetFuel(100.f);
-                }
-
-                Spawners.Free();
-            }
-
-            if (VersionInfo.FortniteVersion > 3.4)
-            {
-                TArray<ABuildingItemCollectorActor*> Collectors{};
-                Utils::GetAll<ABuildingItemCollectorActor>(Collectors);
-                for (auto& CollectorActor : Collectors)
-                {
-                    if (Sum > Weight)
-                    {
-                    PickNum:
-                        auto RandomNum = (float)rand() / (RAND_MAX / TotalWeight);
-
-                        int Rarity = 0;
-                        bool found = false;
-
-                        for (auto& Element : WeightMap)
-                        {
-                            float Weight = Element.second;
-
-                            if (Weight == 0)
-                                continue;
-
-                            if (RandomNum <= Weight)
-                            {
-                                Rarity = Element.first;
-
-                                found = true;
-                                break;
-                            }
-
-                            RandomNum -= Weight;
-                        }
-
-                        if (!found)
-                            goto PickNum;
-
-                        if (Rarity == 0)
-                        {
-                            CollectorActor->K2_DestroyActor();
-                            continue;
-                        }
-
-                        int AttemptsToGetItem = 0;
-                        for (int i = 0; i < CollectorActor->ItemCollections.Num(); i++)
-                        {
-                            if (AttemptsToGetItem > 10)
-                            {
-                                AttemptsToGetItem = 0;
-                                goto PickNum;
-                            }
-
-                            auto& Collection = CollectorActor->ItemCollections.Get(i, FCollectorUnitInfo::Size());
-
-                            if (Collection.bUseDefinedOutputItem)
-                                continue;
-
-                            TArray<FFortItemEntry*> LootDrops{};
-
-                            UFortLootPackage::ChooseLootForContainer(LootDrops, CollectorActor->DefaultItemLootTierGroupName, Rarity);
-
-                            if (Collection.OutputItemEntry.Num() > 0)
-                            {
-                                Collection.OutputItemEntry.ResetNum();
-                                Collection.OutputItem = nullptr;
-                            }
-
-                            for (auto& LootDrop : LootDrops)
-                            {
-                                if (!Collection.OutputItem && AFortInventory::IsPrimaryQuickbar(LootDrop->ItemDefinition))
-                                    Collection.OutputItem = LootDrop->ItemDefinition;
-
-                                Collection.OutputItemEntry.Add(*LootDrop, FFortItemEntry::Size());
-                                free(LootDrop);
-                            }
-
-                            if (!Collection.OutputItem)
-                            {
-                                i--;
-                                AttemptsToGetItem++;
-
-                                continue;
-                            }
-
-                            AttemptsToGetItem = 0;
-                        }
-
-                        CollectorActor->StartingGoalLevel = Rarity;
-                    }
-                    else
-                        CollectorActor->K2_DestroyActor();
-                }
-                Collectors.Free();
-
-                Utils::ExecHook((UFunction*)FindObject<UFunction>(L"/Game/Athena/Items/Gameplay/VendingMachine/B_Athena_VendingMachine.B_Athena_VendingMachine_C:VendWobble__FinishedFunc"), VendWobble__FinishedFunc, VendWobble__FinishedFuncOG);
-            }
-            //Utils::ExecHook((UFunction*)FindObject<UFunction>(L"/Game/Athena/Items/Consumables/Parents/GA_Athena_MedConsumable_Parent.GA_Athena_MedConsumable_Parent_C:Triggered_4C02BFB04B18D9E79F84848FFE6D2C32"), AFortPlayerPawnAthena::Athena_MedConsumable_Triggered, AFortPlayerPawnAthena::Athena_MedConsumable_TriggeredOG);
-        }
     }
     else
     {
@@ -1452,8 +1082,6 @@ void AFortGameMode::SpawnDefaultPawnFor(UObject* Context, FFrame& Stack, AActor*
 
         NewPlayer->WorldInventory->Update(nullptr);*/
     }
-
-    *Ret = Pawn;
 }
 
 
@@ -1515,8 +1143,6 @@ void AFortGameMode::HandlePostSafeZonePhaseChanged(AFortGameMode* GameMode, int 
 
     if (VersionInfo.FortniteVersion >= 13.00)
     {
-
-
         static bool bSetDurations = false;
         if (!bSetDurations)
         {
@@ -1589,7 +1215,7 @@ void AFortGameMode::HandlePostSafeZonePhaseChanged(AFortGameMode* GameMode, int 
         {
             auto PlayerController = (AFortPlayerControllerAthena*)UncastedPlayer;
 
-            PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetStormPhase(), 1);
+            PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetStormPhase(), 1, false);
         }
     }
 }
@@ -1969,7 +1595,7 @@ void StartNewSafeZonePhase(AFortGameMode* GameMode, int NewSafeZonePhase, bool b
             {
                 auto PlayerController = (AFortPlayerControllerAthena*)UncastedPlayer;
 
-                PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetStormPhase(), 1);
+                PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetStormPhase(), 1, false);
             }
     }
 }
@@ -2051,9 +1677,400 @@ void OnWorldInitDone(UNavigationSystem* NavSys, char Mode)
     AllNavmeshes.Free();*/
 }
 
+void AFortGameMode::FinishWorldInitialization(AFortGameMode* _this, AActor* WorldManager)
+{
+    auto GameMode = (AFortGameModeAthena*)_this;
+    auto GameState = (AFortGameStateAthena*)GameMode->GameState;
+
+    //if (VersionInfo.EngineVersion == 4.25)
+    //    SetupPlaylist(GameMode, GameState);
+
+    printf("[GameMode] FinishWorldInitialization\n");
+    FinishWorldInitializationOG(_this, WorldManager);
+
+
+    auto AddToTierData = [&](const UDataTable* Table, TArray<FFortLootTierData*>& TempArr)
+        {
+            if (!Table)
+                return;
+
+            Table->AddToRoot();
+            if (VersionInfo.FortniteVersion >= 20)
+            {
+                if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
+                    for (auto& ParentTable : CompositeTable->ParentTables)
+                        if (ParentTable)
+                            for (auto& [Key, Val] : *(TMap<int32, FFortLootTierData*>*) (__int64(ParentTable) + 0x30))
+                                TempArr.Add(Val);
+
+                for (auto& [Key, Val] : *(TMap<int32, FFortLootTierData*>*) (__int64(Table) + 0x30))
+                {
+                    bool bFound = false;
+
+                    for (auto& TierData : TempArr)
+                        if (TierData->TierGroup == Val->TierGroup && TierData->LootPackage == Val->LootPackage)
+                        {
+                            TierData = Val;
+                            bFound = true;
+                            break;
+                        }
+
+                    if (!bFound)
+                        TempArr.Add(Val);
+                }
+            }
+            else
+            {
+                if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
+                    for (auto& ParentTable : CompositeTable->ParentTables)
+                        if (ParentTable)
+                            for (auto& [Key, Val] : (TMap<FName, FFortLootTierData*>) ParentTable->RowMap)
+                                TempArr.Add(Val);
+
+                for (auto& [Key, Val] : (TMap<FName, FFortLootTierData*>) Table->RowMap)
+                {
+                    bool bFound = false;
+
+                    for (auto& TierData : TempArr)
+                        if (TierData->TierGroup == Val->TierGroup && TierData->LootPackage == Val->LootPackage)
+                        {
+                            TierData = Val;
+                            bFound = true;
+                            break;
+                        }
+
+                    if (!bFound)
+                        TempArr.Add(Val);
+                }
+            }
+        };
+
+    auto AddToPackages = [&](const UDataTable* Table, std::unordered_map<int32, FFortLootPackageData*>& TempArr)
+        {
+            if (!Table)
+                return;
+
+            Table->AddToRoot();
+            if (VersionInfo.FortniteVersion >= 20)
+            {
+                if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
+                    for (auto& ParentTable : CompositeTable->ParentTables)
+                        if (ParentTable)
+                            for (auto& [Key, Val] : *(TMap<int32, FFortLootPackageData*>*) (__int64(ParentTable) + 0x30))
+                                TempArr[Key] = Val;
+
+                for (auto& [Key, Val] : *(TMap<int32, FFortLootPackageData*>*) (__int64(Table) + 0x30))
+                    TempArr[Key] = Val;
+            }
+            else
+            {
+                if (auto CompositeTable = Table->Cast<UCompositeDataTable>())
+                    for (auto& ParentTable : CompositeTable->ParentTables)
+                        if (ParentTable)
+                            for (auto& [Key, Val] : (TMap<FName, FFortLootPackageData*>) ParentTable->RowMap)
+                                TempArr[Key.ComparisonIndex] = Val;
+
+                for (auto& [Key, Val] : (TMap<FName, FFortLootPackageData*>) Table->RowMap)
+                {
+                    TempArr[Key.ComparisonIndex] = Val;
+                }
+            }
+        };
+
+    auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
+
+    if (!Playlist)
+        Playlist = FindObject<UFortPlaylistAthena>(L"/Game/Athena/Playlists/Playlist_DefaultSolo.Playlist_DefaultSolo");
+
+    TArray<FFortLootTierData*> LootTierDataTempArr;
+    auto LootTierData = Playlist ? Playlist->LootTierData.Get() : nullptr;
+    if (!LootTierData)
+        LootTierData = FindObject<UDataTable>(GameMode->HasWarmupRequiredPlayerCount() ? L"/Game/Items/Datatables/AthenaLootTierData_Client.AthenaLootTierData_Client" : L"/Game/Items/Datatables/LootTierData_Client.LootTierData_Client");
+    if (LootTierData)
+        AddToTierData(LootTierData, LootTierDataTempArr);
+
+    for (auto& Val : LootTierDataTempArr)
+        TierDataMap[Val->TierGroup.ComparisonIndex].Add(Val);
+
+    std::unordered_map<int32, FFortLootPackageData*> LootPackageTempArr;
+    auto LootPackages = Playlist ? Playlist->LootPackages.Get() : nullptr;
+    if (!LootPackages)
+        LootPackages = FindObject<UDataTable>(GameMode->HasWarmupRequiredPlayerCount() ? L"/Game/Items/Datatables/AthenaLootPackages_Client.AthenaLootPackages_Client" : L"/Game/Items/Datatables/LootPackages_Client.LootPackages_Client");
+    if (LootPackages)
+        AddToPackages(LootPackages, LootPackageTempArr);
+
+    for (auto& [_, Val] : LootPackageTempArr)
+        LootPackageMap[Val->LootPackageID.ComparisonIndex].Add(Val);
+
+    auto GameFeatureDataClass = FindClass("FortGameFeatureData");
+    if (GameFeatureDataClass)
+        for (int i = 0; i < TUObjectArray::Num(); i++)
+        {
+            auto Object = TUObjectArray::GetObjectByIndex(i);
+
+            if (!Object || !Object->Class || Object->IsDefaultObject())
+                continue;
+
+            if (Object->IsA(GameFeatureDataClass))
+            {
+                static auto DefaultLootTableDataOffset = Object->GetOffset("DefaultLootTableData");
+                static auto PlaylistOverrideLootTableDataOffset = Object->GetOffset("PlaylistOverrideLootTableData");
+
+                auto& LootTableData = GetFromOffset<FFortGameFeatureLootTableData>(Object, DefaultLootTableDataOffset);
+                auto& LootTableDataUE53 = GetFromOffset<FFortGameFeatureLootTableData_UE53>(Object, DefaultLootTableDataOffset);
+                auto& PlaylistOverrideLootTableData = GetFromOffset<TMap<FGameplayTag, FFortGameFeatureLootTableData>>(Object, PlaylistOverrideLootTableDataOffset);
+                auto& PlaylistOverrideLootTableDataLWC = GetFromOffset<TMap<int32, FFortGameFeatureLootTableData>>(Object, PlaylistOverrideLootTableDataOffset);
+                auto& PlaylistOverrideLootTableDataUE53 = GetFromOffset<TMap<int32, FFortGameFeatureLootTableData_UE53>>(Object, PlaylistOverrideLootTableDataOffset);
+                auto LTDFeatureData = VersionInfo.EngineVersion >= 5.3 ? LootTableDataUE53.LootTierData.Get() : LootTableData.LootTierData.Get();
+                auto LootPackageData = VersionInfo.EngineVersion >= 5.3 ? LootTableDataUE53.LootPackageData.Get() : LootTableData.LootPackageData.Get();
+
+                if (LTDFeatureData)
+                {
+                    TArray<FFortLootTierData*> LTDTempData;
+
+                    AddToTierData(LTDFeatureData, LTDTempData);
+
+                    if (Playlist)
+                    {
+                        if (VersionInfo.EngineVersion >= 5.3)
+                        {
+                            /*for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
+                                for (auto& Override : PlaylistOverrideLootTableDataUE52)
+                                    if (Tag.TagName.ComparisonIndex == Override.First)
+                                        AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);*/
+                        }
+                        else if (VersionInfo.FortniteVersion < 20.00)
+                        {
+                            for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
+                                for (auto& Override : PlaylistOverrideLootTableData)
+                                    if (Tag.TagName == Override.First.TagName)
+                                        AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);
+                        }
+                        else
+                            for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
+                                for (auto& Override : PlaylistOverrideLootTableDataLWC)
+                                    if (Tag.TagName.ComparisonIndex == Override.First)
+                                        AddToTierData(Override.Second.LootTierData.Get(), LTDTempData);
+                    }
+
+                    //for (auto& [_, Val] : LTDTempData)
+                    //    TierDataAllGroups.Add(Val);
+
+                    for (auto& Val : LTDTempData)
+                        TierDataMap[Val->TierGroup.ComparisonIndex].Add(Val);
+                }
+
+                if (LootPackageData)
+                {
+                    std::unordered_map<int32, FFortLootPackageData*> LPTempData;
+
+                    AddToPackages(LootPackageData, LPTempData);
+
+                    if (Playlist)
+                    {
+                        if (VersionInfo.EngineVersion >= 5.3)
+                        {
+                            /*for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
+                                for (auto& Override : PlaylistOverrideLootTableDataUE52)
+                                    if (Tag.TagName.ComparisonIndex == Override.First)
+                                        AddToPackages(Override.Second.LootPackageData.Get(), LPTempData);*/
+                        }
+                        else if (VersionInfo.FortniteVersion < 20.00)
+                        {
+                            for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
+                                for (auto& Override : PlaylistOverrideLootTableData)
+                                    if (Tag.TagName == Override.First.TagName)
+                                        AddToPackages(Override.Second.LootPackageData.Get(), LPTempData);
+                        }
+                        else
+                            for (auto& Tag : Playlist->GameplayTagContainer.GameplayTags)
+                                for (auto& Override : PlaylistOverrideLootTableDataLWC)
+                                    if (Tag.TagName.ComparisonIndex == Override.First)
+                                        AddToPackages(Override.Second.LootPackageData.Get(), LPTempData);
+                    }
+
+
+                    for (auto& [_, Val] : LPTempData)
+                        LootPackageMap[Val->LootPackageID.ComparisonIndex].Add(Val);
+                }
+            }
+        }
+
+    UFortLootPackage::SpawnFloorLootForContainer(FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_Warmup.Tiered_Athena_FloorLoot_Warmup_C"));
+    UFortLootPackage::SpawnFloorLootForContainer(FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_01.Tiered_Athena_FloorLoot_01_C"));
+
+    TArray<ABGAConsumableSpawner*> ConsumableSpawners{};
+    Utils::GetAll<ABGAConsumableSpawner>(ConsumableSpawners);
+
+    for (auto& Spawner : ConsumableSpawners)
+        UFortLootPackage::SpawnConsumableActor(Spawner);
+
+    ConsumableSpawners.Free();
+
+    if (AFortAthenaLivingWorldStaticPointProvider::StaticClass())
+    {
+        TArray<AFortAthenaLivingWorldStaticPointProvider*> Spawners;
+        Utils::GetAll<AFortAthenaLivingWorldStaticPointProvider>(Spawners);
+        UEAllocatedMap<FName, const UClass*> VehicleSpawnerMap =
+        {
+            { FName(L"Athena.Vehicle.SpawnLocation.Motorcycle.Dirtbike"), FindObject<UClass>(L"/Dirtbike/Vehicle/Motorcycle_DirtBike_Vehicle.Motorcycle_DirtBike_Vehicle_C") },
+            { FName(L"Athena.Vehicle.SpawnLocation.Motorcycle.Sportbike"), FindObject<UClass>(L"/Sportbike/Vehicle/Motorcycle_Sport_Vehicle.Motorcycle_Sport_Vehicle_C") },
+            { FName(L"Athena.Vehicle.SpawnLocation.Valet.BasicCar.Taxi"), FindObject<UClass>(L"/Valet/TaxiCab/Valet_TaxiCab_Vehicle.Valet_TaxiCab_Vehicle_C") },
+            { FName(L"Athena.Vehicle.SpawnLocation.Valet.BasicCar.Modded"), FindObject<UClass>(L"/ModdedBasicCar/Vehicle/Valet_BasicCar_Vehicle_SuperSedan.Valet_BasicCar_Vehicle_SuperSedan_C") },
+            { FName(L"Athena.Vehicle.SpawnLocation.Valet.BasicTruck.Upgraded"), FindObject<UClass>(L"/Valet/BasicTruck/Valet_BasicTruck_Vehicle_Upgrade.Valet_BasicTruck_Vehicle_Upgrade_C") },
+            { FName(L"Athena.Vehicle.SpawnLocation.Valet.BigRig.Upgraded"), FindObject<UClass>(L"/Valet/BigRig/Valet_BigRig_Vehicle_Upgrade.Valet_BigRig_Vehicle_Upgrade_C") },
+            { FName(L"Athena.Vehicle.SpawnLocation.Valet.SportsCar.Upgraded"), FindObject<UClass>(L"/Valet/SportsCar/Valet_SportsCar_Vehicle_Upgrade.Valet_SportsCar_Vehicle_Upgrade_C") },
+            { FName(L"Athena.Vehicle.SpawnLocation.Valet.BasicCar.Upgraded"), FindObject<UClass>(L"/Valet/BasicCar/Valet_BasicCar_Vehicle_Upgrade.Valet_BasicCar_Vehicle_Upgrade_C") }
+        };
+
+        for (auto& Spawner : Spawners)
+        {
+            const UClass* VehicleClass = nullptr;
+            for (int i = 0; i < Spawner->FiltersTags.GameplayTags.Num(); i++)
+            {
+                auto& Tag = Spawner->FiltersTags.GameplayTags.Get(i, FGameplayTag::Size());
+
+                if (VehicleSpawnerMap.contains(Tag.TagName))
+                {
+                    VehicleClass = VehicleSpawnerMap[Tag.TagName];
+                    break;
+                }
+            }
+
+            if (VehicleClass)
+            {
+                auto Vehicle = UWorld::SpawnActor<AFortAthenaVehicle>(VehicleClass, Spawner->K2_GetActorLocation(), Spawner->K2_GetActorRotation());
+
+                if (auto Car = Vehicle->Cast<AFortDagwoodVehicle>())
+                    Car->SetFuel(100.f);
+                //printf("Spawned a %s\n", Spawner->Name.ToString().c_str());
+            }
+            else
+            {
+                for (auto& Tag : Spawner->FiltersTags.GameplayTags)
+                    printf("Fix: Tag: %s\n", Tag.TagName.ToString().c_str());
+            }
+        }
+        Spawners.Free();
+    }
+    // not an else here because they still use spawners for boats, and fully on s27
+    if (VersionInfo.FortniteVersion >= 4.23 && std::floor(VersionInfo.FortniteVersion) != 20 && std::floor(VersionInfo.FortniteVersion) != 21) // its auto on s20 & s21
+    {
+        TArray<AFortAthenaVehicleSpawner*> Spawners{};
+        Utils::GetAll<AFortAthenaVehicleSpawner>(Spawners);
+
+        for (auto& Spawner : Spawners)
+        {
+            auto Vehicle = UWorld::SpawnActor<AFortAthenaVehicle>(Spawner->GetVehicleClass(), Spawner->K2_GetActorLocation(), Spawner->K2_GetActorRotation());
+
+            if (auto Car = Vehicle->Cast<AFortDagwoodVehicle>())
+                Car->SetFuel(100.f);
+        }
+
+        Spawners.Free();
+    }
+
+    if (VersionInfo.FortniteVersion > 3.4)
+    {
+        TArray<ABuildingItemCollectorActor*> Collectors{};
+        Utils::GetAll<ABuildingItemCollectorActor>(Collectors);
+        for (auto& CollectorActor : Collectors)
+        {
+            if (Sum > Weight)
+            {
+            PickNum:
+                auto RandomNum = (float)rand() / (RAND_MAX / TotalWeight);
+
+                int Rarity = 0;
+                bool found = false;
+
+                for (auto& Element : WeightMap)
+                {
+                    float Weight = Element.second;
+
+                    if (Weight == 0)
+                        continue;
+
+                    if (RandomNum <= Weight)
+                    {
+                        Rarity = Element.first;
+
+                        found = true;
+                        break;
+                    }
+
+                    RandomNum -= Weight;
+                }
+
+                if (!found)
+                    goto PickNum;
+
+                if (Rarity == 0)
+                {
+                    CollectorActor->K2_DestroyActor();
+                    continue;
+                }
+
+                int AttemptsToGetItem = 0;
+                for (int i = 0; i < CollectorActor->ItemCollections.Num(); i++)
+                {
+                    if (AttemptsToGetItem > 10)
+                    {
+                        AttemptsToGetItem = 0;
+                        goto PickNum;
+                    }
+
+                    auto& Collection = CollectorActor->ItemCollections.Get(i, FCollectorUnitInfo::Size());
+
+                    if (Collection.bUseDefinedOutputItem)
+                        continue;
+
+                    TArray<FFortItemEntry*> LootDrops{};
+
+                    UFortLootPackage::ChooseLootForContainer(LootDrops, CollectorActor->DefaultItemLootTierGroupName, Rarity);
+
+                    if (Collection.OutputItemEntry.Num() > 0)
+                    {
+                        Collection.OutputItemEntry.ResetNum();
+                        Collection.OutputItem = nullptr;
+                    }
+
+                    for (auto& LootDrop : LootDrops)
+                    {
+                        if (!Collection.OutputItem && AFortInventory::IsPrimaryQuickbar(LootDrop->ItemDefinition))
+                            Collection.OutputItem = LootDrop->ItemDefinition;
+
+                        Collection.OutputItemEntry.Add(*LootDrop, FFortItemEntry::Size());
+                        free(LootDrop);
+                    }
+
+                    if (!Collection.OutputItem)
+                    {
+                        i--;
+                        AttemptsToGetItem++;
+
+                        continue;
+                    }
+
+                    AttemptsToGetItem = 0;
+                }
+
+                CollectorActor->StartingGoalLevel = Rarity;
+            }
+            else
+                CollectorActor->K2_DestroyActor();
+        }
+        Collectors.Free();
+
+        Utils::ExecHook((UFunction*)FindObject<UFunction>(L"/Game/Athena/Items/Gameplay/VendingMachine/B_Athena_VendingMachine.B_Athena_VendingMachine_C:VendWobble__FinishedFunc"), VendWobble__FinishedFunc, VendWobble__FinishedFuncOG);
+    }
+    //Utils::ExecHook((UFunction*)FindObject<UFunction>(L"/Game/Athena/Items/Consumables/Parents/GA_Athena_MedConsumable_Parent.GA_Athena_MedConsumable_Parent_C:Triggered_4C02BFB04B18D9E79F84848FFE6D2C32"), AFortPlayerPawnAthena::Athena_MedConsumable_Triggered, AFortPlayerPawnAthena::Athena_MedConsumable_TriggeredOG);
+}
+
 void AFortGameMode::Hook()
 {
     Utils::ExecHook(GetDefaultObj()->GetFunction("ReadyToStartMatch"), ReadyToStartMatch_, ReadyToStartMatch_OG);
+    Utils::Hook(FindFinishWorldInitialization(), FinishWorldInitialization, FinishWorldInitializationOG);
     //if (VersionInfo.EngineVersion == 4.16)
     //    Utils::Hook(Memcury::Scanner::FindPattern("40 55 53 56 41 56 48 8D 6C 24 ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 48 8B 01 48 8B F1").Get(), OnWorldInitDone, OnWorldInitDoneOG);
 }

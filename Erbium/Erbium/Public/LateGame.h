@@ -23,7 +23,7 @@ class LateGame
 public:
     static FLateGameItem GetShotgun();
     static FLateGameItem GetAssaultRifle();
-    static FLateGameItem GetSniper();
+    static FLateGameItem GetUtility();
     static FLateGameItem GetHeal();
 
     static const UFortItemDefinition* GetAmmo(EAmmoType);

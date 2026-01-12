@@ -610,7 +610,7 @@ uint64_t FindSendRequestNow()
 
         if (!sRef)
             return 0;
-
+            
         for (int i = 0; i < 1000; i++)
         {
             auto Ptr = (uint8_t*)(sRef - i);
@@ -2535,7 +2535,7 @@ uint64_t FindCanAffordToPlaceBuildableClass()
             {
                 auto Ptr = (uint8_t*)(sRef.Get() - i);
 
-                if (*Ptr == 0x40 && (*(Ptr + 1) == 0x57 || *(Ptr + 1) == 0x55 || *(Ptr + 1) == 0x53))
+                if (*Ptr == 0x40 && (*(Ptr + 1) == 0x57 || *(Ptr + 1) == 0x55 || *(Ptr + 1) == 0x53 || *(Ptr + 1) == 0x56))
                     return uint64_t(Ptr);
             }
         }
@@ -2586,6 +2586,9 @@ uint64 FindLoadPlayset(const std::vector<uint8_t>& Bytes, int recursive)
         if (VersionInfo.EngineVersion >= 5.0)
         {
             LoadPlayset = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 4C 8B B1 ? ? ? ? 45").Get();
+
+            if (!LoadPlayset)
+                LoadPlayset = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B B1 ? ? ? ? 45").Get();
 
             if (!LoadPlayset)
                 LoadPlayset = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 4C 8B A9").Get();
@@ -2846,6 +2849,237 @@ uint64 FindListenCall()
     return ListenCall;
 }
 
+uint64 FindQueueStatEvent()
+{
+    auto sRef = Memcury::Scanner::FindStringRef(L"UFortQuestManager::QueueStatEvent: %s tried to queue a stat event, but the player controller is null. \n\t Event: %s", false, 0, VersionInfo.FortniteVersion >= 19, false);
+
+    if (!sRef.IsValid())
+        return 0;
+
+    for (int i = 0; i < 2000; i++)
+    {
+        auto Ptr = (uint8_t*)(sRef.Get() - i);
+
+        if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4)
+            return uint64_t(Ptr);
+        else if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
+            return uint64_t(Ptr);
+        else if (*Ptr == 0x40 && *(Ptr + 1) == 0x55)
+            return uint64_t(Ptr);
+    }
+
+    return 0;
+}
+
+uint64 FindFinishWorldInitialization()
+{
+    auto sRef = Memcury::Scanner::FindStringRef(L"Can't find a FortAthenaMapInfo placed in map.  Skipping warmup and aircraft phases.", false, 0, VersionInfo.FortniteVersion >= 19, false);
+
+    if (!sRef.IsValid())
+    {
+        auto MeshSRef = Memcury::Scanner::FindStringRef(L"bEnableMeshNetwork");
+
+        if (!MeshSRef.IsValid())
+        {
+            return Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 55 57 41 56 48 8D 6C 24 ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 48 8B F9 E8 ? ? ? ? 48 8B CF 4C 8B F0").Get();
+        }
+
+        uint64_t ShouldPIESetDefaultPlaylistPart = 0;
+        for (int i = 0; i < 2000; i++)
+        {
+            auto Ptr = (uint8_t*)(MeshSRef.Get() - i);
+
+            if (*Ptr == 0x48 && *(Ptr + 1) == 0x83 && *(Ptr + 2) == 0xEC)
+            {
+                ShouldPIESetDefaultPlaylistPart = uint64_t(Ptr);
+                break;
+            }
+            else if (*Ptr == 0x48 && *(Ptr + 1) == 0x81 && *(Ptr + 2) == 0xEC)
+            {
+                ShouldPIESetDefaultPlaylistPart = uint64_t(Ptr);
+                break;
+            }
+        }
+
+        uint64_t ShouldPIESetDefaultPlaylist = 0;
+
+        for (int i = 0; i < 2000; i++)
+        {
+            auto Ptr = (uint8_t*)(ShouldPIESetDefaultPlaylistPart - i);
+
+            if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4)
+            {
+                ShouldPIESetDefaultPlaylist = uint64_t(Ptr);
+                break;
+            }
+            else if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
+            {
+                ShouldPIESetDefaultPlaylist = uint64_t(Ptr);
+                break;
+            }
+            else if (*Ptr == 0x4C && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xDC)
+            {
+                ShouldPIESetDefaultPlaylist = uint64_t(Ptr);
+                break;
+            }
+            else if (*Ptr == 0x40 && *(Ptr + 1) == 0x55)
+            {
+                ShouldPIESetDefaultPlaylist = uint64_t(Ptr);
+                break;
+            }
+        }
+
+        sRef = Memcury::Scanner::FindPointerRef((void*)ShouldPIESetDefaultPlaylist);
+    }
+
+    if (!sRef.Get())
+        return 0;
+
+    uint64_t FinishWorldInitializationPart = 0;
+    for (int i = 0; i < 2000; i++)
+    {
+        auto Ptr = (uint8_t*)(sRef.Get() - i);
+
+        if (*Ptr == 0x48 && *(Ptr + 1) == 0x83 && *(Ptr + 2) == 0xEC)
+        {
+            FinishWorldInitializationPart = uint64_t(Ptr);
+            break;
+        }
+        else if (*Ptr == 0x48 && *(Ptr + 1) == 0x81 && *(Ptr + 2) == 0xEC)
+        {
+            FinishWorldInitializationPart = uint64_t(Ptr);
+            break;
+        }
+    }
+
+    for (int i = 0; i < 2000; i++)
+    {
+        auto Ptr = (uint8_t*)(FinishWorldInitializationPart - i);
+
+        if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4)
+            return uint64_t(Ptr);
+        else if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
+            return uint64_t(Ptr);
+        else if (*Ptr == 0x4C && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xDC)
+            return uint64_t(Ptr);
+        else if (*Ptr == 0x40 && *(Ptr + 1) == 0x55)
+            return uint64_t(Ptr);
+    }
+
+    return 0;
+}
+
+auto FindCmpRef(void* Pointer) -> Memcury::Scanner
+{
+    Memcury::PE::Address add{ nullptr };
+
+    if (!Pointer)
+        return Memcury::Scanner(add);
+
+    auto textSection = Memcury::PE::Section::GetSection(".text");
+
+    const auto scanBytes = reinterpret_cast<std::uint8_t*>(textSection.GetSectionStart().Get());
+
+    int aa = 0;
+
+    __m128i t = _mm_set1_epi8((char)0x39);
+    __m128i t2 = _mm_set1_epi8((char)0x83);
+    DWORD i = 0;
+
+    for (; i < textSection.GetSectionSize() - (textSection.GetSectionSize() % 16); i += 16)
+    {
+        auto bytes = _mm_load_si128((const __m128i*)(scanBytes + i));
+        int offset = _mm_movemask_epi8(_mm_cmpeq_epi8(bytes, t));
+
+        if (offset != 0)
+        {
+            for (int q = 0; q < 16; q++)
+            {
+                int c = offset & (1 << q);
+                if (c)
+                {
+                    if (Memcury::PE::Address(&scanBytes[i + q]).RelativeOffset(2).GetAs<void*>() == Pointer)
+                    {
+                        add = Memcury::PE::Address(&scanBytes[i + q]);
+
+                        goto _ret;
+                    }
+                }
+            }
+        }
+
+        int offset2 = _mm_movemask_epi8(_mm_cmpeq_epi8(bytes, t2));
+
+        if (offset2 != 0)
+        {
+            for (int q = 0; q < 16; q++)
+            {
+                int c = offset2 & (1 << q);
+                if (c)
+                {
+                    if (Memcury::PE::Address(&scanBytes[i + q]).RelativeOffset(2, 1).GetAs<void*>() == Pointer)
+                    {
+                        add = Memcury::PE::Address(&scanBytes[i + q]);
+
+                        goto _ret;
+                    }
+                }
+            }
+        }
+    }
+_ret:
+
+
+    return Memcury::Scanner(add);
+}
+
+
+uint64 FindSetIsDoorOpen()
+{
+    auto CVar = FindCVar<void>(L"Athena.EnableSlammingThroughDoorsKnockbackPawns");
+    if (!CVar)
+        return 0;
+
+    auto CVarRef = FindCmpRef(CVar);
+
+    if (!CVarRef.IsValid())
+        return 0;
+
+    printf("CVarRef: %llx\n", CVarRef.Get() - ImageBase);
+    uint64_t SetIsDoorOpenPart = 0;
+    for (int i = 0; i < 0x10000; i++)
+    {
+        auto Ptr = (uint8_t*)(CVarRef.Get() - i);
+
+        if (*Ptr == 0x48 && *(Ptr + 1) == 0x83 && *(Ptr + 2) == 0xEC)
+        {
+            SetIsDoorOpenPart = uint64_t(Ptr);
+            break;
+        }
+        else if (*Ptr == 0x48 && *(Ptr + 1) == 0x81 && *(Ptr + 2) == 0xEC)
+        {
+            SetIsDoorOpenPart = uint64_t(Ptr);
+            break;
+        }
+    }
+    printf("CVarRef: %llx\n", SetIsDoorOpenPart - ImageBase);
+
+    if (SetIsDoorOpenPart)
+        for (int i = 0; i < 2000; i++)
+        {
+            auto Ptr = (uint8_t*)(SetIsDoorOpenPart - i);
+
+            if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4)
+                return uint64_t(Ptr);
+            else if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
+                return uint64_t(Ptr);
+            else if (*Ptr == 0x40 && *(Ptr + 1) == 0x55)
+                return uint64_t(Ptr);
+        }
+
+    return 0;
+}
+
 void FindNullsAndRetTrues()
 {
     if (VersionInfo.EngineVersion == 4.16)
@@ -2915,8 +3149,8 @@ void FindNullsAndRetTrues()
             NullFuncs.push_back(Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 48 83 EC 30 48 8B F9 48 8B CA E8").Get());
             NullFuncs.push_back(Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 ? 41 ? 48 83 EC 60 45 33 F6 4C 8D ? ? ? ? ? 48 8B DA").Get());
         }
-        else if (VersionInfo.EngineVersion == 5.1)
-            NullFuncs.push_back(Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? B8 ? ? ? ? E8 ? ? ? ? 48 2B E0 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 4D 8B F1").Get());
+        //else if (VersionInfo.EngineVersion == 5.1)
+        //    NullFuncs.push_back(Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? B8 ? ? ? ? E8 ? ? ? ? 48 2B E0 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 4D 8B F1").Get());
         else if (VersionInfo.EngineVersion == 5.2)
             NullFuncs.push_back(Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 0F 29 70 ? 48 8D 6C 24 ? 48 83 E5 ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 4C 8B F2").Get());
         else if (VersionInfo.EngineVersion == 5.3)

@@ -210,6 +210,7 @@ LONG WINAPI ErbiumUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo)
     Memcury::Util::CopyToClipboard(reportStr);
     SymCleanup(currentPrc);
     Sleep(3000);
+    //while (true) {}
     TerminateProcess(GetCurrentProcess(), ExceptionInfo->ExceptionRecord->ExceptionCode);
     //ExitProcess(ExceptionInfo->ExceptionRecord->ExceptionCode);
     return EXCEPTION_CONTINUE_EXECUTION;

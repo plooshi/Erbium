@@ -191,6 +191,7 @@ public:
     DEFINE_FUNC(OnXPEvent, void);
     DEFINE_FUNC(ClientMedalsRecived, void);
     DEFINE_FUNC(OnProfileUpdated, void);
+    DEFINE_FUNC(QuestObjectiveUpdated, void);
 };
 
 class AFortBroadcastRemoteClientInfo : public AActor
@@ -218,6 +219,29 @@ class IFortInventoryInterface : public IInterface
 {
 public:
     UCLASS_COMMON_MEMBERS(IFortInventoryInterface);
+};
+
+struct fr {
+    uint32_t a;
+};
+class UFortMovementMode_BaseExtLogic : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortMovementMode_BaseExtLogic);
+
+    DEFINE_PROP(LogicID, fr);
+    DEFINE_PROP(OwnerPawn, TWeakObjectPtr<class AFortPlayerPawnAthena>);
+    DEFINE_PROP(OwnerMovementComponent, TWeakObjectPtr<class UObject>);
+    DEFINE_PROP(OwnerAbilitySystemComponent, TWeakObjectPtr<class UAbilitySystemComponent>);
+};
+
+class UFortMovementComp_Character : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortMovementComp_Character);
+
+    DEFINE_PROP(ActiveMovementModeExtension, UObject*);
+    DEFINE_PROP(PawnOwner, AFortPlayerPawnAthena*);
 };
 
 inline const UCurveTable* GameData = nullptr;
@@ -341,6 +365,7 @@ public:
     DEFINE_FUNC(ClientCreativePhoneCreated, void);
     DEFINE_FUNC(GetQuestManager, UFortQuestManager*);
     DEFINE_FUNC(OnRep_IsCreativeQuickbarEnabled, void);
+    DEFINE_FUNC(ServerAwardVehicleTrickPoints, void);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);
@@ -369,6 +394,7 @@ public:
     DefUHookOg(ServerLoadingScreenDropped_);
     static void ServerCreativeSetFlightSpeedIndex(UObject*, FFrame&);
     static void ServerCreativeSetFlightSprint(UObject*, FFrame&);
+    DefUHookOg(ServerAwardVehicleTrickPoints_);
 
     InitPostLoadHooks;
 };

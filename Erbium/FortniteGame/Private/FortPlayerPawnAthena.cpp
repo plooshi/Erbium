@@ -552,6 +552,11 @@ void AFortPlayerPawnAthena::EndSkydiving(AFortPlayerPawnAthena* Pawn)
 
 	if (PlayerController && Pawn->bIsSkydiving)
 		PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetLand(), 1, Pawn);
+
+	if (Pawn->bIsSkydivingFromBus)
+	{
+		PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetVisit(), 1, Pawn);
+	}
 }
 
 
