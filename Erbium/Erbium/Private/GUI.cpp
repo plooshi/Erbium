@@ -514,8 +514,8 @@ void GUI::Init()
 
         case 5:
 
-
-
+            // contibute this to LATEST Erbium (LateGame gui tab) 
+            // made by @ducki67
             ImGui::Text("Zone Phase settings:");
             ImGui::Spacing();
             ImGui::SliderInt("Zone phase", &FConfiguration::LateGameZone, 3, 7); // pahse 7 is playeble ig
