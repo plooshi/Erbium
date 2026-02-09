@@ -213,7 +213,6 @@ public:
 				FEventFunction{ false, L"/ResolveDDMachine/Gameplay/BP_Athena_DD_Machine_Trigger.BP_Athena_DD_Machine_Trigger_C.SetTimerForNextPulse" },
 				FEventFunction{ false, L"/ResolveDDMachine/Gameplay/BP_Athena_DD_Machine_Trigger.BP_Athena_DD_Machine_Trigger_C.GetPulseRadiusAtLevel" },
 				FEventFunction{ false, L"/ResolveDDMachine/Gameplay/BP_Athena_DD_Machine_Trigger.BP_Athena_DD_Machine_Trigger_C.UpdatePercentPulsesOccurred" }
-
 			},
 			20.40,
 			nullptr
