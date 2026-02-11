@@ -664,9 +664,9 @@ void UFortLootPackage::Hook()
 {
 	if (VersionInfo.FortniteVersion < 3)
 	{
-		auto PostUpdate_ = Memcury::Scanner::FindStringRef(L"ABuildingSMActor::PostUpdate() Building: %s, AltMeshIdx: %d", false, 0, VersionInfo.FortniteVersion >= 19).ScanFor({ 0x40, 0x53 }, false).Get();
+		/auto PostUpdate_ = Memcury::Scanner::FindStringRef(L"ABuildingSMActor::PostUpdate() Building: %s, AltMeshIdx: %d", false, 0, VersionInfo.FortniteVersion >= 19).ScanFor({ 0x40, 0x53 }, false).Get();
 
-		Utils::Hook(PostUpdate_, PostUpdate);
+		///Utils::Hook(PostUpdate_, PostUpdate);
 	}
 
 	if (VersionInfo.FortniteVersion >= 11.00)
