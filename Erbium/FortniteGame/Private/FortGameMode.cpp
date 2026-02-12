@@ -426,9 +426,10 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
         if (!AIDirectorClass)
             AIDirectorClass = FindClass("FortAIDirector");
 
-        GameMode->AIDirector = UWorld::SpawnActor(AIDirectorClass, FVector{}, GameMode);
-        if (GameMode->AIDirector)
-            GameMode->AIDirector->Call(GameMode->AIDirector->GetFunction("Activate"));
+        auto GameModeZone = (AFortGameModeZone*)GameMode;
+        GameModeZone->AIDirector = UWorld::SpawnActor(AIDirectorClass, FVector{}, GameMode);
+        if (GameModeZone->AIDirector)
+            GameModeZone->AIDirector->Call(GameModeZone->AIDirector->GetFunction("Activate"));
 
         if (UFortServerBotManagerAthena::StaticClass())
         {
@@ -446,16 +447,19 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
 
         auto GoalManagerClass = GameMode->HasWarmupRequiredPlayerCount() ? FindClass("FortAIGoalManager") : FindObject<UClass>("/Game/AI/GoalSelection/AIGoalManager.AIGoalManager_C");
 
-        GameMode->AIGoalManager = UWorld::SpawnActor(GoalManagerClass, FVector{}, GameMode);
+        GameModeZone->AIGoalManager = UWorld::SpawnActor(GoalManagerClass, FVector{}, GameMode);
 
         auto MissionManagerClass = GameMode->HasWarmupRequiredPlayerCount() ? nullptr : FindObject<UClass>("/Game/Blueprints/MissionManager.MissionManager_C");
 
         if (MissionManagerClass)
         {
-            GameState->MissionManager = UWorld::SpawnActor(MissionManagerClass, FVector{}, GameState);
-            GameState->OnRep_MissionManager();
+			auto GameStateZone = (AFortGameStateZone*)GameState;
+            GameStateZone->MissionManager = UWorld::SpawnActor(MissionManagerClass, FVector{}, GameState);
+            GameStateZone->OnRep_MissionManager();
 
             auto MissionInfo = FindObject<UFortMissionInfo>(L"/Game/Missions/Primary/EvacuateTheSurvivors/EvacuteTheSurvivors.EvacuteTheSurvivors");
+            GameStateZone->GameDifficulty = 10.f; // proper? idk
+            GameStateZone->OnRep_GameDifficulty();
 
             if (!MissionInfo)
                 MissionInfo = FindObject<UFortMissionInfo>(L"/SaveTheWorld/Missions/Primary/EvacuateTheSurvivors/EvacuteTheSurvivors.EvacuteTheSurvivors");

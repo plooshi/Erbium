@@ -47,8 +47,6 @@ public:
     DEFINE_PROP(OnSafeZoneIndicatorSpawned, TMulticastInlineDelegate<void(AFortSafeZoneIndicator*)>);
     DEFINE_PROP(MatchState, FName);
     DEFINE_PROP(bEnableDBNO, bool);
-    DEFINE_PROP(AIDirector, AActor*);
-    DEFINE_PROP(AIGoalManager, AActor*);
     DEFINE_PROP(bEnableReplicationGraph, bool);
     DEFINE_PROP(bAllowSpectateAfterDeath, bool);
     DEFINE_PROP(ServerBotManager, UObject*);
@@ -80,4 +78,67 @@ class AFortGameModeAthena : public AFortGameMode
 {
 public:
     UCLASS_COMMON_MEMBERS(AFortGameModeAthena);
+};
+
+class AFortGameModeZone : public AFortGameMode
+{
+public:
+    UCLASS_COMMON_MEMBERS(AFortGameModeZone);
+
+    DEFINE_PROP(ActiveSpawnPad, ABuildingSMActor*);
+    DEFINE_PROP(AIGoalManager, AActor*);
+    DEFINE_PROP(bUseAllSocketsInSpawnPad, bool);
+
+};
+
+class EMissionGenerationCategory
+{
+public:
+    UENUM_COMMON_MEMBERS(EMissionGenerationCategory);
+
+    DEFINE_ENUM_PROP(Primary);
+    DEFINE_ENUM_PROP(Secondary);
+    DEFINE_ENUM_PROP(Tertiary);
+    DEFINE_ENUM_PROP(Survivor);
+    DEFINE_ENUM_PROP(Max_None);
+    DEFINE_ENUM_PROP(EMissionGenerationCategory_MAX);
+};
+
+class AFortMission : public AActor
+{
+public:
+	UCLASS_COMMON_MEMBERS(AFortMission);
+
+    DEFINE_PROP(MissionInfo, UFortMissionInfo*);
+    DEFINE_PROP(MissionEnemyClasses, TArray<class UClass*>);
+    DEFINE_PROP(BotLogicClass, TSubclassOf<class AActor>); // UFortBotMissionLogic
+    DEFINE_PROP(BotLogic, AActor); // same shit as above
+    DEFINE_PROP(MissionGenerator, AActor*);
+    DEFINE_PROP(MissionGuid, FGuid);
+    DEFINE_PROP(MissionCategory, EMissionGenerationCategory);
+
+    DEFINE_FUNC(SpawnAtPlacementActorsAsArray, TArray<AActor*>);
+
+    DEFINE_FUNC(GetMissionGuid, FGuid);
+    DEFINE_FUNC(AddParticipantAccount, bool);
+    DEFINE_PROP(bLoadedFromRecord, bool);
+
+};
+
+class FFortStartingMissionInfo final 
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FFortStartingMissionInfo);
+    DEFINE_STRUCT_PROP(StartingMissions, TArray<class UFortMissionInfo*>);
+    DEFINE_STRUCT_PROP(bDisableSharedMissionLoading, bool);
+};
+
+class AFortWorldManager : public AActor
+{
+public:
+    UCLASS_COMMON_MEMBERS(AFortWorldManager);
+
+    DEFINE_PROP(bSavingEnabled, uint8);
+    DEFINE_PROP(StartingMissionInfo, FFortStartingMissionInfo);
+
 };
