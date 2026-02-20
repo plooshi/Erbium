@@ -1,12 +1,12 @@
 #pragma once
 #include "../../pch.h"
-#include "FortPlayerPawnAthena.h"
-#include "FortInventory.h"
-#include "FortPlayerStateAthena.h"
-#include "GameplayTagContainer.h"
-#include "FortVolume.h"
 #include "FortCheatManager.h"
+#include "FortInventory.h"
+#include "FortPlayerPawnAthena.h"
+#include "FortPlayerStateAthena.h"
 #include "FortQuestManager.h"
+#include "FortVolume.h"
+#include "GameplayTagContainer.h"
 
 class UAthenaPickaxeItemDefinition : public UFortItemDefinition
 {
@@ -221,7 +221,8 @@ public:
     UCLASS_COMMON_MEMBERS(IFortInventoryInterface);
 };
 
-struct fr {
+struct fr
+{
     uint32_t a;
 };
 class UFortMovementMode_BaseExtLogic : public UObject
@@ -293,8 +294,7 @@ public:
         else
             return *(AFortInventory**)(__int64(this) + WorldInventory__Offset) = NewInventory;
     }
-    __declspec(property(get = GetWorldInventory, put = SetWorldInventory))
-    AFortInventory* WorldInventory;
+    __declspec(property(get = GetWorldInventory, put = SetWorldInventory)) AFortInventory* WorldInventory;
 
     DEFINE_PROP(OutpostInventory, AFortInventory*);
     DEFINE_PROP(CosmeticLoadoutPC, FFortAthenaLoadout);

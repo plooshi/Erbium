@@ -105,7 +105,6 @@ CVarT* FindCVar(const wchar_t* CVarStr)
         }
     }
 
-
     for (int i = 0; i < 2000; i++)
     {
         auto Ptr = (uint8_t*)(BeforeVars + i);
@@ -116,7 +115,6 @@ CVarT* FindCVar(const wchar_t* CVarStr)
 
     return nullptr;
 }
-
 
 inline std::vector<uint64_t> NullFuncs = {};
 inline std::vector<uint64_t> RetTrueFuncs = {};

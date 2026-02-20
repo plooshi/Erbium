@@ -1,17 +1,17 @@
 #pragma once
 #include "../../pch.h"
+#include "../../Engine/Public/AbilitySystemComponent.h"
+#include "../../Engine/Public/CurveTable.h"
 #include "../../Engine/Public/DataTable.h"
 #include "../../Engine/Public/DataTableFunctionLibrary.h"
-#include "../../Engine/Public/CurveTable.h"
 #include "GameplayTagContainer.h"
-#include "../../Engine/Public/AbilitySystemComponent.h"
 
 struct FUIExtension final
 {
 public:
-    uint8                                         Slot;                                              // 0x0000(0x0001)(Edit, ZeroConstructor, DisableEditOnInstance, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
-    uint8                                         Pad_1[0x7];                                        // 0x0001(0x0007)(Fixing Size After Last Property [ Dumper-7 ])
-    TSoftClassPtr<class UClass>                   WidgetClass;                                       // 0x0008(0x0028)(Edit, DisableEditOnInstance, UObjectWrapper, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+    uint8 Slot; // 0x0000(0x0001)(Edit, ZeroConstructor, DisableEditOnInstance, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+    uint8 Pad_1[0x7]; // 0x0001(0x0007)(Fixing Size After Last Property [ Dumper-7 ])
+    TSoftClassPtr<class UClass> WidgetClass; // 0x0008(0x0028)(Edit, DisableEditOnInstance, UObjectWrapper, HasGetValueTypeHash, NativeAccessSpecifierPublic)
 };
 
 struct EPlaylistUIExtensionSlot

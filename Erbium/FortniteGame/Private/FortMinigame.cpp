@@ -6,7 +6,7 @@
 
 void AFortMinigame::SetState(AFortMinigame* Minigame, uint8 NewState)
 {
-    TArray<AFortPlayerStateAthena *> Players;
+    TArray<AFortPlayerStateAthena*> Players;
     Minigame->GetParticipatingPlayers(&Players);
 
     printf("[CreativeRuntime] (SetState): %d\n", NewState);
@@ -25,12 +25,12 @@ void AFortMinigame::SetState(AFortMinigame* Minigame, uint8 NewState)
                         Controller->ServerSetTeam(i + 3);
                     else
                         Controller->ServerSetTeam((i % Minigame->NumTeams) + 3);
-                            
+
                     Minigame->OnPlayerPawnPossessedDuringTransition(&Controller->MyFortPawn);
                 }
             }
         }
-                
+
         Minigame->AdvanceState();
         Minigame->HandleMinigameStarted();
     }
@@ -45,16 +45,18 @@ void AFortMinigame::SetState(AFortMinigame* Minigame, uint8 NewState)
             auto Pawn = Controller->MyFortPawn;
             if (!Pawn)
                 continue;
-                    
+
             Minigame->OnClientFinishTeleportingForMinigame(&Pawn);
         }
-                
+
         // this can crash btw!
-        std::thread([Minigame, NewState]()
-        {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            SetStateOG(Minigame, NewState);
-        }).detach();    
+        std::thread(
+            [Minigame, NewState]()
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+                SetStateOG(Minigame, NewState);
+            })
+            .detach();
     }
     else if (NewState == EFortMinigameState::GetPostGameReset())
     {
@@ -68,13 +70,13 @@ void AFortMinigame::SetState(AFortMinigame* Minigame, uint8 NewState)
             auto Pawn = Controller->MyFortPawn;
             if (!Pawn)
                 continue;
-                    
+
             Minigame->OnPlayerPawnPossessedDuringTransition(&Pawn);
         }
-                
+
         Minigame->CurrentState = (uint8_t)EFortMinigameState::GetPreGame();
     }
-    
+
     if (NewState != EFortMinigameState::GetWaitingForCameras() && NewState != EFortMinigameState::GetPostGameReset())
         return SetStateOG(Minigame, NewState);
 }
@@ -83,6 +85,6 @@ void AFortMinigame::Hook()
 {
     if (!GetDefaultObj())
         return;
-    
-    //Utils::Hook(FindSetState(), SetState, SetStateOG);
+
+    // Utils::Hook(FindSetState(), SetState, SetStateOG);
 }

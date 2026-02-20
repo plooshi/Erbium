@@ -34,7 +34,7 @@
 
 #include <windows.h>
 
- // MinHook Error Codes.
+// MinHook Error Codes.
 typedef enum MH_STATUS
 {
     // Unknown error. Should not be returned.
@@ -80,15 +80,15 @@ typedef enum MH_STATUS
 
     // The specified function is not found.
     MH_ERROR_FUNCTION_NOT_FOUND
-}
-MH_STATUS;
+} MH_STATUS;
 
 // Can be passed as a parameter to MH_EnableHook, MH_DisableHook,
 // MH_QueueEnableHook or MH_QueueDisableHook.
 #define MH_ALL_HOOKS NULL
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
     // Initialize the MinHook library. You must call this function EXACTLY ONCE
@@ -121,8 +121,7 @@ extern "C" {
     //   ppOriginal  [out] A pointer to the trampoline function, which will be
     //                     used to call the original target function.
     //                     This parameter can be NULL.
-    MH_STATUS WINAPI MH_CreateHookApi(
-        LPCWSTR pszModule, LPCSTR pszProcName, LPVOID pDetour, LPVOID* ppOriginal);
+    MH_STATUS WINAPI MH_CreateHookApi(LPCWSTR pszModule, LPCSTR pszProcName, LPVOID pDetour, LPVOID* ppOriginal);
 
     // Creates a hook for the specified API function, in disabled state.
     // Parameters:
@@ -138,8 +137,7 @@ extern "C" {
     //   ppTarget    [out] A pointer to the target function, which will be used
     //                     with other functions.
     //                     This parameter can be NULL.
-    MH_STATUS WINAPI MH_CreateHookApiEx(
-        LPCWSTR pszModule, LPCSTR pszProcName, LPVOID pDetour, LPVOID* ppOriginal, LPVOID* ppTarget);
+    MH_STATUS WINAPI MH_CreateHookApiEx(LPCWSTR pszModule, LPCSTR pszProcName, LPVOID pDetour, LPVOID* ppOriginal, LPVOID* ppTarget);
 
     // Removes an already created hook.
     // Parameters:

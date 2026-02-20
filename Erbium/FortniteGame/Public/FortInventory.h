@@ -1,11 +1,11 @@
 #pragma once
 #include "../../pch.h"
-#include "FortPlayerPawnAthena.h"
 #include "../../Engine/Public/AbilitySystemComponent.h"
+#include "../../Engine/Public/CurveTable.h"
 #include "../../Engine/Public/DataTable.h"
 #include "../../Engine/Public/DataTableFunctionLibrary.h"
-#include "../../Engine/Public/CurveTable.h"
 #include "BuildingContainer.h"
+#include "FortPlayerPawnAthena.h"
 #include "FortPlaylistAthena.h"
 
 struct FGuid
@@ -20,7 +20,6 @@ struct FGuid
         return A == _Rhs.A && B == _Rhs.B && C == _Rhs.C && D == _Rhs.D;
     }
 };
-
 
 class UFortItem : public UObject
 {
@@ -151,12 +150,11 @@ public:
             }
         }
 
-
         auto PickupComponent = GetPickupComponent();
 
         if (PickupComponent)
             return PickupComponent->bCanBeDroppedFromInventory;
-        
+
         return false;
     }
 };
@@ -457,7 +455,6 @@ public:
     UCLASS_COMMON_MEMBERS(UFortEditToolItemDefinition);
 };
 
-
 class AFortInventory : public AActor
 {
 public:
@@ -475,8 +472,10 @@ public:
     UFortWorldItem* GiveItem(FFortItemEntry&, int = -1, bool = true, bool = true);
     void Update(FFortItemEntry*);
     void Remove(FGuid);
-    static AFortPickupAthena* SpawnPickup(FVector, FFortItemEntry&, long long = EFortPickupSourceTypeFlag::GetOther(), long long = EFortPickupSpawnSource::GetUnset(), AFortPlayerPawnAthena* = nullptr, int = -1, bool = true, bool = true, bool = true, const UClass* = nullptr, FVector = FVector());
-    static AFortPickupAthena* SpawnPickup(FVector, const UFortItemDefinition*, int, int, long long = EFortPickupSourceTypeFlag::GetOther(), long long = EFortPickupSpawnSource::GetUnset(), AFortPlayerPawnAthena* = nullptr, bool = true, bool = true, const UClass* = nullptr);
+    static AFortPickupAthena* SpawnPickup(FVector, FFortItemEntry&, long long = EFortPickupSourceTypeFlag::GetOther(), long long = EFortPickupSpawnSource::GetUnset(),
+        AFortPlayerPawnAthena* = nullptr, int = -1, bool = true, bool = true, bool = true, const UClass* = nullptr, FVector = FVector());
+    static AFortPickupAthena* SpawnPickup(FVector, const UFortItemDefinition*, int, int, long long = EFortPickupSourceTypeFlag::GetOther(),
+        long long = EFortPickupSpawnSource::GetUnset(), AFortPlayerPawnAthena* = nullptr, bool = true, bool = true, const UClass* = nullptr);
     static AFortPickupAthena* SpawnPickup(ABuildingContainer*, FFortItemEntry&, AFortPlayerPawnAthena* = nullptr, int = -1);
     static FFortItemEntry* MakeItemEntry(const UFortItemDefinition*, int32, int32);
     static FFortRangedWeaponStats* GetStats(const UFortWeaponItemDefinition*);

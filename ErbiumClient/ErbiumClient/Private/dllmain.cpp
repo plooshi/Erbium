@@ -1,28 +1,27 @@
-// dllmain.cpp : Defines the entry point for the DLL application.
 #include "pch.h"
+#include "../../../Erbium/Erbium/Public/Configuration.h"
 #include "../Public/Client.h"
 #include <thread>
-#include "../../../Erbium/Erbium/Public/Configuration.h"
 
 void ForceIris(uintptr_t IrisBool)
 {
-	Memcury::PE::Address add{ nullptr };
+    Memcury::PE::Address add { nullptr };
 
-	const auto sizeOfImage = Memcury::PE::GetNTHeaders()->OptionalHeader.SizeOfImage;
-	const auto scanBytes = reinterpret_cast<std::uint8_t*>(Memcury::PE::GetModuleBase());
+    const auto sizeOfImage = Memcury::PE::GetNTHeaders()->OptionalHeader.SizeOfImage;
+    const auto scanBytes = reinterpret_cast<std::uint8_t*>(Memcury::PE::GetModuleBase());
 
-	for (auto i = 0ul; i < sizeOfImage - 5; ++i)
-	{
-		if (scanBytes[i] == 0x83 || scanBytes[i] == 0x39)
-		{
-			if (Memcury::PE::Address(&scanBytes[i]).RelativeOffset(2, scanBytes[i] == 0x83).GetAs<void*>() == (void*)IrisBool)
-			{
-				add = Memcury::PE::Address(&scanBytes[i]);
+    for (auto i = 0ul; i < sizeOfImage - 5; ++i)
+    {
+        if (scanBytes[i] == 0x83 || scanBytes[i] == 0x39)
+        {
+            if (Memcury::PE::Address(&scanBytes[i]).RelativeOffset(2, scanBytes[i] == 0x83).GetAs<void*>() == (void*)IrisBool)
+            {
+                add = Memcury::PE::Address(&scanBytes[i]);
 
                 Utils::Patch<uint32_t>(__int64(&scanBytes[i]) + 2, 0x0); // the next bytes will always be greater than 0
-			}
-		}
-	}
+            }
+        }
+    }
 }
 
 void Main()
@@ -68,7 +67,7 @@ void Main()
 
         ForceIris(__int64(IrisBool));
 
-        //UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"net.Iris.UseIrisReplication 1"), nullptr);
+        // UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"net.Iris.UseIrisReplication 1"), nullptr);
     }
     if (VersionInfo.EngineVersion >= 5.4)
     {
@@ -78,8 +77,8 @@ void Main()
         auto SlideCVar = FindCVar<uint32_t>(L"Fort.MME.Sliding");
         auto MantleCVar = FindCVar<uint32_t>(L"Fort.MME.Clambering");
 
-        //if (SprintCVar)
-        //    *SprintCVar = false;
+        // if (SprintCVar)
+        //     *SprintCVar = false;
 
         if (HurdleCVar)
             *HurdleCVar = false;
@@ -100,10 +99,7 @@ void Main()
     return;
 }
 
-BOOL APIENTRY DllMain( HMODULE hModule,
-                       DWORD  ul_reason_for_call,
-                       LPVOID lpReserved
-                     )
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
     switch (ul_reason_for_call)
     {
@@ -116,4 +112,3 @@ BOOL APIENTRY DllMain( HMODULE hModule,
     }
     return TRUE;
 }
-

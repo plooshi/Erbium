@@ -1,11 +1,11 @@
 #pragma once
 #include "../../pch.h"
-#include "FortGameStateAthena.h"
 #include "FortGameSessionAthena.h"
-#include "FortSafeZoneIndicator.h"
+#include "FortGameStateAthena.h"
 #include "FortInventory.h"
-#include "FortPlayerPawnAthena.h"
 #include "FortPlayerControllerAthena.h"
+#include "FortPlayerPawnAthena.h"
+#include "FortSafeZoneIndicator.h"
 
 class AFortGameMode : public AActor
 {
@@ -13,7 +13,7 @@ public:
     static inline uint8_t CurrentTeam = 3;
     static inline uint8_t PlayersOnCurTeam = 0;
     static inline TArray<const UFortAbilitySet*> AbilitySets;
-    static inline FVector SafeZoneLoc{};
+    static inline FVector SafeZoneLoc {};
 
     UCLASS_COMMON_MEMBERS(AFortGameMode);
 
@@ -71,7 +71,7 @@ public:
     DefHookOg(bool, StartAircraftPhase, AFortGameMode*, char);
     DefUHookOg(OnAircraftExitedDropZone_);
     DefHookOg(void, FinishWorldInitialization, AFortGameMode*, AActor*);
-    
+
     InitHooks;
     InitPostLoadHooks;
 };

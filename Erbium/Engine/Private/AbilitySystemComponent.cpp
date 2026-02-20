@@ -9,19 +9,19 @@ FGameplayAbilitySpecHandle UAbilitySystemComponent::GiveAbility(const UObject* A
 {
     if (!this || !Ability)
         return {};
-    //printf("GiveAbility[%s]\n", Ability->Name.ToString().c_str());
+    // printf("GiveAbility[%s]\n", Ability->Name.ToString().c_str());
 
-    auto Spec = (FGameplayAbilitySpec*) malloc(FGameplayAbilitySpec::Size());
+    auto Spec = (FGameplayAbilitySpec*)malloc(FGameplayAbilitySpec::Size());
     memset(PBYTE(Spec), 0, FGameplayAbilitySpec::Size());
 
     if (ConstructAbilitySpec)
-        ((void (*)(FGameplayAbilitySpec*, const UObject*, int, int, UObject*)) ConstructAbilitySpec)(Spec, Ability, 1, -1, SourceObject);
+        ((void (*)(FGameplayAbilitySpec*, const UObject*, int, int, UObject*))ConstructAbilitySpec)(Spec, Ability, 1, -1, SourceObject);
     else
     {
         Spec->MostRecentArrayReplicationKey = -1;
         Spec->ReplicationID = -1;
         Spec->ReplicationKey = -1;
-        Spec->Ability = (UFortGameplayAbility*) Ability;
+        Spec->Ability = (UFortGameplayAbility*)Ability;
         Spec->Level = 1;
         Spec->InputID = -1;
         Spec->Handle.Handle = rand();
@@ -44,7 +44,7 @@ void UAbilitySystemComponent::GiveAbilitySet(const UFortAbilitySet* Set)
         UFortKismetLibrary::EquipFortAbilitySet(ScriptInterface, Set, nullptr);
     else if (Set)
     {
-        //printf("GiveAbilitySet[%s]\n", Set->Name.ToString().c_str());
+        // printf("GiveAbilitySet[%s]\n", Set->Name.ToString().c_str());
         for (auto& GameplayAbility : Set->GameplayAbilities)
             GiveAbility(GameplayAbility->GetDefaultObj());
         if (Set->HasGrantedGameplayEffects())
@@ -68,12 +68,15 @@ struct _Pad_0x18
 };
 
 uint64_t InternalTryActivateAbility_ = 0;
-void UAbilitySystemComponent::InternalServerTryActivateAbility(UAbilitySystemComponent* AbilitySystemComponent, FGameplayAbilitySpecHandle Handle, bool InputPressed, FPredictionKey* PredictionKey, void* TriggerEventData)
+void UAbilitySystemComponent::InternalServerTryActivateAbility(
+    UAbilitySystemComponent* AbilitySystemComponent, FGameplayAbilitySpecHandle Handle, bool InputPressed, FPredictionKey* PredictionKey, void* TriggerEventData)
 {
-    auto Spec = AbilitySystemComponent->ActivatableAbilities.Items.Search([&](FGameplayAbilitySpec& item)
-    {
-        return item.Handle.Handle == Handle.Handle;
-        }, FGameplayAbilitySpec::Size());
+    auto Spec = AbilitySystemComponent->ActivatableAbilities.Items.Search(
+        [&](FGameplayAbilitySpec& item)
+        {
+            return item.Handle.Handle == Handle.Handle;
+        },
+        FGameplayAbilitySpec::Size());
 
     if (!Spec)
         return AbilitySystemComponent->ClientActivateAbilityFailed(Handle, PredictionKey->Current);
@@ -81,17 +84,18 @@ void UAbilitySystemComponent::InternalServerTryActivateAbility(UAbilitySystemCom
     Spec->InputPressed = true;
 
     UFortGameplayAbility* InstancedAbility = nullptr;
-    auto InternalTryActivateAbility = (bool (*)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle, _Pad_0x10, UFortGameplayAbility**, void*, void*)) InternalTryActivateAbility_;
-    auto InternalTryActivateAbilityNew = (bool (*)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle, _Pad_0x18, UFortGameplayAbility**, void*, void*)) InternalTryActivateAbility_;
-    
-    if (!(FPredictionKey::Size() == 0x18 ? InternalTryActivateAbilityNew(AbilitySystemComponent, Handle, *(_Pad_0x18*)PredictionKey, &InstancedAbility, nullptr, TriggerEventData) : InternalTryActivateAbility(AbilitySystemComponent, Handle, *(_Pad_0x10*)PredictionKey, &InstancedAbility, nullptr, TriggerEventData)))
+    auto InternalTryActivateAbility = (bool (*)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle, _Pad_0x10, UFortGameplayAbility**, void*, void*))InternalTryActivateAbility_;
+    auto InternalTryActivateAbilityNew
+        = (bool (*)(UAbilitySystemComponent*, FGameplayAbilitySpecHandle, _Pad_0x18, UFortGameplayAbility**, void*, void*))InternalTryActivateAbility_;
+
+    if (!(FPredictionKey::Size() == 0x18 ? InternalTryActivateAbilityNew(AbilitySystemComponent, Handle, *(_Pad_0x18*)PredictionKey, &InstancedAbility, nullptr, TriggerEventData)
+                                         : InternalTryActivateAbility(AbilitySystemComponent, Handle, *(_Pad_0x10*)PredictionKey, &InstancedAbility, nullptr, TriggerEventData)))
     {
         AbilitySystemComponent->ClientActivateAbilityFailed(Handle, PredictionKey->Current);
         Spec->InputPressed = false;
         AbilitySystemComponent->ActivatableAbilities.MarkItemDirty(*Spec);
     }
 }
-
 
 void UFortGameplayAbility::K2_AddGameplayCueWithParams_(UObject* Context, FFrame& Stack)
 {
@@ -110,7 +114,7 @@ void UFortGameplayAbility::K2_AddGameplayCueWithParams_(UObject* Context, FFrame
 
     auto AbilitySystemComponent = (UAbilitySystemComponent*)Ability->GetAbilitySystemComponentFromActorInfo();
 
-    //AbilitySystemComponent->NetMulticast_InvokeGameplayCueAdded(GameplayCueTag, *PredictionKey, EffectContext);
+    // AbilitySystemComponent->NetMulticast_InvokeGameplayCueAdded(GameplayCueTag, *PredictionKey, EffectContext);
     if (AbilitySystemComponent)
         AbilitySystemComponent->NetMulticast_InvokeGameplayCueAdded_WithParams(GameplayCueTag, *PredictionKey, GameplayCueParameter);
 
@@ -154,7 +158,7 @@ void UFortGameplayAbility::K2_ExecuteGameplayCue_(UObject* Context, FFrame& Stac
 
     auto AbilitySystemComponent = (UAbilitySystemComponent*)Ability->GetAbilitySystemComponentFromActorInfo();
 
-    //AbilitySystemComponent->NetMulticast_InvokeGameplayCueAdded(GameplayCueTag, *PredictionKey, EffectContext);
+    // AbilitySystemComponent->NetMulticast_InvokeGameplayCueAdded(GameplayCueTag, *PredictionKey, EffectContext);
     if (AbilitySystemComponent)
         AbilitySystemComponent->NetMulticast_InvokeGameplayCueExecuted(GameplayCueTag, *PredictionKey, EffectContext);
 
@@ -175,7 +179,7 @@ void UFortGameplayAbility::K2_ExecuteGameplayCueWithParams_(UObject* Context, FF
 
     auto AbilitySystemComponent = (UAbilitySystemComponent*)Ability->GetAbilitySystemComponentFromActorInfo();
 
-    //AbilitySystemComponent->NetMulticast_InvokeGameplayCueAdded(GameplayCueTag, *PredictionKey, EffectContext);
+    // AbilitySystemComponent->NetMulticast_InvokeGameplayCueAdded(GameplayCueTag, *PredictionKey, EffectContext);
     if (AbilitySystemComponent)
         AbilitySystemComponent->NetMulticast_InvokeGameplayCueExecuted_WithParams(GameplayCueTag, *PredictionKey, GameplayCueParameter);
 
@@ -202,7 +206,8 @@ void UAbilitySystemComponent::Hook()
 
         for (int i = 0; i < 400; i++)
         {
-            if ((*(uint8_t*)(ServerTryActivateAbilityWithEventDataNativeAddr + i) == 0xFF && *(uint8_t*)(ServerTryActivateAbilityWithEventDataNativeAddr + i + 1) == 0x90) || (*(uint8_t*)(ServerTryActivateAbilityWithEventDataNativeAddr + i) == 0xFF && *(uint8_t*)(ServerTryActivateAbilityWithEventDataNativeAddr + i + 1) == 0x93))
+            if ((*(uint8_t*)(ServerTryActivateAbilityWithEventDataNativeAddr + i) == 0xFF && *(uint8_t*)(ServerTryActivateAbilityWithEventDataNativeAddr + i + 1) == 0x90)
+                || (*(uint8_t*)(ServerTryActivateAbilityWithEventDataNativeAddr + i) == 0xFF && *(uint8_t*)(ServerTryActivateAbilityWithEventDataNativeAddr + i + 1) == 0x93))
             {
                 istaIdx = *(uint32*)(ServerTryActivateAbilityWithEventDataNativeAddr + i + 2) / 8;
                 break;
@@ -214,9 +219,13 @@ void UAbilitySystemComponent::Hook()
 
     if (VersionInfo.FortniteVersion >= 8)
     {
-        Utils::ExecHook(UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_ExecuteGameplayCue"), UFortGameplayAbility::K2_ExecuteGameplayCue_, UFortGameplayAbility::K2_ExecuteGameplayCue_OG);
-        Utils::ExecHook(UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_ExecuteGameplayCueWithParams"), UFortGameplayAbility::K2_ExecuteGameplayCueWithParams_, UFortGameplayAbility::K2_ExecuteGameplayCueWithParams_OG);
-        Utils::ExecHook(UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_AddGameplayCue"), UFortGameplayAbility::K2_AddGameplayCue_, UFortGameplayAbility::K2_AddGameplayCue_OG);
-        Utils::ExecHook(UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_AddGameplayCueWithParams"), UFortGameplayAbility::K2_AddGameplayCueWithParams_, UFortGameplayAbility::K2_AddGameplayCueWithParams_OG);
+        Utils::ExecHook(UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_ExecuteGameplayCue"), UFortGameplayAbility::K2_ExecuteGameplayCue_,
+            UFortGameplayAbility::K2_ExecuteGameplayCue_OG);
+        Utils::ExecHook(UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_ExecuteGameplayCueWithParams"), UFortGameplayAbility::K2_ExecuteGameplayCueWithParams_,
+            UFortGameplayAbility::K2_ExecuteGameplayCueWithParams_OG);
+        Utils::ExecHook(
+            UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_AddGameplayCue"), UFortGameplayAbility::K2_AddGameplayCue_, UFortGameplayAbility::K2_AddGameplayCue_OG);
+        Utils::ExecHook(UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_AddGameplayCueWithParams"), UFortGameplayAbility::K2_AddGameplayCueWithParams_,
+            UFortGameplayAbility::K2_AddGameplayCueWithParams_OG);
     }
 }

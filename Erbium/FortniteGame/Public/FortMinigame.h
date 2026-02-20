@@ -23,16 +23,17 @@ class AFortMinigame : public AActor
 {
 public:
     UCLASS_COMMON_MEMBERS(AFortMinigame);
-    
+
     DEFINE_PROP(NumTeams, int32);
     DEFINE_PROP(CurrentState, uint8);
-    
+
     DEFINE_FUNC(GetParticipatingPlayers, void);
     DEFINE_FUNC(OnPlayerPawnPossessedDuringTransition, void);
     DEFINE_FUNC(OnClientFinishTeleportingForMinigame, void);
     DEFINE_FUNC(AdvanceState, void);
     DEFINE_FUNC(HandleMinigameStarted, void);
-    DEFINE_FUNC(HandleVolumeEditModeChange, void);    
+    DEFINE_FUNC(HandleVolumeEditModeChange, void);
+
 public:
     DefHookOg(void, SetState, AFortMinigame* Minigame, uint8 NewState);
     InitHooks;

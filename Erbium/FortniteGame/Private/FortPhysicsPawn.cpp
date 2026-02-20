@@ -68,14 +68,13 @@ void AFortPhysicsPawn::ServerMove(UObject* Context, FFrame& Stack)
         Translation = State->Translation;
         LinearVelocity = State->LinearVelocity;
         AngularVelocity = State->AngularVelocity;
-        
+
         free(State);
     }
     auto Pawn = (AFortPhysicsPawn*)Context;
 
-
-   if (VersionInfo.EngineVersion < 4.24)
-   {
+    if (VersionInfo.EngineVersion < 4.24)
+    {
         Rotation.X -= 2.5f;
         Rotation.Y /= 0.3f;
         Rotation.Z -= -2.0f;
@@ -94,7 +93,7 @@ void AFortPhysicsPawn::ServerMove(UObject* Context, FFrame& Stack)
             RealRotation.Pitch = 0;
             RealRotation.Roll = 0;
         }
-        
+
         RootComponent->K2_SetWorldLocationAndRotation(Translation, RealRotation, false, nullptr, true);
         RootComponent->SetPhysicsLinearVelocity(LinearVelocity, 0, FName(0));
         RootComponent->SetPhysicsAngularVelocityInRadians(AngularVelocity, 0, FName(0));
@@ -174,7 +173,7 @@ void OnRep_ReplicatedAttachedInfo(AFortOctopusTowhookAttachableProjectile* _this
         return;
     }*/
 
-    auto CanGrappleToComponent = (bool(*)(AFortOctopusVehicle*, UActorComponent*))CanGrappleToComponent_;
+    auto CanGrappleToComponent = (bool (*)(AFortOctopusVehicle*, UActorComponent*))CanGrappleToComponent_;
 
     if (!CanGrappleToComponent(OwningVehicle, Comp))
     {
@@ -190,10 +189,12 @@ void OnRep_ReplicatedAttachedInfo(AFortOctopusTowhookAttachableProjectile* _this
 
     printf("[Ballers] Comp: %s, Owner %s\n", Comp->Name.ToString().c_str(), Comp->GetOwner()->Name.ToString().c_str());
     printf("[Ballers] Location: %f %f %f [World] -> ", _this->AttachedInfo.Hit.Location.X, _this->AttachedInfo.Hit.Location.Y, _this->AttachedInfo.Hit.Location.Z);
-    printf("%f %f %f [Local]\n", OwningVehicle->ReplicatedAttachState.LocalLocation.X, OwningVehicle->ReplicatedAttachState.LocalLocation.Y, OwningVehicle->ReplicatedAttachState.LocalLocation.Z);
+    printf("%f %f %f [Local]\n", OwningVehicle->ReplicatedAttachState.LocalLocation.X, OwningVehicle->ReplicatedAttachState.LocalLocation.Y,
+        OwningVehicle->ReplicatedAttachState.LocalLocation.Z);
     printf("[Ballers] Normal: %f %f %f [World] -> ", _this->AttachedInfo.Hit.Normal.X, _this->AttachedInfo.Hit.Normal.Y, _this->AttachedInfo.Hit.Normal.Z);
-    printf("%f %f %f [Local]\n", OwningVehicle->ReplicatedAttachState.LocalNormal.X, OwningVehicle->ReplicatedAttachState.LocalNormal.Y, OwningVehicle->ReplicatedAttachState.LocalNormal.Z);
-    //printf("CALLED!!!!\n");
+    printf("%f %f %f [Local]\n", OwningVehicle->ReplicatedAttachState.LocalNormal.X, OwningVehicle->ReplicatedAttachState.LocalNormal.Y,
+        OwningVehicle->ReplicatedAttachState.LocalNormal.Z);
+    // printf("CALLED!!!!\n");
 }
 
 void AFortPhysicsPawn::Hook()
@@ -242,7 +243,7 @@ void AFortPhysicsPawn::Hook()
 
         auto OnRep_ReplicatedAttachedInfo__Impl = AFortOctopusTowhookAttachableProjectile::GetDefaultObj()->Vft[OnRep_ReplicatedAttachedInfoIdx];
         auto CanGrappleToComponent = Memcury::Scanner(OnRep_ReplicatedAttachedInfo__Impl).ScanFor({ 0xFF, 0x90 }).Get();
-        
+
         for (int i = 0; i < 2000; i++)
         {
             auto Ptr = (uint8_t*)(CanGrappleToComponent - i);

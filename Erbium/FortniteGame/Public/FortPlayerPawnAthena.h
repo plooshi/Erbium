@@ -8,6 +8,9 @@ public:
     UCLASS_COMMON_MEMBERS(UCharacterMovementComponent);
 
     DEFINE_PROP(Velocity, FVector);
+    DEFINE_BITFIELD_PROP(bCheatFlying);
+
+    DEFINE_FUNC(SetMovementMode, void);
 };
 
 struct FZiplinePawnState

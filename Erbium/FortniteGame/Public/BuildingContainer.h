@@ -10,7 +10,6 @@ public:
     DEFINE_STRUCT_PROP(SearchAnimationCount, uint32);
 };
 
-
 struct FVector3f
 {
 public:

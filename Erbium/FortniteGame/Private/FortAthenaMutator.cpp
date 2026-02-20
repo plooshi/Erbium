@@ -5,7 +5,7 @@ void AFortAthenaMutator_GiveItemsAtGamePhaseStep::OnGamePhaseStepChanged(UObject
 {
     TScriptInterface<IInterface> SafeZoneInterface;
     uint8_t GamePhaseStep;
-    
+
     Stack.StepCompiledIn(&SafeZoneInterface);
     Stack.StepCompiledIn(&GamePhaseStep);
     Stack.IncrementCode();

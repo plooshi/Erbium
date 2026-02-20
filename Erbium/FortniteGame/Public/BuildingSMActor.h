@@ -1,8 +1,8 @@
 #pragma once
 #include "../../pch.h"
+#include "../../Engine/Public/CurveTable.h"
 #include "FortPlayerStateAthena.h"
 #include "GameplayTagContainer.h"
-#include "../../Engine/Public/CurveTable.h"
 
 enum class EFortResourceType : uint8
 {
@@ -25,9 +25,9 @@ public:
 struct FTierMeshSets final
 {
 public:
-    int32                                         Tier;                                              // 0x0000(0x0004)(Edit, BlueprintVisible, ZeroConstructor, DisableEditOnInstance, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
-    uint8                                         Pad_4[0x4];                                        // 0x0004(0x0004)(Fixing Size After Last Property [ Dumper-7 ])
-    TArray<void*>                                 MeshSets;                                          // 0x0008(0x0010)(Edit, BlueprintVisible, ZeroConstructor, DisableEditOnInstance, NativeAccessSpecifierPublic)
+    int32 Tier; // 0x0000(0x0004)(Edit, BlueprintVisible, ZeroConstructor, DisableEditOnInstance, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+    uint8 Pad_4[0x4]; // 0x0004(0x0004)(Fixing Size After Last Property [ Dumper-7 ])
+    TArray<void*> MeshSets; // 0x0008(0x0010)(Edit, BlueprintVisible, ZeroConstructor, DisableEditOnInstance, NativeAccessSpecifierPublic)
 };
 
 inline uint64_t GetSparseClassData_ = 0;
@@ -119,7 +119,6 @@ public:
 
         return GetSparseClassDataOG(Class, 1);
     }
-
 
     DEFINE_FUNC(GetHealth, float);
     DEFINE_FUNC(GetMaxHealth, float);

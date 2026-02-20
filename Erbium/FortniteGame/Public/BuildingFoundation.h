@@ -40,7 +40,7 @@ public:
     DEFINE_BITFIELD_PROP(bServerStreamedInLevel);
 
     DEFINE_FUNC(OnRep_DynamicFoundationRepData, void);
-    //DEFINE_FUNC(SetDynamicFoundationTransform, void);
+    // DEFINE_FUNC(SetDynamicFoundationTransform, void);
     DEFINE_FUNC(SetDynamicFoundationEnabled, void);
     DEFINE_FUNC(OnRep_ServerStreamedInLevel, void);
     DEFINE_FUNC(OnRep_LevelToStream, void);

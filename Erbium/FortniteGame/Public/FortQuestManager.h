@@ -1,7 +1,7 @@
 #pragma once
 #include "../../pch.h"
-#include "GameplayTagContainer.h"
 #include "FortInventory.h"
+#include "GameplayTagContainer.h"
 
 struct FFortQuestObjectiveStatXPTableRow
 {
@@ -180,7 +180,6 @@ public:
     DEFINE_FUNC(HandleQuestObjectiveUpdated, void);
 };
 
-
 class UFortQuestManager : public UObject
 {
 public:
@@ -195,9 +194,11 @@ public:
     DEFINE_FUNC(HandleQuestUpdated, void);
     DEFINE_FUNC(HandleQuestObjectiveUpdated, void);
 
-    void SendStatEvent__Internal(AActor* PlayerController, long long StatEvent, int32 Count, UObject* TargetObject, FGameplayTagContainer TargetTags, FGameplayTagContainer SourceTags, FGameplayTagContainer ContextTags, bool* QuestActive, bool* QuestCompleted);
-    void SendStatEvent(AActor* PlayerController, long long StatEvent, int32 Count, bool bAllowQueueStatEvent, UObject* TargetObject = nullptr, FGameplayTagContainer TargetTags = FGameplayTagContainer(), FGameplayTagContainer AdditionalSourceTags = FGameplayTagContainer(), bool* QuestActive = nullptr, bool* QuestCompleted = nullptr);
-
+    void SendStatEvent__Internal(AActor* PlayerController, long long StatEvent, int32 Count, UObject* TargetObject, FGameplayTagContainer TargetTags,
+        FGameplayTagContainer SourceTags, FGameplayTagContainer ContextTags, bool* QuestActive, bool* QuestCompleted);
+    void SendStatEvent(AActor* PlayerController, long long StatEvent, int32 Count, bool bAllowQueueStatEvent, UObject* TargetObject = nullptr,
+        FGameplayTagContainer TargetTags = FGameplayTagContainer(), FGameplayTagContainer AdditionalSourceTags = FGameplayTagContainer(), bool* QuestActive = nullptr,
+        bool* QuestCompleted = nullptr);
 
     InitPostLoadHooks;
 };

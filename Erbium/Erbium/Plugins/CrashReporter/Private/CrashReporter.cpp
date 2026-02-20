@@ -1,8 +1,8 @@
 #include "pch.h"
 #include "../Public/CrashReporter.h"
 #include <TlHelp32.h>
-#include <winternl.h>
 #include <sstream>
+#include <winternl.h>
 #pragma comment(lib, "ntdll.lib")
 
 void FreezeOtherThreads()
@@ -16,11 +16,11 @@ void FreezeOtherThreads()
         THREADENTRY32 te;
         te.dwSize = sizeof(te);
         if (Thread32First(h, &te))
-    {
-            do {
-                if (te.dwSize >= FIELD_OFFSET(THREADENTRY32, th32OwnerProcessID) +
-                    sizeof(te.th32OwnerProcessID))
-    {
+        {
+            do
+            {
+                if (te.dwSize >= FIELD_OFFSET(THREADENTRY32, th32OwnerProcessID) + sizeof(te.th32OwnerProcessID))
+                {
                     if (te.th32ThreadID != currentThr && te.th32OwnerProcessID == currentPrc)
                     {
                         auto thr = OpenThread(THREAD_ALL_ACCESS, false, te.th32ThreadID);
@@ -33,22 +33,22 @@ void FreezeOtherThreads()
                     }
                 }
                 te.dwSize = sizeof(te);
-            } while (Thread32Next(h, &te));
+            }
+            while (Thread32Next(h, &te));
         }
         CloseHandle(h);
     }
 }
 
-DWORD FormatNtStatus(NTSTATUS nsCode, TCHAR** ppszMessage) 
+DWORD FormatNtStatus(NTSTATUS nsCode, TCHAR** ppszMessage)
 {
     HMODULE ntdll = LoadLibraryA("ntdll.dll");
 
-    if (ntdll == NULL) 
+    if (ntdll == NULL)
         return 0;
 
-    DWORD outLen = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE,
-        ntdll, RtlNtStatusToDosError(nsCode), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-        (LPSTR)ppszMessage, 0, NULL);
+    DWORD outLen = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, ntdll, RtlNtStatusToDosError(nsCode),
+        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)ppszMessage, 0, NULL);
 
     FreeLibrary(ntdll);
 
@@ -62,7 +62,7 @@ LONG WINAPI ErbiumUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo)
 
     FreezeOtherThreads();
 
-    STACKFRAME64 stackFrame{};
+    STACKFRAME64 stackFrame {};
 
     char symName[1024 * sizeof(TCHAR)];
     char symStorage[sizeof(IMAGEHLP_SYMBOL64) + sizeof(symName)];
@@ -86,13 +86,16 @@ LONG WINAPI ErbiumUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo)
         printf("[CrashReporter] Failed to initialize symbol finder!");
 
     std::stringstream reportStream;
-    
+
     reportStream << "[CrashReporter] Caught unhandled exception (Code: ";
     char code[9];
 
     switch (ExceptionInfo->ExceptionRecord->ExceptionCode)
     {
-#define NAMED_EX(x) case x: reportStream << #x; break;
+#define NAMED_EX(x)                                                                                                                                                                \
+    case x:                                                                                                                                                                        \
+        reportStream << #x;                                                                                                                                                        \
+        break;
 
         NAMED_EX(EXCEPTION_ACCESS_VIOLATION);
         NAMED_EX(EXCEPTION_ARRAY_BOUNDS_EXCEEDED);
@@ -149,18 +152,8 @@ LONG WINAPI ErbiumUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo)
         auto contextCpy = *ExceptionInfo->ContextRecord;
         contextCpy.ContextFlags = CONTEXT_ALL;
 
-        auto result = StackWalk
-        (
-            IMAGE_FILE_MACHINE_AMD64,
-            currentPrc,
-            currentThr,
-            &stackFrame,
-            ExceptionInfo->ContextRecord,
-            NULL,
-            SymFunctionTableAccess64,
-            SymGetModuleBase64,
-            NULL
-        );
+        auto result
+            = StackWalk(IMAGE_FILE_MACHINE_AMD64, currentPrc, currentThr, &stackFrame, ExceptionInfo->ContextRecord, NULL, SymFunctionTableAccess64, SymGetModuleBase64, NULL);
 
         if (result == false)
             break;
@@ -185,7 +178,7 @@ LONG WINAPI ErbiumUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo)
 
         sym->SizeOfStruct = sizeof(symStorage);
         sym->MaxNameLength = sizeof(symName);
-        
+
         BOOL SymResult = SymGetSymFromAddr64(currentPrc, (ULONG64)stackFrame.AddrPC.Offset, &displacement, sym);
         if (SymResult == false || imageBase == ImageBase)
             reportStream << "[unknown]\n";
@@ -194,7 +187,7 @@ LONG WINAPI ErbiumUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo)
             UnDecorateSymbolName(sym->Name, (PSTR)symName, sizeof(symName), UNDNAME_COMPLETE);
 
             reportStream << sym->Name << "()";
-            IMAGEHLP_LINE64	ImageHelpLine = { 0 };
+            IMAGEHLP_LINE64 ImageHelpLine = { 0 };
             ImageHelpLine.SizeOfStruct = sizeof(ImageHelpLine);
             if (SymGetLineFromAddr64(currentPrc, (ULONG64)stackFrame.AddrPC.Offset, (::DWORD*)&displacement, &ImageHelpLine))
             {
@@ -210,9 +203,9 @@ LONG WINAPI ErbiumUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo)
     Memcury::Util::CopyToClipboard(reportStr);
     SymCleanup(currentPrc);
     Sleep(3000);
-    //while (true) {}
+    // while (true) {}
     TerminateProcess(GetCurrentProcess(), ExceptionInfo->ExceptionRecord->ExceptionCode);
-    //ExitProcess(ExceptionInfo->ExceptionRecord->ExceptionCode);
+    // ExitProcess(ExceptionInfo->ExceptionRecord->ExceptionCode);
     return EXCEPTION_CONTINUE_EXECUTION;
 }
 

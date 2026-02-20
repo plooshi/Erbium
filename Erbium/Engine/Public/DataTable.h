@@ -10,15 +10,14 @@ public:
     {
         return *(TMap<FName, uint8*>*)(__int64(this) + 0x30);
     }
-    __declspec(property(get = GetRowMap))
-    TMap<FName, uint8_t*> RowMap;
+    __declspec(property(get = GetRowMap)) TMap<FName, uint8_t*> RowMap;
 };
 
 class UCompositeDataTable : public UObject
 {
 public:
     UCLASS_COMMON_MEMBERS(UCompositeDataTable);
-    
+
     DEFINE_PROP(ParentTables, TArray<UDataTable*>);
 };
 

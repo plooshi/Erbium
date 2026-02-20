@@ -38,33 +38,33 @@
                -AddHook: Adds a hook to the VEH Hook system.
                -RemoveHook: Removes a hook from the VEH Hook system.
 */
-#include <string>
-#include <format>
-#include <vector>
-#include <stdexcept>
-#include <type_traits>
-#include <intrin.h>
-#include <Windows.h>
-#include <source_location>
 #include <DbgHelp.h>
+#include <Windows.h>
+#include <format>
+#include <intrin.h>
+#include <source_location>
+#include <stdexcept>
+#include <string>
+#include <type_traits>
+#include <vector>
 #pragma comment(lib, "Dbghelp.lib")
 
-#define MemcuryAssert(cond)                                              \
-        if (!(cond))                                                         \
-        {                                                                    \
-            MessageBoxA(nullptr, #cond, __FUNCTION__, MB_ICONERROR | MB_OK); \
-            Memcury::Safety::FreezeCurrentThread();                          \
-        }
+#define MemcuryAssert(cond)                                                                                                                                                        \
+    if (!(cond))                                                                                                                                                                   \
+    {                                                                                                                                                                              \
+        MessageBoxA(nullptr, #cond, __FUNCTION__, MB_ICONERROR | MB_OK);                                                                                                           \
+        Memcury::Safety::FreezeCurrentThread();                                                                                                                                    \
+    }
 
-#define MemcuryAssertM(cond, msg)                                      \
-        if (!(cond))                                                       \
-        {                                                                  \
-            MessageBoxA(nullptr, msg, __FUNCTION__, MB_ICONERROR | MB_OK); \
-        }
+#define MemcuryAssertM(cond, msg)                                                                                                                                                  \
+    if (!(cond))                                                                                                                                                                   \
+    {                                                                                                                                                                              \
+        MessageBoxA(nullptr, msg, __FUNCTION__, MB_ICONERROR | MB_OK);                                                                                                             \
+    }
 
-#define MemcuryThrow(msg)                                          \
-        MessageBoxA(nullptr, msg, __FUNCTION__, MB_ICONERROR | MB_OK); \
-        Memcury::Safety::FreezeCurrentThread();
+#define MemcuryThrow(msg)                                                                                                                                                          \
+    MessageBoxA(nullptr, msg, __FUNCTION__, MB_ICONERROR | MB_OK);                                                                                                                 \
+    Memcury::Safety::FreezeCurrentThread();
 
 extern uint64_t ImageBase;
 inline bool bUE51 = false;
@@ -158,24 +158,15 @@ namespace Memcury
             bool result;
             DWORD64 displacement = 0;
 
-            char buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR)]{ 0 };
-            char name[256]{ 0 };
-            char module[256]{ 0 };
+            char buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR)] { 0 };
+            char name[256] { 0 };
+            char module[256] { 0 };
 
             PSYMBOL_INFO symbolInfo = (PSYMBOL_INFO)buffer;
 
             for (ULONG frame = 0;; frame++)
             {
-                result = StackWalk64(
-                    IMAGE_FILE_MACHINE_AMD64,
-                    process,
-                    thread,
-                    &stack,
-                    ctx,
-                    NULL,
-                    SymFunctionTableAccess64,
-                    SymGetModuleBase64,
-                    NULL);
+                result = StackWalk64(IMAGE_FILE_MACHINE_AMD64, process, thread, &stack, ctx, NULL, SymFunctionTableAccess64, SymGetModuleBase64, NULL);
 
                 if (!result)
                     break;
@@ -306,24 +297,17 @@ namespace Memcury
 
         inline auto byteIsAscii(uint8_t byte) -> bool
         {
-            static constexpr bool isAscii[0x100] = {
-                false, false, false, false, false, false, false, false, false, true, true, false, false, true, false, false,
-                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-                true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
-                true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
-                true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
-                true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
-                true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
-                true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, false,
-                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false
-            };
+            static constexpr bool isAscii[0x100] = { false, false, false, false, false, false, false, false, false, true, true, false, false, true, false, false, false, false,
+                false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, true, true, true, true, true, true, true, true, true, true,
+                true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
+                true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
+                true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
+                true, true, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false };
 
             return isAscii[byte];
         }
@@ -335,7 +319,7 @@ namespace Memcury
 
         static auto pattern2bytes(const char* pattern) -> std::vector<int>
         {
-            auto bytes = std::vector<int>{};
+            auto bytes = std::vector<int> {};
             const auto start = const_cast<char*>(pattern);
             const auto end = const_cast<char*>(pattern) + strlen(pattern);
 
@@ -367,7 +351,7 @@ namespace Memcury
         inline auto GetModuleBase() -> uintptr_t
         {
             return ImageBase;
-            //return Globals::moduleName == 0 ? ImageBase : uint64_t(GetModuleHandleA(Globals::moduleName));
+            // return Globals::moduleName == 0 ? ImageBase : uint64_t(GetModuleHandleA(Globals::moduleName));
         }
 
         inline auto GetDOSHeader() -> PIMAGE_DOS_HEADER
@@ -479,7 +463,8 @@ namespace Memcury
 
             auto RelativeOffset(uint32_t offset, uint32_t off2 = 0) -> Address
             {
-                if (_address) _address = ((_address + offset + 4 + off2) + *(int32_t*)(_address + offset));
+                if (_address)
+                    _address = ((_address + offset + 4 + off2) + *(int32_t*)(_address + offset));
                 return *this;
             }
 
@@ -551,7 +536,7 @@ namespace Memcury
                 }
 
                 MemcuryThrow("Section not found");
-                return Section{};
+                return Section {};
             }
 
             auto GetSectionSize() -> uint32_t
@@ -594,25 +579,25 @@ namespace Memcury
         static auto FindPatternEx(HANDLE handle, const char* pattern, const char* mask, uint64_t begin, uint64_t end) -> Scanner
         {
             auto scan = [](const char* pattern, const char* mask, char* begin, unsigned int size) -> char*
+            {
+                size_t patternLen = strlen(mask);
+                for (unsigned int i = 0; i < size - patternLen; i++)
                 {
-                    size_t patternLen = strlen(mask);
-                    for (unsigned int i = 0; i < size - patternLen; i++)
+                    bool found = true;
+                    for (unsigned int j = 0; j < patternLen; j++)
                     {
-                        bool found = true;
-                        for (unsigned int j = 0; j < patternLen; j++)
+                        if (mask[j] != '?' && pattern[j] != *(begin + i + j))
                         {
-                            if (mask[j] != '?' && pattern[j] != *(begin + i + j))
-                            {
-                                found = false;
-                                break;
-                            }
+                            found = false;
+                            break;
                         }
-
-                        if (found)
-                            return (begin + i);
                     }
-                    return nullptr;
-                };
+
+                    if (found)
+                        return (begin + i);
+                }
+                return nullptr;
+            };
 
             uint64_t match = NULL;
             SIZE_T bytesRead;
@@ -683,7 +668,7 @@ namespace Memcury
         static inline auto HasAVX2 = IsProcessorFeaturePresent(PF_AVX2_INSTRUCTIONS_AVAILABLE);
         static auto FindPattern(const char* signature, bool bWarnIfNotFound = true, bool bInRData = false) -> Scanner
         {
-            PE::Address add{ nullptr };
+            PE::Address add { nullptr };
 
             auto patternBytes = ASM::pattern2bytes(signature);
 
@@ -735,7 +720,7 @@ namespace Memcury
                     }
                 }
             }
-            else 
+            else
             {
                 __m128i t = _mm_set1_epi8((char)startingByte);
 
@@ -787,7 +772,7 @@ namespace Memcury
 
         static auto FindPointerRef(void* Pointer, int useRefNum = 0, bool bUseFirstResult = false, bool bWarnIfNotFound = true) -> Scanner // credit me and ender
         {
-            PE::Address add{ nullptr };
+            PE::Address add { nullptr };
 
             if (!Pointer)
                 return Scanner(add);
@@ -837,7 +822,6 @@ namespace Memcury
                     }
                 }
 
-
                 int offset2 = _mm_movemask_epi8(_mm_cmpeq_epi8(bytes, t2));
 
                 if (offset2 != 0)
@@ -883,7 +867,7 @@ namespace Memcury
         template <typename T = const wchar_t*>
         static __declspec(noinline) auto FindStringRef(T string, bool bWarnIfNotFound = true, int useRefNum = 0, bool bIsInFunc = false, bool bSkunky = false) -> Scanner
         {
-            PE::Address add{ nullptr };
+            PE::Address add { nullptr };
 
             constexpr auto bIsWide = std::is_same<T, const wchar_t*>::value;
             constexpr auto bIsChar = std::is_same<T, const char*>::value;
@@ -905,7 +889,7 @@ namespace Memcury
 
             DWORD i = 0x0;
             if (HasAVX2)
-            { 
+            {
                 __m256i t = _mm256_set1_epi8((char)0x8d);
                 // scan only text section
                 for (; i < textSection.GetSectionSize() - (textSection.GetSectionSize() % 32); i += 32)
@@ -921,7 +905,7 @@ namespace Memcury
                         int c = offset & (1 << q);
                         if (c)
                         {
-                            //if (scanBytes[i + q + 1] == ASM::LEA)
+                            // if (scanBytes[i + q + 1] == ASM::LEA)
                             if ((scanBytes[i + q - 1] & 0xFB) == 0x48)
                             {
                                 auto stringAdd = PE::Address(&scanBytes[i + q]).RelativeOffset(2);
@@ -942,7 +926,7 @@ namespace Memcury
                                     }
 
                                     // Check if the first char is printable
-                                    //if (ASM::byteIsAscii(strBytes[0]))
+                                    // if (ASM::byteIsAscii(strBytes[0]))
                                     {
                                         if constexpr (!bIsPtr)
                                         {
@@ -1018,7 +1002,7 @@ namespace Memcury
                                 if (rdataSection.isInSection(stringAdd))
                                 {
                                     auto strBytes = stringAdd.GetAs<std::uint8_t*>();
-                                    
+
                                     if (bUE51 && bIsInFunc)
                                     {
                                         auto pointerToRef = *(LPVOID*)strBytes;
@@ -1030,7 +1014,7 @@ namespace Memcury
                                     }
 
                                     // Check if the first char is printable
-                                    //if (ASM::byteIsAscii(strBytes[0]))
+                                    // if (ASM::byteIsAscii(strBytes[0]))
                                     {
                                         if constexpr (!bIsPtr)
                                         {
@@ -1091,7 +1075,7 @@ namespace Memcury
                 {
                     if constexpr (bIsWide)
                     {
-                        //std::wstring wstr = std::wstring(string);
+                        // std::wstring wstr = std::wstring(string);
 
                         // auto aaa = (L"failed FindStringRef " + std::wstring(string));
                         // MessageBoxA(0, std::string(aaa.begin(), aaa.end()).c_str(), "Memcury", MB_ICONERROR);
@@ -1109,21 +1093,21 @@ namespace Memcury
                 {
                     for (int i = 0; i < 300; i++)
                     {
-                        //if (!bSkunky ? (*(uint8_t*)(add.Get() - i) == 0x48 && *(uint8_t*)(add.Get() - i + 1) == 0x83) :
-                        //    (*(uint8_t*)(add.Get() - i) == 0x4C && *(uint8_t*)(add.Get() - i + 1) == 0x8B && *(uint8_t*)(add.Get() - i + 2) == 0xDC))
+                        // if (!bSkunky ? (*(uint8_t*)(add.Get() - i) == 0x48 && *(uint8_t*)(add.Get() - i + 1) == 0x83) :
+                        //     (*(uint8_t*)(add.Get() - i) == 0x4C && *(uint8_t*)(add.Get() - i + 1) == 0x8B && *(uint8_t*)(add.Get() - i + 2) == 0xDC))
                         if (*(uint8_t*)(add.Get() - i) == 0x48 && *(uint8_t*)(add.Get() - i + 1) == 0x83 && *(uint8_t*)(add.Get() - i + 2) == 0xEC)
                         {
-                           int sub = 0;
-                           if (*(uint8_t*)(add.Get() - i - 3) == 0x4C && *(uint8_t*)(add.Get() - i - 2) == 0x8B && *(uint8_t*)(add.Get() - i - 1) == 0xDC)
-                              sub = 3;
-                           // MessageBoxA(0, std::format("0x{:x}", (__int64(add.Get() - i) - __int64(GetModuleHandleW(0)))).c_str(), "Memcury", MB_OK);
+                            int sub = 0;
+                            if (*(uint8_t*)(add.Get() - i - 3) == 0x4C && *(uint8_t*)(add.Get() - i - 2) == 0x8B && *(uint8_t*)(add.Get() - i - 1) == 0xDC)
+                                sub = 3;
+                            // MessageBoxA(0, std::format("0x{:x}", (__int64(add.Get() - i) - __int64(GetModuleHandleW(0)))).c_str(), "Memcury", MB_OK);
 
-                           auto beginFunc = Scanner(add.Get() - i - sub);
+                            auto beginFunc = Scanner(add.Get() - i - sub);
 
-                           auto ref = FindPointerRef(beginFunc.GetAs<void*>(), 0, true);
+                            auto ref = FindPointerRef(beginFunc.GetAs<void*>(), 0, true);
 
-                           if (ref.Get())
-                               return ref;
+                            if (ref.Get())
+                                return ref;
                         }
                     }
                 }
@@ -1141,7 +1125,8 @@ namespace Memcury
         inline auto ScanFor(std::vector<uint8_t> opcodesToFind, bool forward = true, int toSkip = 0, int bytesToSkip = 1, int Radius = 2048, bool bIgnoreFF = false) -> Scanner
         {
             const auto scanBytes = _address.GetAs<std::uint8_t*>();
-            if (!scanBytes) return *this;
+            if (!scanBytes)
+                return *this;
 
             bool bFound = false;
 
@@ -1232,8 +1217,8 @@ namespace Memcury
             for (auto i = (forward ? 1 : -1); forward ? (i < 2048) : (i > -2048); forward ? i++ : i--)
             {
                 if ( // ASM::byteIsA(scanBytes[i], ASM::MNEMONIC::JMP_REL8) ||
-                    // ASM::byteIsA(scanBytes[i], ASM::MNEMONIC::JMP_REL32) ||
-                    // ASM::byteIsA(scanBytes[i], ASM::MNEMONIC::JMP_EAX) ||
+                     // ASM::byteIsA(scanBytes[i], ASM::MNEMONIC::JMP_REL32) ||
+                     // ASM::byteIsA(scanBytes[i], ASM::MNEMONIC::JMP_EAX) ||
                     ASM::byteIsA(scanBytes[i], ASM::MNEMONIC::RETN_REL8) || ASM::byteIsA(scanBytes[i], ASM::MNEMONIC::RETN) || ASM::byteIsA(scanBytes[i], ASM::MNEMONIC::INT3))
                 {
                     _address = (uintptr_t)&scanBytes[i + 1];
@@ -1497,8 +1482,11 @@ namespace Memcury
         {
             if (Exception->ExceptionRecord->ExceptionCode == STATUS_GUARD_PAGE_VIOLATION)
             {
-                auto Itr = std::find_if(Hooks.begin(), Hooks.end(), [Rip = Exception->ContextRecord->Rip](const HOOK_INFO& Hook)
-                    { return Hook.Original == (void*)Rip; });
+                auto Itr = std::find_if(Hooks.begin(), Hooks.end(),
+                    [Rip = Exception->ContextRecord->Rip](const HOOK_INFO& Hook)
+                    {
+                        return Hook.Original == (void*)Rip;
+                    });
                 if (Itr != Hooks.end())
                 {
                     Exception->ContextRecord->Rip = (uintptr_t)Itr->Detour;
@@ -1556,8 +1544,11 @@ namespace Memcury
 
         inline bool RemoveHook(void* Original)
         {
-            auto Itr = std::find_if(Hooks.begin(), Hooks.end(), [Original](const HOOK_INFO& Hook)
-                { return Hook.Original == Original; });
+            auto Itr = std::find_if(Hooks.begin(), Hooks.end(),
+                [Original](const HOOK_INFO& Hook)
+                {
+                    return Hook.Original == Original;
+                });
 
             if (Itr == Hooks.end())
             {
@@ -1584,7 +1575,8 @@ inline bool IsBadReadPtr(void* p)
         DWORD mask = (PAGE_READONLY | PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY);
         bool b = !(mbi.Protect & mask);
         // check the page is not a guard page
-        if (mbi.Protect & (PAGE_GUARD | PAGE_NOACCESS)) b = true;
+        if (mbi.Protect & (PAGE_GUARD | PAGE_NOACCESS))
+            b = true;
 
         return b;
     }
@@ -1617,7 +1609,8 @@ inline uintptr_t FindNameRef(const wchar_t* Name, int skip = 0, bool bWarnString
 }
 
 // Finds a string ref, then goes searches xref of the function that it's in and returns that address.
-inline uintptr_t FindFunctionCall(const wchar_t* Name, const std::vector<uint8_t>& Bytes = std::vector<uint8_t>{ 0x48, 0x89, 0x5C }, int skip = 0, bool bWarnStringNotFound = true) // credit ender & me
+inline uintptr_t FindFunctionCall(
+    const wchar_t* Name, const std::vector<uint8_t>& Bytes = std::vector<uint8_t> { 0x48, 0x89, 0x5C }, int skip = 0, bool bWarnStringNotFound = true) // credit ender & me
 {
     auto NameRef = FindNameRef(Name, skip, bWarnStringNotFound);
 
@@ -1630,7 +1623,7 @@ inline uintptr_t FindFunctionCall(const wchar_t* Name, const std::vector<uint8_t
 inline bool IsNullSub(uint64_t Addr)
 {
     // if (*(uint8_t*)(Addr) == 0xEB && *(uint8_t*)(Addr + 1) == 0xF7) // positive sp value has been detected, the output may be wrong!
-       // return true;
+    // return true;
 
     return *(uint8_t*)(Addr) == 0xC3 || *(uint8_t*)(Addr) == 0xC2;
 }

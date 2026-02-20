@@ -9,7 +9,8 @@ struct FParseConditionResult
     size_t NextStart;
 };
 
-static FParseConditionResult ParseCondition(UEAllocatedString Condition, const FGameplayTagContainer& TargetTags, const FGameplayTagContainer& SourceTags, const FGameplayTagContainer& ContextTags)
+static FParseConditionResult ParseCondition(
+    UEAllocatedString Condition, const FGameplayTagContainer& TargetTags, const FGameplayTagContainer& SourceTags, const FGameplayTagContainer& ContextTags)
 {
     size_t CondTypeStart = -1, CondTypeEnd = -1, NextCond = -1;
 
@@ -101,7 +102,6 @@ static bool IsConditionMet(const FString& InCondition, const FGameplayTagContain
 
     auto Condition = InCondition.ToString();
 
-
     FParseConditionResult Result = ParseCondition(Condition, TargetTags, SourceTags, ContextTags);
 
     if (Result.NextStart != Condition.npos)
@@ -162,7 +162,8 @@ void GiveAccolade(AFortPlayerControllerAthena* PlayerController, UFortAccoladeIt
     float XpValue = Accolade->XpRewardAmount.Evaluate();
 
     if (XpValue == 0)
-        UDataTableFunctionLibrary::EvaluateCurveTableRow(Accolade->XpRewardAmount.Curve.CurveTable, FName(L"Default_Medal"), Accolade->XpRewardAmount.Value, nullptr, &XpValue, FString());
+        UDataTableFunctionLibrary::EvaluateCurveTableRow(
+            Accolade->XpRewardAmount.Curve.CurveTable, FName(L"Default_Medal"), Accolade->XpRewardAmount.Value, nullptr, &XpValue, FString());
 
     Info->EventXpValue = (int32)XpValue;
     Info->RestedValuePortion = Info->EventXpValue;
@@ -199,7 +200,6 @@ void GiveAccolade(AFortPlayerControllerAthena* PlayerController, UFortAccoladeIt
             PlayerController->XPComponent->MedalsEarned.Remove(MedalIndex);
     }*/
 
-
     /*for (auto& AthenaAccolade : PlayerController->XPComponent->PlayerAccolades)
     {
         if (AthenaAccolade.AccoladeDef == Accolade)
@@ -233,7 +233,11 @@ std::unordered_map<UFortQuestManager*, std::unordered_set<UFortQuestItemDefiniti
 void ProgressQuest(UFortQuestManager* _this, AFortPlayerControllerAthena* PlayerController, UFortQuestItem* QuestItem, FName BackendName, int Count)
 {
     auto QuestDefinition = QuestItem->ItemDefinition;
-    auto QuestObjectivePtr = QuestItem->Objectives.Search([&](UFortQuestObjectiveInfo* Obj) { return Obj->BackendName == BackendName; });
+    auto QuestObjectivePtr = QuestItem->Objectives.Search(
+        [&](UFortQuestObjectiveInfo* Obj)
+        {
+            return Obj->BackendName == BackendName;
+        });
 
     if (!QuestObjectivePtr)
         return; // if this somehow happens, we are just fucked
@@ -269,12 +273,15 @@ void ProgressQuest(UFortQuestManager* _this, AFortPlayerControllerAthena* Player
 
     printf("[Quests] %s Completed: %s\n", BackendName.ToString().c_str(), (AcheivedCount + Count == QuestObjective->RequiredCount) ? "true" : "false");
     // keep it the same damnit
-    _this->SelfCompletedUpdatedQuest(PlayerController, QuestDefinition, BackendName, AcheivedCount + Count, Count, nullptr, AcheivedCount + Count == QuestObjective->RequiredCount, bAllObjectivesCompleted);
+    _this->SelfCompletedUpdatedQuest(
+        PlayerController, QuestDefinition, BackendName, AcheivedCount + Count, Count, nullptr, AcheivedCount + Count == QuestObjective->RequiredCount, bAllObjectivesCompleted);
 
     if (!UFortQuestManager::SelfCompletedUpdatedQuest__Ptr)
-        _this->HandleQuestUpdated(PlayerController, QuestDefinition, BackendName, AcheivedCount + Count, Count, nullptr, AcheivedCount + Count == QuestObjective->RequiredCount, bAllObjectivesCompleted);
+        _this->HandleQuestUpdated(
+            PlayerController, QuestDefinition, BackendName, AcheivedCount + Count, Count, nullptr, AcheivedCount + Count == QuestObjective->RequiredCount, bAllObjectivesCompleted);
     else if (!UFortQuestManager::HandleQuestUpdated__Ptr)
-        _this->HandleQuestObjectiveUpdated(PlayerController, QuestDefinition, BackendName, AcheivedCount + Count, Count, nullptr, AcheivedCount + Count == QuestObjective->RequiredCount, bAllObjectivesCompleted);
+        _this->HandleQuestObjectiveUpdated(
+            PlayerController, QuestDefinition, BackendName, AcheivedCount + Count, Count, nullptr, AcheivedCount + Count == QuestObjective->RequiredCount, bAllObjectivesCompleted);
     else if (!UFortQuestManager::HandleQuestObjectiveUpdated__Ptr)
     {
         UFortQuestManagerComponent_Athena* QuestManagerComp = nullptr;
@@ -287,40 +294,43 @@ void ProgressQuest(UFortQuestManager* _this, AFortPlayerControllerAthena* Player
                 break;
             }
         }
-        
+
         if (QuestManagerComp)
-            QuestManagerComp->HandleQuestObjectiveUpdated(PlayerController, QuestDefinition, BackendName, AcheivedCount + Count, Count, nullptr, AcheivedCount + Count == QuestObjective->RequiredCount, bAllObjectivesCompleted);
+            QuestManagerComp->HandleQuestObjectiveUpdated(PlayerController, QuestDefinition, BackendName, AcheivedCount + Count, Count, nullptr,
+                AcheivedCount + Count == QuestObjective->RequiredCount, bAllObjectivesCompleted);
     }
 
     if (PlayerController->HasXPComponent())
     {
-        PlayerController->XPComponent->QuestObjectiveUpdated(PlayerController, QuestDefinition, BackendName, Count, AcheivedCount + Count == QuestObjective->RequiredCount, bAllObjectivesCompleted);
+        PlayerController->XPComponent->QuestObjectiveUpdated(
+            PlayerController, QuestDefinition, BackendName, Count, AcheivedCount + Count == QuestObjective->RequiredCount, bAllObjectivesCompleted);
     }
 }
 
 std::unordered_map<AActor*, std::unordered_map<int32_t, int32_t>> CountThresholdMap;
 std::unordered_set<UFortAccoladeItemDefinition*> OnlyOnceMap;
 
-void UFortQuestManager::SendStatEvent__Internal(AActor* PlayerController, long long StatEvent, int32 Count, UObject* TargetObject, FGameplayTagContainer TargetTags, FGameplayTagContainer SourceTags, FGameplayTagContainer ContextTags, bool* QuestActive, bool* QuestCompleted)
+void UFortQuestManager::SendStatEvent__Internal(AActor* PlayerController, long long StatEvent, int32 Count, UObject* TargetObject, FGameplayTagContainer TargetTags,
+    FGameplayTagContainer SourceTags, FGameplayTagContainer ContextTags, bool* QuestActive, bool* QuestCompleted)
 {
     if (!this)
         return;
 
-	static auto XPTable = FindObject<UDataTable>(L"/Game/Athena/Items/Quests/AthenaObjectiveStatXPTable.AthenaObjectiveStatXPTable");
+    static auto XPTable = FindObject<UDataTable>(L"/Game/Athena/Items/Quests/AthenaObjectiveStatXPTable.AthenaObjectiveStatXPTable");
     auto FortPC = (AFortPlayerControllerAthena*)PlayerController;
 
-	if (XPTable && FortPC->HasXPComponent())
-	{
-		for (const auto& [ Key, Value ] : XPTable->RowMap)
-		{
-			auto Row = (FFortQuestObjectiveStatXPTableRow*)Value;
+    if (XPTable && FortPC->HasXPComponent())
+    {
+        for (const auto& [Key, Value] : XPTable->RowMap)
+        {
+            auto Row = (FFortQuestObjectiveStatXPTableRow*)Value;
 
-			if (Row->Type != (uint8_t)StatEvent) // todo: fix this count threshold stuff
-				continue;
+            if (Row->Type != (uint8_t)StatEvent) // todo: fix this count threshold stuff
+                continue;
 
-			if (!Row->HasAccoladePrimaryAssetId())
-				break;
-			
+            if (!Row->HasAccoladePrimaryAssetId())
+                break;
+
             auto Accolade = (UFortAccoladeItemDefinition*)UKismetSystemLibrary::GetObjectFromPrimaryAssetId(Row->AccoladePrimaryAssetId);
 
             if (!Accolade)
@@ -329,23 +339,23 @@ void UFortQuestManager::SendStatEvent__Internal(AActor* PlayerController, long l
             if (Row->bOnceOnly && OnlyOnceMap.contains(Accolade))
                 continue;
 
-			if (!TargetTags.HasAll(Row->TargetTags))
-				continue;
+            if (!TargetTags.HasAll(Row->TargetTags))
+                continue;
 
-			if (!SourceTags.HasAll(Row->SourceTags))
-				continue;
+            if (!SourceTags.HasAll(Row->SourceTags))
+                continue;
 
-			if (!ContextTags.HasAll(Row->ContextTags))
-				continue;
+            if (!ContextTags.HasAll(Row->ContextTags))
+                continue;
 
-			if (FFortQuestObjectiveStatXPTableRow::HasExcludeTargetTags() && TargetTags.HasAny(Row->ExcludeTargetTags))
-				continue;
+            if (FFortQuestObjectiveStatXPTableRow::HasExcludeTargetTags() && TargetTags.HasAny(Row->ExcludeTargetTags))
+                continue;
 
-			if (FFortQuestObjectiveStatXPTableRow::HasExcludeSourceTags() && SourceTags.HasAny(Row->ExcludeSourceTags))
-				continue;
+            if (FFortQuestObjectiveStatXPTableRow::HasExcludeSourceTags() && SourceTags.HasAny(Row->ExcludeSourceTags))
+                continue;
 
-			if (FFortQuestObjectiveStatXPTableRow::HasExcludeContextTags() && ContextTags.HasAny(Row->ExcludeContextTags))
-				continue;
+            if (FFortQuestObjectiveStatXPTableRow::HasExcludeContextTags() && ContextTags.HasAny(Row->ExcludeContextTags))
+                continue;
 
             if (!IsConditionMet(Row->Condition, TargetTags, SourceTags, ContextTags))
                 continue;
@@ -378,8 +388,8 @@ void UFortQuestManager::SendStatEvent__Internal(AActor* PlayerController, long l
 
                 GiveAccolade(FortPC, Accolade, Row->AccoladePrimaryAssetId);
             }
-		}
-	}
+        }
+    }
 
     if (VersionInfo.FortniteVersion < 12 && StatEvent == EFortQuestObjectiveStatEvent::GetComplexCustom())
         return; // js crashes idk why
@@ -390,7 +400,6 @@ void UFortQuestManager::SendStatEvent__Internal(AActor* PlayerController, long l
             continue;
 
         auto QuestDefinition = Quest->ItemDefinition;
-
 
         for (int i = 0; i < QuestDefinition->Objectives.Num(); i++)
         {
@@ -411,18 +420,18 @@ void UFortQuestManager::SendStatEvent__Internal(AActor* PlayerController, long l
                     if (Row->Type != StatEvent)
                         continue;
 
-                    //printf("USA is not in europe %s %d\n", Objective.BackendName.ToString().c_str(), Row->TargetTagContainer.GameplayTags.Num());
+                    // printf("USA is not in europe %s %d\n", Objective.BackendName.ToString().c_str(), Row->TargetTagContainer.GameplayTags.Num());
                     if (!TargetTags.HasAll(Row->TargetTagContainer))
                         continue;
-                    //printf("Passed TT\n");
+                    // printf("Passed TT\n");
 
                     if (!SourceTags.HasAll(Row->SourceTagContainer))
                         continue;
-                    //printf("Passed ST\n");
+                    // printf("Passed ST\n");
 
                     if (VersionInfo.FortniteVersion >= 10 && !ContextTags.HasAll(Row->ContextTagContainer))
                         continue;
-                    //printf("Passed CT\n");
+                    // printf("Passed CT\n");
 
                     if (!IsConditionMet(Row->Condition, TargetTags, SourceTags, ContextTags))
                         continue;
@@ -432,7 +441,7 @@ void UFortQuestManager::SendStatEvent__Internal(AActor* PlayerController, long l
                 }
             }
             else
-             {
+            {
                 if (FFortMcpQuestObjectiveInfo::HasInlineObjectiveStats())
                 {
                     for (int i = 0; i < Objective.InlineObjectiveStats.Num(); i++)
@@ -486,7 +495,8 @@ void UFortQuestManager::SendStatEvent__Internal(AActor* PlayerController, long l
 
 bool bHasQueueStatEvent = false;
 
-void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEvent, int32 Count, bool bAllowQueueStatEvent, UObject* TargetObject, FGameplayTagContainer TargetTags, FGameplayTagContainer AdditionalSourceTags, bool* QuestActive, bool* QuestCompleted)
+void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEvent, int32 Count, bool bAllowQueueStatEvent, UObject* TargetObject,
+    FGameplayTagContainer TargetTags, FGameplayTagContainer AdditionalSourceTags, bool* QuestActive, bool* QuestCompleted)
 {
     if ((bHasQueueStatEvent && !bAllowQueueStatEvent) || !this)
         return;
@@ -501,7 +511,9 @@ void UFortQuestManager::SendStatEvent(AActor* PlayerController, long long StatEv
     auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 
-    auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount() ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
+    auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount()
+        ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData)
+        : nullptr;
 
     if (Playlist && Playlist->HasGameplayTagContainer())
         ContextTags.AppendTags(Playlist->GameplayTagContainer);
@@ -535,22 +547,26 @@ void SendComplexCustomStatEvent(UObject* Context, FFrame& Stack)
     auto PlayerController = (AFortPlayerControllerAthena*)QuestManager->GetPlayerControllerBP();
 
     printf("SendComplexCustomStatEvent\n");
-       QuestManager->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetComplexCustom(), Count, false, TargetObject, TargetTags, AdditionalSourceTags);
+    QuestManager->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetComplexCustom(), Count, false, TargetObject, TargetTags, AdditionalSourceTags);
 }
 
-void QueueStatEvent(UFortQuestManager* QuestManager, uint8_t InType, UObject* InTargetObject, FGameplayTagContainer* InTargetTags, FGameplayTagContainer* InSourceTags, FGameplayTagContainer* InContextTags, void* InObjectiveStat, FName InObjectiveBackendName, int InCount)
+void QueueStatEvent(UFortQuestManager* QuestManager, uint8_t InType, UObject* InTargetObject, FGameplayTagContainer* InTargetTags, FGameplayTagContainer* InSourceTags,
+    FGameplayTagContainer* InContextTags, void* InObjectiveStat, FName InObjectiveBackendName, int InCount)
 {
     printf("[QuestManager] QueueStatEvent (Event: %d)\n", InType);
 
     auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 
-    auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount() ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
+    auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount()
+        ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData)
+        : nullptr;
 
     if (Playlist && Playlist->HasGameplayTagContainer())
         (*InContextTags).AppendTags(Playlist->GameplayTagContainer);
 
-    return QuestManager->SendStatEvent__Internal(QuestManager->GetPlayerControllerBP(), InType, InCount, InTargetObject, *InTargetTags, *InSourceTags, *InContextTags, nullptr, nullptr);
+    return QuestManager->SendStatEvent__Internal(
+        QuestManager->GetPlayerControllerBP(), InType, InCount, InTargetObject, *InTargetTags, *InSourceTags, *InContextTags, nullptr, nullptr);
 }
 
 void UFortQuestManager::PostLoadHook()

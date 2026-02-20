@@ -1,17 +1,16 @@
-// dllmain.cpp : Defines the entry point for the DLL application.
 #include "pch.h"
-#include "../Public/Utils.h"
-#include <thread>
-#include <iostream>
-#include "../Public/Finders.h"
-#include "../../FortniteGame/Public/FortInventory.h"
-#include <chrono>
-#include "../Public/Configuration.h"
-#include "../Public/Misc.h"
-#include "../Public/GUI.h"
-#include "../../Erbium/Plugins/CrashReporter/Public/CrashReporter.h"
-#include "../../FortniteGame/Public/FortPlayerControllerAthena.h"
 #include "../../Engine/Public/NetDriver.h"
+#include "../../Erbium/Plugins/CrashReporter/Public/CrashReporter.h"
+#include "../../FortniteGame/Public/FortInventory.h"
+#include "../../FortniteGame/Public/FortPlayerControllerAthena.h"
+#include "../Public/Configuration.h"
+#include "../Public/Finders.h"
+#include "../Public/GUI.h"
+#include "../Public/Misc.h"
+#include "../Public/Utils.h"
+#include <chrono>
+#include <iostream>
+#include <thread>
 #pragma comment(lib, "libcurl/libcurl.lib")
 #pragma comment(lib, "libcurl/zlib.lib")
 #pragma comment(lib, "Ws2_32.lib")
@@ -68,8 +67,8 @@ void Main()
         {
             uint32 Offset = DefaultCurieGlobals->GetOffset("bEnableCurie");
 
-            //if (Offset != -1)
-            //    *(bool*)(uintptr_t(DefaultCurieGlobals) + Offset) = false;
+            // if (Offset != -1)
+            //     *(bool*)(uintptr_t(DefaultCurieGlobals) + Offset) = false;
         }
     }
     if (VersionInfo.EngineVersion >= 5.3 && FConfiguration::bEnableIris)
@@ -108,7 +107,7 @@ void Main()
                 }
             }
         }
-        //UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"net.Iris.UseIrisReplication 1"), nullptr);
+        // UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"net.Iris.UseIrisReplication 1"), nullptr);
     }
     if (VersionInfo.EngineVersion >= 5.4)
     {
@@ -118,8 +117,8 @@ void Main()
         auto SlideCVar = FindCVar<uint32_t>(L"Fort.MME.Sliding");
         auto MantleCVar = FindCVar<uint32_t>(L"Fort.MME.Clambering");
 
-        //if (SprintCVar)
-        //    *SprintCVar = false;
+        // if (SprintCVar)
+        //     *SprintCVar = false;
 
         if (HurdleCVar)
             *HurdleCVar = false;
@@ -144,12 +143,15 @@ void Main()
     if constexpr (FConfiguration::WebhookURL && *FConfiguration::WebhookURL)
         curl_global_init(CURL_GLOBAL_ALL);
 
-    sprintf_s(GUI::windowTitle, VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Setting up" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Setting up" : "Erbium (FN %.1f, UE %.2f): Setting up"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
+    sprintf_s(GUI::windowTitle,
+        VersionInfo.EngineVersion >= 5.0
+            ? "Erbium (FN %.2f, UE %.1f): Setting up"
+            : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Setting up" : "Erbium (FN %.1f, UE %.2f): Setting up"),
+        VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
     SetConsoleTitleA(GUI::windowTitle);
 
-
-    //if constexpr (!FConfiguration::bGUI)
-    //    Sleep(2000);
+    // if constexpr (!FConfiguration::bGUI)
+    //     Sleep(2000);
 
     printf("Hooking & finding offsets... (this may take a while)\n");
 
@@ -228,10 +230,7 @@ void Main()
     Misc::bHookedAll = true;
 }
 
-BOOL APIENTRY DllMain(HMODULE hModule,
-    DWORD  ul_reason_for_call,
-    LPVOID lpReserved
-)
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
     switch (ul_reason_for_call)
     {

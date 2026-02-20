@@ -1,15 +1,15 @@
 #include "pch.h"
 #include "../Public/GUI.h"
-#include <d3d11.h>
-#include "../../ImGui/imgui.h"
-#include "../../ImGui/imgui_impl_win32.h"
-#include "../../ImGui/imgui_impl_dx11.h"
-#include "../Public/Configuration.h"
-#include "../Public/Events.h"
 #include "../../FortniteGame/Public/BattleRoyaleGamePhaseLogic.h"
 #include "../../FortniteGame/Public/BuildingSMActor.h"
-#include <sstream>
+#include "../../ImGui/imgui.h"
+#include "../../ImGui/imgui_impl_dx11.h"
+#include "../../ImGui/imgui_impl_win32.h"
+#include "../Public/Configuration.h"
+#include "../Public/Events.h"
+#include <d3d11.h>
 #include <fstream>
+#include <sstream>
 #pragma comment(lib, "d3d11.lib")
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -47,16 +47,20 @@ auto WindowHeight = 400;
 void GUI::Init()
 {
     ImGui_ImplWin32_EnableDpiAwareness();
-    float main_scale = ImGui_ImplWin32_GetDpiScaleForMonitor(MonitorFromPoint(POINT{ 0, 0 }, MONITOR_DEFAULTTOPRIMARY));
+    float main_scale = ImGui_ImplWin32_GetDpiScaleForMonitor(MonitorFromPoint(POINT { 0, 0 }, MONITOR_DEFAULTTOPRIMARY));
 
-    WNDCLASS wc{};
+    WNDCLASS wc {};
     wc.lpszClassName = L"ErbiumWC";
     wc.lpfnWndProc = WndProc;
     RegisterClass(&wc);
 
     wchar_t buffer[67];
-    swprintf_s(buffer, VersionInfo.EngineVersion >= 5.0 ? L"Erbium (FN %.2f, UE %.1f)" : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? L"Erbium (FN %.2f, UE %.2f)" : L"Erbium (FN %.1f, UE %.2f)"), VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
-    auto hWnd = CreateWindow(wc.lpszClassName, buffer, WS_OVERLAPPEDWINDOW & ~WS_MAXIMIZEBOX & ~WS_THICKFRAME, 100, 100, (int)(WindowWidth * main_scale), (int)(WindowHeight * main_scale), nullptr, nullptr, nullptr, nullptr);
+    swprintf_s(buffer,
+        VersionInfo.EngineVersion >= 5.0 ? L"Erbium (FN %.2f, UE %.1f)"
+                                         : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? L"Erbium (FN %.2f, UE %.2f)" : L"Erbium (FN %.1f, UE %.2f)"),
+        VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
+    auto hWnd = CreateWindow(wc.lpszClassName, buffer, WS_OVERLAPPEDWINDOW & ~WS_MAXIMIZEBOX & ~WS_THICKFRAME, 100, 100, (int)(WindowWidth * main_scale),
+        (int)(WindowHeight * main_scale), nullptr, nullptr, nullptr, nullptr);
 
     IDXGISwapChain* g_pSwapChain = nullptr;
     ID3D11Device* g_pd3dDevice = nullptr;
@@ -79,12 +83,17 @@ void GUI::Init()
     sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 
     UINT createDeviceFlags = 0;
-    //createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+    // createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
     D3D_FEATURE_LEVEL featureLevel;
-    const D3D_FEATURE_LEVEL featureLevelArray[2] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_0, };
-    HRESULT res = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext);
+    const D3D_FEATURE_LEVEL featureLevelArray[2] = {
+        D3D_FEATURE_LEVEL_11_0,
+        D3D_FEATURE_LEVEL_10_0,
+    };
+    HRESULT res = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &g_pSwapChain,
+        &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext);
     if (res == DXGI_ERROR_UNSUPPORTED)
-        res = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_WARP, nullptr, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &g_pSwapChain, &g_pd3dDevice, &featureLevel, &g_pd3dDeviceContext);
+        res = D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_WARP, nullptr, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &g_pSwapChain, &g_pd3dDevice,
+            &featureLevel, &g_pd3dDeviceContext);
     if (res != S_OK)
         return;
 
@@ -109,9 +118,10 @@ void GUI::Init()
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    ImGuiIO& io = ImGui::GetIO(); (void)io;
+    ImGuiIO& io = ImGui::GetIO();
+    (void)io;
     io.IniFilename = NULL;
-    //io.DisplaySize = ImGui::GetMainViewport()->Size;
+    // io.DisplaySize = ImGui::GetMainViewport()->Size;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
@@ -154,9 +164,9 @@ void GUI::Init()
     style.Colors[ImGuiCol_Tab] = ImVec4(0.25f, 0.25f, 0.25f, 1.0f);
     style.Colors[ImGuiCol_TabSelected] = ImVec4(0.29f, 0.29f, 0.29f, 1.0f);
     style.Colors[ImGuiCol_TabHovered] = ImVec4(0.32f, 0.32f, 0.32f, 1.0f);
-    //ImGui::StyleColorsDark();
+    // ImGui::StyleColorsDark();
 
-    //ImGuiStyle& style = ImGui::GetStyle();
+    // ImGuiStyle& style = ImGui::GetStyle();
     style.ScaleAllSizes(main_scale);
     style.FontScaleDpi = main_scale;
 
@@ -205,7 +215,7 @@ void GUI::Init()
         ImGui_ImplWin32_NewFrame();
         ImGui::NewFrame();
 
-        main_scale = ImGui_ImplWin32_GetDpiScaleForMonitor(MonitorFromPoint(POINT{ 0, 0 }, MONITOR_DEFAULTTOPRIMARY));
+        main_scale = ImGui_ImplWin32_GetDpiScaleForMonitor(MonitorFromPoint(POINT { 0, 0 }, MONITOR_DEFAULTTOPRIMARY));
         ImGui::SetNextWindowPos(ImVec2(0, 0), ImGuiCond_Always);
         ImGui::SetNextWindowSize(ImVec2(WindowWidth * main_scale, WindowHeight * main_scale), ImGuiCond_Always);
 
@@ -260,6 +270,10 @@ void GUI::Init()
                 ImGui::EndTabItem();
             }
 
+            // do not remove
+            if (ImGui::TabItemButton("Made by Sarah (@ustruct on Discord)"))
+                ImGui::EndTabItem();
+
             ImGui::EndTabBar();
         }
 
@@ -269,14 +283,17 @@ void GUI::Init()
         {
         case 0:
             if (gsStatus >= Joinable)
-                ImGui::BeginChild("ServerInfo", ImVec2(245 * main_scale, 130 * main_scale), ImGuiChildFlags_Borders/*, ImGuiWindowFlags_ChildWindow | ImGuiWindowFlags_AlwaysHorizontallScrollbar */);
+                ImGui::BeginChild("ServerInfo", ImVec2(245 * main_scale, 130 * main_scale),
+                    ImGuiChildFlags_Borders /*, ImGuiWindowFlags_ChildWindow | ImGuiWindowFlags_AlwaysHorizontallScrollbar */);
             ImGui::Text((std::string("Status: ") + (gsStatus == NotReady ? "Setting up the server..." : (gsStatus == Joinable ? "Joinable!" : "Match Started"))).c_str());
             if (gsStatus >= Joinable)
             {
                 ImGui::Text((std::string("Player Count: ") + std::to_string(GameMode->AlivePlayers.Num())).c_str());
                 ImGui::Text((std::string("Port: ") + std::to_string(FConfiguration::Port)).c_str());
 
-                auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount() ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData) : nullptr;
+                auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount()
+                    ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData)
+                    : nullptr;
 
                 if (Playlist)
                 {
@@ -299,9 +316,9 @@ void GUI::Init()
                 if (UFortGameStateComponent_BattleRoyaleGamePhaseLogic::GetDefaultObj())
                 {
                     UFortGameStateComponent_BattleRoyaleGamePhaseLogic::bStartAircraft = true;
-                    //auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get();
+                    // auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get();
 
-                    //GamePhaseLogic->StartAircraftPhase();
+                    // GamePhaseLogic->StartAircraftPhase();
                 }
                 else
                     UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"startaircraft"), nullptr);
@@ -392,8 +409,8 @@ void GUI::Init()
 
             if (ImGui::Button("Reset Builds"))
             {
-				TArray<ABuildingSMActor*> Builds;
-				Utils::GetAll<ABuildingSMActor>(Builds);
+                TArray<ABuildingSMActor*> Builds;
+                Utils::GetAll<ABuildingSMActor>(Builds);
 
                 for (auto& Build : Builds)
                     if (Build->bPlayerPlaced)
@@ -404,13 +421,13 @@ void GUI::Init()
 
             if (ImGui::Button("Destroy Floor Loot"))
             {
-				TArray<AFortPickupAthena*> Pickups;
-				Utils::GetAll<AFortPickupAthena>(Pickups);
-				
+                TArray<AFortPickupAthena*> Pickups;
+                Utils::GetAll<AFortPickupAthena>(Pickups);
+
                 for (auto& Pickup : Pickups)
                     Pickup->K2_DestroyActor();
 
-				Pickups.Free();
+                Pickups.Free();
             }
             break;
         case 4:
@@ -419,7 +436,7 @@ void GUI::Init()
             if (ImGui::Button("Dump Items"))
             {
                 std::stringstream ss;
-                
+
                 ss << "Generated by Erbium (https://github.com/plooshi/Erbium)\n";
                 char version[6];
 
@@ -502,7 +519,6 @@ void GUI::Init()
         }
 
         ImGui::End();
-
 
         ImGui::Render();
         const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };

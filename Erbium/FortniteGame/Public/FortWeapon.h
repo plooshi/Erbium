@@ -1,7 +1,7 @@
 #pragma once
 #include "../../pch.h"
-#include "FortInventory.h"
 #include "../../Engine/Public/AbilitySystemComponent.h"
+#include "FortInventory.h"
 #include "FortPhysicsPawn.h"
 
 struct FFortAbilitySetHandle final

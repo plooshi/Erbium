@@ -1,8 +1,8 @@
 #pragma once
 #include "../../pch.h"
-#include "FortPlaylistAthena.h"
 #include "../../Engine/Public/CurveTable.h"
 #include "FortPlayerStateAthena.h"
+#include "FortPlaylistAthena.h"
 #include "LevelStreamingDynamic.h"
 
 struct FGameMemberInfo : public FFastArraySerializerItem
@@ -98,15 +98,13 @@ public:
     DEFINE_STATIC_FUNC(SpawnAircraft, AFortAthenaAircraft*);
 };
 
-
 struct FBoxSphereBounds final
 {
 public:
-    struct FVector                                Origin;                                            // 0x0000(0x0018)(Edit, BlueprintVisible, ZeroConstructor, SaveGame, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
-    struct FVector                                BoxExtent;                                         // 0x0018(0x0018)(Edit, BlueprintVisible, ZeroConstructor, SaveGame, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
-    double                                        SphereRadius;                                      // 0x0030(0x0008)(Edit, BlueprintVisible, ZeroConstructor, SaveGame, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+    struct FVector Origin; // 0x0000(0x0018)(Edit, BlueprintVisible, ZeroConstructor, SaveGame, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+    struct FVector BoxExtent; // 0x0018(0x0018)(Edit, BlueprintVisible, ZeroConstructor, SaveGame, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+    double SphereRadius; // 0x0030(0x0008)(Edit, BlueprintVisible, ZeroConstructor, SaveGame, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
 };
-
 
 class AFortAthenaMapInfo : public AActor
 {
@@ -144,7 +142,6 @@ public:
     DEFINE_STRUCT_PROP(bIsFinishedStreaming, bool);
 };
 
-
 class AFortCreativePortalManager : public AActor
 {
 public:
@@ -153,6 +150,9 @@ public:
     DEFINE_PROP(AllPortals, TArray<AActor*>);
     DEFINE_PROP(UsedPortals, TArray<AActor*>);
     DEFINE_PROP(AvailablePortals, TArray<AActor*>);
+    DEFINE_PROP(PendingPortalReservations, TArray<TWeakObjectPtr<AActor>>);
+
+    DEFINE_FUNC(ProcessPendingPortalReservations, void);
 };
 
 class UFortMissionInfo : public UObject

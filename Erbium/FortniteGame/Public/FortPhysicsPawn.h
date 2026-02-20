@@ -63,7 +63,7 @@ class AFortAthenaVehicle : public AActor
 public:
     UCLASS_COMMON_MEMBERS(AFortAthenaVehicle);
 
-    //DEFINE_FUNC(FindSeatIndex, int32);
+    // DEFINE_FUNC(FindSeatIndex, int32);
 };
 
 class AFortCharacterVehicle : public AActor

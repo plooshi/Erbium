@@ -62,7 +62,6 @@ public:
     UCLASS_COMMON_MEMBERS(UGameplayEffect);
 };
 
-
 struct FGameplayEffectApplicationInfoHard
 {
 public:
@@ -76,7 +75,7 @@ class UFortAbilitySet : public UObject
 {
 public:
     UCLASS_COMMON_MEMBERS(UFortAbilitySet);
-    
+
     DEFINE_PROP(GameplayAbilities, TArray<TSubclassOf<UFortGameplayAbility>>);
     DEFINE_PROP(GrantedGameplayEffects, TArray<FGameplayEffectApplicationInfoHard>);
 };
@@ -95,7 +94,6 @@ public:
     DEFINE_STRUCT_PROP(EffectContext, FGameplayEffectContextHandle);
 };
 
-
 struct FActiveGameplayEffectHandle
 {
 public:
@@ -112,7 +110,6 @@ public:
     DEFINE_STRUCT_PROP(Def, UGameplayEffect*);
 };
 
-
 struct FActiveGameplayEffect
 {
 public:
@@ -120,7 +117,6 @@ public:
 
     DEFINE_STRUCT_PROP(Spec, FGameplayEffectSpec);
 };
-
 
 struct FActiveGameplayEffectsContainer
 {

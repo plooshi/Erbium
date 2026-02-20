@@ -5,6 +5,6 @@ class UFortCheatManager : public UObject
 {
 public:
     UCLASS_COMMON_MEMBERS(UFortCheatManager);
-    
+
     DEFINE_FUNC(Teleport, void);
 };

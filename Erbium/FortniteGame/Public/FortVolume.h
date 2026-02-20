@@ -5,7 +5,7 @@ struct FCreativeLoadedLinkData
 {
 public:
     USCRIPTSTRUCT_COMMON_MEMBERS(FCreativeLoadedLinkData);
-    
+
     DEFINE_STRUCT_PROP(CreatorName, FString);
     DEFINE_STRUCT_PROP(SupportCode, FString);
     DEFINE_STRUCT_PROP(Version, int32);

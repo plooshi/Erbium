@@ -4,7 +4,6 @@
 
 struct FRealCurve
 {
-
 };
 
 struct FSimpleCurveKey
@@ -33,8 +32,7 @@ public:
     {
         return *(TMap<FName, FRealCurve*>*)(__int64(this) + 0x30);
     }
-    __declspec(property(get = GetRowMap))
-    TMap<FName, FRealCurve*> RowMap;
+    __declspec(property(get = GetRowMap)) TMap<FName, FRealCurve*> RowMap;
 };
 
 struct FCurveTableRowHandle
