@@ -3601,6 +3601,16 @@ void AFortPlayerControllerAthena::ServerAwardVehicleTrickPoints_(UObject* Contex
     TargetTags.ParentTags.Free();
 }
 
+void ServerRestartPlayer(AFortPlayerControllerAthena* _this)
+{
+    if (_this->Pawn)
+        _this->UnPossess(_this->Pawn);
+
+    auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
+
+    GameMode->RestartPlayer(_this);
+}
+
 void AFortPlayerControllerAthena::PostLoadHook()
 {
     if (VersionInfo.FortniteVersion >= 27)
@@ -3629,6 +3639,9 @@ void AFortPlayerControllerAthena::PostLoadHook()
         auto ServerRestartPlayerIdx = GetDefaultObj()->GetFunction("ServerRestartPlayer")->GetVTableIndex();
         auto DefaultFortPCZone = DefaultObjImpl("FortPlayerControllerZone");
         Utils::Hook<AFortPlayerControllerAthena>(ServerRestartPlayerIdx, DefaultFortPCZone->Vft[ServerRestartPlayerIdx]);
+
+        if (VersionInfo.FortniteVersion >= 15)
+            Utils::Hook(uint64_t(DefaultObjImpl("PlayerController")->Vft[ServerRestartPlayerIdx]), ServerRestartPlayer);
     }
 
     auto ServerSuicideIdx = GetDefaultObj()->GetFunction("ServerSuicide")->GetVTableIndex();
@@ -3678,8 +3691,8 @@ void AFortPlayerControllerAthena::PostLoadHook()
             : (VersionInfo.FortniteVersion >= 24 && VersionInfo.FortniteVersion < 25 ? std::vector<uint8_t> { 0x48, 0x8B, 0xC4 } : std::vector<uint8_t> { 0x48, 0x89, 0x5C }));
     Utils::Hook(ClientOnPawnDiedAddr, ClientOnPawnDied, ClientOnPawnDiedOG);
 
-    if (VersionInfo.FortniteVersion >= 15)
-        Utils::ExecHook(GetDefaultObj()->GetFunction("ServerClientIsReadyToRespawn"), ServerClientIsReadyToRespawn);
+    //if (VersionInfo.FortniteVersion >= 15)
+    //    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerClientIsReadyToRespawn"), ServerClientIsReadyToRespawn);
 
     if (FConfiguration::bEnableCheats)
         Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCheat"), ServerCheat);

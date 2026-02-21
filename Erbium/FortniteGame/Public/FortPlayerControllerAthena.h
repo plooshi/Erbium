@@ -366,6 +366,7 @@ public:
     DEFINE_FUNC(GetQuestManager, UFortQuestManager*);
     DEFINE_FUNC(OnRep_IsCreativeQuickbarEnabled, void);
     DEFINE_FUNC(ServerAwardVehicleTrickPoints, void);
+    DEFINE_FUNC(UnPossess, void);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);
