@@ -288,7 +288,7 @@ void GUI::Init()
             ImGui::Text((std::string("Status: ") + (gsStatus == NotReady ? "Setting up the server..." : (gsStatus == Joinable ? "Joinable!" : "Match Started"))).c_str());
             if (gsStatus >= Joinable)
             {
-                ImGui::Text((std::string("Player Count: ") + std::to_string(GameMode->AlivePlayers.Num())).c_str());
+                ImGui::Text((std::string("Player Count: ") + std::to_string(GameMode->HasAlivePlayers() ? GameMode->AlivePlayers.Num() : 0)).c_str());
                 ImGui::Text((std::string("Port: ") + std::to_string(FConfiguration::Port)).c_str());
 
                 auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount()

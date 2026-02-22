@@ -675,6 +675,9 @@ void Misc::Hook()
         auto NearGetOverrideCosmeticLoadout = Memcury::Scanner::FindPattern("4D 8B CD 4C 8D 45 ? 48 8B D6");
 
         if (!NearGetOverrideCosmeticLoadout.IsValid())
+            NearGetOverrideCosmeticLoadout = Memcury::Scanner::FindPattern("4D 8B CD 4C 8D 85 ? ? ? ? 48 8B D6");
+
+        if (!NearGetOverrideCosmeticLoadout.IsValid())
             NearGetOverrideCosmeticLoadout = Memcury::Scanner::FindPattern("4C 8D 45 ? 48 8B D3 48 8B CF E8 ? ? ? ? 0F B6 57");
 
         if (!NearGetOverrideCosmeticLoadout.IsValid())

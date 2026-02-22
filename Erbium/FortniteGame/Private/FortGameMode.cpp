@@ -436,7 +436,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
         if (GameMode->AIDirector)
             GameMode->AIDirector->Call(GameMode->AIDirector->GetFunction("Activate"));
 
-        if (UFortServerBotManagerAthena::StaticClass())
+        if (GameMode->HasServerBotManager())
         {
             if (auto BotManager = (UFortServerBotManagerAthena*)UGameplayStatics::SpawnObject(UFortServerBotManagerAthena::StaticClass(), GameMode))
             {

@@ -142,19 +142,16 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
         FortPawn->OnRep_IsInsideSafeZone();
     }
 
-    if (VersionInfo.FortniteVersion < 15 && Num > 0 && Playlist && Playlist->RespawnType > 0)
+    auto Interface = PlayerController->PlayerState->GetInterface(IFortAbilitySystemInterface::StaticClass());
+    if (InitializePlayerGameplayAbilities_ && Interface)
     {
-        auto Interface = PlayerController->PlayerState->GetInterface(IFortAbilitySystemInterface::StaticClass());
-        if (InitializePlayerGameplayAbilities_ && Interface)
-        {
-            auto InitializePlayerGameplayAbilities = (void (*&)(const IInterface*))InitializePlayerGameplayAbilities_;
+        auto InitializePlayerGameplayAbilities = (void (*&)(const IInterface*))InitializePlayerGameplayAbilities_;
 
-            InitializePlayerGameplayAbilities(Interface);
-        }
-        else
-            for (auto& AbilitySet : AFortGameMode::AbilitySets)
-                PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
+        InitializePlayerGameplayAbilities(Interface);
     }
+    else
+        for (auto& AbilitySet : AFortGameMode::AbilitySets)
+            PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
 
     if (Num == 0)
     {
