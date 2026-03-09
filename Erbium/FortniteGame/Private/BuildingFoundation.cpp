@@ -14,6 +14,7 @@ void ABuildingFoundation::SetDynamicFoundationEnabled_(UObject* Context, FFrame&
         auto SelectAndSetupMyBuildingLevel = (bool (*)(ABuildingFoundation*, void*))SelectAndSetupMyBuildingLevel_;
         SelectAndSetupMyBuildingLevel(Foundation, nullptr);
     }
+    
     if (Foundation->HasDynamicFoundationRepData())
     {
         Foundation->DynamicFoundationRepData.EnabledState = bEnabled ? 1 : 2;
@@ -22,8 +23,8 @@ void ABuildingFoundation::SetDynamicFoundationEnabled_(UObject* Context, FFrame&
     if (Foundation->HasFoundationEnabledState())
         Foundation->FoundationEnabledState = bEnabled ? 1 : 2;
 
-    if (VersionInfo.FortniteVersion >= 14 and VersionInfo.FortniteVersion < 15)// Idk why, but it is not called on s14 maybe on more szns
-        Foundation->SetDynamicFoundationTransform(Foundation->GetTransform());
+    //if (VersionInfo.FortniteVersion >= 14 and VersionInfo.FortniteVersion < 15)// Idk why, but it is not called on s14 maybe on more szns
+    Foundation->SetDynamicFoundationTransform(Foundation->GetTransform());
 }
 
 void ABuildingFoundation::SetDynamicFoundationTransform_(UObject* Context, FFrame& Stack)
