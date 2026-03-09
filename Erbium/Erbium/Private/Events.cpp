@@ -1,7 +1,29 @@
 #include "pch.h"
 #include "../Public/Events.h"
 #include "../../FortniteGame/Public/FortGameMode.h"
+#include "../../FortniteGame/Public/BattleRoyaleGamePhaseLogic.h"
 #include <thread>
+
+class ASpecialEventScript : public AActor
+{
+public:
+    UCLASS_COMMON_MEMBERS(ASpecialEventScript);
+
+    DEFINE_PROP(DelayAfterConentLoad, float);
+    DEFINE_PROP(ReplicatedActivePhaseIndex, int);
+    DEFINE_PROP(DelayAfterWarmup, float);
+
+    DEFINE_FUNC(OnRep_ReplicatedActivePhaseIndex, void);
+};
+
+class ASpecialEventScriptMeshActor : public AActor
+{
+public:
+    UCLASS_COMMON_MEMBERS(ASpecialEventScriptMeshActor);
+
+    DEFINE_FUNC(MeshRootStartEvent, void);
+    DEFINE_FUNC(OnRep_RootStartTime, void);
+};
 
 void Events::StartEvent()
 {
@@ -62,13 +84,45 @@ void Events::StartEvent()
                 }
                 else if (wcsstr(EventFunction.FunctionPath, L"StartEventAtIndex"))
                 {
-                    int StartingIndex = 0;
-                    Target->ProcessEvent(const_cast<UFunction*>(Function), &StartingIndex);
+                    TArray<ASpecialEventScriptMeshActor*> MeshActors;
+                    Utils::GetAll<ASpecialEventScriptMeshActor>(MeshActors);
+
+                    /**static auto GamePhaseOffset = GPL->GetOffset("GamePhase");
+                    auto& _GamePhase = *(EAthenaGamePhase*)(__int64(GPL) + GamePhaseOffset);
+                    printf("%d\n", _GamePhase);*/
+                    if (UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StaticClass())
+                    {
+                        auto GPL = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(GameMode);
+                        GPL->SetGamePhase(EAthenaGamePhase::SafeZones);
+                        GPL->SetGamePhaseStep(EAthenaGamePhaseStep::StormHolding);
+                    }
+                    else
+                    {
+                        GameMode->GameState->GamePhase = (uint8)EAthenaGamePhase::SafeZones;
+                        GameMode->GameState->GamePhaseStep = (uint8)EAthenaGamePhaseStep::StormHolding;
+                    }
+
+                    auto MeshActor = MeshActors[0];
+
+                    auto Scr = (ASpecialEventScript*)Target;
+                    
+                    Scr->DelayAfterConentLoad = 0.6f;
+
+                    auto MeshNetworkSubsystem = TUObjectArray::FindFirstObject("MeshNetworkSubsystem");
+
+                    if (MeshNetworkSubsystem)
+                        *(uint8_t*)(__int64(MeshNetworkSubsystem) + MeshNetworkSubsystem->GetOffset("NodeType")) = 0;
+
+                    MeshActor->MeshRootStartEvent();
+
+                    if (MeshNetworkSubsystem)
+                        *(uint8_t*)(__int64(MeshNetworkSubsystem) + MeshNetworkSubsystem->GetOffset("NodeType")) = 2;
+                    MeshActor->OnRep_RootStartTime();
+                    //Target->Call(const_cast<UFunction*>(Function), 0, 0.f);
                 }
                 else
                 {
-                    float fr = 0.f;
-                    Target->ProcessEvent(const_cast<UFunction*>(Function), &fr);
+                    Target->Call(const_cast<UFunction*>(Function), 0.f);
                 }
             }
 
@@ -117,4 +171,17 @@ void Events::StartEvent()
     }
 
     printf("[Events] Build does not have an event.\n");
+}
+
+void (*ActivatePhaseAtIndexOG)(ASpecialEventScript* _this, int IndexToActivate, float a3);
+void ActivatePhaseAtIndex(ASpecialEventScript* _this, int IndexToActivate, float a3)
+{
+    _this->ReplicatedActivePhaseIndex = IndexToActivate;
+
+    ActivatePhaseAtIndexOG(_this, IndexToActivate, a3);
+}
+
+void Events::Hook()
+{
+    Utils::Hook(FindActivatePhaseAtIndex(), ActivatePhaseAtIndex, ActivatePhaseAtIndexOG);
 }

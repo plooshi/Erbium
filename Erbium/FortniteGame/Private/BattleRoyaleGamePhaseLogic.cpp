@@ -50,6 +50,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::HandleMatchHasStarted(A
     }
     else
     {
+        printf("[GamePhaseLogic] Skipping warmup\n");
         GamePhaseLogic->StartAircraftPhase();
     }
 }
@@ -456,6 +457,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 
     if (bSkipAircraft)
     {
+        printf("[GamePhaseLogic] Skipping aircraft\n");
         SetGamePhase(EAthenaGamePhase::SafeZones);
         SetGamePhaseStep(EAthenaGamePhaseStep::StormForming);
 
