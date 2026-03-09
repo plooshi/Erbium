@@ -3212,6 +3212,28 @@ uint64 FindSetIsDoorOpen()
     return 0;
 }
 
+uint64 FindSelectAndSetupMyBuildingLevel() {
+    auto sRef = Memcury::Scanner::FindStringRef(L"ABuildingFoundation::SelectAndSetupMyBuildingLevel - Cannot get WorldManager!!", false, 0,
+        VersionInfo.FortniteVersion >= 19, false);
+
+    if (!sRef.IsValid())
+        return 0;
+
+    for (int i = 0; i < 2000; i++)
+    {
+        auto Ptr = (uint8_t*)(sRef.Get() - i);
+
+        if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4)
+            return uint64_t(Ptr);
+        else if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
+            return uint64_t(Ptr);
+        else if (*Ptr == 0x40 && *(Ptr + 1) == 0x55)
+            return uint64_t(Ptr);
+    }
+
+    return 0;
+}
+
 void FindNullsAndRetTrues()
 {
     if (VersionInfo.EngineVersion == 4.16)
