@@ -3212,6 +3212,11 @@ uint64 FindSetIsDoorOpen()
     return 0;
 }
 
+uint64 FindSelectAndSetupMyBuildingLevel() {
+    //Def Not Universal
+    return Memcury::Scanner::FindPattern("40 55 57 48 83 EC ? 48 8B EA 48 8B F9 E8").Get();
+}
+
 void FindNullsAndRetTrues()
 {
     if (VersionInfo.EngineVersion == 4.16)
