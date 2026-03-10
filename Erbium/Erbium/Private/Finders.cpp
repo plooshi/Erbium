@@ -3242,9 +3242,27 @@ uint64 FindSelectAndSetupMyBuildingLevel() {
     if (!sRef.IsValid())
         return 0;
 
+    
+    uint64_t SelectAndSetupMyBuildingLevelPart = 0;
     for (int i = 0; i < 2000; i++)
     {
         auto Ptr = (uint8_t*)(sRef.Get() - i);
+
+        if (*Ptr == 0x48 && *(Ptr + 1) == 0x83 && *(Ptr + 2) == 0xEC)
+        {
+            SelectAndSetupMyBuildingLevelPart = uint64_t(Ptr);
+            break;
+        }
+        else if (*Ptr == 0x48 && *(Ptr + 1) == 0x81 && *(Ptr + 2) == 0xEC)
+        {
+            SelectAndSetupMyBuildingLevelPart = uint64_t(Ptr);
+            break;
+        }
+    }
+
+    for (int i = 0; i < 2000; i++)
+    {
+        auto Ptr = (uint8_t*)(SelectAndSetupMyBuildingLevelPart - i);
 
         if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4)
             return uint64_t(Ptr);

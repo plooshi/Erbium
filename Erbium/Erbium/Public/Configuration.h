@@ -2,7 +2,7 @@
 
 struct FConfiguration
 {
-    static inline auto Playlist = L"/BuffetPlaylist/Playlist/Playlist_Buffet.Playlist_Buffet";
+    static inline auto Playlist = L"/Game/Athena/Playlists/Playlist_DefaultSolo.Playlist_DefaultSolo";
     static inline auto MaxTickRate = 30;
     static inline auto bLateGame = false;
     static inline auto LateGameZone = 3; // starting zone

@@ -14,7 +14,7 @@ void ABuildingFoundation::SetDynamicFoundationEnabled_(UObject* Context, FFrame&
         auto SelectAndSetupMyBuildingLevel = (bool (*)(ABuildingFoundation*, void*))SelectAndSetupMyBuildingLevel_;
         SelectAndSetupMyBuildingLevel(Foundation, nullptr);
     }
-    
+
     if (Foundation->HasDynamicFoundationRepData())
     {
         Foundation->DynamicFoundationRepData.EnabledState = bEnabled ? 1 : 2;

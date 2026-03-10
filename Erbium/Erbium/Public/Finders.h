@@ -78,6 +78,8 @@ uint64 FindListenCall();
 uint64 FindQueueStatEvent();
 uint64 FindFinishWorldInitialization();
 uint64 FindSetIsDoorOpen();
+uint64 FindActivatePhaseAtIndex();
+uint64 FindSelectAndSetupMyBuildingLevel();
 
 template <typename CVarT>
 CVarT* FindCVar(const wchar_t* CVarStr)
