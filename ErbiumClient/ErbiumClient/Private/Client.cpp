@@ -150,10 +150,10 @@ void Client::Init()
                         Playlist->RespawnTime.Curve.RowName = FName();
                         Playlist->RespawnTime.Value = 3;
                     }
-                    Playlist->RespawnType = 2; // InfiniteRespawnExceptStorm
+                    Playlist->RespawnType = 1; // InfiniteRespawnExceptStorm
                     if (Playlist->HasbAllowJoinInProgress())
                         Playlist->bAllowJoinInProgress = true;
-                    // if (Playlist->HasbForceRespawnLocationInsideOfVolume())
+                    //if (Playlist->HasbForceRespawnLocationInsideOfVolume())
                     //	Playlist->bForceRespawnLocationInsideOfVolume = true;
                     if (Playlist->HasbForceCameraFadeOnRespawn())
                         Playlist->bForceCameraFadeOnRespawn = true;

@@ -49,6 +49,7 @@ public:
 
     DEFINE_PROP(ItemDefinition, UObject*);
 
+    DEFINE_FUNC(SetDecoObjectPreview, void);
     DEFINE_FUNC(ServerSpawnDeco, void);
 
     DefUHookOg(ServerSpawnDeco_);

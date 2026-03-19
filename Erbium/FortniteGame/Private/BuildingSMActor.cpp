@@ -204,6 +204,9 @@ void AFortDecoTool::ServerSpawnDeco_(UObject* Context, FFrame& Stack)
             }
         }
 
+        if (!ItemDefinition)
+            return;
+
         auto ShouldAllowServerSpawnDeco = (bool (*)(AFortDecoTool*, FVector&, FRotator&, ABuildingSMActor*, uint8_t))DecoTool->Vft[ShouldAllowServerSpawnDecoVft];
 
         if (ShouldAllowServerSpawnDecoVft && !ShouldAllowServerSpawnDeco(DecoTool, Location, Rotation, AttachedActor, InBuildingAttachmentType))
@@ -213,17 +216,17 @@ void AFortDecoTool::ServerSpawnDeco_(UObject* Context, FFrame& Stack)
         if (VersionInfo.FortniteVersion >= 27)
         {
             auto SpawnDeco
-                = (ABuildingSMActor * (*)(AFortDecoTool*, TSubclassOf<ABuildingSMActor>&, FVector&, FRotator&, ABuildingSMActor*, int, uint8_t)) DecoTool->Vft[SpawnDecoVft];
+                = (ABuildingSMActor * (*)(AFortDecoTool*, TSubclassOf<ABuildingSMActor>&, FVector&, FRotator&, ABuildingSMActor*, uint8_t, int)) DecoTool->Vft[SpawnDecoVft];
 
             TSubclassOf<ABuildingSMActor> SubclassOf;
             SubclassOf.ClassPtr = ItemDefinition->BlueprintClass.Get();
-            NewTrap = SpawnDecoVft ? SpawnDeco(DecoTool, SubclassOf, Location, Rotation, AttachedActor, 0, InBuildingAttachmentType) : nullptr;
+            NewTrap = SpawnDecoVft ? SpawnDeco(DecoTool, SubclassOf, Location, Rotation, AttachedActor, InBuildingAttachmentType, 0) : nullptr;
         }
         else
         {
-            auto SpawnDeco = (ABuildingSMActor * (*)(AFortDecoTool*, UClass*, FVector&, FRotator&, ABuildingSMActor*, int, uint8_t)) DecoTool->Vft[SpawnDecoVft];
+            auto SpawnDeco = (ABuildingSMActor * (*)(AFortDecoTool*, UClass*, FVector&, FRotator&, ABuildingSMActor*, uint8_t, int)) DecoTool->Vft[SpawnDecoVft];
 
-            NewTrap = SpawnDecoVft ? SpawnDeco(DecoTool, ItemDefinition->BlueprintClass.Get(), Location, Rotation, AttachedActor, 0, InBuildingAttachmentType) : nullptr;
+            NewTrap = SpawnDecoVft ? SpawnDeco(DecoTool, ItemDefinition->BlueprintClass.Get(), Location, Rotation, AttachedActor, InBuildingAttachmentType, 0) : nullptr;
         }
 
         auto Resource = UFortKismetLibrary::GetDefaultObj()->K2_GetResourceItemDefinition(AttachedActor->ResourceType);
@@ -317,6 +320,9 @@ void AFortDecoTool_ContextTrap::ServerSpawnDeco_Implementation(UObject* Context,
             }
         }
 
+        if (!ItemDefinition)
+            return;
+
         auto ShouldAllowServerSpawnDeco = (bool (*)(AFortDecoTool*, FVector&, FRotator&, ABuildingSMActor*, uint8_t))DecoTool->Vft[ShouldAllowServerSpawnDecoVft];
 
         if (ShouldAllowServerSpawnDecoVft && !ShouldAllowServerSpawnDeco(DecoTool, Location, Rotation, AttachedActor, InBuildingAttachmentType))
@@ -326,17 +332,17 @@ void AFortDecoTool_ContextTrap::ServerSpawnDeco_Implementation(UObject* Context,
         if (VersionInfo.FortniteVersion >= 27)
         {
             auto SpawnDeco
-                = (ABuildingSMActor * (*)(AFortDecoTool*, TSubclassOf<ABuildingSMActor>&, FVector&, FRotator&, ABuildingSMActor*, int, uint8_t)) DecoTool->Vft[SpawnDecoVft];
+                = (ABuildingSMActor * (*)(AFortDecoTool*, TSubclassOf<ABuildingSMActor>&, FVector&, FRotator&, ABuildingSMActor*, uint8_t, int)) DecoTool->Vft[SpawnDecoVft];
 
             TSubclassOf<ABuildingSMActor> SubclassOf;
             SubclassOf.ClassPtr = ItemDefinition->BlueprintClass.Get();
-            NewTrap = SpawnDecoVft ? SpawnDeco(DecoTool, SubclassOf, Location, Rotation, AttachedActor, 0, InBuildingAttachmentType) : nullptr;
+            NewTrap = SpawnDecoVft ? SpawnDeco(DecoTool, SubclassOf, Location, Rotation, AttachedActor, InBuildingAttachmentType, 0) : nullptr;
         }
         else
         {
-            auto SpawnDeco = (ABuildingSMActor * (*)(AFortDecoTool*, UClass*, FVector&, FRotator&, ABuildingSMActor*, int, uint8_t)) DecoTool->Vft[SpawnDecoVft];
+            auto SpawnDeco = (ABuildingSMActor * (*)(AFortDecoTool*, UClass*, FVector&, FRotator&, ABuildingSMActor*, uint8_t, int)) DecoTool->Vft[SpawnDecoVft];
 
-            NewTrap = SpawnDecoVft ? SpawnDeco(DecoTool, ItemDefinition->BlueprintClass.Get(), Location, Rotation, AttachedActor, 0, InBuildingAttachmentType) : nullptr;
+            NewTrap = SpawnDecoVft ? SpawnDeco(DecoTool, ItemDefinition->BlueprintClass.Get(), Location, Rotation, AttachedActor, InBuildingAttachmentType, 0) : nullptr;
         }
 
         auto Resource = UFortKismetLibrary::GetDefaultObj()->K2_GetResourceItemDefinition(AttachedActor->ResourceType);
@@ -465,7 +471,7 @@ void AFortDecoTool::ServerCreateBuildingAndSpawnDeco(UObject* Context, FFrame& S
     auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
     auto bIgnoreCanAffordCheck = UFortKismetLibrary::DoesItemDefinitionHaveGameplayTag(ItemDefinition, FGameplayTag(FName(L"Trap.ExtraPiece.Cost.Ignore")));
     TSubclassOf<AActor> BuildingClass {};
-    auto ResourceType = PlayerController->CurrentResourceType;
+    EFortResourceType ResourceType = PlayerController->CurrentResourceType;
 
     if (ItemDefinition->HasAutoCreateAttachmentBuildingResourceType()
         && ItemDefinition->AutoCreateAttachmentBuildingResourceType != EFortResourceType(EFortResourceType__Enum::GetNone()))
@@ -496,6 +502,8 @@ void AFortDecoTool::ServerCreateBuildingAndSpawnDeco(UObject* Context, FFrame& S
             }
         }
     }
+
+    return;
 _out:
 
     FBuildingClassData BuildingClassData;
@@ -570,22 +578,33 @@ _out:
 
     for (auto& RemoveBuilding : RemoveBuildings)
         RemoveBuilding->K2_DestroyActor();
-    // RemoveBuildings.Free();
+    RemoveBuildings.Free();
 
     static auto K2_SpawnBuildingActor = ABuildingSMActor::GetDefaultObj()->GetFunction("K2_SpawnBuildingActor");
 
     ABuildingSMActor* Building = nullptr;
-    if (K2_SpawnBuildingActor)
+    /*if (K2_SpawnBuildingActor)
     {
-        FTransform SpawnTransform(BuildingLocation, BuildingRotation);
+        FTransform SpawnTransform(BuildLoc, BuildRot);
         Building = ABuildingSMActor::K2_SpawnBuildingActor(PlayerController, BuildingClass, SpawnTransform, PlayerController, nullptr, false, false);
     }
-    else
-        Building = UWorld::SpawnActor<ABuildingSMActor>(BuildingClass, BuildingLocation, BuildingRotation, PlayerController);
+    else*/
+    Building = UWorld::SpawnActorUnfinished<ABuildingSMActor>(BuildingClass, BuildingLocation, BuildingRotation, PlayerController);
+
+    Building->InitializeKismetSpawnedBuildingActor(Building, PlayerController, true, nullptr, false);
+    UWorld::FinishSpawnActor(Building, BuildingLocation, BuildingRotation);
+
+    if (!Building)
+        return;
 
     Building->bPlayerPlaced = true;
 
-    Building->InitializeKismetSpawnedBuildingActor(Building, PlayerController, true, nullptr, false);
+    if (((AFortPlayerStateAthena*)PlayerController->PlayerState)->HasTeamIndex())
+        Building->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
+
+    if (Building->HasTeamIndex())
+        Building->TeamIndex = Building->Team;
+
     // UWorld::FinishSpawnActor(Building, BuildLoc, BuildRot);
 
     if (!PlayerController->bBuildFree && !FConfiguration::bInfiniteMats)

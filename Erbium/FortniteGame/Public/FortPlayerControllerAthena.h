@@ -201,6 +201,7 @@ public:
 
     DEFINE_PROP(RemoteBuildableClass, TSubclassOf<AActor>);
     DEFINE_PROP(bActive, bool);
+    DEFINE_PROP(RemoteBuildingMaterial, EFortResourceType);
 
     DEFINE_FUNC(OnRep_bActive, void);
 };
@@ -319,6 +320,7 @@ public:
     DEFINE_PROP(OwnedPortal, AActor*);
     DEFINE_PROP(CreativePlotLinkedVolume, AFortVolume*);
     DEFINE_PROP(CurrentResourceType, EFortResourceType);
+    DEFINE_PROP(CurrentResourceLevel, uint8_t);
     DEFINE_PROP(WarmupPlayerStart, AActor*);
     DEFINE_BITFIELD_PROP(bIsCreativeModeEnabled);
     DEFINE_PROP(FlyingModifierIndex, int32);
@@ -367,6 +369,8 @@ public:
     DEFINE_FUNC(OnRep_IsCreativeQuickbarEnabled, void);
     DEFINE_FUNC(ServerAwardVehicleTrickPoints, void);
     DEFINE_FUNC(UnPossess, void);
+    DEFINE_FUNC(ServerRestartPlayer, void);
+    DEFINE_FUNC(ServerPlayEmoteItem, void);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);
@@ -379,7 +383,7 @@ public:
     static void ServerEndEditingBuildingActor(UObject*, FFrame&);
     static void ServerRepairBuildingActor(UObject*, FFrame&);
     static void ServerAttemptInventoryDrop(UObject*, FFrame&);
-    static void ServerPlayEmoteItem(UObject*, FFrame&);
+    static void ServerPlayEmoteItem_(UObject*, FFrame&);
     static void ServerClientIsReadyToRespawn(UObject*, FFrame&);
     static void ServerCheat(UObject*, FFrame&);
     DefHookOg(void, ClientOnPawnDied, AFortPlayerControllerAthena*, FFortPlayerDeathReport&);
@@ -396,6 +400,8 @@ public:
     static void ServerCreativeSetFlightSpeedIndex(UObject*, FFrame&);
     static void ServerCreativeSetFlightSprint(UObject*, FFrame&);
     DefUHookOg(ServerAwardVehicleTrickPoints_);
+    static void ServerOnMaterialSelection(UObject*, FFrame&);
+    static void ServerPlaySquadQuickChatMessage(UObject*, FFrame&);
 
     InitPostLoadHooks;
 };

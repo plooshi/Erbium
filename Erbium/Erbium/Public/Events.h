@@ -198,6 +198,16 @@ public:
 		FEvent
 		{
 			nullptr,
+			L"/Armadillo/Gameplay/BP_Armadillo_SpecialEventScript.BP_Armadillo_SpecialEventScript_C",
+			{
+				FEventFunction{ false, L"/Script/SpecialEventGameplayRuntime.SpecialEventScript.StartEventAtIndex" }
+			},
+			20.40,
+			nullptr
+		},
+		FEvent
+		{
+			nullptr,
 			L"/Radish/Gameplay/BP_Radish_Special_EventScript.BP_Radish_Special_EventScript_C",
 			{
 				FEventFunction{ false, L"/Script/SpecialEventGameplayRuntime.SpecialEventScript.StartEventAtIndex" }

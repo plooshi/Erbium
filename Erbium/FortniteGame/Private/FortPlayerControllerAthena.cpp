@@ -288,8 +288,14 @@ void AFortPlayerControllerAthena::ServerAttemptAircraftJump_(UObject* Context, F
         else
             PlayerController = (AFortPlayerControllerAthena*)Context;
 
+        PlayerController->StateName = FName(L"Inactive");
+
+        if (PlayerController->Pawn)
+            PlayerController->UnPossess(PlayerController->Pawn);
+
         GameMode->RestartPlayer(PlayerController);
-        PlayerController->ClientSetRotation(Rotation, true);
+        //PlayerController->ServerRestartPlayer();
+        PlayerController->SetControlRotation(Rotation);
 
         if (PlayerController->MyFortPawn)
         {
@@ -354,21 +360,15 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryItem_(UObject* Context, 
     if (!entry)
         return;
 
-    UFortItemDefinition* ItemDefinition = (UFortItemDefinition*)entry->ItemDefinition;
+    UFortItemDefinition* RealDef = (UFortItemDefinition*)entry->ItemDefinition;
+    auto UncastedDef = RealDef;
 
-    if (auto Gadget = ItemDefinition->Cast<UFortGadgetItemDefinition>())
-        ItemDefinition = Gadget->GetWeaponItemDefinition();
-    else if (ItemDefinition->IsA(UFortDecoItemDefinition::StaticClass()))
-    {
-        PlayerController->MyFortPawn->PickUpActor(nullptr, ItemDefinition);
-        ((AFortWeapon*)PlayerController->MyFortPawn->CurrentWeapon)->ItemEntryGuid = ItemGuid;
+    if (auto Gadget = RealDef->Cast<UFortGadgetItemDefinition>())
+        UncastedDef = Gadget->GetWeaponItemDefinition();
 
-        static auto ContextTrapClass = FindClass("FortDecoTool_ContextTrap");
-        if (PlayerController->MyFortPawn->CurrentWeapon->IsA(ContextTrapClass))
-            ((AFortWeapon*)PlayerController->MyFortPawn->CurrentWeapon)->ContextTrapItemDefinition = ItemDefinition;
-
+    auto ItemDefinition = UncastedDef->Cast<UFortWeaponItemDefinition>();
+    if (!ItemDefinition)
         return;
-    }
 
     auto Weapon = PlayerController->MyFortPawn->EquipWeaponDefinition(ItemDefinition, ItemGuid, entry->HasTrackerGuid() ? entry->TrackerGuid : FGuid(), false);
     if (VersionInfo.FortniteVersion <= 2.5)
@@ -404,10 +404,26 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryItem_(UObject* Context, 
 
     if (auto DecoTool = Weapon->Cast<AFortDecoTool>())
     {
-        DecoTool->ItemDefinition = ItemDefinition;
+        DecoTool->SetDecoObjectPreview(ItemDefinition, true);
+        if (!AFortDecoTool::SetDecoObjectPreview__Ptr)
+            DecoTool->ItemDefinition = ItemDefinition;
 
         if (auto ContextTrapTool = Weapon->Cast<AFortDecoTool_ContextTrap>())
             ContextTrapTool->ContextTrapItemDefinition = (UFortContextTrapItemDefinition*)ItemDefinition;
+    }
+    Weapon->ForceNetUpdate();
+
+    if (PlayerController->MyFortPawn->HasVehicleInputComponent())
+    {
+        if (auto Gadget = RealDef->Cast<UFortGadgetItemDefinition>())
+        {
+            if (!Gadget->bValidForLastEquipped)
+                return;
+        }
+        else if (!ItemDefinition->bValidForLastEquipped)
+            return;
+
+        *(FGuid*)(__int64(&PlayerController->MyFortPawn->VehicleInputComponent) - 0x20) = ItemGuid;
     }
 }
 
@@ -431,17 +447,40 @@ void AFortPlayerControllerAthena::ServerExecuteInventoryWeapon(UObject* Context,
     if (!entry || !PlayerController->MyFortPawn)
         return;
 
-    UFortItemDefinition* ItemDefinition = (UFortItemDefinition*)entry->ItemDefinition;
+    UFortItemDefinition* RealDef = (UFortItemDefinition*)entry->ItemDefinition;
+    auto UncastedDef = RealDef;
 
-    PlayerController->MyFortPawn->EquipWeaponDefinition(ItemDefinition, Weapon->ItemEntryGuid, entry->HasTrackerGuid() ? entry->TrackerGuid : FGuid(), false);
+    if (auto Gadget = RealDef->Cast<UFortGadgetItemDefinition>())
+        UncastedDef = Gadget->GetWeaponItemDefinition();
 
-    if (ItemDefinition->IsA(UFortDecoItemDefinition::StaticClass()))
+    auto ItemDefinition = UncastedDef->Cast<UFortWeaponItemDefinition>();
+    if (!ItemDefinition)
+        return;
+
+    PlayerController->MyFortPawn->EquipWeaponDefinition(ItemDefinition, entry->ItemGuid, entry->HasTrackerGuid() ? entry->TrackerGuid : FGuid(), false);
+
+    if (auto DecoTool = Weapon->Cast<AFortDecoTool>())
     {
-        auto DecoTool = (AFortDecoTool*)Weapon;
-        DecoTool->ItemDefinition = ItemDefinition;
+        DecoTool->SetDecoObjectPreview(ItemDefinition, true);
+        if (!AFortDecoTool::SetDecoObjectPreview__Ptr)
+            DecoTool->ItemDefinition = ItemDefinition;
 
         if (auto ContextTrapTool = Weapon->Cast<AFortDecoTool_ContextTrap>())
             ContextTrapTool->ContextTrapItemDefinition = (UFortContextTrapItemDefinition*)ItemDefinition;
+    }
+    Weapon->ForceNetUpdate();
+
+    if (PlayerController->MyFortPawn->HasVehicleInputComponent())
+    {
+        if (auto Gadget = RealDef->Cast<UFortGadgetItemDefinition>())
+        {
+            if (!Gadget->bValidForLastEquipped)
+                return;
+        }
+        else if (!ItemDefinition->bValidForLastEquipped)
+            return;
+
+        *(FGuid*)(__int64(&PlayerController->MyFortPawn->VehicleInputComponent) - 0x20) = entry->ItemGuid;
     }
 }
 
@@ -714,7 +753,7 @@ void AFortPlayerControllerAthena::ServerBeginEditingBuildingActor(UObject* Conte
     Stack.StepCompiledIn(&Building);
     Stack.IncrementCode();
     auto PlayerController = (AFortPlayerControllerAthena*)Context;
-    if (!PlayerController || !PlayerController->MyFortPawn || !Building /* || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex*/)
+    if (!PlayerController || !PlayerController->MyFortPawn || !Building->IsA<ABuildingSMActor>() /* || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex*/)
         return;
 
     AFortPlayerStateAthena* PlayerState = (AFortPlayerStateAthena*)PlayerController->PlayerState;
@@ -820,7 +859,7 @@ void AFortPlayerControllerAthena::ServerEndEditingBuildingActor(UObject* Context
     Stack.IncrementCode();
 
     auto PlayerController = (AFortPlayerControllerAthena*)Context;
-    if (!PlayerController || !PlayerController->MyFortPawn || !Building
+    if (!PlayerController || !PlayerController->MyFortPawn || !Building || !Building->IsA<ABuildingSMActor>()
         || Building->EditingPlayer != PlayerController->PlayerState /* || Building->Team != static_cast<AFortPlayerStateAthena*>(PlayerController->PlayerState)->TeamIndex*/
         || Building->bDestroyed)
         return;
@@ -871,7 +910,7 @@ void AFortPlayerControllerAthena::ServerRepairBuildingActor(UObject* Context, FF
     Stack.StepCompiledIn(&Building);
     Stack.IncrementCode();
     auto PlayerController = (AFortPlayerControllerAthena*)Context;
-    if (!PlayerController)
+    if (!PlayerController || !Building->IsA<ABuildingSMActor>())
         return;
 
     auto Price = (int32)std::floor((10.f * (1.f - Building->GetHealthPercent())) * 0.75f);
@@ -988,7 +1027,7 @@ public:
 
 extern uint64_t ConstructAbilitySpec;
 uint64_t GiveAbilityAndActivateOnce;
-void AFortPlayerControllerAthena::ServerPlayEmoteItem(UObject* Context, FFrame& Stack)
+void AFortPlayerControllerAthena::ServerPlayEmoteItem_(UObject* Context, FFrame& Stack)
 {
     UObject* Asset;
     float RandomNumber = 0.f;
@@ -3596,7 +3635,7 @@ void AFortPlayerControllerAthena::ServerAwardVehicleTrickPoints_(UObject* Contex
     TargetTags.ParentTags.Free();
 }
 
-void ServerRestartPlayer(AFortPlayerControllerAthena* _this)
+void ServerRestartPlayer_(AFortPlayerControllerAthena* _this)
 {
     if (_this->Pawn)
         _this->UnPossess(_this->Pawn);
@@ -3604,6 +3643,74 @@ void ServerRestartPlayer(AFortPlayerControllerAthena* _this)
     auto GameMode = (AFortGameModeAthena*)UWorld::GetWorld()->AuthorityGameMode;
 
     GameMode->RestartPlayer(_this);
+}
+
+void AFortPlayerControllerAthena::ServerOnMaterialSelection(UObject* Context, FFrame& Stack)
+{
+    EFortResourceType NewResourceType;
+    uint8 NewResourceLevel;
+
+    Stack.StepCompiledIn(&NewResourceType);
+    Stack.StepCompiledIn(&NewResourceLevel);
+    Stack.IncrementCode();
+    auto PlayerController = (AFortPlayerControllerAthena*)Context;
+
+    PlayerController->CurrentResourceType = NewResourceType;
+    PlayerController->CurrentResourceLevel = NewResourceLevel;
+}
+
+struct FAthenaQuickChatLeafEntry
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FAthenaQuickChatLeafEntry);
+
+    DEFINE_STRUCT_PROP(TeamCommType, uint8_t);
+    DEFINE_STRUCT_PROP(EmojiItemDefinition, UFortItemDefinition*);
+};
+
+class UAthenaQuickChatBank : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UAthenaQuickChatBank);
+
+    DEFINE_PROP(ChatOptions, TArray<FAthenaQuickChatLeafEntry>);
+};
+
+struct FAthenaQuickChatActiveEntry
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FAthenaQuickChatActiveEntry);
+    uint8_t Pad[0x20];
+
+    DEFINE_STRUCT_PROP(Index, int8);
+    DEFINE_STRUCT_PROP(Bank, TWeakObjectPtr<UAthenaQuickChatBank>);
+};
+
+void AFortPlayerControllerAthena::ServerPlaySquadQuickChatMessage(UObject* Context, FFrame& Stack)
+{
+    auto& ChatEntry = Stack.StepCompiledInRef<FAthenaQuickChatActiveEntry>();
+    auto& SenderID = Stack.StepCompiledInRef<FUniqueNetIdRepl>();
+    Stack.IncrementCode();
+    auto PlayerController = (AFortPlayerControllerAthena*)Context;
+
+    auto Bank = ChatEntry.Bank.Get();
+
+    if (!Bank)
+        return;
+
+    if (!Bank->ChatOptions.IsValidIndex(ChatEntry.Index))
+        return;
+
+    auto& ChatOption = Bank->ChatOptions.Get(ChatEntry.Index, FAthenaQuickChatLeafEntry::Size());
+
+    auto PlayerState = (AFortPlayerStateAthena*)PlayerController->PlayerState;
+
+    PlayerState->TeamMemberState = ChatOption.TeamCommType;
+    PlayerState->ReplicatedTeamMemberState = ChatOption.TeamCommType;
+
+    PlayerController->ServerPlayEmoteItem(ChatOption.EmojiItemDefinition, 0);
+
+    PlayerState->OnRep_ReplicatedTeamMemberState();
 }
 
 void AFortPlayerControllerAthena::PostLoadHook()
@@ -3635,8 +3742,8 @@ void AFortPlayerControllerAthena::PostLoadHook()
         auto DefaultFortPCZone = DefaultObjImpl("FortPlayerControllerZone");
         Utils::Hook<AFortPlayerControllerAthena>(ServerRestartPlayerIdx, DefaultFortPCZone->Vft[ServerRestartPlayerIdx]);
 
-        if (VersionInfo.FortniteVersion >= 15)
-            Utils::Hook(uint64_t(DefaultObjImpl("PlayerController")->Vft[ServerRestartPlayerIdx]), ServerRestartPlayer);
+        if (VersionInfo.FortniteVersion >= 15 && VersionInfo.FortniteVersion < 16)
+            Utils::Hook(uint64_t(DefaultObjImpl("PlayerController")->Vft[ServerRestartPlayerIdx]), ServerRestartPlayer_);
     }
 
     auto ServerSuicideIdx = GetDefaultObj()->GetFunction("ServerSuicide")->GetVTableIndex();
@@ -3677,8 +3784,8 @@ void AFortPlayerControllerAthena::PostLoadHook()
     else
         Utils::ExecHook(GetDefaultObj()->GetFunction("ServerSpawnInventoryDrop"), ServerAttemptInventoryDrop);
 
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerPlayEmoteItem"), ServerPlayEmoteItem);
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerPlaySprayItem"), ServerPlayEmoteItem);
+    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerPlayEmoteItem"), ServerPlayEmoteItem_);
+    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerPlaySprayItem"), ServerPlayEmoteItem_);
 
     auto ClientOnPawnDiedAddr = FindFunctionCall(L"ClientOnPawnDied",
         VersionInfo.EngineVersion == 4.16
@@ -3686,8 +3793,8 @@ void AFortPlayerControllerAthena::PostLoadHook()
             : (VersionInfo.FortniteVersion >= 24 && VersionInfo.FortniteVersion < 25 ? std::vector<uint8_t> { 0x48, 0x8B, 0xC4 } : std::vector<uint8_t> { 0x48, 0x89, 0x5C }));
     Utils::Hook(ClientOnPawnDiedAddr, ClientOnPawnDied, ClientOnPawnDiedOG);
 
-    //if (VersionInfo.FortniteVersion >= 15)
-    //    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerClientIsReadyToRespawn"), ServerClientIsReadyToRespawn);
+    if (VersionInfo.FortniteVersion >= 16)
+        Utils::ExecHook(GetDefaultObj()->GetFunction("ServerClientIsReadyToRespawn"), ServerClientIsReadyToRespawn);
 
     if (FConfiguration::bEnableCheats)
         Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCheat"), ServerCheat);
@@ -3743,4 +3850,7 @@ void AFortPlayerControllerAthena::PostLoadHook()
 
     if (DefaultIndicatedActorLibrary)
         Utils::ExecHook(DefaultIndicatedActorLibrary->GetFunction("AddActorsToIndicatedList"), AddActorsToIndicatedList);
+
+    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerOnMaterialSelection"), ServerOnMaterialSelection);
+    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerPlaySquadQuickChatMessage"), ServerPlaySquadQuickChatMessage);
 }

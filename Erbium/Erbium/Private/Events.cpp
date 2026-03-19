@@ -4,6 +4,23 @@
 #include "../../FortniteGame/Public/BattleRoyaleGamePhaseLogic.h"
 #include <thread>
 
+struct FPhaseDataLayerEntry
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FPhaseDataLayerEntry);
+
+    DEFINE_STRUCT_PROP(DataLayerAsset, UObject*);
+    DEFINE_STRUCT_PROP(bIsRecursive, bool);
+};
+
+struct FPhaseInfo
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FPhaseInfo);
+
+    DEFINE_STRUCT_PROP(DataLayers, TArray<FPhaseDataLayerEntry>);
+};
+
 class ASpecialEventScript : public AActor
 {
 public:
@@ -12,6 +29,7 @@ public:
     DEFINE_PROP(DelayAfterConentLoad, float);
     DEFINE_PROP(ReplicatedActivePhaseIndex, int);
     DEFINE_PROP(DelayAfterWarmup, float);
+    DEFINE_PROP(PhaseInfoArray, TArray<FPhaseInfo>);
 
     DEFINE_FUNC(OnRep_ReplicatedActivePhaseIndex, void);
 };
@@ -173,15 +191,40 @@ void Events::StartEvent()
     printf("[Events] Build does not have an event.\n");
 }
 
-void (*ActivatePhaseAtIndexOG)(ASpecialEventScript* _this, int IndexToActivate, float a3);
-void ActivatePhaseAtIndex(ASpecialEventScript* _this, int IndexToActivate, float a3)
+void (*ActivatePhaseOG)(ASpecialEventScript* _this, int IndexToActivate, float a3);
+void ActivatePhase(ASpecialEventScript* _this, int IndexToActivate, float a3)
 {
+    // for some reason the 2 functions below dont handle datalayers
+    if (VersionInfo.FortniteVersion >= 23)
+    {
+        // should be in UnloadLevelsAtPhaseEnd
+        if (_this->ReplicatedActivePhaseIndex >= 0)
+        {
+            auto& OldPhaseInfo = _this->PhaseInfoArray.Get(_this->ReplicatedActivePhaseIndex, FPhaseInfo::Size());
+            for (int i = 0; i < OldPhaseInfo.DataLayers.Num(); i++)
+            {
+                auto& DL = OldPhaseInfo.DataLayers.Get(i, FPhaseDataLayerEntry::Size());
+
+                UWorld::GetWorld()->GetDataLayerManager()->SetDataLayerRuntimeState(DL.DataLayerAsset, 0, DL.bIsRecursive);
+            }
+        }
+
+        // should be in LoadLevelsAtIndex
+        auto& PhaseInfo = _this->PhaseInfoArray.Get(IndexToActivate, FPhaseInfo::Size());
+        for (int i = 0; i < PhaseInfo.DataLayers.Num(); i++)
+        {
+            auto& DL = PhaseInfo.DataLayers.Get(i, FPhaseDataLayerEntry::Size());
+
+            UWorld::GetWorld()->GetDataLayerManager()->SetDataLayerRuntimeState(DL.DataLayerAsset, 2, DL.bIsRecursive);
+        }
+    }
+
     _this->ReplicatedActivePhaseIndex = IndexToActivate;
 
-    ActivatePhaseAtIndexOG(_this, IndexToActivate, a3);
+    ActivatePhaseOG(_this, IndexToActivate, a3);
 }
 
 void Events::Hook()
 {
-    Utils::Hook(FindActivatePhaseAtIndex(), ActivatePhaseAtIndex, ActivatePhaseAtIndexOG);
+    Utils::Hook(FindActivatePhase(), ActivatePhase, ActivatePhaseOG);
 }

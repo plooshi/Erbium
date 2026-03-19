@@ -7,6 +7,7 @@ struct FUniqueNetIdRepl
 {
 public:
     USCRIPTSTRUCT_COMMON_MEMBERS(FUniqueNetIdRepl);
+    uint8_t Pad[0x50];
 
     DEFINE_STRUCT_PROP(ReplicationBytes, TArray<uint8>);
 };
@@ -65,6 +66,8 @@ public:
     DEFINE_BITFIELD_PROP(bIsABot);
     DEFINE_BITFIELD_PROP(bIsSpectator);
     DEFINE_PROP(WorldPlayerId, int16);
+    DEFINE_PROP(TeamMemberState, uint8);
+    DEFINE_PROP(ReplicatedTeamMemberState, uint8);
 
     DEFINE_FUNC(OnRep_SquadId, void);
     DEFINE_FUNC(OnRep_DeathInfo, void);
@@ -76,4 +79,5 @@ public:
     DEFINE_FUNC(OnRep_Place, void);
     DEFINE_FUNC(OnRep_SeasonLevelUIDisplay, void);
     DEFINE_FUNC(OnRep_PlayerName, void);
+    DEFINE_FUNC(OnRep_ReplicatedTeamMemberState, void);
 };
