@@ -201,6 +201,10 @@ public:
     UCLASS_COMMON_MEMBERS(AFortAthenaLivingWorldStaticPointProvider);
 
     DEFINE_PROP(FiltersTags, FGameplayTagContainer);
+    DEFINE_PROP(SpawnPoints, TArray<FTransform>);
+    DEFINE_PROP(bStartEnabled, bool);
+    DEFINE_PROP(bRandomizeStartPoint, bool);
+    DEFINE_PROP(bRandomizePointRotation, bool);
 };
 
 class UFortVehicleItemDefinition : public UObject
