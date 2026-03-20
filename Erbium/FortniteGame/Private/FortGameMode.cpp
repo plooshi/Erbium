@@ -221,7 +221,8 @@ class AFortAthenaVehicleSpawner : public AActor
 public:
     UCLASS_COMMON_MEMBERS(AFortAthenaVehicleSpawner);
 
-    DEFINE_PROP(FortVehicleItemDef, TSoftObjectPtr<UFortVehicleItemDefinition>);
+    DEFINE_PROP(CachedFortVehicleItemDef, UFortVehicleItemDefinition*);
+    DEFINE_PROP(bForceSpawnAlways, bool);
 
     DEFINE_FUNC(GetVehicleClass, UClass*);
 };
@@ -2020,7 +2021,7 @@ void AFortGameMode::FinishWorldInitialization(AFortGameMode* _this, AActor* Worl
         Spawners.Free();
     }
     // not an else here because they still use spawners for boats, and fully on s27
-    if (VersionInfo.FortniteVersion >= 4.23 && std::floor(VersionInfo.FortniteVersion) != 20 && std::floor(VersionInfo.FortniteVersion) != 21
+    if (VersionInfo.EngineVersion >= 4.23 && std::floor(VersionInfo.FortniteVersion) != 20 && std::floor(VersionInfo.FortniteVersion) != 21
         && std::floor(VersionInfo.FortniteVersion) != 22) // its auto on s20, s21, and s22
     {
         TArray<AFortAthenaVehicleSpawner*> Spawners {};
@@ -2028,23 +2029,28 @@ void AFortGameMode::FinishWorldInitialization(AFortGameMode* _this, AActor* Worl
 
         for (auto& Spawner : Spawners)
         {
-            auto VehicleDef = Spawner->FortVehicleItemDef.Get();
-            if (!VehicleDef)
-                continue;
+            auto VehicleClass = Spawner->GetVehicleClass();
 
-            double Min = std::clamp(VehicleDef->VehicleMinSpawnPercent.Evaluate() * 0.01f, 0.0f, 1.0f);
-            double Max = std::clamp(VehicleDef->VehicleMaxSpawnPercent.Evaluate() * 0.01f, 0.0f, 1.0f);
-            auto SpawnPercent = Min + (Max - Min) * (rand() / (float)RAND_MAX);
-            auto bShouldSpawn = (rand() / (float)RAND_MAX) <= SpawnPercent;
-
-            if (bShouldSpawn)
+            if (Spawner->HasCachedFortVehicleItemDef() && (!Spawner->HasbForceSpawnAlways() || !Spawner->bForceSpawnAlways))
             {
+                auto VehicleDef = Spawner->CachedFortVehicleItemDef;
+                if (!VehicleDef)
+                    continue;
 
-                auto Vehicle = UWorld::SpawnActor<AFortAthenaVehicle>(Spawner->GetVehicleClass(), Spawner->K2_GetActorLocation(), Spawner->K2_GetActorRotation());
+                double Min = std::clamp(VehicleDef->VehicleMinSpawnPercent.Evaluate() * 0.01f, 0.0f, 1.0f);
+                double Max = std::clamp(VehicleDef->VehicleMaxSpawnPercent.Evaluate() * 0.01f, 0.0f, 1.0f);
 
-                if (auto Car = Vehicle->Cast<AFortDagwoodVehicle>())
-                    Car->SetFuel(100.f);
+                auto SpawnPercent = Min + (Max - Min) * (rand() / (float)RAND_MAX);
+                auto bShouldSpawn = (rand() / (float)RAND_MAX) <= SpawnPercent;
+
+                if (!bShouldSpawn)
+                    continue;
             }
+
+            auto Vehicle = UWorld::SpawnActor<AFortAthenaVehicle>(Spawner->GetVehicleClass(), Spawner->K2_GetActorLocation(), Spawner->K2_GetActorRotation());
+
+            if (auto Car = Vehicle->Cast<AFortDagwoodVehicle>())
+                Car->SetFuel(100.f);
         }
 
         Spawners.Free();

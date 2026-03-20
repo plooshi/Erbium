@@ -221,8 +221,8 @@ void GUI::Init()
 
         ImGui::Begin("Erbium", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar);
 
-        int SelectedUI = 0;
-        int hasEvent = 0;
+        static int SelectedUI = 0;
+        static int hasEvent = 0;
 
         if (hasEvent == 0)
         {
