@@ -220,13 +220,13 @@ void AFortDecoTool::ServerSpawnDeco_(UObject* Context, FFrame& Stack)
 
             TSubclassOf<ABuildingSMActor> SubclassOf;
             SubclassOf.ClassPtr = ItemDefinition->BlueprintClass.Get();
-            NewTrap = SpawnDecoVft ? SpawnDeco(DecoTool, SubclassOf, Location, Rotation, AttachedActor, InBuildingAttachmentType, 0) : nullptr;
+            NewTrap = SpawnDecoVft && SpawnDeco ? SpawnDeco(DecoTool, SubclassOf, Location, Rotation, AttachedActor, InBuildingAttachmentType, 0) : nullptr;
         }
         else
         {
             auto SpawnDeco = (ABuildingSMActor * (*)(AFortDecoTool*, UClass*, FVector&, FRotator&, ABuildingSMActor*, uint8_t, int)) DecoTool->Vft[SpawnDecoVft];
 
-            NewTrap = SpawnDecoVft ? SpawnDeco(DecoTool, ItemDefinition->BlueprintClass.Get(), Location, Rotation, AttachedActor, InBuildingAttachmentType, 0) : nullptr;
+            NewTrap = SpawnDecoVft && SpawnDeco ? SpawnDeco(DecoTool, ItemDefinition->BlueprintClass.Get(), Location, Rotation, AttachedActor, InBuildingAttachmentType, 0) : nullptr;
         }
 
         auto Resource = UFortKismetLibrary::GetDefaultObj()->K2_GetResourceItemDefinition(AttachedActor->ResourceType);
