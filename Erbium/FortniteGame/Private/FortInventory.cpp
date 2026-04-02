@@ -440,6 +440,8 @@ AFortPickupAthena* AFortInventory::SpawnPickup(FVector Loc, const UFortItemDefin
     AFortPlayerPawnAthena* Pawn, bool Toss, bool bRandomRotation, const UClass* OverrideClass)
 {
     auto ItemEntry = MakeItemEntry(ItemDefinition, Count, -1);
+    ItemEntry->LoadedAmmo = LoadedAmmo;
+
     auto Pickup = SpawnPickup(Loc, *ItemEntry, SourceTypeFlag, SpawnSource, Pawn, -1, Toss, true, bRandomRotation, OverrideClass);
     free(ItemEntry);
     return Pickup;

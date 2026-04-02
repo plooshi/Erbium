@@ -22,6 +22,10 @@ void UFortMissionLibrary::TeleportPlayerPawn(UObject* Context, FFrame& Stack, bo
     Stack.StepCompiledIn(&bIgnoreSupplementalKillVolumeSweep);
     Stack.IncrementCode();
 
+    auto Vehicle = PlayerPawn->GetVehicleActor();
+    if (Vehicle)
+        Vehicle->K2_TeleportTo(DestLocation, DestRotation);
+
     PlayerPawn->K2_TeleportTo(DestLocation, DestRotation);
     *Ret = true;
 }

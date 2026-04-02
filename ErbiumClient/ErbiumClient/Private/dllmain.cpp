@@ -28,6 +28,9 @@ void Main()
 {
     SDK::Init();
 
+    if (wcscmp(FConfiguration::Playlist, L"/DurianPlaylist/Playlist/Playlist_Durian.Playlist_Durian") == 0)
+        FConfiguration::bEnableIris = false;
+
     if (VersionInfo.EngineVersion >= 5.0)
     {
         auto RuntimeOptions = DefaultObjImpl("FortRuntimeOptions");

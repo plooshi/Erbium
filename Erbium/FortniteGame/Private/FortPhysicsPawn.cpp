@@ -80,21 +80,19 @@ void AFortPhysicsPawn::ServerMove(UObject* Context, FFrame& Stack)
         Rotation.Z -= -2.0f;
         Rotation.W /= -1.2f;
     }
+    else
+    {
+        Rotation.X -= 0.3f;
+        Rotation.Y /= -0.75f;
+        Rotation.Z += 0.15f;
+        Rotation.W /= 1.1f;
+    }
 
     UPrimitiveComponent* RootComponent = Pawn->RootComponent->Cast<UPrimitiveComponent>();
 
     if (RootComponent)
     {
-        FRotator RealRotation = Rotation.Rotator();
-
-        if (VersionInfo.EngineVersion >= 4.24)
-        {
-            RealRotation.Yaw = FRotator::UnwindDegrees(RealRotation.Yaw);
-            RealRotation.Pitch = 0;
-            RealRotation.Roll = 0;
-        }
-
-        RootComponent->K2_SetWorldLocationAndRotation(Translation, RealRotation, false, nullptr, true);
+        RootComponent->K2_SetWorldTransform(FTransform(Translation, Rotation), false, nullptr, true);
         RootComponent->SetPhysicsLinearVelocity(LinearVelocity, 0, FName(0));
         RootComponent->SetPhysicsAngularVelocityInRadians(AngularVelocity, 0, FName(0));
     }

@@ -1551,7 +1551,7 @@ uint64_t FindClearAbility()
             // mov rcx, (rdi|rsi)
             // call ClearAbility
             // jmp
-            if (*(uint8_t*)(GiveAbilityAndActivateOnce + i) == 0x48 && *(uint8_t*)(GiveAbilityAndActivateOnce + i + 1) == 0x8B
+            if ((*(uint8_t*)(GiveAbilityAndActivateOnce + i) & 0xF8) == 0x48 && *(uint8_t*)(GiveAbilityAndActivateOnce + i + 1) == 0x8B
                 && *(uint8_t*)(GiveAbilityAndActivateOnce + i + 3) == 0xE8
                 && (*(uint8_t*)(GiveAbilityAndActivateOnce + i + 8) == 0xE9 || *(uint8_t*)(GiveAbilityAndActivateOnce + i + 8) == 0xEB))
             {
@@ -3332,7 +3332,7 @@ void FindNullsAndRetTrues()
         // NullFuncs.push_back(Memcury::Scanner::FindStringRef(L"Widget Class %s - Running Initialize On Archetype, %s.").ScanFor(std::vector<uint8_t>{ 0x48, 0x89, 0x5C },
         // false).Get()); // for 12.41 NullFuncs.push_back(Memcury::Scanner::FindPattern(VersionInfo.FortniteVersion == 12.41 ? "40 57 41 56 48 81 EC ? ? ? ? 80 3D ? ? ? ? ? 0F B6
         // FA 44 8B F1 74 3A 80 3D ? ? ? ? ? 0F" : "40 57 41 56 48 81 EC ? ? ? ? 80 3D ? ? ? ? ? 0F B6 FA 44 8B F1 74 3A 80 3D ? ? ? ? ? 0F 82").Get()); if
-        // (VersionInfo.FortniteVersion == 12.41)
+        //if (VersionInfo.FortniteVersion == 12.41)
         //     NullFuncs.push_back(Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC ? 48 8B FA 4C 8B F9").Get());
         /*else */ if (VersionInfo.FortniteVersion == 12.61)
             NullFuncs.push_back(
