@@ -73,7 +73,7 @@ void AFortPhysicsPawn::ServerMove(UObject* Context, FFrame& Stack)
     }
     auto Pawn = (AFortPhysicsPawn*)Context;
 
-    if (VersionInfo.EngineVersion < 4.24)
+    if (VersionInfo.EngineVersion < 4.26)
     {
         Rotation.X -= 2.5f;
         Rotation.Y /= 0.3f;
