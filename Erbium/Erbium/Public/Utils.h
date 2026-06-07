@@ -89,6 +89,7 @@ public:
     {
         if (!_Fn)
             return;
+
         if (!std::is_same_v<_Ot, void*>)
             _Orig = (_Ot)_Fn->ExecFunction;
 

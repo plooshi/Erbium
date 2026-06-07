@@ -388,6 +388,12 @@ namespace SDK
                 Offsets::StaticLoadObject = Memcury::Scanner::FindPattern("40 55 53 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 "
                                                                           "48 89 85 ? ? ? ? 48 8B 85 ? ? ? ? 45 33 FF 48 8B B5 ? ? ? ? 49 8B D8")
                                                 .Get();
+
+            if (!Offsets::StaticLoadObject)
+                Offsets::StaticLoadObject
+                    = Memcury::Scanner::FindPattern("40 55 53 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 "
+                                                    "85 ? ? ? ? 48 8B 85 ? ? ? ? 33 FF 4C 8B B5 ? ? ? ? 49 8B D8")
+                          .Get();
         }
         else
         {

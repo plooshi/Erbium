@@ -233,7 +233,7 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
                 if (FinalCount > 0.f)
                     AmmoEntry = AFortInventory::MakeItemEntry(AmmoDefinition, (int)FinalCount,
                         AmmoDefinition->IsA(UFortWorldItemDefinition::StaticClass())
-                            ? std::clamp(GetLevel(AmmoDefinition->LootLevelData), AmmoDefinition->MinLevel, AmmoDefinition->MaxLevel > 0 ? AmmoDefinition->MaxLevel : 99999)
+                            ? (AmmoDefinition->HasLootLevelData() ? std::clamp(GetLevel(AmmoDefinition->LootLevelData), AmmoDefinition->MinLevel, AmmoDefinition->MaxLevel > 0 ? AmmoDefinition->MaxLevel : 99999) : 0)
                             : 0);
 
                 AmmoTags.GameplayTags.Free();
@@ -260,7 +260,7 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
                 // if (Inventory::GetQuickbar(LootDrop.ItemDefinition) == EFortQuickBars::Secondary)
                 LootDrops.Add(AFortInventory::MakeItemEntry(ItemDefinition, OGCount - (int32)ItemDefinition->GetMaxStackSize(),
                     ItemDefinition->IsA(UFortWorldItemDefinition::StaticClass())
-                        ? std::clamp(GetLevel(ItemDefinition->LootLevelData), ItemDefinition->MinLevel, ItemDefinition->MaxLevel > 0 ? ItemDefinition->MaxLevel : 99999)
+                        ? (ItemDefinition->HasLootLevelData() ? std::clamp(GetLevel(ItemDefinition->LootLevelData), ItemDefinition->MinLevel, ItemDefinition->MaxLevel > 0 ? ItemDefinition->MaxLevel : 99999) : 0)
                         : 0));
             }
 
@@ -281,8 +281,8 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
                 // if (!AFortInventory::IsPrimaryQuickbar(LootDrop->ItemDefinition))
                 LootDrops.Add(AFortInventory::MakeItemEntry(AmmoEntry->ItemDefinition, OGCount - AmmoEntry->ItemDefinition->GetMaxStackSize(),
                     AmmoEntry->ItemDefinition->IsA(UFortWorldItemDefinition::StaticClass())
-                        ? std::clamp(GetLevel(AmmoEntry->ItemDefinition->LootLevelData), AmmoEntry->ItemDefinition->MinLevel,
-                              AmmoEntry->ItemDefinition->MaxLevel > 0 ? AmmoEntry->ItemDefinition->MaxLevel : 99999)
+                        ? (AmmoEntry->ItemDefinition->HasLootLevelData() ? std::clamp(GetLevel(AmmoEntry->ItemDefinition->LootLevelData), AmmoEntry->ItemDefinition->MinLevel,
+                              AmmoEntry->ItemDefinition->MaxLevel > 0 ? AmmoEntry->ItemDefinition->MaxLevel : 99999) : 0)
                         : 0));
             }
 
@@ -295,7 +295,7 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
     if (!found && LootPackage->Count > 0)
         LootDrops.Add(AFortInventory::MakeItemEntry(ItemDefinition, LootPackage->Count,
             ItemDefinition->IsA(UFortWorldItemDefinition::StaticClass())
-                ? std::clamp(GetLevel(ItemDefinition->LootLevelData), ItemDefinition->MinLevel, ItemDefinition->MaxLevel > 0 ? ItemDefinition->MaxLevel : 99999)
+                ? (ItemDefinition->HasLootLevelData() ? std::clamp(GetLevel(ItemDefinition->LootLevelData), ItemDefinition->MinLevel, ItemDefinition->MaxLevel > 0 ? ItemDefinition->MaxLevel : 99999) : 0)
                 : 0));
 
     if (!foundAmmo && AmmoEntry && LootPackage->Count > 0)
