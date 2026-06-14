@@ -49,21 +49,21 @@
 #include <vector>
 #pragma comment(lib, "Dbghelp.lib")
 
-#define MemcuryAssert(cond)                                                                                                                                                        \
-    if (!(cond))                                                                                                                                                                   \
-    {                                                                                                                                                                              \
-        MessageBoxA(nullptr, #cond, __FUNCTION__, MB_ICONERROR | MB_OK);                                                                                                           \
-        Memcury::Safety::FreezeCurrentThread();                                                                                                                                    \
+#define MemcuryAssert(cond)                                                                                                                                                                                           \
+    if (!(cond))                                                                                                                                                                                                      \
+    {                                                                                                                                                                                                                 \
+        MessageBoxA(nullptr, #cond, __FUNCTION__, MB_ICONERROR | MB_OK);                                                                                                                                              \
+        Memcury::Safety::FreezeCurrentThread();                                                                                                                                                                       \
     }
 
-#define MemcuryAssertM(cond, msg)                                                                                                                                                  \
-    if (!(cond))                                                                                                                                                                   \
-    {                                                                                                                                                                              \
-        MessageBoxA(nullptr, msg, __FUNCTION__, MB_ICONERROR | MB_OK);                                                                                                             \
+#define MemcuryAssertM(cond, msg)                                                                                                                                                                                     \
+    if (!(cond))                                                                                                                                                                                                      \
+    {                                                                                                                                                                                                                 \
+        MessageBoxA(nullptr, msg, __FUNCTION__, MB_ICONERROR | MB_OK);                                                                                                                                                \
     }
 
-#define MemcuryThrow(msg)                                                                                                                                                          \
-    MessageBoxA(nullptr, msg, __FUNCTION__, MB_ICONERROR | MB_OK);                                                                                                                 \
+#define MemcuryThrow(msg)                                                                                                                                                                                             \
+    MessageBoxA(nullptr, msg, __FUNCTION__, MB_ICONERROR | MB_OK);                                                                                                                                                    \
     Memcury::Safety::FreezeCurrentThread();
 
 extern uint64_t ImageBase;
@@ -114,7 +114,7 @@ namespace Memcury
             uintptr_t dllStart = (uintptr_t)HModule;
             uintptr_t dllEnd = (uintptr_t)HModule + NTHeaders->OptionalHeader.SizeOfImage;
 
-            return { dllStart, dllEnd };
+            return {dllStart, dllEnd};
         }
 
         inline auto CopyToClipboard(std::string str)
@@ -129,7 +129,7 @@ namespace Memcury
 
             GlobalFree(mem);
         }
-    }
+    } // namespace Util
 
     namespace Safety
     {
@@ -158,9 +158,9 @@ namespace Memcury
             bool result;
             DWORD64 displacement = 0;
 
-            char buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR)] { 0 };
-            char name[256] { 0 };
-            char module[256] { 0 };
+            char buffer[sizeof(SYMBOL_INFO) + MAX_SYM_NAME * sizeof(TCHAR)]{0};
+            char name[256]{0};
+            char module[256]{0};
 
             PSYMBOL_INFO symbolInfo = (PSYMBOL_INFO)buffer;
 
@@ -185,14 +185,14 @@ namespace Memcury
                 printf("[%lu] Name: %s - Address: %p  - Module: %s\n", frame, symbolInfo->Name, (void*)symbolInfo->Address, module);
             }
         }
-    }
+    } // namespace Safety
 
     namespace Globals
     {
         constexpr const bool bLogging = true;
 
         static const char* moduleName = nullptr;
-    }
+    } // namespace Globals
 
     namespace ASM
     {
@@ -297,17 +297,17 @@ namespace Memcury
 
         inline auto byteIsAscii(uint8_t byte) -> bool
         {
-            static constexpr bool isAscii[0x100] = { false, false, false, false, false, false, false, false, false, true, true, false, false, true, false, false, false, false,
-                false, false, false, false, false, false, false, false, false, false, false, false, false, false, true, true, true, true, true, true, true, true, true, true, true,
-                true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
-                true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
-                true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true, true,
-                true, true, true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
-                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false };
+            static constexpr bool isAscii[0x100] = {
+                false, false, false, false, false, false, false, false, false, true,  true,  false, false, true,  false, false, false, false, false, false, false, false, false, false, false, false,
+                false, false, false, false, false, false, true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+                true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+                true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,
+                true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  true,  false, false, false,
+                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false,
+                false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
 
             return isAscii[byte];
         }
@@ -319,7 +319,7 @@ namespace Memcury
 
         static auto pattern2bytes(const char* pattern) -> std::vector<int>
         {
-            auto bytes = std::vector<int> {};
+            auto bytes = std::vector<int>{};
             const auto start = const_cast<char*>(pattern);
             const auto end = const_cast<char*>(pattern) + strlen(pattern);
 
@@ -339,7 +339,7 @@ namespace Memcury
             }
             return bytes;
         }
-    }
+    } // namespace ASM
 
     namespace PE
     {
@@ -519,7 +519,7 @@ namespace Memcury
                 {
                     auto secName = std::string((char*)section->Name);
 
-                    sections.push_back({ secName, *section });
+                    sections.push_back({secName, *section});
                 }
 
                 return sections;
@@ -536,7 +536,7 @@ namespace Memcury
                 }
 
                 MemcuryThrow("Section not found");
-                return Section {};
+                return Section{};
             }
 
             auto GetSectionSize() -> uint32_t
@@ -559,7 +559,7 @@ namespace Memcury
                 return address >= GetSectionStart() && address < GetSectionEnd();
             }
         };
-    }
+    } // namespace PE
 
     class Scanner
     {
@@ -602,7 +602,7 @@ namespace Memcury
             uint64_t match = NULL;
             SIZE_T bytesRead;
             char* buffer = nullptr;
-            MEMORY_BASIC_INFORMATION mbi = { 0 };
+            MEMORY_BASIC_INFORMATION mbi = {0};
 
             uint64_t curr = begin;
 
@@ -668,7 +668,7 @@ namespace Memcury
         static inline auto HasAVX2 = IsProcessorFeaturePresent(PF_AVX2_INSTRUCTIONS_AVAILABLE);
         static auto FindPattern(const char* signature, bool bWarnIfNotFound = true, bool bInRData = false) -> Scanner
         {
-            PE::Address add { nullptr };
+            PE::Address add{nullptr};
 
             auto patternBytes = ASM::pattern2bytes(signature);
 
@@ -772,7 +772,7 @@ namespace Memcury
 
         static auto FindPointerRef(void* Pointer, int useRefNum = 0, bool bUseFirstResult = false, bool bWarnIfNotFound = true) -> Scanner // credit me and ender
         {
-            PE::Address add { nullptr };
+            PE::Address add{nullptr};
 
             if (!Pointer)
                 return Scanner(add);
@@ -867,7 +867,7 @@ namespace Memcury
         template <typename T = const wchar_t*>
         static auto FindStringRef(T string, bool bWarnIfNotFound = true, int useRefNum = 0, bool bIsInFunc = false, bool bSkunky = false) -> Scanner
         {
-            PE::Address add { nullptr };
+            PE::Address add{nullptr};
 
             constexpr auto bIsWide = std::is_same<T, const wchar_t*>::value;
             constexpr auto bIsChar = std::is_same<T, const char*>::value;
@@ -1330,8 +1330,19 @@ namespace Memcury
         void WriteAbsoluteJump(void* jumpLocation, void* destination)
         {
             uint8_t absJumpInstructions[] = {
-                ASM::Mnemonic("CMOVNS"), 0xBA, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // mov r10, addr
-                0x41, 0xFF, 0xE2 // jmp r10
+                ASM::Mnemonic("CMOVNS"),
+                0xBA,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x00, // mov r10, addr
+                0x41,
+                0xFF,
+                0xE2 // jmp r10
             };
 
             auto destination64 = (uint64_t)destination;
@@ -1347,7 +1358,7 @@ namespace Memcury
             */
 
             Scanner scanner(originalFunction);
-            scanner.ScanFor({ 0x48, 0x83, 0xEC }); // sub rsp
+            scanner.ScanFor({0x48, 0x83, 0xEC}); // sub rsp
 
             auto restoreSize = scanner.Get() - originalFunction.Get();
 
@@ -1380,7 +1391,7 @@ namespace Memcury
 
         auto PrepareJMPInstruction(uint64_t dst)
         {
-            uint8_t bytes[5] = { ASM::Mnemonic("JMP_REL32"), 0x0, 0x0, 0x0, 0x0 };
+            uint8_t bytes[5] = {ASM::Mnemonic("JMP_REL32"), 0x0, 0x0, 0x0, 0x0};
 
             const uint64_t relAddr = dst - (originalFunction.Get() + ASM::SIZE_OF_JMP_RELATIVE_INSTRUCTION);
             memcpy(bytes + 1, &relAddr, 4);
@@ -1482,11 +1493,7 @@ namespace Memcury
         {
             if (Exception->ExceptionRecord->ExceptionCode == STATUS_GUARD_PAGE_VIOLATION)
             {
-                auto Itr = std::find_if(Hooks.begin(), Hooks.end(),
-                    [Rip = Exception->ContextRecord->Rip](const HOOK_INFO& Hook)
-                    {
-                        return Hook.Original == (void*)Rip;
-                    });
+                auto Itr = std::find_if(Hooks.begin(), Hooks.end(), [Rip = Exception->ContextRecord->Rip](const HOOK_INFO& Hook) { return Hook.Original == (void*)Rip; });
                 if (Itr != Hooks.end())
                 {
                     Exception->ContextRecord->Rip = (uintptr_t)Itr->Detour;
@@ -1544,11 +1551,7 @@ namespace Memcury
 
         inline bool RemoveHook(void* Original)
         {
-            auto Itr = std::find_if(Hooks.begin(), Hooks.end(),
-                [Original](const HOOK_INFO& Hook)
-                {
-                    return Hook.Original == Original;
-                });
+            auto Itr = std::find_if(Hooks.begin(), Hooks.end(), [Original](const HOOK_INFO& Hook) { return Hook.Original == Original; });
 
             if (Itr == Hooks.end())
             {
@@ -1564,12 +1567,12 @@ namespace Memcury
 
             return false;
         }
-    }
-}
+    } // namespace VEHHook
+} // namespace Memcury
 
 inline bool IsBadReadPtr(void* p)
 {
-    MEMORY_BASIC_INFORMATION mbi = { 0 };
+    MEMORY_BASIC_INFORMATION mbi = {0};
     if (::VirtualQuery(p, &mbi, sizeof(mbi)))
     {
         DWORD mask = (PAGE_READONLY | PAGE_READWRITE | PAGE_WRITECOPY | PAGE_EXECUTE_READ | PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY);
@@ -1601,7 +1604,7 @@ inline uintptr_t FindNameRef(const wchar_t* Name, int skip = 0, bool bWarnString
     if (!StringRef.Get())
         return 0;
 
-    auto FunctionPtr = StringRef.ScanFor({ 0x48, 0x8D, 0x0D }).RelativeOffset(3).GetAs<void*>();
+    auto FunctionPtr = StringRef.ScanFor({0x48, 0x8D, 0x0D}).RelativeOffset(3).GetAs<void*>();
 
     auto PtrRef = Memcury::Scanner::FindPointerRef(FunctionPtr);
 
@@ -1609,8 +1612,7 @@ inline uintptr_t FindNameRef(const wchar_t* Name, int skip = 0, bool bWarnString
 }
 
 // Finds a string ref, then goes searches xref of the function that it's in and returns that address.
-inline uintptr_t FindFunctionCall(
-    const wchar_t* Name, const std::vector<uint8_t>& Bytes = std::vector<uint8_t> { 0x48, 0x89, 0x5C }, int skip = 0, bool bWarnStringNotFound = true) // credit ender & me
+inline uintptr_t FindFunctionCall(const wchar_t* Name, const std::vector<uint8_t>& Bytes = std::vector<uint8_t>{0x48, 0x89, 0x5C}, int skip = 0, bool bWarnStringNotFound = true) // credit ender & me
 {
     auto NameRef = FindNameRef(Name, skip, bWarnStringNotFound);
 

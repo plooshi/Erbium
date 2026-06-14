@@ -232,9 +232,7 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 
             bool bLevelInitializedForActor = IsLevelInitializedForActor(Driver, Actor, Conn);
             if (!Channel && (!bLevelInitializedForActor || !IsActorRelevantToConnection(Actor, Viewers)))
-            {
                 continue;
-            }
 
             auto PriorityConn = Conn;
             bool bDoCullCheck = true;
@@ -854,6 +852,7 @@ void FlushNetDormancy(AActor* Actor)
 
 void UNetDriver::PostLoadHook()
 {
+    printf("SetWorld: %llx\n", FindSetWorld() - ImageBase);
     if (VersionInfo.EngineVersion == 4.16)
     {
         NetworkObjectListOffset = 0x3f8;
@@ -937,6 +936,8 @@ void UNetDriver::PostLoadHook()
         ClientWorldPackageNameOffset = 0x1818;
     else if (VersionInfo.FortniteVersion >= 24)
         ClientWorldPackageNameOffset = 0x1820;
+    else if (VersionInfo.FortniteVersion >= 21.20)
+        ClientWorldPackageNameOffset = 0x1708;
     else if (VersionInfo.FortniteVersion >= 20.20)
         ClientWorldPackageNameOffset = 0x16b8;
     else if (VersionInfo.FortniteVersion >= 20)

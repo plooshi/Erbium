@@ -85,8 +85,7 @@ AFortAthenaCreativePortal* AFortAthenaCreativePortal::Create(AFortPlayerControll
             LevelSaveComponent->PlotPermissions.Permission = 1;
         else if (Portal->LinkedVolume->HasPlayspace())
         {
-            auto PermissionComponent
-                = (UPlayspaceComponent_CreativeToolsPermission*)Portal->LinkedVolume->Playspace->GetComponentByClass(UPlayspaceComponent_CreativeToolsPermission::StaticClass());
+            auto PermissionComponent = (UPlayspaceComponent_CreativeToolsPermission*)Portal->LinkedVolume->Playspace->GetComponentByClass(UPlayspaceComponent_CreativeToolsPermission::StaticClass());
 
             PermissionComponent->AccountIdOfOwner = PlayerState->UniqueId;
             PermissionComponent->PlotPermissions.Permission = 1;
@@ -154,12 +153,7 @@ void AFortAthenaCreativePortal::TeleportPlayerToLinkedVolume(UObject* Context, F
 
     static auto CreativePhone = FindObject<UFortWeaponItemDefinition>(L"/Game/Athena/Items/Weapons/Prototype/WID_CreativeTool.WID_CreativeTool");
 
-    auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search(
-        [&](FFortItemEntry& entry)
-        {
-            return entry.ItemDefinition == CreativePhone;
-        },
-        FFortItemEntry::Size());
+    auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) { return entry.ItemDefinition == CreativePhone; }, FFortItemEntry::Size());
 
     if (!ItemEntry)
     {

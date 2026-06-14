@@ -456,7 +456,7 @@ namespace SDK
             if (!this)
                 return nullptr;
 
-            auto setnzAddr = Memcury::Scanner(GetNativeFunc()).ScanFor({ 0x0F, 0x95 }).Get();
+            auto setnzAddr = Memcury::Scanner(GetNativeFunc()).ScanFor({0x0F, 0x95}).Get();
 
             for (int i = 0; i < 0x200; i++)
             {
@@ -496,7 +496,7 @@ namespace SDK
             auto Addr = ValidateRef.Get();
 
             if (!Addr)
-                Addr = Memcury::Scanner(GetNativeFunc()).ScanFor({ 0x0F, 0x95 }).Get();
+                Addr = Memcury::Scanner(GetNativeFunc()).ScanFor({0x0F, 0x95}).Get();
 
             if (Addr)
                 for (int i = 0; i < 2000; i++)
@@ -544,16 +544,14 @@ namespace SDK
 
         Params GetParams() const
         {
-            Params p {};
+            Params p{};
 
             if (VersionInfo.FortniteVersion >= 12.10)
                 for (const UField* _Pr = GetChildProperties(); _Pr; _Pr = _Pr->FField_GetNext())
-                    p.NameOffsetMap.push_back({ GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags),
-                        GetFromOffset<uint32>(_Pr, Offsets::ElementSize) });
+                    p.NameOffsetMap.push_back({GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags), GetFromOffset<uint32>(_Pr, Offsets::ElementSize)});
             else
                 for (const UField* _Pr = GetChildren(); _Pr; _Pr = _Pr->GetNext())
-                    p.NameOffsetMap.push_back({ GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags),
-                        GetFromOffset<uint32>(_Pr, Offsets::ElementSize) });
+                    p.NameOffsetMap.push_back({GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags), GetFromOffset<uint32>(_Pr, Offsets::ElementSize)});
 
             p.Size = GetPropertiesSize();
             return p;
@@ -561,16 +559,16 @@ namespace SDK
 
         ParamsNamed GetParamsNamed() const
         {
-            ParamsNamed p {};
+            ParamsNamed p{};
 
             if (VersionInfo.FortniteVersion >= 12.10)
                 for (const UField* _Pr = GetChildProperties(); _Pr; _Pr = _Pr->FField_GetNext())
-                    p.NameOffsetMap.push_back({ _Pr->FField_GetName().ToSDKString(), GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal),
-                        GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags), GetFromOffset<uint32>(_Pr, Offsets::ElementSize) });
+                    p.NameOffsetMap.push_back({_Pr->FField_GetName().ToSDKString(), GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags),
+                                               GetFromOffset<uint32>(_Pr, Offsets::ElementSize)});
             else
                 for (const UField* _Pr = GetChildren(); _Pr; _Pr = _Pr->GetNext())
-                    p.NameOffsetMap.push_back({ _Pr->GetName().ToSDKString(), GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal),
-                        GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags), GetFromOffset<uint32>(_Pr, Offsets::ElementSize) });
+                    p.NameOffsetMap.push_back(
+                        {_Pr->GetName().ToSDKString(), GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags), GetFromOffset<uint32>(_Pr, Offsets::ElementSize)});
 
             p.Size = GetPropertiesSize();
             return p;
@@ -593,7 +591,7 @@ namespace SDK
 
         if constexpr (sizeof...(args) == 0 && !std::is_void_v<Ret>)
         {
-            Ret ret {};
+            Ret ret{};
 
             ProcessEvent(Function, &ret);
 
@@ -605,63 +603,59 @@ namespace SDK
         memset((PBYTE)Mem, 0, Params.Size);
 
         size_t i = 0;
-        (
-            [&]
+        ([&]
+        {
+            if (i >= Params.NameOffsetMap.size())
+                return;
+
+            auto& Param = Params.NameOffsetMap[i];
+
+            if (((Param.PropertyFlags & 0x100) != 0 && (Param.PropertyFlags & 0x8000000) == 0) || (Param.PropertyFlags & 0x400) != 0)
             {
-                if (i >= Params.NameOffsetMap.size())
-                    return;
-
-                auto& Param = Params.NameOffsetMap[i];
-
-                if (((Param.PropertyFlags & 0x100) != 0 && (Param.PropertyFlags & 0x8000000) == 0) || (Param.PropertyFlags & 0x400) != 0)
-                {
-                    i++;
-                    return;
-                }
-
-                const auto& Arg = args;
-
-                memcpy(PBYTE(__int64(Mem) + Param.Offset), (const PBYTE)&Arg, Param.ElementSize);
                 i++;
-            }(),
-            ...);
+                return;
+            }
+
+            const auto& Arg = args;
+
+            memcpy(PBYTE(__int64(Mem) + Param.Offset), (const PBYTE)&Arg, Param.ElementSize);
+            i++;
+        }(), ...);
 
         ProcessEvent(Function, Mem);
 
         i = 0;
-        (
-            [&]
+        ([&]
+        {
+            if (i >= Params.NameOffsetMap.size())
+                return;
+
+            auto& Param = Params.NameOffsetMap[i];
+
+            if (((Param.PropertyFlags & 0x100) == 0 && (Param.PropertyFlags & 0x8000000) == 0) || (Param.PropertyFlags & 0x400) != 0)
             {
-                if (i >= Params.NameOffsetMap.size())
-                    return;
-
-                auto& Param = Params.NameOffsetMap[i];
-
-                if (((Param.PropertyFlags & 0x100) == 0 && (Param.PropertyFlags & 0x8000000) == 0) || (Param.PropertyFlags & 0x400) != 0)
-                {
-                    i++;
-                    return;
-                }
-
-                const auto& Arg = args;
-
-                if constexpr (std::is_pointer_v<std::remove_reference_t<decltype(args)>>)
-                {
-                    if (Arg != nullptr)
-                        memcpy((PBYTE)Arg, (const PBYTE)(__int64(Mem) + Param.Offset), Param.ElementSize);
-                }
-                else if constexpr (std::is_reference_v<decltype(args)>)
-                {
-                    // if ((Param.PropertyFlags & 0x2) != 0)
-                    //	memcpy((PBYTE)&Arg, (const PBYTE)(__int64(Mem) + Param.Offset), Param.ElementSize);
-                }
                 i++;
-            }(),
-            ...);
+                return;
+            }
+
+            const auto& Arg = args;
+
+            if constexpr (std::is_pointer_v<std::remove_reference_t<decltype(args)>>)
+            {
+                if (Arg != nullptr)
+                    memcpy((PBYTE)Arg, (const PBYTE)(__int64(Mem) + Param.Offset), Param.ElementSize);
+            }
+            else if constexpr (std::is_reference_v<decltype(args)>)
+            {
+                // if ((Param.PropertyFlags & 0x2) != 0)
+                //	memcpy((PBYTE)&Arg, (const PBYTE)(__int64(Mem) + Param.Offset), Param.ElementSize);
+            }
+            i++;
+        }(), ...);
 
         if constexpr (!std::is_void_v<Ret>)
         {
-            Ret ret {};
+            Ret ret{};
             for (auto& Param : Params.NameOffsetMap)
             {
                 if ((Param.PropertyFlags & 0x400) == 0)
@@ -985,7 +979,7 @@ namespace SDK
     class FWeakObjectPtr
     {
     public:
-        int32 ObjectIndex; // 0x0000(0x0004)(NOT AUTO-GENERATED PROPERTY)
+        int32 ObjectIndex;        // 0x0000(0x0004)(NOT AUTO-GENERATED PROPERTY)
         int32 ObjectSerialNumber; // 0x0004(0x0004)(NOT AUTO-GENERATED PROPERTY)
 
         FWeakObjectPtr(int32 Index = 0, int32 SerialNumber = 0)
@@ -1306,4 +1300,4 @@ namespace SDK
                     break;
                 }
     }
-}
+} // namespace SDK

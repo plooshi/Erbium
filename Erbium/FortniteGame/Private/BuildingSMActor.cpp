@@ -8,8 +8,7 @@
 #include "../Public/FortPlayerControllerAthena.h"
 #include "../Public/FortWeapon.h"
 
-void ABuildingSMActor::OnDamageServer(
-    ABuildingSMActor* Actor, float Damage, FGameplayTagContainer DamageTags, FVector Momentum, __int64 HitInfo, AActor* InstigatedBy, AActor* DamageCauser, __int64 EffectContext)
+void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGameplayTagContainer DamageTags, FVector Momentum, __int64 HitInfo, AActor* InstigatedBy, AActor* DamageCauser, __int64 EffectContext)
 {
     auto GameState = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState);
     auto GameMode = ((AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode);
@@ -47,12 +46,12 @@ void ABuildingSMActor::OnDamageServer(
     auto MaxMat = Resource->GetMaxStackSize();
 
     static auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount()
-        ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData)
-        : nullptr;
+                               ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData)
+                               : nullptr;
     static auto GameData = Playlist ? Playlist->ResourceRates.Get() : nullptr;
     if (!GameData)
-        GameData = FindObject<UCurveTable>(GameMode->HasWarmupRequiredPlayerCount() ? L"/Game/Athena/Balance/DataTables/AthenaResourceRates.AthenaResourceRates"
-                                                                                    : L"/Game/Balance/DataTables/ResourceRates.ResourceRates");
+        GameData =
+            FindObject<UCurveTable>(GameMode->HasWarmupRequiredPlayerCount() ? L"/Game/Athena/Balance/DataTables/AthenaResourceRates.AthenaResourceRates" : L"/Game/Balance/DataTables/ResourceRates.ResourceRates");
 
     int ResCount = 0;
     if (Actor->HasBuildingResourceAmountOverride())
@@ -87,17 +86,8 @@ void ABuildingSMActor::OnDamageServer(
 
     if (ResCount > 0)
     {
-        auto ItemP = Controller->WorldInventory->Inventory.ItemInstances.Search(
-            [&](UFortWorldItem* entry)
-            {
-                return entry->ItemEntry.ItemDefinition == Resource;
-            });
-        auto itemEntry = Controller->WorldInventory->Inventory.ReplicatedEntries.Search(
-            [&](FFortItemEntry& entry)
-            {
-                return entry.ItemDefinition == Resource;
-            },
-            FFortItemEntry::Size());
+        auto ItemP = Controller->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* entry) { return entry->ItemEntry.ItemDefinition == Resource; });
+        auto itemEntry = Controller->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) { return entry.ItemDefinition == Resource; }, FFortItemEntry::Size());
 
         if (ItemP)
         {
@@ -116,8 +106,8 @@ void ABuildingSMActor::OnDamageServer(
             itemEntry->Count += ResCount;
             if (itemEntry->Count > MaxMat)
             {
-                AFortInventory::SpawnPickup(Controller->Pawn->K2_GetActorLocation(), Item->ItemEntry.ItemDefinition, itemEntry->Count - MaxMat, 0,
-                    EFortPickupSourceTypeFlag::GetTossed(), EFortPickupSpawnSource::GetUnset(), Controller->MyFortPawn);
+                AFortInventory::SpawnPickup(Controller->Pawn->K2_GetActorLocation(), Item->ItemEntry.ItemDefinition, itemEntry->Count - MaxMat, 0, EFortPickupSourceTypeFlag::GetTossed(),
+                                            EFortPickupSpawnSource::GetUnset(), Controller->MyFortPawn);
                 itemEntry->Count = MaxMat;
             }
 
@@ -140,8 +130,8 @@ void ABuildingSMActor::OnDamageServer(
         {
             if (ResCount > MaxMat)
             {
-                AFortInventory::SpawnPickup(Controller->Pawn->K2_GetActorLocation(), Resource, ResCount - MaxMat, 0, EFortPickupSourceTypeFlag::GetTossed(),
-                    EFortPickupSpawnSource::GetUnset(), Controller->MyFortPawn);
+                AFortInventory::SpawnPickup(Controller->Pawn->K2_GetActorLocation(), Resource, ResCount - MaxMat, 0, EFortPickupSourceTypeFlag::GetTossed(), EFortPickupSpawnSource::GetUnset(),
+                                            Controller->MyFortPawn);
                 ResCount = MaxMat;
             }
 
@@ -150,8 +140,8 @@ void ABuildingSMActor::OnDamageServer(
     }
 
     if (ResCount > 0)
-        Controller->ClientReportDamagedResourceBuilding(
-            Actor, ResCount == 0 ? EFortResourceType(EFortResourceType__Enum::GetNone()) : Actor->ResourceType, ResCount, Actor->GetHealth() - Damage <= 0, Damage == 100.f);
+        Controller->ClientReportDamagedResourceBuilding(Actor, ResCount == 0 ? EFortResourceType(EFortResourceType__Enum::GetNone()) : Actor->ResourceType, ResCount, Actor->GetHealth() - Damage <= 0,
+                                                        Damage == 100.f);
 
     Actor->ForceNetUpdate();
     return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
@@ -215,8 +205,7 @@ void AFortDecoTool::ServerSpawnDeco_(UObject* Context, FFrame& Stack)
         ABuildingSMActor* NewTrap = nullptr;
         if (VersionInfo.FortniteVersion >= 27)
         {
-            auto SpawnDeco
-                = (ABuildingSMActor * (*)(AFortDecoTool*, TSubclassOf<ABuildingSMActor>&, FVector&, FRotator&, ABuildingSMActor*, uint8_t, int)) DecoTool->Vft[SpawnDecoVft];
+            auto SpawnDeco = (ABuildingSMActor * (*)(AFortDecoTool*, TSubclassOf<ABuildingSMActor>&, FVector&, FRotator&, ABuildingSMActor*, uint8_t, int)) DecoTool->Vft[SpawnDecoVft];
 
             TSubclassOf<ABuildingSMActor> SubclassOf;
             SubclassOf.ClassPtr = ItemDefinition->BlueprintClass.Get();
@@ -230,17 +219,8 @@ void AFortDecoTool::ServerSpawnDeco_(UObject* Context, FFrame& Stack)
         }
 
         auto Resource = UFortKismetLibrary::GetDefaultObj()->K2_GetResourceItemDefinition(AttachedActor->ResourceType);
-        auto item = PlayerController->WorldInventory->Inventory.ItemInstances.Search(
-            [&](UFortWorldItem* Item)
-            {
-                return Item->ItemEntry.ItemDefinition == DecoTool->ItemDefinition;
-            });
-        auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search(
-            [&](FFortItemEntry& entry)
-            {
-                return entry.ItemDefinition == DecoTool->ItemDefinition;
-            },
-            FFortItemEntry::Size());
+        auto item = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* Item) { return Item->ItemEntry.ItemDefinition == DecoTool->ItemDefinition; });
+        auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) { return entry.ItemDefinition == DecoTool->ItemDefinition; }, FFortItemEntry::Size());
         if (!itemEntry)
             return;
 
@@ -331,8 +311,7 @@ void AFortDecoTool_ContextTrap::ServerSpawnDeco_Implementation(UObject* Context,
         ABuildingSMActor* NewTrap = nullptr;
         if (VersionInfo.FortniteVersion >= 27)
         {
-            auto SpawnDeco
-                = (ABuildingSMActor * (*)(AFortDecoTool*, TSubclassOf<ABuildingSMActor>&, FVector&, FRotator&, ABuildingSMActor*, uint8_t, int)) DecoTool->Vft[SpawnDecoVft];
+            auto SpawnDeco = (ABuildingSMActor * (*)(AFortDecoTool*, TSubclassOf<ABuildingSMActor>&, FVector&, FRotator&, ABuildingSMActor*, uint8_t, int)) DecoTool->Vft[SpawnDecoVft];
 
             TSubclassOf<ABuildingSMActor> SubclassOf;
             SubclassOf.ClassPtr = ItemDefinition->BlueprintClass.Get();
@@ -346,17 +325,8 @@ void AFortDecoTool_ContextTrap::ServerSpawnDeco_Implementation(UObject* Context,
         }
 
         auto Resource = UFortKismetLibrary::GetDefaultObj()->K2_GetResourceItemDefinition(AttachedActor->ResourceType);
-        auto item = PlayerController->WorldInventory->Inventory.ItemInstances.Search(
-            [&](UFortWorldItem* Item)
-            {
-                return Item->ItemEntry.ItemDefinition == DecoTool->ItemDefinition;
-            });
-        auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search(
-            [&](FFortItemEntry& entry)
-            {
-                return entry.ItemDefinition == DecoTool->ItemDefinition;
-            },
-            FFortItemEntry::Size());
+        auto item = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* Item) { return Item->ItemEntry.ItemDefinition == DecoTool->ItemDefinition; });
+        auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) { return entry.ItemDefinition == DecoTool->ItemDefinition; }, FFortItemEntry::Size());
         if (!itemEntry)
             return;
 
@@ -470,11 +440,10 @@ void AFortDecoTool::ServerCreateBuildingAndSpawnDeco(UObject* Context, FFrame& S
 
     auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
     auto bIgnoreCanAffordCheck = UFortKismetLibrary::DoesItemDefinitionHaveGameplayTag(ItemDefinition, FGameplayTag(FName(L"Trap.ExtraPiece.Cost.Ignore")));
-    TSubclassOf<AActor> BuildingClass {};
+    TSubclassOf<AActor> BuildingClass{};
     EFortResourceType ResourceType = PlayerController->CurrentResourceType;
 
-    if (ItemDefinition->HasAutoCreateAttachmentBuildingResourceType()
-        && ItemDefinition->AutoCreateAttachmentBuildingResourceType != EFortResourceType(EFortResourceType__Enum::GetNone()))
+    if (ItemDefinition->HasAutoCreateAttachmentBuildingResourceType() && ItemDefinition->AutoCreateAttachmentBuildingResourceType != EFortResourceType(EFortResourceType__Enum::GetNone()))
         ResourceType = ItemDefinition->AutoCreateAttachmentBuildingResourceType;
     auto BuildingType = GetBuildingTypeFromBuildingAttachmentType(InBuildingAttachmentType);
 
@@ -530,11 +499,7 @@ _out:
         {
             auto Resource = UFortKismetLibrary::K2_GetResourceItemDefinition(((ABuildingSMActor*)BuildingClass->GetDefaultObj())->ResourceType);
 
-            auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search(
-                [&](UFortWorldItem* entry)
-                {
-                    return entry->ItemEntry.ItemDefinition == Resource;
-                });
+            auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* entry) { return entry->ItemEntry.ItemDefinition == Resource; });
 
             if (!ItemP)
                 return;
@@ -570,9 +535,8 @@ _out:
         auto CantBuild = (__int64 (*)(UWorld*, const UClass*, _Pad_0xC, _Pad_0xC, bool, TArray<ABuildingSMActor*>*, char*))CantBuild_;
         auto CantBuildNew = (__int64 (*)(UWorld*, const UClass*, _Pad_0x18, _Pad_0x18, bool, TArray<ABuildingSMActor*>*, char*))CantBuild_;
 
-        if (VersionInfo.FortniteVersion >= 20.00
-                ? CantBuildNew(UWorld::GetWorld(), BuildingClass, *(_Pad_0x18*)&BuildingLocation, *(_Pad_0x18*)&BuildingRotation, false, &RemoveBuildings, &_Unk_OutVar1)
-                : CantBuild(UWorld::GetWorld(), BuildingClass, *(_Pad_0xC*)&BuildingLocation, *(_Pad_0xC*)&BuildingRotation, false, &RemoveBuildings, &_Unk_OutVar1))
+        if (VersionInfo.FortniteVersion >= 20.00 ? CantBuildNew(UWorld::GetWorld(), BuildingClass, *(_Pad_0x18*)&BuildingLocation, *(_Pad_0x18*)&BuildingRotation, false, &RemoveBuildings, &_Unk_OutVar1)
+                                                 : CantBuild(UWorld::GetWorld(), BuildingClass, *(_Pad_0xC*)&BuildingLocation, *(_Pad_0xC*)&BuildingRotation, false, &RemoveBuildings, &_Unk_OutVar1))
             return;
     }
 
@@ -638,17 +602,15 @@ void ABuildingSMActor::PostLoadHook()
         ShouldAllowServerSpawnDecoVft = FindShouldAllowServerSpawnDecoVft();
     }
 
-    auto OnDamageServerAddr = FindFunctionCall(L"OnDamageServer",
-        VersionInfo.EngineVersion == 4.16                                            ? std::vector<uint8_t> { 0x4C, 0x89, 0x4C }
-            : VersionInfo.EngineVersion == 4.19 || VersionInfo.EngineVersion >= 4.27 ? std::vector<uint8_t> { 0x48, 0x8B, 0xC4 }
-                                                                                     : std::vector<uint8_t> { 0x40, 0x55 });
+    auto OnDamageServerAddr = FindFunctionCall(L"OnDamageServer", VersionInfo.EngineVersion == 4.16                                        ? std::vector<uint8_t>{0x4C, 0x89, 0x4C}
+                                                                  : VersionInfo.EngineVersion == 4.19 || VersionInfo.EngineVersion >= 4.27 ? std::vector<uint8_t>{0x48, 0x8B, 0xC4}
+                                                                                                                                           : std::vector<uint8_t>{0x40, 0x55});
 
     Utils::Hook(OnDamageServerAddr, OnDamageServer, OnDamageServerOG);
 
     if (VersionInfo.FortniteVersion >= 18)
         Utils::ExecHook(AFortDecoTool::GetDefaultObj()->GetFunction("ServerSpawnDeco"), AFortDecoTool::ServerSpawnDeco_, AFortDecoTool::ServerSpawnDeco_OG);
-    Utils::ExecHook(AFortDecoTool::GetDefaultObj()->GetFunction("ServerCreateBuildingAndSpawnDeco"), AFortDecoTool::ServerCreateBuildingAndSpawnDeco,
-        AFortDecoTool::ServerCreateBuildingAndSpawnDecoOG);
+    Utils::ExecHook(AFortDecoTool::GetDefaultObj()->GetFunction("ServerCreateBuildingAndSpawnDeco"), AFortDecoTool::ServerCreateBuildingAndSpawnDeco, AFortDecoTool::ServerCreateBuildingAndSpawnDecoOG);
     if (AFortDecoTool_ContextTrap::StaticClass())
     {
         auto Func = AFortDecoTool_ContextTrap::GetDefaultObj()->GetFunction("ServerSpawnDeco");

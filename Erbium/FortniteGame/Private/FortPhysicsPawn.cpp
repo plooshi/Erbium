@@ -187,11 +187,9 @@ void OnRep_ReplicatedAttachedInfo(AFortOctopusTowhookAttachableProjectile* _this
 
     printf("[Ballers] Comp: %s, Owner %s\n", Comp->Name.ToString().c_str(), Comp->GetOwner()->Name.ToString().c_str());
     printf("[Ballers] Location: %f %f %f [World] -> ", _this->AttachedInfo.Hit.Location.X, _this->AttachedInfo.Hit.Location.Y, _this->AttachedInfo.Hit.Location.Z);
-    printf("%f %f %f [Local]\n", OwningVehicle->ReplicatedAttachState.LocalLocation.X, OwningVehicle->ReplicatedAttachState.LocalLocation.Y,
-        OwningVehicle->ReplicatedAttachState.LocalLocation.Z);
+    printf("%f %f %f [Local]\n", OwningVehicle->ReplicatedAttachState.LocalLocation.X, OwningVehicle->ReplicatedAttachState.LocalLocation.Y, OwningVehicle->ReplicatedAttachState.LocalLocation.Z);
     printf("[Ballers] Normal: %f %f %f [World] -> ", _this->AttachedInfo.Hit.Normal.X, _this->AttachedInfo.Hit.Normal.Y, _this->AttachedInfo.Hit.Normal.Z);
-    printf("%f %f %f [Local]\n", OwningVehicle->ReplicatedAttachState.LocalNormal.X, OwningVehicle->ReplicatedAttachState.LocalNormal.Y,
-        OwningVehicle->ReplicatedAttachState.LocalNormal.Z);
+    printf("%f %f %f [Local]\n", OwningVehicle->ReplicatedAttachState.LocalNormal.X, OwningVehicle->ReplicatedAttachState.LocalNormal.Y, OwningVehicle->ReplicatedAttachState.LocalNormal.Z);
     // printf("CALLED!!!!\n");
 }
 
@@ -240,7 +238,7 @@ void AFortPhysicsPawn::Hook()
         auto OnRep_ReplicatedAttachedInfoIdx = AFortOctopusTowhookAttachableProjectile::GetDefaultObj()->GetFunction("OnRep_ReplicatedAttachedInfo")->GetVTableIndex();
 
         auto OnRep_ReplicatedAttachedInfo__Impl = AFortOctopusTowhookAttachableProjectile::GetDefaultObj()->Vft[OnRep_ReplicatedAttachedInfoIdx];
-        auto CanGrappleToComponent = Memcury::Scanner(OnRep_ReplicatedAttachedInfo__Impl).ScanFor({ 0xFF, 0x90 }).Get();
+        auto CanGrappleToComponent = Memcury::Scanner(OnRep_ReplicatedAttachedInfo__Impl).ScanFor({0xFF, 0x90}).Get();
 
         for (int i = 0; i < 2000; i++)
         {

@@ -65,21 +65,21 @@ namespace SDK
         }
     };
 
-#define DefineLWCProp(Name, NonLWCOffset, TypeLWC, TypeNonLWC, Ret)                                                                                                                \
-    Ret Get##Name() const                                                                                                                                                          \
-    {                                                                                                                                                                              \
-        if (VersionInfo.FortniteVersion >= 20)                                                                                                                                     \
-            return *(TypeLWC*)(__int64(this) + (NonLWCOffset * 2));                                                                                                                \
-        else                                                                                                                                                                       \
-            return *(TypeNonLWC*)(__int64(this) + NonLWCOffset);                                                                                                                   \
-    }                                                                                                                                                                              \
-    void Set##Name(Ret New) const                                                                                                                                                  \
-    {                                                                                                                                                                              \
-        if (VersionInfo.FortniteVersion >= 20)                                                                                                                                     \
-            *(TypeLWC*)(__int64(this) + (NonLWCOffset * 2)) = New;                                                                                                                 \
-        else                                                                                                                                                                       \
-            *(TypeNonLWC*)(__int64(this) + NonLWCOffset) = (TypeNonLWC)New;                                                                                                        \
-    }                                                                                                                                                                              \
+#define DefineLWCProp(Name, NonLWCOffset, TypeLWC, TypeNonLWC, Ret)                                                                                                                                                   \
+    Ret Get##Name() const                                                                                                                                                                                             \
+    {                                                                                                                                                                                                                 \
+        if (VersionInfo.FortniteVersion >= 20)                                                                                                                                                                        \
+            return *(TypeLWC*)(__int64(this) + (NonLWCOffset * 2));                                                                                                                                                   \
+        else                                                                                                                                                                                                          \
+            return *(TypeNonLWC*)(__int64(this) + NonLWCOffset);                                                                                                                                                      \
+    }                                                                                                                                                                                                                 \
+    void Set##Name(Ret New) const                                                                                                                                                                                     \
+    {                                                                                                                                                                                                                 \
+        if (VersionInfo.FortniteVersion >= 20)                                                                                                                                                                        \
+            *(TypeLWC*)(__int64(this) + (NonLWCOffset * 2)) = New;                                                                                                                                                    \
+        else                                                                                                                                                                                                          \
+            *(TypeNonLWC*)(__int64(this) + NonLWCOffset) = (TypeNonLWC)New;                                                                                                                                           \
+    }                                                                                                                                                                                                                 \
     __declspec(property(get = Get##Name, put = Set##Name)) TypeLWC Name;
 
     struct FVector
@@ -194,33 +194,33 @@ namespace SDK
         }
         FVector operator*(const FVector& Other) const
         {
-            return { X * Other.X, Y * Other.Y, Z * Other.Z };
+            return {X * Other.X, Y * Other.Y, Z * Other.Z};
         }
         FVector operator*(UnderlayingType Scalar) const
         {
-            return { X * Scalar, Y * Scalar, Z * Scalar };
+            return {X * Scalar, Y * Scalar, Z * Scalar};
         }
         FVector operator+(const FVector& Other) const
         {
-            return { X + Other.X, Y + Other.Y, Z + Other.Z };
+            return {X + Other.X, Y + Other.Y, Z + Other.Z};
         }
         FVector operator-(const FVector& Other) const
         {
-            return { X - Other.X, Y - Other.Y, Z - Other.Z };
+            return {X - Other.X, Y - Other.Y, Z - Other.Z};
         }
         FVector operator/(const FVector& Other) const
         {
             if (Other.X == 0.0f || Other.Y == 0.0f || Other.Z == 0.0f)
                 return *this;
 
-            return { X / Other.X, Y / Other.Y, Z / Other.Z };
+            return {X / Other.X, Y / Other.Y, Z / Other.Z};
         }
         FVector operator/(UnderlayingType Scalar) const
         {
             if (Scalar == 0.0f)
                 return *this;
 
-            return { X / Scalar, Y / Scalar, Z / Scalar };
+            return {X / Scalar, Y / Scalar, Z / Scalar};
         }
         bool operator==(const FVector& Other) const
         {
@@ -294,7 +294,7 @@ namespace SDK
             double sinPitch = sin(Pitch * halfOfARadian), sinYaw = sin(Yaw * halfOfARadian), sinRoll = sin(Roll * halfOfARadian);
             double cosPitch = cos(Pitch * halfOfARadian), cosYaw = cos(Yaw * halfOfARadian), cosRoll = cos(Roll * halfOfARadian);
 
-            FQuat out {};
+            FQuat out{};
             out.X = cosRoll * sinPitch * sinYaw - sinRoll * cosPitch * cosYaw;
             out.Y = -cosRoll * sinPitch * cosYaw - sinRoll * cosPitch * sinYaw;
             out.Z = cosRoll * cosPitch * sinYaw - sinRoll * sinPitch * cosYaw;
@@ -352,7 +352,7 @@ namespace SDK
 
         const double SINGULARITY_THRESHOLD = 0.4999995;
         const double RAD_TO_DEG = 57.29577951308232;
-        FRotator RotatorFromQuat {};
+        FRotator RotatorFromQuat{};
 
         if (SingularityTest < -SINGULARITY_THRESHOLD)
         {
@@ -403,7 +403,7 @@ namespace SDK
 
         FTransform(const FTransform&) = default;
 
-        FTransform(FVector loc = {}, FQuat rot = {}, FVector scale = { 1, 1, 1 })
+        FTransform(FVector loc = {}, FQuat rot = {}, FVector scale = {1, 1, 1})
         {
             Rotation = rot;
             Translation = loc;
@@ -549,6 +549,7 @@ namespace SDK
         DEFINE_FUNC(SetLifeSpan, void);
         DEFINE_FUNC(K2_AttachToComponent, void);
         DEFINE_FUNC(SetActorHiddenInGame, void);
+        DEFINE_FUNC(GetActorEyesViewPoint, void);
     };
 
     class UGameplayStatics : public SDK::UObject
@@ -1034,7 +1035,7 @@ namespace SDK
         template <typename T>
         __forceinline T& StepCompiledInRef()
         {
-            T TempVal {};
+            T TempVal{};
             return *(T*)StepCompiledInRefInternal(&TempVal);
         }
 
@@ -1089,4 +1090,4 @@ namespace SDK
             InvocationList.Add(NewDelegate, FScriptDelegate::Size());
         }
     };
-}
+} // namespace SDK

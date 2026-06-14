@@ -39,8 +39,8 @@ int GetLevel(const FDataTableCategoryHandle& CategoryHandle)
         if (!LootLevelDataPair.Value())
             continue;
 
-        if ((FFortLootLevelData::HasCategory() ? LootLevelDataPair.Value()->Category : LootLevelDataPair.Value()->category) != CategoryHandle.RowContents
-            || LootLevelDataPair.Value()->LootLevel > GameState->WorldLevel || LootLevelDataPair.Value()->LootLevel <= Level)
+        if ((FFortLootLevelData::HasCategory() ? LootLevelDataPair.Value()->Category : LootLevelDataPair.Value()->category) != CategoryHandle.RowContents ||
+            LootLevelDataPair.Value()->LootLevel > GameState->WorldLevel || LootLevelDataPair.Value()->LootLevel <= Level)
             continue;
 
         Level = LootLevelDataPair.Value()->LootLevel;
@@ -97,7 +97,7 @@ public:
 
 void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SDK::FName Package, int i, FName TierGroup, int WorldLevel, ABuildingContainer* Container)
 {
-    TArray<FFortLootPackageData*> LPGroups {};
+    TArray<FFortLootPackageData*> LPGroups{};
 
     for (auto const& Val : LootPackageMap[Package.ComparisonIndex])
     {
@@ -122,11 +122,7 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
     if (LPGroups.Num() == 0)
         return;
 
-    auto LootPackage = PickWeighted(LPGroups,
-        [](float Total)
-        {
-            return ((float)rand() / 32767.f) * Total;
-        });
+    auto LootPackage = PickWeighted(LPGroups, [](float Total) { return ((float)rand() / 32767.f) * Total; });
     if (!LootPackage)
         return;
 
@@ -155,7 +151,7 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
             {
                 auto SpawnAmmoData = FindObject<UFortWeaponPickupSpawnAmmoData>(L"/Game/Athena/Balance/Pickups/FortWeaponPickupSpawnAmmoData.FortWeaponPickupSpawnAmmoData");
 
-                FGameplayTagContainer AmmoTags {};
+                FGameplayTagContainer AmmoTags{};
 
                 auto Interface = (IGameplayTagAssetInterface*)AmmoDefinition->GetInterface(IGameplayTagAssetInterface::StaticClass());
                 if (Interface)
@@ -179,7 +175,7 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 
                 auto Multiplier = SpawnAmmoData->DefaultWeaponAmmoMultiplier.Evaluate((float)WorldLevel);
 
-                FGameplayTagContainer WeaponTags {};
+                FGameplayTagContainer WeaponTags{};
 
                 auto Interface2 = (IGameplayTagAssetInterface*)ItemDefinition->GetInterface(IGameplayTagAssetInterface::StaticClass());
                 if (Interface2)
@@ -204,7 +200,7 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 
                 if (Container)
                 {
-                    FGameplayTagContainer SourceTags {};
+                    FGameplayTagContainer SourceTags{};
 
                     auto Interface3 = (IGameplayTagAssetInterface*)Container->GetInterface(IGameplayTagAssetInterface::StaticClass());
                     if (Interface3)
@@ -231,7 +227,8 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
                 auto FinalCount = AmmoCount * Multiplier * SourceMultiplier;
 
                 if (FinalCount > 0.f)
-                    AmmoEntry = AFortInventory::MakeItemEntry(AmmoDefinition, (int)FinalCount,
+                    AmmoEntry = AFortInventory::MakeItemEntry(
+                        AmmoDefinition, (int)FinalCount,
                         AmmoDefinition->IsA(UFortWorldItemDefinition::StaticClass())
                             ? (AmmoDefinition->HasLootLevelData() ? std::clamp(GetLevel(AmmoDefinition->LootLevelData), AmmoDefinition->MinLevel, AmmoDefinition->MaxLevel > 0 ? AmmoDefinition->MaxLevel : 99999) : 0)
                             : 0);
@@ -258,7 +255,8 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
                 LootDrop->Count = ItemDefinition->GetMaxStackSize();
 
                 // if (Inventory::GetQuickbar(LootDrop.ItemDefinition) == EFortQuickBars::Secondary)
-                LootDrops.Add(AFortInventory::MakeItemEntry(ItemDefinition, OGCount - (int32)ItemDefinition->GetMaxStackSize(),
+                LootDrops.Add(AFortInventory::MakeItemEntry(
+                    ItemDefinition, OGCount - (int32)ItemDefinition->GetMaxStackSize(),
                     ItemDefinition->IsA(UFortWorldItemDefinition::StaticClass())
                         ? (ItemDefinition->HasLootLevelData() ? std::clamp(GetLevel(ItemDefinition->LootLevelData), ItemDefinition->MinLevel, ItemDefinition->MaxLevel > 0 ? ItemDefinition->MaxLevel : 99999) : 0)
                         : 0));
@@ -280,10 +278,11 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 
                 // if (!AFortInventory::IsPrimaryQuickbar(LootDrop->ItemDefinition))
                 LootDrops.Add(AFortInventory::MakeItemEntry(AmmoEntry->ItemDefinition, OGCount - AmmoEntry->ItemDefinition->GetMaxStackSize(),
-                    AmmoEntry->ItemDefinition->IsA(UFortWorldItemDefinition::StaticClass())
-                        ? (AmmoEntry->ItemDefinition->HasLootLevelData() ? std::clamp(GetLevel(AmmoEntry->ItemDefinition->LootLevelData), AmmoEntry->ItemDefinition->MinLevel,
-                              AmmoEntry->ItemDefinition->MaxLevel > 0 ? AmmoEntry->ItemDefinition->MaxLevel : 99999) : 0)
-                        : 0));
+                                                            AmmoEntry->ItemDefinition->IsA(UFortWorldItemDefinition::StaticClass())
+                                                                ? (AmmoEntry->ItemDefinition->HasLootLevelData() ? std::clamp(GetLevel(AmmoEntry->ItemDefinition->LootLevelData), AmmoEntry->ItemDefinition->MinLevel,
+                                                                                                                              AmmoEntry->ItemDefinition->MaxLevel > 0 ? AmmoEntry->ItemDefinition->MaxLevel : 99999)
+                                                                                                                 : 0)
+                                                                : 0));
             }
 
             // if (Inventory::GetQuickbar(LootDrop.ItemDefinition) == EFortQuickBars::Secondary)
@@ -293,7 +292,8 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
     }
 
     if (!found && LootPackage->Count > 0)
-        LootDrops.Add(AFortInventory::MakeItemEntry(ItemDefinition, LootPackage->Count,
+        LootDrops.Add(AFortInventory::MakeItemEntry(
+            ItemDefinition, LootPackage->Count,
             ItemDefinition->IsA(UFortWorldItemDefinition::StaticClass())
                 ? (ItemDefinition->HasLootLevelData() ? std::clamp(GetLevel(ItemDefinition->LootLevelData), ItemDefinition->MinLevel, ItemDefinition->MaxLevel > 0 ? ItemDefinition->MaxLevel : 99999) : 0)
                 : 0));
@@ -305,17 +305,13 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
 
 void UFortLootPackage::ChooseLootForContainer(TArray<FFortItemEntry*>& LootDrops, FName TierGroup, int LootTier, int WorldLevel, ABuildingContainer* Container)
 {
-    TArray<FFortLootTierData*> TierDataGroups {};
+    TArray<FFortLootTierData*> TierDataGroups{};
 
     for (auto const& Val : TierDataMap[TierGroup.ComparisonIndex])
         if (LootTier == -1 ? true : LootTier == Val->LootTier)
             TierDataGroups.Add(Val);
 
-    auto LootTierData = PickWeighted(TierDataGroups,
-        [](float Total)
-        {
-            return ((float)rand() / 32767.f) * Total;
-        });
+    auto LootTierData = PickWeighted(TierDataGroups, [](float Total) { return ((float)rand() / 32767.f) * Total; });
 
     if (!LootTierData)
         return;
@@ -490,7 +486,7 @@ bool UFortLootPackage::SpawnLootHook(ABuildingContainer* Container)
             RealTierGroup = Loot_AthenaAmmoLarge;
     }
 
-    TArray<FFortItemEntry*> LootDrops {};
+    TArray<FFortItemEntry*> LootDrops{};
 
     UFortLootPackage::ChooseLootForContainer(LootDrops, RealTierGroup, -1, GameMode->GameState->WorldLevel, Container);
 
@@ -539,7 +535,7 @@ void UFortLootPackage::SpawnLoot(FName& TierGroup, FVector Loc)
             RealTierGroup = Loot_AthenaAmmoLarge;
     }
 
-    TArray<FFortItemEntry*> LootDrops {};
+    TArray<FFortItemEntry*> LootDrops{};
 
     UFortLootPackage::ChooseLootForContainer(LootDrops, RealTierGroup);
 
@@ -605,7 +601,7 @@ void UFortLootPackage::SpawnFloorLootForContainer(const UClass* ContainerType)
 void UFortLootPackage::SpawnConsumableActor(ABGAConsumableSpawner* Spawner)
 {
     return;
-    TArray<FFortItemEntry*> LootDrops {};
+    TArray<FFortItemEntry*> LootDrops{};
 
     UFortLootPackage::ChooseLootForContainer(LootDrops, Spawner->SpawnLootTierGroup);
     if (LootDrops.Num() == 0)
@@ -684,14 +680,14 @@ void UFortLootPackage::Hook()
                                .ScanFor({ 0x40, 0x53 }, false)
                                .Get();
 
-		Utils::Hook(PostUpdate_, PostUpdate);
-	}*/
+        Utils::Hook(PostUpdate_, PostUpdate);
+    }*/
 
     if (VersionInfo.FortniteVersion >= 11.00)
     {
         Utils::Hook(FindSpawnLoot(), SpawnLootHook);
 
-        auto OnAuthorityRandomUpgradeAppliedAddr = FindFunctionCall(L"OnAuthorityRandomUpgradeApplied", std::vector<uint8_t> { 0x48, 0x89, 0x5C });
+        auto OnAuthorityRandomUpgradeAppliedAddr = FindFunctionCall(L"OnAuthorityRandomUpgradeApplied", std::vector<uint8_t>{0x48, 0x89, 0x5C});
         Utils::Hook(OnAuthorityRandomUpgradeAppliedAddr, OnAuthorityRandomUpgradeApplied, OnAuthorityRandomUpgradeAppliedOG);
         return;
     }
@@ -702,7 +698,7 @@ void UFortLootPackage::Hook()
         if (ServerOnAttemptInteractRef.Get())
         {
             auto UnderlyingCall = ServerOnAttemptInteractRef;
-            UnderlyingCall.ScanFor({ 0x41, 0xFF }, false);
+            UnderlyingCall.ScanFor({0x41, 0xFF}, false);
 
             if (UnderlyingCall.Get() != ServerOnAttemptInteractRef.Get())
             {

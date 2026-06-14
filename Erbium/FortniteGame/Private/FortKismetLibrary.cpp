@@ -53,8 +53,7 @@ void UFortKismetLibrary::K2_SpawnPickupInWorld(UObject* Object, FFrame& Stack, A
         Stack.StepCompiledIn(&bPickupOnlyRelevantToOwner);
     Stack.IncrementCode();
 
-    *Ret = AFortInventory::SpawnPickup(
-        Position, ItemDefinition, NumberToSpawn, 0, SourceType, Source, OptionalOwnerPC ? OptionalOwnerPC->MyFortPawn : nullptr, bToss, bRandomRotation);
+    *Ret = AFortInventory::SpawnPickup(Position, ItemDefinition, NumberToSpawn, 0, SourceType, Source, OptionalOwnerPC ? OptionalOwnerPC->MyFortPawn : nullptr, bToss, bRandomRotation);
 }
 
 bool bHasItemVariantGuid2 = false;
@@ -103,7 +102,7 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayer(UObject* Context, FFrame& Stack
 {
     AFortPlayerControllerAthena* PlayerController;
     UFortItemDefinition* ItemDefinition;
-    FGuid ItemVariantGuid {};
+    FGuid ItemVariantGuid{};
     int32 AmountToRemove;
     bool bForceRemoval = false;
     Stack.StepCompiledIn(&PlayerController);
@@ -122,17 +121,8 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayer(UObject* Context, FFrame& Stack
     }
     printf(__FUNCTION__ " %s %d\n", ItemDefinition->Name.ToString().c_str(), AmountToRemove);
 
-    auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search(
-        [&](UFortWorldItem* entry)
-        {
-            return entry->ItemEntry.ItemDefinition == ItemDefinition;
-        });
-    auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search(
-        [&](FFortItemEntry& entry)
-        {
-            return entry.ItemDefinition == ItemDefinition;
-        },
-        FFortItemEntry::Size());
+    auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* entry) { return entry->ItemEntry.ItemDefinition == ItemDefinition; });
+    auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) { return entry.ItemDefinition == ItemDefinition; }, FFortItemEntry::Size());
     if (!ItemP)
     {
         *Ret = 0;
@@ -170,17 +160,8 @@ void UFortKismetLibrary::K2_RemoveItemFromPlayerByGuid(UObject* Context, FFrame&
     Stack.StepCompiledIn(&bForceRemoval);
     Stack.IncrementCode();
 
-    auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search(
-        [&](UFortWorldItem* entry)
-        {
-            return entry->ItemEntry.ItemGuid == ItemGuid;
-        });
-    auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search(
-        [&](FFortItemEntry& entry)
-        {
-            return entry.ItemGuid == ItemGuid;
-        },
-        FFortItemEntry::Size());
+    auto ItemP = PlayerController->WorldInventory->Inventory.ItemInstances.Search([&](UFortWorldItem* entry) { return entry->ItemEntry.ItemGuid == ItemGuid; });
+    auto itemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) { return entry.ItemGuid == ItemGuid; }, FFortItemEntry::Size());
 
     if (!ItemP)
     {
@@ -217,8 +198,8 @@ void UFortKismetLibrary::SpawnItemVariantPickupInWorld(UObject* Object, FFrame& 
     Stack.StepCompiledIn(&Params);
     Stack.IncrementCode();
 
-    *Ret = AFortInventory::SpawnPickup(FSpawnItemVariantParams::HasPosition() ? Params.Position : Params.position, Params.WorldItemDefinition, Params.NumberToSpawn, 0,
-        Params.SourceType, Params.Source, nullptr, Params.bToss, Params.bRandomRotation);
+    *Ret = AFortInventory::SpawnPickup(FSpawnItemVariantParams::HasPosition() ? Params.Position : Params.position, Params.WorldItemDefinition, Params.NumberToSpawn, 0, Params.SourceType, Params.Source, nullptr,
+                                       Params.bToss, Params.bRandomRotation);
 }
 
 bool bHasOptionalLootTags = false;
@@ -229,7 +210,7 @@ void UFortKismetLibrary::PickLootDrops(UObject* Object, FFrame& Stack, bool* Ret
     FName TierGroupName;
     int32 WorldLevel;
     int32 ForcedLootTier;
-    FGameplayTagContainer OptionalLootTags {};
+    FGameplayTagContainer OptionalLootTags{};
 
     if (bHasWorldContextObject2)
         Stack.StepCompiledIn(&WorldContextObject);
@@ -241,7 +222,7 @@ void UFortKismetLibrary::PickLootDrops(UObject* Object, FFrame& Stack, bool* Ret
         Stack.StepCompiledIn(&OptionalLootTags);
     Stack.IncrementCode();
 
-    TArray<FFortItemEntry*> LootDrops {};
+    TArray<FFortItemEntry*> LootDrops{};
 
     UFortLootPackage::ChooseLootForContainer(LootDrops, TierGroupName, ForcedLootTier, WorldLevel);
 
@@ -286,8 +267,7 @@ void UFortKismetLibrary::K2_SpawnPickupInWorldWithClassAndItemEntry(UObject* Con
     Stack.StepCompiledIn(&bPickupOnlyRelevantToOwner);
     Stack.IncrementCode();
 
-    *Ret = AFortInventory::SpawnPickup(
-        Position, Entry->ItemDefinition, Entry->Count, Entry->Level, SourceType, Source, OptionalOwnerPC ? OptionalOwnerPC->MyFortPawn : nullptr, bToss, bRandomRotation);
+    *Ret = AFortInventory::SpawnPickup(Position, Entry->ItemDefinition, Entry->Count, Entry->Level, SourceType, Source, OptionalOwnerPC ? OptionalOwnerPC->MyFortPawn : nullptr, bToss, bRandomRotation);
     free(Entry);
 }
 
@@ -313,8 +293,7 @@ void UFortKismetLibrary::OpenActor_(UObject* Context, FFrame& Stack)
     Stack.StepCompiledIn(&bRequestFastOpen);
     Stack.IncrementCode();
 
-    printf(
-        "OpenActor %s %s\n", OpenableInterfaceActor->Name.ToString().c_str(), OptionalControllerInstigator ? OptionalControllerInstigator->Name.ToString().c_str() : "<nullptr>");
+    printf("OpenActor %s %s\n", OpenableInterfaceActor->Name.ToString().c_str(), OptionalControllerInstigator ? OptionalControllerInstigator->Name.ToString().c_str() : "<nullptr>");
     if (SetIsDoorOpen && OpenableInterfaceActor->IsA<ABuildingWall>())
         SetIsDoorOpen(OpenableInterfaceActor, bRequestFastOpen ? 1 : 0, OptionalControllerInstigator ? OptionalControllerInstigator->Pawn : nullptr);
     else
@@ -330,8 +309,7 @@ void UFortKismetLibrary::CloseActor_(UObject* Context, FFrame& Stack)
     Stack.StepCompiledIn(&OptionalControllerInstigator);
     Stack.IncrementCode();
 
-    printf(
-        "CloseActor %s %s\n", OpenableInterfaceActor->Name.ToString().c_str(), OptionalControllerInstigator ? OptionalControllerInstigator->Name.ToString().c_str() : "<nullptr>");
+    printf("CloseActor %s %s\n", OpenableInterfaceActor->Name.ToString().c_str(), OptionalControllerInstigator ? OptionalControllerInstigator->Name.ToString().c_str() : "<nullptr>");
     if (SetIsDoorOpen && OpenableInterfaceActor->IsA<ABuildingWall>())
         SetIsDoorOpen(OpenableInterfaceActor, 3, OptionalControllerInstigator ? OptionalControllerInstigator->Pawn : nullptr);
     else

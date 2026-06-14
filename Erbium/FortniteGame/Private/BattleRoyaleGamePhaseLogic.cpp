@@ -166,15 +166,12 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::GenerateStormCircles(AF
 
     StormCircles.clear();
 
-    auto FRandSeeded = [&]()
-    {
-        return (float)rand() / 32767.f;
-    };
+    auto FRandSeeded = [&]() { return (float)rand() / 32767.f; };
 
-    float Radii[13] = { 150000, 120000, 95000, 70000, 55000, 32500, 20000, 10000, 5000, 2500, 1650, 1090, 0 };
+    float Radii[13] = {150000, 120000, 95000, 70000, 55000, 32500, 20000, 10000, 5000, 2500, 1650, 1090, 0};
 
     FVector FirstCenter = MapInfo->GetMapCenter();
-    StormCircles.push_back(FStormCircle { FirstCenter, Radii[0] });
+    StormCircles.push_back(FStormCircle{FirstCenter, Radii[0]});
 
     float DirAngle = FRandSeeded() * 2.f * PI;
     float DirSin, DirCos;
@@ -240,7 +237,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::GenerateStormCircles(AF
 
         NewCenter = ClampToPlayableBounds(NewCenter, Radii[i], MapInfo->CachedPlayableBoundsForClients);
 
-        StormCircles.push_back(FStormCircle { NewCenter, Radii[i] });
+        StormCircles.push_back(FStormCircle{NewCenter, Radii[i]});
     }
 
     for (int i = 7; i < 13; ++i)
@@ -261,7 +258,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::GenerateStormCircles(AF
 
         NewCenter = ClampToPlayableBounds(NewCenter, rNew, MapInfo->CachedPlayableBoundsForClients);
 
-        StormCircles.push_back(FStormCircle { NewCenter, rNew });
+        StormCircles.push_back(FStormCircle{NewCenter, rNew});
     }
 }
 // end
@@ -272,7 +269,7 @@ AFortSafeZoneIndicator* UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Setu
 
     if (!this->SafeZoneIndicator)
     {
-        AFortSafeZoneIndicator* SafeZoneIndicator = UWorld::SpawnActor<AFortSafeZoneIndicator>(SafeZoneIndicatorClass, FVector {});
+        AFortSafeZoneIndicator* SafeZoneIndicator = UWorld::SpawnActor<AFortSafeZoneIndicator>(SafeZoneIndicatorClass, FVector{});
 
         if (SafeZoneIndicator)
         {
@@ -297,8 +294,7 @@ AFortSafeZoneIndicator* UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Setu
                 PhaseInfo->ShrinkTime = SafeZoneDefinition.ShrinkTime.Evaluate(i);
                 PhaseInfo->PlayerCap = (int)SafeZoneDefinition.PlayerCapSolo.Evaluate(i);
 
-                UDataTableFunctionLibrary::EvaluateCurveTableRow(
-                    GameState->AthenaGameDataTable, FName(L"Default.SafeZone.Damage"), i, nullptr, &PhaseInfo->DamageInfo.Damage, FString());
+                UDataTableFunctionLibrary::EvaluateCurveTableRow(GameState->AthenaGameDataTable, FName(L"Default.SafeZone.Damage"), i, nullptr, &PhaseInfo->DamageInfo.Damage, FString());
                 if (i == 0.f)
                     PhaseInfo->DamageInfo.Damage = 0.01f;
                 PhaseInfo->DamageInfo.bPercentageBasedDamage = true;
@@ -415,8 +411,8 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 
     auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
     auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount()
-        ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData)
-        : nullptr;
+                        ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData)
+                        : nullptr;
 
     if constexpr (FConfiguration::WebhookURL && *FConfiguration::WebhookURL)
     {
@@ -430,13 +426,13 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 
         sprintf_s(version, VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "%.2f" : "%.1f", VersionInfo.FortniteVersion);
 
-        auto payload = UEAllocatedString("{\"embeds\": [{\"title\": \"Match has started!\", \"fields\": [{\"name\":\"Version\",\"value\":\"") + version
-            + "\"}, {\"name\":\"Playlist\",\"value\":\"" + (Playlist ? Playlist->PlaylistName.ToString() : "Playlist_DefaultSolo") + "\"},{\"name\":\"Players\",\"value\":\""
-            + std::to_string(GameMode->AlivePlayers.Num()).c_str() + "\"}], \"color\": "
-            + "\"7237230\", \"footer\": {\"text\":\"Erbium\", "
-              "\"icon_url\":\"https://cdn.discordapp.com/attachments/1341168629378584698/1436803905119064105/"
-              "L0WnFa.png.png?ex=6910ef69&is=690f9de9&hm=01a0888b46647959b38ee58df322048ab49e2a5a678e52d4502d9c5e3978d805&\"}, \"timestamp\":\""
-            + iso8601() + "\"}] }";
+        auto payload = UEAllocatedString("{\"embeds\": [{\"title\": \"Match has started!\", \"fields\": [{\"name\":\"Version\",\"value\":\"") + version + "\"}, {\"name\":\"Playlist\",\"value\":\"" +
+                       (Playlist ? Playlist->PlaylistName.ToString() : "Playlist_DefaultSolo") + "\"},{\"name\":\"Players\",\"value\":\"" + std::to_string(GameMode->AlivePlayers.Num()).c_str() +
+                       "\"}], \"color\": " +
+                       "\"7237230\", \"footer\": {\"text\":\"Erbium\", "
+                       "\"icon_url\":\"https://cdn.discordapp.com/attachments/1341168629378584698/1436803905119064105/"
+                       "L0WnFa.png.png?ex=6910ef69&is=690f9de9&hm=01a0888b46647959b38ee58df322048ab49e2a5a678e52d4502d9c5e3978d805&\"}, \"timestamp\":\"" +
+                       iso8601() + "\"}] }";
 
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload.c_str());
 
@@ -446,10 +442,9 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
     }
     GUI::gsStatus = StartedMatch;
     sprintf_s(GUI::windowTitle,
-        VersionInfo.EngineVersion >= 5.0
-            ? "Erbium (FN %.2f, UE %.1f): Match started"
-            : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Match started" : "Erbium (FN %.1f, UE %.2f): Match started"),
-        VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
+              VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Match started"
+                                               : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Match started" : "Erbium (FN %.1f, UE %.2f): Match started"),
+              VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
     SetConsoleTitleA(GUI::windowTitle);
 
     if (FConfiguration::bJoinInProgress || (Playlist && Playlist->bAllowJoinInProgress))
@@ -583,8 +578,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 
             if (bStartAircraft || gettingReady)
             {
-                if (bStartAircraft
-                    || (((AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && WarmupCountdownEndTime != -1 && WarmupCountdownEndTime < Time))
+                if (bStartAircraft || (((AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && WarmupCountdownEndTime != -1 && WarmupCountdownEndTime < Time))
                 {
                     StartAircraftPhase();
 
@@ -611,8 +605,8 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
             static bool startedForming = false;
             if (!startedForming)
             {
-                if (((AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && Aircrafts_GameState[0].Get() && Aircrafts_GameState[0]->DropEndTime != -1
-                    && Aircrafts_GameState[0]->DropEndTime < Time)
+                if (((AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && Aircrafts_GameState[0].Get() && Aircrafts_GameState[0]->DropEndTime != -1 &&
+                    Aircrafts_GameState[0]->DropEndTime < Time)
                 {
                     startedForming = true;
                     auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
@@ -623,7 +617,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
                         auto Player = (AFortPlayerControllerAthena*)Player__Uncasted;
                         if (!Player->PlayerState->bIsABot && Player->IsInAircraft())
                         {
-                            Player->GetAircraftComponent()->ServerAttemptAircraftJump(FRotator {});
+                            Player->GetAircraftComponent()->ServerAttemptAircraftJump(FRotator{});
                         }
                     }
 
@@ -647,8 +641,8 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
 
         if (!finishedFlight)
         {
-            if (((AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && Aircrafts_GameState[0].Get() && Aircrafts_GameState[0]->FlightEndTime != -1
-                && Aircrafts_GameState[0]->FlightEndTime < Time)
+            if (((AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode)->AlivePlayers.Num() > 0 && Aircrafts_GameState[0].Get() && Aircrafts_GameState[0]->FlightEndTime != -1 &&
+                Aircrafts_GameState[0]->FlightEndTime < Time)
             {
                 finishedFlight = true;
                 auto Aircraft = Aircrafts_GameState[0].Get();

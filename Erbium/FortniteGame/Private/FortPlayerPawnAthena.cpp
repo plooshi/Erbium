@@ -18,28 +18,28 @@ struct _Pad_0x18
 struct FFortPickupRequestInfo final
 {
 public:
-    struct FGuid SwapWithItem; // 0x0000(0x0010)(ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
-    float FlyTime; // 0x0010(0x0004)(ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
-    struct _Pad_0xC Direction; // 0x0014(0x000C)(ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
-    uint8 bPlayPickupSound : 1; // 0x0020(0x0001)(BitIndex: 0x00, PropSize: 0x0001 (NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic))
-    uint8 bIsAutoPickup : 1; // 0x0020(0x0001)(BitIndex: 0x01, PropSize: 0x0001 (NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic))
-    uint8 bUseRequestedSwap : 1; // 0x0020(0x0001)(BitIndex: 0x02, PropSize: 0x0001 (NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic))
+    struct FGuid SwapWithItem;    // 0x0000(0x0010)(ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+    float FlyTime;                // 0x0010(0x0004)(ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+    struct _Pad_0xC Direction;    // 0x0014(0x000C)(ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+    uint8 bPlayPickupSound : 1;   // 0x0020(0x0001)(BitIndex: 0x00, PropSize: 0x0001 (NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic))
+    uint8 bIsAutoPickup : 1;      // 0x0020(0x0001)(BitIndex: 0x01, PropSize: 0x0001 (NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic))
+    uint8 bUseRequestedSwap : 1;  // 0x0020(0x0001)(BitIndex: 0x02, PropSize: 0x0001 (NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic))
     uint8 bTrySwapWithWeapon : 1; // 0x0020(0x0001)(BitIndex: 0x03, PropSize: 0x0001 (NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic))
-    uint8 Pad_21[0x3]; // 0x0021(0x0003)(Fixing Struct Size After Last Property [ Dumper-7 ])
+    uint8 Pad_21[0x3];            // 0x0021(0x0003)(Fixing Struct Size After Last Property [ Dumper-7 ])
 };
 
 struct alignas(0x8) FFortPickupRequestInfoNew final
 {
 public:
     struct FGuid SwapWithItem; // 0x0000(0x0010)(ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
-    float FlyTime; // 0x0010(0x0004)(ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+    float FlyTime;             // 0x0010(0x0004)(ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
     uint8 Pad_1[0x4];
-    struct _Pad_0x18 Direction; // 0x0014(0x000C)(ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
-    uint8 bPlayPickupSound : 1; // 0x0020(0x0001)(BitIndex: 0x00, PropSize: 0x0001 (NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic))
-    uint8 bIsAutoPickup : 1; // 0x0020(0x0001)(BitIndex: 0x01, PropSize: 0x0001 (NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic))
-    uint8 bUseRequestedSwap : 1; // 0x0020(0x0001)(BitIndex: 0x02, PropSize: 0x0001 (NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic))
+    struct _Pad_0x18 Direction;   // 0x0014(0x000C)(ZeroConstructor, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
+    uint8 bPlayPickupSound : 1;   // 0x0020(0x0001)(BitIndex: 0x00, PropSize: 0x0001 (NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic))
+    uint8 bIsAutoPickup : 1;      // 0x0020(0x0001)(BitIndex: 0x01, PropSize: 0x0001 (NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic))
+    uint8 bUseRequestedSwap : 1;  // 0x0020(0x0001)(BitIndex: 0x02, PropSize: 0x0001 (NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic))
     uint8 bTrySwapWithWeapon : 1; // 0x0020(0x0001)(BitIndex: 0x03, PropSize: 0x0001 (NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic))
-    uint8 Pad_2[0x7]; // 0x0021(0x0003)(Fixing Struct Size After Last Property [ Dumper-7 ])
+    uint8 Pad_2[0x7];             // 0x0021(0x0003)(Fixing Struct Size After Last Property [ Dumper-7 ])
 };
 
 uint64_t SetPickupTarget_ = 0;
@@ -115,8 +115,8 @@ void AFortPlayerPawnAthena::ServerHandlePickupInfo(UObject* Context, FFrame& Sta
     if (!Pawn || !Pickup || Pickup->bPickedUp)
         return;
 
-    if (bUseRequestedSwap && Pawn->CurrentWeapon && AFortInventory::IsPrimaryQuickbar(((AFortWeapon*)Pawn->CurrentWeapon)->WeaponData)
-        && AFortInventory::IsPrimaryQuickbar(Pickup->PrimaryPickupItemEntry.ItemDefinition))
+    if (bUseRequestedSwap && Pawn->CurrentWeapon && AFortInventory::IsPrimaryQuickbar(((AFortWeapon*)Pawn->CurrentWeapon)->WeaponData) &&
+        AFortInventory::IsPrimaryQuickbar(Pickup->PrimaryPickupItemEntry.ItemDefinition))
     {
         auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
         /*auto SwapEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
@@ -217,15 +217,11 @@ bool AFortPlayerPawnAthena::FinishedTargetSpline(void* _Pickup)
         {
             PlayerController->bTryPickupSwap = false;
 
-            auto entry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search(
-                [&](FFortItemEntry& entry)
-                {
-                    return entry.ItemGuid == ((AFortWeapon*)PlayerController->Pawn->CurrentWeapon)->ItemEntryGuid;
-                },
-                FFortItemEntry::Size());
+            auto entry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry)
+            { return entry.ItemGuid == ((AFortWeapon*)PlayerController->Pawn->CurrentWeapon)->ItemEntryGuid; }, FFortItemEntry::Size());
 
-            AFortInventory::SpawnPickup(PlayerController->GetViewTarget()->K2_GetActorLocation(), *entry, EFortPickupSourceTypeFlag::GetPlayer(),
-                EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn, -1, true, true, true, nullptr, FinalLoc);
+            AFortInventory::SpawnPickup(PlayerController->GetViewTarget()->K2_GetActorLocation(), *entry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn, -1,
+                                        true, true, true, nullptr, FinalLoc);
             // SwapEntry(PC, *entry, Pickup->PrimaryPickupItemEntry);
             PlayerController->WorldInventory->Remove(entry->ItemGuid);
             auto Item = PlayerController->WorldInventory->GiveItem(Pickup->PrimaryPickupItemEntry);
@@ -250,8 +246,8 @@ bool AFortPlayerPawnAthena::FinishedTargetSpline(void* _Pickup)
                     PlayerController->ClientEquipItem(Item->ItemEntry.ItemGuid, true);*/
         }
         else
-            AFortInventory::SpawnPickup(PlayerController->GetViewTarget()->K2_GetActorLocation(), Pickup->PrimaryPickupItemEntry, EFortPickupSourceTypeFlag::GetPlayer(),
-                EFortPickupSpawnSource::GetUnset(), PlayerController->MyFortPawn, -1, true, true, true, nullptr, FinalLoc);
+            AFortInventory::SpawnPickup(PlayerController->GetViewTarget()->K2_GetActorLocation(), Pickup->PrimaryPickupItemEntry, EFortPickupSourceTypeFlag::GetPlayer(), EFortPickupSpawnSource::GetUnset(),
+                                        PlayerController->MyFortPawn, -1, true, true, true, nullptr, FinalLoc);
     }
     else
         PlayerController->InternalPickup(&Pickup->PrimaryPickupItemEntry);
@@ -286,7 +282,7 @@ void AFortPlayerPawnAthena::ServerSendZiplineState(UObject* Context, FFrame& Sta
         auto Velocity = Pawn->CharacterMovement->Velocity;
         auto VelocityX = Velocity.X * -0.5f;
         auto VelocityY = Velocity.Y * -0.5f;
-        Pawn->LaunchCharacterJump(FVector { VelocityX >= -750 ? min(VelocityX, 750) : -750, VelocityY >= -750 ? min(VelocityY, 750) : -750, 1200 }, false, false, true, true);
+        Pawn->LaunchCharacterJump(FVector{VelocityX >= -750 ? min(VelocityX, 750) : -750, VelocityY >= -750 ? min(VelocityY, 750) : -750, 1200}, false, false, true, true);
     }
 
     auto NewZipline = Pawn->GetActiveZipline();
@@ -338,24 +334,17 @@ void AFortPlayerPawnAthena::OnCapsuleBeginOverlap_(UObject* Context, FFrame& Sta
 
     auto MaxStack = Pickup->PrimaryPickupItemEntry.ItemDefinition->GetMaxStackSize();
     auto itemEntry = ((AFortPlayerControllerAthena*)Pawn->Controller)
-                         ->WorldInventory->Inventory.ReplicatedEntries.Search(
-                             [&](FFortItemEntry& entry)
-                             {
-                                 return entry.ItemDefinition == Pickup->PrimaryPickupItemEntry.ItemDefinition && entry.Count <= MaxStack;
-                             },
-                             FFortItemEntry::Size());
+                         ->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) { return entry.ItemDefinition == Pickup->PrimaryPickupItemEntry.ItemDefinition && entry.Count <= MaxStack; },
+                                                                              FFortItemEntry::Size());
 
     if (Pickup && Pickup->PawnWhoDroppedPickup != Pawn)
     {
-        if ((!itemEntry
-                && ((Pickup->PrimaryPickupItemEntry.ItemDefinition->HasbForceAutoPickup()
-                        && (Pickup->PrimaryPickupItemEntry.ItemDefinition->HasbForceAutoPickup()
-                                ? Pickup->PrimaryPickupItemEntry.ItemDefinition->bForceAutoPickup
-                                : (Pickup->PrimaryPickupItemEntry.ItemDefinition->GetPickupComponent()
-                                          ? Pickup->PrimaryPickupItemEntry.ItemDefinition->GetPickupComponent()->bForceAutoPickup
-                                          : false)))
-                    || !AFortInventory::IsPrimaryQuickbar(Pickup->PrimaryPickupItemEntry.ItemDefinition)))
-            || (itemEntry && itemEntry->Count < MaxStack))
+        if ((!itemEntry && ((Pickup->PrimaryPickupItemEntry.ItemDefinition->HasbForceAutoPickup() &&
+                             (Pickup->PrimaryPickupItemEntry.ItemDefinition->HasbForceAutoPickup()
+                                  ? Pickup->PrimaryPickupItemEntry.ItemDefinition->bForceAutoPickup
+                                  : (Pickup->PrimaryPickupItemEntry.ItemDefinition->GetPickupComponent() ? Pickup->PrimaryPickupItemEntry.ItemDefinition->GetPickupComponent()->bForceAutoPickup : false))) ||
+                            !AFortInventory::IsPrimaryQuickbar(Pickup->PrimaryPickupItemEntry.ItemDefinition))) ||
+            (itemEntry && itemEntry->Count < MaxStack))
             Pawn->ServerHandlePickup(Pickup, Pickup->PickupLocationData.FlyTime, FVector(), true);
     }
 
@@ -414,14 +403,13 @@ void AFortPlayerPawnAthena::Athena_MedConsumable_Triggered(UObject* Context, FFr
     static auto HealthCue = FName(L"GameplayCue.Athena.Health.HealUsed");
 
     auto Handle = PlayerState->AbilitySystemComponent->MakeEffectContext();
-    FGameplayTag Tag {};
+    FGameplayTag Tag{};
     FName CueName = Consumable->HealsShields ? ShieldCue : HealthCue;
 
     if (Consumable->HealsHealth && Consumable->HealsShields)
     {
         static auto HealthHealAmountOffset = Consumable->GetOffset("HealthHealAmount");
-        auto HealthHealAmount
-            = Consumable->HasHealthHealAmount() ? *(float*)(__int64(Consumable) + HealthHealAmountOffset) : *(double*)(__int64(Consumable) + HealthHealAmountOffset);
+        auto HealthHealAmount = Consumable->HasHealthHealAmount() ? *(float*)(__int64(Consumable) + HealthHealAmountOffset) : *(double*)(__int64(Consumable) + HealthHealAmountOffset);
         if (Consumable->PlayerPawn->GetHealth() + HealthHealAmount <= 100)
             CueName = HealthCue;
     }
@@ -510,12 +498,7 @@ void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack
         // printf("Weapon: %s\n", Weapon ? Weapon->Name.ToString().c_str() : "<null>");
         if (Weapon)
         {
-            auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search(
-                [Weapon](FFortItemEntry& entry)
-                {
-                    return entry.ItemDefinition == Weapon;
-                },
-                FFortItemEntry::Size());
+            auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([Weapon](FFortItemEntry& entry) { return entry.ItemDefinition == Weapon; }, FFortItemEntry::Size());
 
             if (ItemEntry)
                 PlayerController->WorldInventory->Remove(ItemEntry->ItemGuid);
@@ -538,12 +521,8 @@ void AFortPlayerPawnAthena::ServerOnExitVehicle_(UObject* Context, FFrame& Stack
         else
         {
             printf("yo\n");
-            auto pickaxeEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search(
-                [](FFortItemEntry& entry)
-                {
-                    return entry.ItemDefinition->IsA<UFortWeaponMeleeItemDefinition>();
-                },
-                FFortItemEntry::Size());
+            auto pickaxeEntry =
+                PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([](FFortItemEntry& entry) { return entry.ItemDefinition->IsA<UFortWeaponMeleeItemDefinition>(); }, FFortItemEntry::Size());
 
             if (pickaxeEntry)
             {

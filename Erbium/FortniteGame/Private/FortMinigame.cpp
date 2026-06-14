@@ -50,13 +50,11 @@ void AFortMinigame::SetState(AFortMinigame* Minigame, uint8 NewState)
         }
 
         // this can crash btw!
-        std::thread(
-            [Minigame, NewState]()
-            {
-                std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-                SetStateOG(Minigame, NewState);
-            })
-            .detach();
+        std::thread([Minigame, NewState]()
+        {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            SetStateOG(Minigame, NewState);
+        }).detach();
     }
     else if (NewState == EFortMinigameState::GetPostGameReset())
     {

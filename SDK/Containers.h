@@ -199,7 +199,7 @@ namespace UC
 
         template <typename KeyElementType, typename ValueElementType>
         using TMapIterator = TContainerIterator<TMap<KeyElementType, ValueElementType>>;
-    }
+    } // namespace Iterators
 
     namespace ContainerImpl
     {
@@ -242,7 +242,7 @@ namespace UC
 
                 return 31 - FloorLog2(Value);
             }
-        }
+        } // namespace HelperFunctions
 
         template <int32 Size, uint32 Alignment>
         struct TAlignedBytes
@@ -269,7 +269,7 @@ namespace UC
 
             public:
                 ForElementType()
-                    : InlineData { 0x0 }
+                    : InlineData{0x0}
                     , SecondaryData(nullptr)
                 {
                 }
@@ -414,7 +414,7 @@ namespace UC
             int32 HashNextId;
             int32 HashIndex;
         };
-    }
+    } // namespace ContainerImpl
 
     template <typename KeyType, typename ValueType>
     class TPair
@@ -1543,7 +1543,7 @@ namespace UC
                 return &IteratedContainer != &Other.IteratedContainer || BitIterator != Other.BitIterator;
             }
         };
-    }
+    } // namespace Iterators
 
     inline Iterators::FSetBitIterator ContainerImpl::FBitArray::begin()
     {
@@ -1557,4 +1557,4 @@ namespace UC
     static_assert(sizeof(TArray<int32>) == 0x10, "TArray has a wrong size!");
     static_assert(sizeof(TSet<int32>) == 0x50, "TSet has a wrong size!");
     static_assert(sizeof(TMap<int32, int32>) == 0x50, "TMap has a wrong size!");
-}
+} // namespace UC
