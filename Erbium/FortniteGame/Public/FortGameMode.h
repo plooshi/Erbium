@@ -71,6 +71,7 @@ public:
     DefHookOg(bool, StartAircraftPhase, AFortGameMode*, char);
     DefUHookOg(OnAircraftExitedDropZone_);
     DefHookOg(void, FinishWorldInitialization, AFortGameMode*, AActor*);
+    DefHookOg(FVector, PickSafeZoneLocation, __int64* a1, __int64 a2, __int64 a3);
 
     InitHooks;
     InitPostLoadHooks;
