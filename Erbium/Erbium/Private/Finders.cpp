@@ -999,6 +999,12 @@ uint64_t FindFinishedTargetSpline()
                                                                      "8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 48 8B B9 ? ? ? ? 48 8B D9 48 85 FF 0F 84")
                                            .Get();
 
+            if (!FinishedTargetSpline)
+                FinishedTargetSpline =
+                    Memcury::Scanner::FindPattern(
+                        "48 8B C4 48 89 58 10 48 89 70 18 48 89 78 20 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 44 8B 89 ? ? ? ? 45 33 ED")
+                        .Get();
+
             return FinishedTargetSpline;
         }
         else if (VersionInfo.EngineVersion == 5.1)

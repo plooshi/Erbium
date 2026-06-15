@@ -852,7 +852,6 @@ void FlushNetDormancy(AActor* Actor)
 
 void UNetDriver::PostLoadHook()
 {
-    printf("SetWorld: %llx\n", FindSetWorld() - ImageBase);
     if (VersionInfo.EngineVersion == 4.16)
     {
         NetworkObjectListOffset = 0x3f8;
