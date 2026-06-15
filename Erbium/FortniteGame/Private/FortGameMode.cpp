@@ -1223,11 +1223,11 @@ void AFortGameMode::HandlePostSafeZonePhaseChanged(AFortGameMode* GameMode, int 
             GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Durations[FConfiguration::LateGameZone];
     }
 
-    /*if (FConfiguration::bLateGame && (SafeZoneLoc.X != 0 || SafeZoneLoc.Y != 0 || SafeZoneLoc.Z != 0))
+    if (FConfiguration::bLateGame && (SafeZoneLoc.X != 0 || SafeZoneLoc.Y != 0 || SafeZoneLoc.Z != 0))
     {
         GameMode->SafeZoneIndicator->NextCenter = SafeZoneLoc;
         GameMode->SafeZoneIndicator->LastCenter = SafeZoneLoc;
-    }*/
+    }
 
     if (NewSafeZonePhase > (FConfiguration::bLateGame ? FConfiguration::LateGameZone : 1))
     {
@@ -2130,14 +2130,6 @@ void PlayerCanRestart(UObject* Context, FFrame& Stack, bool* Ret)
     *Ret = true;
 }
 
-FVector AFortGameMode::PickSafeZoneLocation(__int64* a1, __int64 a2, __int64 a3)
-{
-    if (FConfiguration::bLateGame && (SafeZoneLoc.X != 0 || SafeZoneLoc.Y != 0 || SafeZoneLoc.Z != 0))
-        return SafeZoneLoc;
-
-    return PickSafeZoneLocationOG(a1, a2, a3);
-}
-
 void AFortGameMode::Hook()
 {
     Utils::ExecHook(GetDefaultObj()->GetFunction("ReadyToStartMatch"), ReadyToStartMatch_, ReadyToStartMatch_OG);
@@ -2174,8 +2166,6 @@ void AFortGameMode::PostLoadHook()
         }
         Utils::ExecHook(L"/Script/FortniteGame.FortSafeZoneIndicator.GetPhaseInfo", GetPhaseInfo);
     }
-    else if (VersionInfo.FortniteVersion < 7)
-        Utils::Hook(FindPickSafeZoneLocation(), PickSafeZoneLocation);
 
     // if (VersionInfo.FortniteVersion >= 15)
     //     Utils::ExecHook(AFortGameModeAthena::GetDefaultObj()->GetFunction("PlayerCanRestart"), PlayerCanRestart);

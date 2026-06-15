@@ -3216,48 +3216,6 @@ uint64 FindSelectAndSetupMyBuildingLevel()
     return 0;
 }
 
-uint64 FindPickSafeZoneLocation()
-{
-    auto sRef = Memcury::Scanner::FindStringRef(L"PickSafeZoneLocation[%d]: Radius: %0.2f   ForceDistanceMin: %0.2f, ForceDistanceMax: %0.2f   RejectRadius: %0.2f, RejectOuterDistance: %0.2f   MaxRadius: %0.2f   "
-                                                L"MapMaxRadius: %0.2f   MegaStormGridCellThickness: %0.2f", false, 0, VersionInfo.FortniteVersion >= 19);
-
-    if (!sRef.IsValid())
-        return 0;
-    
-    uint64_t PickSafeZoneLocationPart = 0;
-    for (int i = 0; i < 2000; i++)
-    {
-        auto Ptr = (uint8_t*)(sRef.Get() - i);
-
-        if (*Ptr == 0x48 && *(Ptr + 1) == 0x83 && *(Ptr + 2) == 0xEC)
-        {
-            PickSafeZoneLocationPart = uint64_t(Ptr);
-            break;
-        }
-        else if (*Ptr == 0x48 && *(Ptr + 1) == 0x81 && *(Ptr + 2) == 0xEC)
-        {
-            PickSafeZoneLocationPart = uint64_t(Ptr);
-            break;
-        }
-    }
-
-    for (int i = 0; i < 2000; i++)
-    {
-        auto Ptr = (uint8_t*)(PickSafeZoneLocationPart - i);
-
-        if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4)
-            return uint64_t(Ptr);
-        else if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
-            return uint64_t(Ptr);
-        else if (*Ptr == 0x4C && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xDC)
-            return uint64_t(Ptr);
-        else if (*Ptr == 0x40 && *(Ptr + 1) == 0x55)
-            return uint64_t(Ptr);
-    }
-
-    return 0;
-}
-
 void FindNullsAndRetTrues()
 {
     if (VersionInfo.EngineVersion == 4.16)
