@@ -1783,6 +1783,9 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
                     bUseMin = true;
             }
 
+            if (!PlayerController->MyFortPawn || !PlayerController->MyFortPawn->HealthSet)
+                return;
+
             float MinValue = bUseMin ? 1.f : 100.f;
             auto& Health = PlayerController->MyFortPawn->HealthSet->Health;
 
@@ -2422,6 +2425,9 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
                 PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1.f);
                 return;
             }
+
+            if (!PlayerController->Pawn)
+                return;
 
             auto Loc = PlayerController->Pawn->K2_GetActorLocation();
             Loc.Z += 200.f;
