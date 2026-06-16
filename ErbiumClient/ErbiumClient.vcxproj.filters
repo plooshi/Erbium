@@ -35,5 +35,11 @@
     <ClCompile Include="ErbiumClient\Private\Client.cpp">
       <Filter>ErbiumClient\Private</Filter>
     </ClCompile>
+    <ClCompile Include="ErbiumClient\Private\hde64.cpp">
+      <Filter>ErbiumClient\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="ErbiumClient\Private\Hooking.cpp">
+      <Filter>ErbiumClient\Private</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
