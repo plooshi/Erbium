@@ -50,8 +50,8 @@ void Events::StartEvent()
 
     auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
     auto Playlist = VersionInfo.FortniteVersion >= 3.5 && GameMode->HasWarmupRequiredPlayerCount()
-        ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData)
-        : nullptr;
+                        ? (GameMode->GameState->HasCurrentPlaylistInfo() ? GameMode->GameState->CurrentPlaylistInfo.BasePlaylist : GameMode->GameState->CurrentPlaylistData)
+                        : nullptr;
 
     for (auto& Event : EventsArray)
     {
@@ -97,7 +97,7 @@ void Events::StartEvent()
                         UObject* GameState;
                         const UFortPlaylistAthena* Playlist;
                         FGameplayTagContainer PlaylistContextTags;
-                    } Params { GameMode->GameState, Playlist, Playlist && Playlist->HasGameplayTagContainer() ? Playlist->GameplayTagContainer : FGameplayTagContainer() };
+                    } Params{ GameMode->GameState, Playlist, Playlist && Playlist->HasGameplayTagContainer() ? Playlist->GameplayTagContainer : FGameplayTagContainer() };
                     Target->ProcessEvent(const_cast<UFunction*>(Function), &Params);
                 }
                 else if (wcsstr(EventFunction.FunctionPath, L"StartEventAtIndex"))
@@ -123,7 +123,7 @@ void Events::StartEvent()
                     auto MeshActor = MeshActors[0];
 
                     auto Scr = (ASpecialEventScript*)Target;
-                    
+
                     Scr->DelayAfterConentLoad = 0.6f;
 
                     auto MeshNetworkSubsystem = TUObjectArray::FindFirstObject("MeshNetworkSubsystem");
@@ -136,7 +136,7 @@ void Events::StartEvent()
                     if (MeshNetworkSubsystem)
                         *(uint8_t*)(__int64(MeshNetworkSubsystem) + MeshNetworkSubsystem->GetOffset("NodeType")) = 2;
                     MeshActor->OnRep_RootStartTime();
-                    //Target->Call(const_cast<UFunction*>(Function), 0, 0.f);
+                    // Target->Call(const_cast<UFunction*>(Function), 0, 0.f);
                 }
                 else
                 {
@@ -146,19 +146,17 @@ void Events::StartEvent()
 
             if (VersionInfo.FortniteVersion == 8.51 && ScriptingObject && !EventFunction.bIsLoaderFunction)
             {
-                std::thread(
-                    [ScriptingObject]
-                    {
-                        std::this_thread::sleep_for(std::chrono::minutes(3));
+                std::thread([ScriptingObject]
+                {
+                    std::this_thread::sleep_for(std::chrono::minutes(3));
 
-                        auto SetUnvaultFn = FindObject<UFunction>(L"/Game/Athena/Prototype/Blueprints/White/BP_SnowScripting.BP_SnowScripting_C.SetUnvaultItemName");
-                        auto PillarsFn = FindObject<UFunction>(L"/Game/Athena/Prototype/Blueprints/White/BP_SnowScripting.BP_SnowScripting_C.PillarsConcluded");
-                        FName Name = FName(L"DrumGun");
+                    auto SetUnvaultFn = FindObject<UFunction>(L"/Game/Athena/Prototype/Blueprints/White/BP_SnowScripting.BP_SnowScripting_C.SetUnvaultItemName");
+                    auto PillarsFn = FindObject<UFunction>(L"/Game/Athena/Prototype/Blueprints/White/BP_SnowScripting.BP_SnowScripting_C.PillarsConcluded");
+                    FName Name = FName(L"DrumGun");
 
-                        ScriptingObject->ProcessEvent(const_cast<UFunction*>(SetUnvaultFn), &Name);
-                        ScriptingObject->ProcessEvent(const_cast<UFunction*>(PillarsFn), &Name);
-                    })
-                    .detach();
+                    ScriptingObject->ProcessEvent(const_cast<UFunction*>(SetUnvaultFn), &Name);
+                    ScriptingObject->ProcessEvent(const_cast<UFunction*>(PillarsFn), &Name);
+                }).detach();
             }
         }
 
@@ -168,12 +166,8 @@ void Events::StartEvent()
             {
                 auto PlayerController = (AFortPlayerControllerAthena*)UncastedPC;
 
-                auto PickaxeInstance = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search(
-                    [&](FFortItemEntry& entry)
-                    {
-                        return entry.ItemDefinition->Cast<UFortWeaponMeleeItemDefinition>();
-                    },
-                    FFortItemEntry::Size());
+                auto PickaxeInstance =
+                    PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) { return entry.ItemDefinition->Cast<UFortWeaponMeleeItemDefinition>(); }, FFortItemEntry::Size());
 
                 if (PickaxeInstance)
                     PlayerController->WorldInventory->Remove(PickaxeInstance->ItemGuid);

@@ -1169,7 +1169,7 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
                 uint8_t p[0x8];
             };
 
-            Test t{PlayerState};
+            Test t{ PlayerState };
             KillerPlayerState->ClientReportKill(t);
             if (KillerPlayerState->HasTeamKillScore())
                 KillerPlayerState->ClientReportTeamKill(KillerPlayerState->TeamKillScore);
@@ -3617,8 +3617,8 @@ void AFortPlayerControllerAthena::PostLoadHook()
 
     auto ClientOnPawnDiedAddr =
         FindFunctionCall(L"ClientOnPawnDied", VersionInfo.EngineVersion == 4.16
-                                                  ? std::vector<uint8_t>{0x48, 0x89, 0x54}
-                                                  : (VersionInfo.FortniteVersion >= 24 && VersionInfo.FortniteVersion < 25 ? std::vector<uint8_t>{0x48, 0x8B, 0xC4} : std::vector<uint8_t>{0x48, 0x89, 0x5C}));
+                                                  ? std::vector<uint8_t>{ 0x48, 0x89, 0x54 }
+                                                  : (VersionInfo.FortniteVersion >= 24 && VersionInfo.FortniteVersion < 25 ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C }));
     Utils::Hook(ClientOnPawnDiedAddr, ClientOnPawnDied, ClientOnPawnDiedOG);
 
     if (VersionInfo.FortniteVersion >= 16)
@@ -3639,7 +3639,7 @@ void AFortPlayerControllerAthena::PostLoadHook()
 
     if (VersionInfo.FortniteVersion >= 14.00)
     {
-        auto OnUnEquipAddr = FindFunctionCall(L"K2_OnUnEquip", std::vector<uint8_t>{0x48, 0x89, 0x5C});
+        auto OnUnEquipAddr = FindFunctionCall(L"K2_OnUnEquip", std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
 
         Utils::Hook(OnUnEquipAddr, OnUnEquip, OnUnEquipOG);
 

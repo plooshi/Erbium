@@ -687,7 +687,7 @@ void UFortLootPackage::Hook()
     {
         Utils::Hook(FindSpawnLoot(), SpawnLootHook);
 
-        auto OnAuthorityRandomUpgradeAppliedAddr = FindFunctionCall(L"OnAuthorityRandomUpgradeApplied", std::vector<uint8_t>{0x48, 0x89, 0x5C});
+        auto OnAuthorityRandomUpgradeAppliedAddr = FindFunctionCall(L"OnAuthorityRandomUpgradeApplied", std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
         Utils::Hook(OnAuthorityRandomUpgradeAppliedAddr, OnAuthorityRandomUpgradeApplied, OnAuthorityRandomUpgradeAppliedOG);
         return;
     }
@@ -698,7 +698,7 @@ void UFortLootPackage::Hook()
         if (ServerOnAttemptInteractRef.Get())
         {
             auto UnderlyingCall = ServerOnAttemptInteractRef;
-            UnderlyingCall.ScanFor({0x41, 0xFF}, false);
+            UnderlyingCall.ScanFor({ 0x41, 0xFF }, false);
 
             if (UnderlyingCall.Get() != ServerOnAttemptInteractRef.Get())
             {

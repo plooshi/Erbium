@@ -72,11 +72,7 @@ inline std::map<int32, TArray<FFortLootPackageData*>> LootPackageMap;
 template <typename T>
 static T* PickWeighted(TArray<T*>& Map, float (*RandFunc)(float), bool bCheckZero = true)
 {
-    float TotalWeight = std::accumulate(Map.begin(), Map.end(), 0.0f,
-        [&](float acc, T*& p)
-        {
-            return acc + p->Weight;
-        });
+    float TotalWeight = std::accumulate(Map.begin(), Map.end(), 0.0f, [&](float acc, T*& p) { return acc + p->Weight; });
     float RandomNumber = RandFunc(TotalWeight);
 
     for (auto& Element : Map)
@@ -97,11 +93,7 @@ static T* PickWeighted(TArray<T*>& Map, float (*RandFunc)(float), bool bCheckZer
 template <typename T>
 static T* PickWeighted(std::vector<T*>& Map, float (*RandFunc)(float), bool bCheckZero = true)
 {
-    float TotalWeight = std::accumulate(Map.begin(), Map.end(), 0.0f,
-        [&](float acc, T*& p)
-        {
-            return acc + p->Weight;
-        });
+    float TotalWeight = std::accumulate(Map.begin(), Map.end(), 0.0f, [&](float acc, T*& p) { return acc + p->Weight; });
     float RandomNumber = RandFunc(TotalWeight);
 
     for (auto& Element : Map)
@@ -138,10 +130,8 @@ public:
 class UFortLootPackage
 {
 public:
-    static void SetupLDSForPackage(
-        TArray<FFortItemEntry*>&, SDK::FName, int, FName, int WorldLevel = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState)->WorldLevel, ABuildingContainer* = nullptr);
-    static void ChooseLootForContainer(
-        TArray<FFortItemEntry*>&, FName, int = -1, int = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState)->WorldLevel, ABuildingContainer* = nullptr);
+    static void SetupLDSForPackage(TArray<FFortItemEntry*>&, SDK::FName, int, FName, int WorldLevel = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState)->WorldLevel, ABuildingContainer* = nullptr);
+    static void ChooseLootForContainer(TArray<FFortItemEntry*>&, FName, int = -1, int = ((AFortGameStateAthena*)UWorld::GetWorld()->GameState)->WorldLevel, ABuildingContainer* = nullptr);
     static void SpawnFloorLootForContainer(const UClass*);
     static bool SpawnLootHook(ABuildingContainer*);
     static void SpawnLoot(FName&, FVector);

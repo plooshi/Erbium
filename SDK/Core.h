@@ -456,7 +456,7 @@ namespace SDK
             if (!this)
                 return nullptr;
 
-            auto setnzAddr = Memcury::Scanner(GetNativeFunc()).ScanFor({0x0F, 0x95}).Get();
+            auto setnzAddr = Memcury::Scanner(GetNativeFunc()).ScanFor({ 0x0F, 0x95 }).Get();
 
             for (int i = 0; i < 0x200; i++)
             {
@@ -496,7 +496,7 @@ namespace SDK
             auto Addr = ValidateRef.Get();
 
             if (!Addr)
-                Addr = Memcury::Scanner(GetNativeFunc()).ScanFor({0x0F, 0x95}).Get();
+                Addr = Memcury::Scanner(GetNativeFunc()).ScanFor({ 0x0F, 0x95 }).Get();
 
             if (Addr)
                 for (int i = 0; i < 2000; i++)
@@ -548,10 +548,10 @@ namespace SDK
 
             if (VersionInfo.FortniteVersion >= 12.10)
                 for (const UField* _Pr = GetChildProperties(); _Pr; _Pr = _Pr->FField_GetNext())
-                    p.NameOffsetMap.push_back({GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags), GetFromOffset<uint32>(_Pr, Offsets::ElementSize)});
+                    p.NameOffsetMap.push_back({ GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags), GetFromOffset<uint32>(_Pr, Offsets::ElementSize) });
             else
                 for (const UField* _Pr = GetChildren(); _Pr; _Pr = _Pr->GetNext())
-                    p.NameOffsetMap.push_back({GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags), GetFromOffset<uint32>(_Pr, Offsets::ElementSize)});
+                    p.NameOffsetMap.push_back({ GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags), GetFromOffset<uint32>(_Pr, Offsets::ElementSize) });
 
             p.Size = GetPropertiesSize();
             return p;
@@ -563,12 +563,12 @@ namespace SDK
 
             if (VersionInfo.FortniteVersion >= 12.10)
                 for (const UField* _Pr = GetChildProperties(); _Pr; _Pr = _Pr->FField_GetNext())
-                    p.NameOffsetMap.push_back({_Pr->FField_GetName().ToSDKString(), GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags),
-                                               GetFromOffset<uint32>(_Pr, Offsets::ElementSize)});
+                    p.NameOffsetMap.push_back({ _Pr->FField_GetName().ToSDKString(), GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags),
+                                                GetFromOffset<uint32>(_Pr, Offsets::ElementSize) });
             else
                 for (const UField* _Pr = GetChildren(); _Pr; _Pr = _Pr->GetNext())
                     p.NameOffsetMap.push_back(
-                        {_Pr->GetName().ToSDKString(), GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags), GetFromOffset<uint32>(_Pr, Offsets::ElementSize)});
+                        { _Pr->GetName().ToSDKString(), GetFromOffset<uint32>(_Pr, Offsets::Offset_Internal), GetFromOffset<uint64>(_Pr, Offsets::PropertyFlags), GetFromOffset<uint32>(_Pr, Offsets::ElementSize) });
 
             p.Size = GetPropertiesSize();
             return p;

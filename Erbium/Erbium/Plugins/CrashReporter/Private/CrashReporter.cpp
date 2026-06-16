@@ -47,8 +47,8 @@ DWORD FormatNtStatus(NTSTATUS nsCode, TCHAR** ppszMessage)
     if (ntdll == NULL)
         return 0;
 
-    DWORD outLen = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, ntdll, RtlNtStatusToDosError(nsCode),
-        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)ppszMessage, 0, NULL);
+    DWORD outLen = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_FROM_HMODULE, ntdll, RtlNtStatusToDosError(nsCode), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+                                  (LPSTR)ppszMessage, 0, NULL);
 
     FreeLibrary(ntdll);
 
@@ -62,7 +62,7 @@ LONG WINAPI ErbiumUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo)
 
     FreezeOtherThreads();
 
-    STACKFRAME64 stackFrame {};
+    STACKFRAME64 stackFrame{};
 
     char symName[1024 * sizeof(TCHAR)];
     char symStorage[sizeof(IMAGEHLP_SYMBOL64) + sizeof(symName)];
@@ -92,9 +92,9 @@ LONG WINAPI ErbiumUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo)
 
     switch (ExceptionInfo->ExceptionRecord->ExceptionCode)
     {
-#define NAMED_EX(x)                                                                                                                                                                \
-    case x:                                                                                                                                                                        \
-        reportStream << #x;                                                                                                                                                        \
+#define NAMED_EX(x)                                                                                                                                                                                                   \
+    case x:                                                                                                                                                                                                           \
+        reportStream << #x;                                                                                                                                                                                           \
         break;
 
         NAMED_EX(EXCEPTION_ACCESS_VIOLATION);
@@ -152,8 +152,7 @@ LONG WINAPI ErbiumUnhandledExceptionFilter(LPEXCEPTION_POINTERS ExceptionInfo)
         auto contextCpy = *ExceptionInfo->ContextRecord;
         contextCpy.ContextFlags = CONTEXT_ALL;
 
-        auto result
-            = StackWalk(IMAGE_FILE_MACHINE_AMD64, currentPrc, currentThr, &stackFrame, ExceptionInfo->ContextRecord, NULL, SymFunctionTableAccess64, SymGetModuleBase64, NULL);
+        auto result = StackWalk(IMAGE_FILE_MACHINE_AMD64, currentPrc, currentThr, &stackFrame, ExceptionInfo->ContextRecord, NULL, SymFunctionTableAccess64, SymGetModuleBase64, NULL);
 
         if (result == false)
             break;

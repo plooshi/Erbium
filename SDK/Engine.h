@@ -194,33 +194,33 @@ namespace SDK
         }
         FVector operator*(const FVector& Other) const
         {
-            return {X * Other.X, Y * Other.Y, Z * Other.Z};
+            return { X * Other.X, Y * Other.Y, Z * Other.Z };
         }
         FVector operator*(UnderlayingType Scalar) const
         {
-            return {X * Scalar, Y * Scalar, Z * Scalar};
+            return { X * Scalar, Y * Scalar, Z * Scalar };
         }
         FVector operator+(const FVector& Other) const
         {
-            return {X + Other.X, Y + Other.Y, Z + Other.Z};
+            return { X + Other.X, Y + Other.Y, Z + Other.Z };
         }
         FVector operator-(const FVector& Other) const
         {
-            return {X - Other.X, Y - Other.Y, Z - Other.Z};
+            return { X - Other.X, Y - Other.Y, Z - Other.Z };
         }
         FVector operator/(const FVector& Other) const
         {
             if (Other.X == 0.0f || Other.Y == 0.0f || Other.Z == 0.0f)
                 return *this;
 
-            return {X / Other.X, Y / Other.Y, Z / Other.Z};
+            return { X / Other.X, Y / Other.Y, Z / Other.Z };
         }
         FVector operator/(UnderlayingType Scalar) const
         {
             if (Scalar == 0.0f)
                 return *this;
 
-            return {X / Scalar, Y / Scalar, Z / Scalar};
+            return { X / Scalar, Y / Scalar, Z / Scalar };
         }
         bool operator==(const FVector& Other) const
         {
@@ -403,7 +403,7 @@ namespace SDK
 
         FTransform(const FTransform&) = default;
 
-        FTransform(FVector loc = {}, FQuat rot = {}, FVector scale = {1, 1, 1})
+        FTransform(FVector loc = {}, FQuat rot = {}, FVector scale = { 1, 1, 1 })
         {
             Rotation = rot;
             Translation = loc;

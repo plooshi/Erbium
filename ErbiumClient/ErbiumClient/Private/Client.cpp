@@ -94,7 +94,7 @@ void Client::Init()
 
         TArray<FUIExtension> ArenaExtensions, ShowdownExtensions;
 
-        FUIExtension ArenaUIExtension {};
+        FUIExtension ArenaUIExtension{};
         ArenaUIExtension.Slot = PrimarySlot;
         if (VersionInfo.FortniteVersion < 23)
             ArenaUIExtension.WidgetClass.ObjectID.AssetPathName = FName(L"/Game/UI/Competitive/Arena/ArenaScoringHUD.ArenaScoringHUD_C");
@@ -109,7 +109,7 @@ void Client::Init()
             SubPathString = FString();
         }
 
-        FUIExtension ShowdownUIExtension {};
+        FUIExtension ShowdownUIExtension{};
         ShowdownUIExtension.Slot = PrimarySlot;
         if (VersionInfo.FortniteVersion < 23)
             ShowdownUIExtension.WidgetClass.ObjectID.AssetPathName = FName(L"/Game/UI/Frontend/Showdown/ShowdownScoringHUD.ShowdownScoringHUD_C");
@@ -153,7 +153,7 @@ void Client::Init()
                     Playlist->RespawnType = 1; // InfiniteRespawnExceptStorm
                     if (Playlist->HasbAllowJoinInProgress())
                         Playlist->bAllowJoinInProgress = true;
-                    //if (Playlist->HasbForceRespawnLocationInsideOfVolume())
+                    // if (Playlist->HasbForceRespawnLocationInsideOfVolume())
                     //	Playlist->bForceRespawnLocationInsideOfVolume = true;
                     if (Playlist->HasbForceCameraFadeOnRespawn())
                         Playlist->bForceCameraFadeOnRespawn = true;

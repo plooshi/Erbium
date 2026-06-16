@@ -5,7 +5,7 @@
 
 void ForceIris(uintptr_t IrisBool)
 {
-    Memcury::PE::Address add { nullptr };
+    Memcury::PE::Address add{ nullptr };
 
     const auto sizeOfImage = Memcury::PE::GetNTHeaders()->OptionalHeader.SizeOfImage;
     const auto scanBytes = reinterpret_cast<std::uint8_t*>(Memcury::PE::GetModuleBase());
@@ -83,8 +83,8 @@ void Main()
         // if (SprintCVar)
         //     *SprintCVar = false;
 
-        //if (HurdleCVar)
-        //    *HurdleCVar = false;
+        // if (HurdleCVar)
+        //     *HurdleCVar = false;
 
         if (SlideCVar)
             *SlideCVar = false;
@@ -94,7 +94,7 @@ void Main()
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"Fort.MME.TacticalSprint 0"), nullptr);
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"Fort.MME.Hurdle 0"), nullptr);
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"Fort.MME.Sliding 0"), nullptr);
-        //UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"Fort.MME.Clambering 0"), nullptr);
+        // UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"Fort.MME.Clambering 0"), nullptr);
     }
 
     Client::Init();

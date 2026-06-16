@@ -282,7 +282,7 @@ void AFortPlayerPawnAthena::ServerSendZiplineState(UObject* Context, FFrame& Sta
         auto Velocity = Pawn->CharacterMovement->Velocity;
         auto VelocityX = Velocity.X * -0.5f;
         auto VelocityY = Velocity.Y * -0.5f;
-        Pawn->LaunchCharacterJump(FVector{VelocityX >= -750 ? min(VelocityX, 750) : -750, VelocityY >= -750 ? min(VelocityY, 750) : -750, 1200}, false, false, true, true);
+        Pawn->LaunchCharacterJump(FVector{ VelocityX >= -750 ? min(VelocityX, 750) : -750, VelocityY >= -750 ? min(VelocityY, 750) : -750, 1200 }, false, false, true, true);
     }
 
     auto NewZipline = Pawn->GetActiveZipline();
@@ -333,9 +333,9 @@ void AFortPlayerPawnAthena::OnCapsuleBeginOverlap_(UObject* Context, FFrame& Sta
         return callOG(Pawn, Stack.GetCurrentNativeFunction(), OnCapsuleBeginOverlap, OverlappedComp, OtherActor, OtherComp, OtherBodyIndex, bFromSweep, SweepResult);
 
     auto MaxStack = Pickup->PrimaryPickupItemEntry.ItemDefinition->GetMaxStackSize();
-    auto itemEntry = ((AFortPlayerControllerAthena*)Pawn->Controller)
-                         ->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) { return entry.ItemDefinition == Pickup->PrimaryPickupItemEntry.ItemDefinition && entry.Count <= MaxStack; },
-                                                                              FFortItemEntry::Size());
+    auto itemEntry = ((AFortPlayerControllerAthena*)Pawn->Controller)->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) {
+        return entry.ItemDefinition == Pickup->PrimaryPickupItemEntry.ItemDefinition && entry.Count <= MaxStack;
+    }, FFortItemEntry::Size());
 
     if (Pickup && Pickup->PawnWhoDroppedPickup != Pawn)
     {

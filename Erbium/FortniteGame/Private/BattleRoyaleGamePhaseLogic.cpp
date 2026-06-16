@@ -168,10 +168,10 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::GenerateStormCircles(AF
 
     auto FRandSeeded = [&]() { return (float)rand() / 32767.f; };
 
-    float Radii[13] = {150000, 120000, 95000, 70000, 55000, 32500, 20000, 10000, 5000, 2500, 1650, 1090, 0};
+    float Radii[13] = { 150000, 120000, 95000, 70000, 55000, 32500, 20000, 10000, 5000, 2500, 1650, 1090, 0 };
 
     FVector FirstCenter = MapInfo->GetMapCenter();
-    StormCircles.push_back(FStormCircle{FirstCenter, Radii[0]});
+    StormCircles.push_back(FStormCircle{ FirstCenter, Radii[0] });
 
     float DirAngle = FRandSeeded() * 2.f * PI;
     float DirSin, DirCos;
@@ -237,7 +237,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::GenerateStormCircles(AF
 
         NewCenter = ClampToPlayableBounds(NewCenter, Radii[i], MapInfo->CachedPlayableBoundsForClients);
 
-        StormCircles.push_back(FStormCircle{NewCenter, Radii[i]});
+        StormCircles.push_back(FStormCircle{ NewCenter, Radii[i] });
     }
 
     for (int i = 7; i < 13; ++i)
@@ -258,7 +258,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::GenerateStormCircles(AF
 
         NewCenter = ClampToPlayableBounds(NewCenter, rNew, MapInfo->CachedPlayableBoundsForClients);
 
-        StormCircles.push_back(FStormCircle{NewCenter, rNew});
+        StormCircles.push_back(FStormCircle{ NewCenter, rNew });
     }
 }
 // end

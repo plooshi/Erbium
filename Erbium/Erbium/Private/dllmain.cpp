@@ -62,7 +62,7 @@ void Main()
     }
     if (VersionInfo.FortniteVersion == 20.40)
     {
-       UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"log LogSpecialRelevancyHealthComponent None"), nullptr);
+        UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"log LogSpecialRelevancyHealthComponent None"), nullptr);
     }
     if (VersionInfo.EngineVersion >= 5.1)
     {
@@ -127,8 +127,8 @@ void Main()
         // if (SprintCVar)
         //     *SprintCVar = false;
 
-        //if (HurdleCVar)
-        //    *HurdleCVar = false;
+        // if (HurdleCVar)
+        //     *HurdleCVar = false;
 
         if (SlideCVar)
             *SlideCVar = false;
@@ -136,7 +136,7 @@ void Main()
         if (MantleCVar)
             *MantleCVar = false;
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"Fort.MME.TacticalSprint 0"), nullptr);
-        //UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"Fort.MME.Hurdle 0"), nullptr);
+        // UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"Fort.MME.Hurdle 0"), nullptr);
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"Fort.MME.Sliding 0"), nullptr);
         UKismetSystemLibrary::ExecuteConsoleCommand(UWorld::GetWorld(), FString(L"Fort.MME.Clambering 0"), nullptr);
     }
@@ -152,10 +152,9 @@ void Main()
         curl_global_init(CURL_GLOBAL_ALL);
 
     sprintf_s(GUI::windowTitle,
-        VersionInfo.EngineVersion >= 5.0
-            ? "Erbium (FN %.2f, UE %.1f): Setting up"
-            : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Setting up" : "Erbium (FN %.1f, UE %.2f): Setting up"),
-        VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
+              VersionInfo.EngineVersion >= 5.0 ? "Erbium (FN %.2f, UE %.1f): Setting up"
+                                               : (VersionInfo.FortniteVersion >= 5.00 || VersionInfo.FortniteVersion < 1.2 ? "Erbium (FN %.2f, UE %.2f): Setting up" : "Erbium (FN %.1f, UE %.2f): Setting up"),
+              VersionInfo.FortniteVersion, VersionInfo.EngineVersion);
     SetConsoleTitleA(GUI::windowTitle);
 
     // if constexpr (!FConfiguration::bGUI)

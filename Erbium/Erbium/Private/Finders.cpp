@@ -12,11 +12,11 @@ uint64_t FindGIsClient()
         bInitialized = true;
 
         std::vector<std::vector<uint8_t>> GIsClientLoads = {
-            {0x88, 0x05},
-            {0xC6, 0x05},
-            {0x88, 0x1D},
-            {0x44, 0x88},
-            {0x40, 0x88}
+            { 0x88, 0x05 },
+            { 0xC6, 0x05 },
+            { 0x88, 0x1D },
+            { 0x44, 0x88 },
+            { 0x40, 0x88 }
         };
 
         auto sRef = Memcury::Scanner::FindStringRef(L"AllowCommandletRendering").Get();
@@ -72,11 +72,11 @@ uint64_t FindGIsServer()
         bInitialized = true;
 
         std::vector<std::vector<uint8_t>> GIsServerLoads = {
-            {0x88, 0x05},
-            {0xC6, 0x05},
-            {0x88, 0x1D},
-            {0x44, 0x88},
-            {0x40, 0x88}
+            { 0x88, 0x05 },
+            { 0xC6, 0x05 },
+            { 0x88, 0x1D },
+            { 0x44, 0x88 },
+            { 0x40, 0x88 }
         };
 
         auto sRef = Memcury::Scanner::FindStringRef(L"AllowCommandletRendering").Get();
@@ -248,7 +248,7 @@ uint64_t FindCreateNetDriverWorldContext()
         bInitialized = true;
 
         if (std::floor(VersionInfo.FortniteVersion) == 19)
-            return CreateNetDriver = Memcury::Scanner::FindPattern("41 56 48 83 EC ? 48 63 81 ? ? ? ? 48 8D ? ? ? ? ? 48 8B B9 ? ? ? ? 4C 8B F2").ScanFor({0xC3}, false).ScanFor({0x48}).Get();
+            return CreateNetDriver = Memcury::Scanner::FindPattern("41 56 48 83 EC ? 48 63 81 ? ? ? ? 48 8D ? ? ? ? ? 48 8B B9 ? ? ? ? 4C 8B F2").ScanFor({ 0xC3 }, false).ScanFor({ 0x48 }).Get();
         if (VersionInfo.FortniteVersion >= 20)
         {
             auto CreateNetDriver_ = Memcury::Scanner::FindPattern("41 56 41 57 48 83 EC ? 48 63 81 ? ? ? ? 48 8D ? ? ? ? ? 48 8B B9");
@@ -284,7 +284,7 @@ uint64_t FindCreateNetDriverWorldContext()
                     }
                 }
 
-                CreateNetDriver = Memcury::Scanner(StartOfFuncBefore).ScanFor({0x48}).Get();
+                CreateNetDriver = Memcury::Scanner(StartOfFuncBefore).ScanFor({ 0x48 }).Get();
             }
 
             return CreateNetDriver;
@@ -298,7 +298,7 @@ uint64_t FindCreateNetDriverWorldContext()
         if (!Ptr.Get())
             return 0;
 
-        auto scuffness = Ptr.ScanFor({0x48, 0x83, 0xEC}, false).ScanFor({0xC3}, false).ScanFor({0x48}); // should land us right at the start of CreateNetDriver
+        auto scuffness = Ptr.ScanFor({ 0x48, 0x83, 0xEC }, false).ScanFor({ 0xC3 }, false).ScanFor({ 0x48 }); // should land us right at the start of CreateNetDriver
 
         return CreateNetDriver = scuffness.Get();
     }
@@ -317,7 +317,7 @@ uint64_t FindInitListen()
 
         if (VersionInfo.EngineVersion >= 5.0)
         {
-            InitListen = Memcury::Scanner::FindPattern("4D 8B C8 4C 8B C2 33 D2 FF 90 ? ? ? ? 84 C0 75 ? 80 3D").ScanFor({0x4C, 0x8B, 0xDC}, false).Get();
+            InitListen = Memcury::Scanner::FindPattern("4D 8B C8 4C 8B C2 33 D2 FF 90 ? ? ? ? 84 C0 75 ? 80 3D").ScanFor({ 0x4C, 0x8B, 0xDC }, false).Get();
             if (!InitListen)
             {
                 InitListen = Memcury::Scanner::FindPattern("4C 8B DC 49 89 5B ? 49 89 73 ? 57 48 83 EC ? 48 8B BC 24").Get();
@@ -364,7 +364,7 @@ uint64_t FindSetWorld()
     {
         bInitialized = true;
 
-        SetWorld = VersionInfo.FortniteVersion <= 13.20 ? Memcury::Scanner::FindStringRef(L"AOnlineBeaconHost::InitHost failed").ScanFor({0x48, 0x8B, 0xD0, 0xE8}, false).RelativeOffset(4).Get() : 0;
+        SetWorld = VersionInfo.FortniteVersion <= 13.20 ? Memcury::Scanner::FindStringRef(L"AOnlineBeaconHost::InitHost failed").ScanFor({ 0x48, 0x8B, 0xD0, 0xE8 }, false).RelativeOffset(4).Get() : 0;
 
         if (VersionInfo.FortniteVersion >= 25)
         {
@@ -719,7 +719,7 @@ uint64_t FindGiveAbility()
 
         Memcury::Scanner addr = Memcury::Scanner::FindStringRef(L"GiveAbilityAndActivateOnce called on ability %s on the client, not allowed!", true, 1, VersionInfo.EngineVersion >= 5.0);
 
-        GiveAbility = addr.ScanFor({0xE8}).RelativeOffset(1).Get();
+        GiveAbility = addr.ScanFor({ 0xE8 }).RelativeOffset(1).Get();
     }
 
     return GiveAbility;
@@ -1083,10 +1083,10 @@ uint64_t FindPickTeam()
         if (!Addr.Get())
             Addr = Memcury::Scanner::FindStringRef(L"PickTeam for [%s] used beacon value [%s]", true, 0, VersionInfo.FortniteVersion >= 19);
 
-        PickTeam =
-            Addr.ScanFor(VersionInfo.FortniteVersion <= 4.1 ? std::vector<uint8_t>{0x48, 0x89, 0x6C} : (VersionInfo.FortniteVersion >= 16 ? std::vector<uint8_t>{0x48, 0x89, 0x5C} : std::vector<uint8_t>{0x40, 0x55}),
-                         false)
-                .Get();
+        PickTeam = Addr.ScanFor(VersionInfo.FortniteVersion <= 4.1 ? std::vector<uint8_t>{ 0x48, 0x89, 0x6C }
+                                                                   : (VersionInfo.FortniteVersion >= 16 ? std::vector<uint8_t>{ 0x48, 0x89, 0x5C } : std::vector<uint8_t>{ 0x40, 0x55 }),
+                                false)
+                       .Get();
     }
 
     return PickTeam;
@@ -1137,8 +1137,8 @@ uint64_t FindReplaceBuildingActor()
             return ReplaceBuildingActor = Memcury::Scanner::FindPattern("4C 89 44 24 ? 55 56 57 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 45").Get();
 
         return ReplaceBuildingActor = sRef.ScanFor(VersionInfo.EngineVersion == 4.20 || (VersionInfo.EngineVersion == 4.21 && VersionInfo.FortniteVersion < 6.30) || VersionInfo.EngineVersion >= 4.27
-                                                       ? std::vector<uint8_t>{0x48, 0x8B, 0xC4}
-                                                       : std::vector<uint8_t>{0x4C, 0x8B},
+                                                       ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 }
+                                                       : std::vector<uint8_t>{ 0x4C, 0x8B },
                                                    false, 0, 1, 1000)
                                           .Get();
     }
@@ -1287,8 +1287,8 @@ uint64_t FindRemoveInventoryItem()
 
         std::vector<uint8_t> funcStart =
             VersionInfo.EngineVersion == 4.16
-                ? std::vector<uint8_t>{0x44, 0x88, 0x4C}
-                : (VersionInfo.FortniteVersion >= 16 && (VersionInfo.FortniteVersion < 20 || VersionInfo.FortniteVersion >= 22) ? std::vector<uint8_t>{0x48, 0x8B, 0xC4} : std::vector<uint8_t>{0x48, 0x89, 0x5C});
+                ? std::vector<uint8_t>{ 0x44, 0x88, 0x4C }
+                : (VersionInfo.FortniteVersion >= 16 && (VersionInfo.FortniteVersion < 20 || VersionInfo.FortniteVersion >= 22) ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
 
         auto sRef = FindNameRef(L"ServerRemoveInventoryItem", 0, false);
         uintptr_t uFuncCall = 0;
@@ -1343,8 +1343,8 @@ uint64_t FindRemoveInventoryStateValue()
 
         std::vector<uint8_t> funcStart =
             VersionInfo.EngineVersion == 4.16
-                ? std::vector<uint8_t>{0x44, 0x88, 0x4C}
-                : (VersionInfo.FortniteVersion >= 16 && (VersionInfo.FortniteVersion < 20 || VersionInfo.FortniteVersion >= 22) ? std::vector<uint8_t>{0x48, 0x8B, 0xC4} : std::vector<uint8_t>{0x48, 0x89, 0x5C});
+                ? std::vector<uint8_t>{ 0x44, 0x88, 0x4C }
+                : (VersionInfo.FortniteVersion >= 16 && (VersionInfo.FortniteVersion < 20 || VersionInfo.FortniteVersion >= 22) ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
 
         auto sRef = FindNameRef(L"ServerRemoveInventoryStateValue", 0, false);
         for (int i = 0; i < 2000; i++)
@@ -1387,8 +1387,8 @@ uint64_t FindSetInventoryStateValue()
 
         std::vector<uint8_t> funcStart =
             VersionInfo.EngineVersion == 4.16
-                ? std::vector<uint8_t>{0x44, 0x88, 0x4C}
-                : (VersionInfo.FortniteVersion >= 16 && (VersionInfo.FortniteVersion < 20 || VersionInfo.FortniteVersion >= 22) ? std::vector<uint8_t>{0x48, 0x8B, 0xC4} : std::vector<uint8_t>{0x48, 0x89, 0x5C});
+                ? std::vector<uint8_t>{ 0x44, 0x88, 0x4C }
+                : (VersionInfo.FortniteVersion >= 16 && (VersionInfo.FortniteVersion < 20 || VersionInfo.FortniteVersion >= 22) ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
 
         auto sRef = FindNameRef(L"ServerSetInventoryStateValue", 0, false);
         for (int i = 0; i < 2000; i++)
@@ -2362,7 +2362,7 @@ uint64 FindPreSendUpdate()
 
         auto sRef = Memcury::Scanner::FindStringRef("ReplicationSystem_PreSendUpdate");
         if (sRef.IsValid())
-            return PreSendUpdate = sRef.ScanFor({0x48, 0x89, 0x5C}, false).Get();
+            return PreSendUpdate = sRef.ScanFor({ 0x48, 0x89, 0x5C }, false).Get();
 
         PreSendUpdate = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 57 48 83 EC ? 8B 02 48 8B F9 4C 8B 41").Get();
 
@@ -2425,7 +2425,7 @@ uint64_t FindInitializeBuildingActor()
         if (!sRef.Get())
             return 0;
 
-        return InitializeBuildingActor = sRef.ScanFor(std::vector<uint8_t>{0x48, 0x8B, 0xC4}, false, 0, 1, 1000).Get();
+        return InitializeBuildingActor = sRef.ScanFor(std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 }, false, 0, 1, 1000).Get();
     }
 
     return InitializeBuildingActor;
@@ -2705,7 +2705,7 @@ uint64 FindLoadPlayset(const std::vector<uint8_t>& Bytes, int recursive)
             }
 
             if (CurrentByte == 0xC3)
-                return FindLoadPlayset({0x40, 0x55}, ++recursive);
+                return FindLoadPlayset({ 0x40, 0x55 }, ++recursive);
         }
 
         return 0;
@@ -3070,7 +3070,7 @@ uint64 FindActivatePhase()
 
 auto FindCmpRef(void* Pointer) -> Memcury::Scanner
 {
-    Memcury::PE::Address add{nullptr};
+    Memcury::PE::Address add{ nullptr };
 
     if (!Pointer)
         return Memcury::Scanner(add);
@@ -3226,7 +3226,7 @@ void FindNullsAndRetTrues()
     }
     else if (VersionInfo.EngineVersion == 4.20)
     {
-        NullFuncs.push_back(Memcury::Scanner::FindStringRef(L"Widget Class %s - Running Initialize On Archetype, %s.").ScanFor(std::vector<uint8_t>{0x48, 0x89, 0x54}, false).Get());
+        NullFuncs.push_back(Memcury::Scanner::FindStringRef(L"Widget Class %s - Running Initialize On Archetype, %s.").ScanFor(std::vector<uint8_t>{ 0x48, 0x89, 0x54 }, false).Get());
         if (VersionInfo.FortniteVersion > 3.2)
         {
             // if (VersionInfo.FortniteVersion == 4.1)
@@ -3244,7 +3244,7 @@ void FindNullsAndRetTrues()
     {
         NullFuncs.push_back(Memcury::Scanner::FindPattern("48 8B C4 48 89 58 08 48 89 70 10 57 48 81 EC ? ? ? ? 48 8B BA ? ? ? ? 48 8B DA 0F 29").Get());
         NullFuncs.push_back(Memcury::Scanner::FindStringRef(L"Widget Class %s - Running Initialize On Archetype, %s.")
-                                .ScanFor(VersionInfo.FortniteVersion < 6.3 ? std::vector<uint8_t>{0x40, 0x55} : std::vector<uint8_t>{0x48, 0x89, 0x5C}, false)
+                                .ScanFor(VersionInfo.FortniteVersion < 6.3 ? std::vector<uint8_t>{ 0x40, 0x55 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C }, false)
                                 .Get());
         NullFuncs.push_back(Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 48 89 7C 24 ? 41 56 48 83 EC 30 41 0F B6 F0 48 8D 15 ? ? ? ? 48 8B F9 41 B8").Get());
     }
@@ -3348,7 +3348,7 @@ void FindNullsAndRetTrues()
     else
     {
         auto sRef = Memcury::Scanner::FindStringRef(L"Changing GameSessionId from '%s' to '%s'", true, 0, VersionInfo.FortniteVersion >= 19);
-        NullFuncs.push_back(sRef.ScanFor(VersionInfo.EngineVersion >= 4.27 ? std::vector<uint8>{0x48, 0x89, 0x5C} : std::vector<uint8>{0x40, 0x55}, false, 0, 1, 2000).Get());
+        NullFuncs.push_back(sRef.ScanFor(VersionInfo.EngineVersion >= 4.27 ? std::vector<uint8>{ 0x48, 0x89, 0x5C } : std::vector<uint8>{ 0x40, 0x55 }, false, 0, 1, 2000).Get());
     }
 
     // if (VersionInfo.EngineVersion == 4.23)
@@ -3493,7 +3493,7 @@ void FindNullsAndRetTrues()
 
     if (VersionInfo.FortniteVersion >= 23)
     {
-        NullFuncs.push_back(Memcury::Scanner::FindStringRef(L"STAT_FortCurieVoxelFirePropagationManager_IgniteGrassInBounds").ScanFor({0x48, 0x8B, 0xC4}, false).Get());
+        NullFuncs.push_back(Memcury::Scanner::FindStringRef(L"STAT_FortCurieVoxelFirePropagationManager_IgniteGrassInBounds").ScanFor({ 0x48, 0x8B, 0xC4 }, false).Get());
     }
 
     if (VersionInfo.EngineVersion < 5.0)

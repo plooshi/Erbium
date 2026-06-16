@@ -47,7 +47,7 @@ static FParseConditionResult ParseCondition(UEAllocatedString Condition, const F
         CondTypeStart = Condition.find(" ");
 
         if (CondTypeStart == Condition.npos)
-            return {false, NextCond};
+            return { false, NextCond };
 
         CondTypeStart++;
 
@@ -76,14 +76,14 @@ static FParseConditionResult ParseCondition(UEAllocatedString Condition, const F
         else if (Left == "Context.Tags")
             Container = ContextTags;
         else
-            return {false, NextCond};
+            return { false, NextCond };
 
         FGameplayTag Tag(FName(UEAllocatedWString(Right.begin(), Right.end()).c_str()));
 
         if (CondType == "HasTag")
-            return {Container.HasTag(Tag), NextCond};
+            return { Container.HasTag(Tag), NextCond };
         else
-            return {!Container.HasTag(Tag), NextCond};
+            return { !Container.HasTag(Tag), NextCond };
     }
     else
     {
@@ -91,7 +91,7 @@ static FParseConditionResult ParseCondition(UEAllocatedString Condition, const F
         printf("Hit unimplemented condition: %s, %s, %s\n", Left.c_str(), CondType.c_str(), Right.c_str());
     }
 
-    return {false, NextCond};
+    return { false, NextCond };
 }
 
 static bool IsConditionMet(const FString& InCondition, const FGameplayTagContainer& TargetTags, const FGameplayTagContainer& SourceTags, const FGameplayTagContainer& ContextTags)

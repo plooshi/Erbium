@@ -15,4 +15,4 @@ using namespace SDK;
 #include <numeric>
 #include <algorithm>
 
-#endif //PCH_H
+#endif // PCH_H

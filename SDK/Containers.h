@@ -269,7 +269,7 @@ namespace UC
 
             public:
                 ForElementType()
-                    : InlineData{0x0}
+                    : InlineData{ 0x0 }
                     , SecondaryData(nullptr)
                 {
                 }
