@@ -236,7 +236,7 @@ void Client::Init()
 
         CompleteBuildingEditInteraction = (void (*)(void*))Memcury::Scanner(CompleteBuildingEditInteractionLea).RelativeOffset(3).Get();
 
-        MH_Initialize();
+        //MH_Initialize();
 
         if (VersionInfo.FortniteVersion < 11)
             Hooking::Hook(SelectEditAddr, SelectEdit, SelectEditOG);
@@ -245,7 +245,7 @@ void Client::Init()
         if (VersionInfo.FortniteVersion < 24.30)
             Hooking::Hook(SelectResetAddr, SelectReset, SelectResetOG);
 
-        MH_EnableHook(MH_ALL_HOOKS);
+        //MH_EnableHook(MH_ALL_HOOKS);
     }
 
     CreateThread(0, 0, (LPTHREAD_START_ROUTINE)ClientThread, 0, 0, 0);
