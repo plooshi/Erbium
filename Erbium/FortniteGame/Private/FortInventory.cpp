@@ -669,10 +669,10 @@ void AFortInventory::PostLoadHook()
     OnItemInstanceAddedVft = FindOnItemInstanceAddedVft();
     ClearAbility_ = FindClearAbility();
 
-    Utils::Hook(FindRemoveInventoryItem(), RemoveInventoryItem);
+    Hooking::Hook(FindRemoveInventoryItem(), RemoveInventoryItem);
     // need to see if these are used
-    // Utils::Hook(FindRemoveInventoryStateValue(), RemoveInventoryStateValue);
-    // Utils::Hook(FindSetInventoryStateValue(), SetInventoryStateValue);
+    // Hooking::Hook(FindRemoveInventoryStateValue(), RemoveInventoryStateValue);
+    // Hooking::Hook(FindSetInventoryStateValue(), SetInventoryStateValue);
 
     auto SetOwningInventory = Memcury::Scanner::FindPattern("48 85 D2 74 ? 80 BA ? ? ? ? ? 75 ? 48 89 91").Get();
     if (!SetOwningInventory)
@@ -698,11 +698,11 @@ void AFortInventory::PostLoadHook()
         {
             auto HasPhantomReserveAmmo = FFortItemEntry::HasPhantomReserveAmmo();
 
-            Utils::Hook<UFortWorldItem>(uint32(SetOwningInventoryIdx - (HasPhantomReserveAmmo ? (VersionInfo.EngineVersion < 4.27 ? 2 : 3) : 1)), SetLoadedAmmo);
+            Hooking::Hook<UFortWorldItem>(uint32(SetOwningInventoryIdx - (HasPhantomReserveAmmo ? (VersionInfo.EngineVersion < 4.27 ? 2 : 3) : 1)), SetLoadedAmmo);
             if (HasPhantomReserveAmmo)
-                Utils::Hook<UFortWorldItem>(uint32(SetOwningInventoryIdx - (VersionInfo.EngineVersion < 4.27 ? 1 : 2)), SetPhantomReserveAmmo);
+                Hooking::Hook<UFortWorldItem>(uint32(SetOwningInventoryIdx - (VersionInfo.EngineVersion < 4.27 ? 1 : 2)), SetPhantomReserveAmmo);
         }
     }
 
-    Utils::ExecHook(DefaultObjImpl("FortAthenaSupplyDrop")->GetFunction("SpawnPickup"), SpawnPickup_);
+    Hooking::ExecHook(DefaultObjImpl("FortAthenaSupplyDrop")->GetFunction("SpawnPickup"), SpawnPickup_);
 }

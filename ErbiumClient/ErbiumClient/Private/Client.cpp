@@ -239,11 +239,11 @@ void Client::Init()
         MH_Initialize();
 
         if (VersionInfo.FortniteVersion < 11)
-            Utils::Hook(SelectEditAddr, SelectEdit, SelectEditOG);
+            Hooking::Hook(SelectEditAddr, SelectEdit, SelectEditOG);
         if (VersionInfo.FortniteVersion < 15.20)
-            Utils::Hook(PerformBuildingEditInteractionAddr, PerformBuildingEditInteraction, PerformBuildingEditInteractionOG);
+            Hooking::Hook(PerformBuildingEditInteractionAddr, PerformBuildingEditInteraction, PerformBuildingEditInteractionOG);
         if (VersionInfo.FortniteVersion < 24.30)
-            Utils::Hook(SelectResetAddr, SelectReset, SelectResetOG);
+            Hooking::Hook(SelectResetAddr, SelectReset, SelectResetOG);
 
         MH_EnableHook(MH_ALL_HOOKS);
     }

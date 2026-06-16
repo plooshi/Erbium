@@ -593,28 +593,28 @@ void AFortPlayerPawnAthena::PostLoadHook()
     auto ServerHandlePickupInfoFn = GetDefaultObj()->GetFunction("ServerHandlePickupInfo");
 
     if (ServerHandlePickupInfoFn)
-        Utils::ExecHook(ServerHandlePickupInfoFn, ServerHandlePickupInfo);
+        Hooking::ExecHook(ServerHandlePickupInfoFn, ServerHandlePickupInfo);
     else
     {
-        Utils::ExecHook(GetDefaultObj()->GetFunction("ServerHandlePickup"), ServerHandlePickup_);
-        Utils::ExecHook(GetDefaultObj()->GetFunction("ServerHandlePickupWithRequestedSwap"), ServerHandlePickupWithRequestedSwap);
+        Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerHandlePickup"), ServerHandlePickup_);
+        Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerHandlePickupWithRequestedSwap"), ServerHandlePickupWithRequestedSwap);
     }
 
-    Utils::Hook(FindFinishedTargetSpline(), FinishedTargetSpline, FinishedTargetSplineOG);
-    Utils::ExecHook(GetDefaultObj()->GetFunction("OnCapsuleBeginOverlap"), OnCapsuleBeginOverlap_, OnCapsuleBeginOverlap_OG);
+    Hooking::Hook(FindFinishedTargetSpline(), FinishedTargetSpline, FinishedTargetSplineOG);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("OnCapsuleBeginOverlap"), OnCapsuleBeginOverlap_, OnCapsuleBeginOverlap_OG);
 
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerSendZiplineState"), ServerSendZiplineState);
-    Utils::ExecHook(GetDefaultObj()->GetFunction("MovingEmoteStopped"), MovingEmoteStopped);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerSendZiplineState"), ServerSendZiplineState);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("MovingEmoteStopped"), MovingEmoteStopped);
 
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerOnExitVehicle"), ServerOnExitVehicle_, ServerOnExitVehicle_OG);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerOnExitVehicle"), ServerOnExitVehicle_, ServerOnExitVehicle_OG);
 
-    Utils::ExecHook(GetDefaultObj()->GetFunction("EmoteStopped"), EmoteStopped_, EmoteStopped_OG);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("EmoteStopped"), EmoteStopped_, EmoteStopped_OG);
 
     auto EndSkydivingFn = GetDefaultObj()->GetFunction("EndSkydiving");
 
     if (EndSkydivingFn)
-        Utils::Hook<AFortPlayerPawnAthena>(EndSkydivingFn->GetVTableIndex(), EndSkydiving, EndSkydivingOG);
+        Hooking::Hook<AFortPlayerPawnAthena>(EndSkydivingFn->GetVTableIndex(), EndSkydiving, EndSkydivingOG);
 
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerReviveFromDBNO"), ServerReviveFromDBNO);
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerThrowCarriedPlayer"), ServerThrowCarriedPlayer_, ServerThrowCarriedPlayer_OG);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerReviveFromDBNO"), ServerReviveFromDBNO);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerThrowCarriedPlayer"), ServerThrowCarriedPlayer_, ServerThrowCarriedPlayer_OG);
 }

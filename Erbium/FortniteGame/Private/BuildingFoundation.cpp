@@ -52,6 +52,6 @@ void ABuildingFoundation::Hook()
 
     SelectAndSetupMyBuildingLevel_ = FindSelectAndSetupMyBuildingLevel();
 
-    Utils::ExecHook(GetDefaultObj()->GetFunction("SetDynamicFoundationEnabled"), SetDynamicFoundationEnabled_);
-    Utils::ExecHook(GetDefaultObj()->GetFunction("SetDynamicFoundationTransform"), SetDynamicFoundationTransform_);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("SetDynamicFoundationEnabled"), SetDynamicFoundationEnabled_);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("SetDynamicFoundationTransform"), SetDynamicFoundationTransform_);
 }

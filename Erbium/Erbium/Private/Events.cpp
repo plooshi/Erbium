@@ -220,5 +220,5 @@ void ActivatePhase(ASpecialEventScript* _this, int IndexToActivate, float a3)
 
 void Events::Hook()
 {
-    Utils::Hook(FindActivatePhase(), ActivatePhase, ActivatePhaseOG);
+    Hooking::Hook(FindActivatePhase(), ActivatePhase, ActivatePhaseOG);
 }

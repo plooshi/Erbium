@@ -42,5 +42,5 @@ void UFortMissionLibrary::PostLoadHook()
                 break;
             }
         }
-    Utils::ExecHook(TeleportPlayerPawnFn, TeleportPlayerPawn);
+    Hooking::ExecHook(TeleportPlayerPawnFn, TeleportPlayerPawn);
 }

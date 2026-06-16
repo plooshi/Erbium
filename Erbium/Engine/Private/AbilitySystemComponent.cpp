@@ -209,14 +209,14 @@ void UAbilitySystemComponent::Hook()
         }
     }
 
-    Utils::HookEvery<UAbilitySystemComponent>(istaIdx, InternalServerTryActivateAbility);
+    Hooking::HookEvery<UAbilitySystemComponent>(istaIdx, InternalServerTryActivateAbility);
 
     if (VersionInfo.FortniteVersion >= 8)
     {
-        Utils::ExecHook(UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_ExecuteGameplayCue"), UFortGameplayAbility::K2_ExecuteGameplayCue_, UFortGameplayAbility::K2_ExecuteGameplayCue_OG);
-        Utils::ExecHook(UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_ExecuteGameplayCueWithParams"), UFortGameplayAbility::K2_ExecuteGameplayCueWithParams_,
+        Hooking::ExecHook(UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_ExecuteGameplayCue"), UFortGameplayAbility::K2_ExecuteGameplayCue_, UFortGameplayAbility::K2_ExecuteGameplayCue_OG);
+        Hooking::ExecHook(UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_ExecuteGameplayCueWithParams"), UFortGameplayAbility::K2_ExecuteGameplayCueWithParams_,
                         UFortGameplayAbility::K2_ExecuteGameplayCueWithParams_OG);
-        Utils::ExecHook(UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_AddGameplayCue"), UFortGameplayAbility::K2_AddGameplayCue_, UFortGameplayAbility::K2_AddGameplayCue_OG);
-        Utils::ExecHook(UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_AddGameplayCueWithParams"), UFortGameplayAbility::K2_AddGameplayCueWithParams_, UFortGameplayAbility::K2_AddGameplayCueWithParams_OG);
+        Hooking::ExecHook(UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_AddGameplayCue"), UFortGameplayAbility::K2_AddGameplayCue_, UFortGameplayAbility::K2_AddGameplayCue_OG);
+        Hooking::ExecHook(UFortGameplayAbility::GetDefaultObj()->GetFunction("K2_AddGameplayCueWithParams"), UFortGameplayAbility::K2_AddGameplayCueWithParams_, UFortGameplayAbility::K2_AddGameplayCueWithParams_OG);
     }
 }

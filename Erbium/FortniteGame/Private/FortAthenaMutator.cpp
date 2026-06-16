@@ -44,7 +44,7 @@ void AFortAthenaMutator_GiveItemsAtGamePhaseStep::PostLoadHook()
     if (!GetDefaultObj())
         return;
 
-    Utils::ExecHook(GetDefaultObj()->GetFunction("OnGamePhaseStepChanged"), OnGamePhaseStepChanged);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("OnGamePhaseStepChanged"), OnGamePhaseStepChanged);
 }
 
 void AFortAthenaMutator_GiveItemsAtGamePhase::PostLoadHook()
@@ -52,5 +52,5 @@ void AFortAthenaMutator_GiveItemsAtGamePhase::PostLoadHook()
     if (!GetDefaultObj())
         return;
 
-    Utils::ExecHook(GetDefaultObj()->GetFunction("OnGamePhaseChanged"), OnGamePhaseChanged);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("OnGamePhaseChanged"), OnGamePhaseChanged);
 }

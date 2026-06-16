@@ -1,72 +1,13 @@
 #pragma once
 #include "../../pch.h"
 #include "Finders.h"
-#include "MinHook.h"
+#include "Hooking.hpp"
 
 class Utils
 {
     static inline void* _NpFH = nullptr;
 
 public:
-    template <class _Ot = void*>
-    static void Hook(uint64_t _Ptr, void* _Detour, _Ot& _Orig = _NpFH)
-    {
-        MH_CreateHook((LPVOID)_Ptr, _Detour, (LPVOID*)(std::is_same_v<_Ot, void*> ? nullptr : &_Orig));
-    }
-
-    __forceinline static void _HookVT(void** _Vt, uint32_t _Ind, void* _Detour)
-    {
-        DWORD _Vo;
-        VirtualProtect(_Vt + _Ind, 8, PAGE_EXECUTE_READWRITE, &_Vo);
-        _Vt[_Ind] = _Detour;
-        VirtualProtect(_Vt + _Ind, 8, _Vo, &_Vo);
-    }
-
-    template <typename _Ct, typename _Ot = void*>
-    __forceinline static void Hook(uint32_t _Ind, void* _Detour, _Ot& _Orig = _NpFH)
-    {
-        auto _Vt = _Ct::GetDefaultObj()->Vft;
-        if (!std::is_same_v<_Ot, void*>)
-            _Orig = (_Ot)_Vt[_Ind];
-
-        _HookVT(_Vt, _Ind, _Detour);
-    }
-
-    template <typename _Ct>
-    __forceinline static void HookEvery(uint32_t _Ind, void* _Detour)
-    {
-        for (int i = 0; i < TUObjectArray::Num(); i++)
-        {
-            auto Obj = TUObjectArray::GetObjectByIndex(i);
-            if (Obj && Obj->IsDefaultObject() && Obj->IsA<_Ct>())
-            {
-                _HookVT(Obj->Vft, _Ind, _Detour);
-            }
-        }
-    }
-
-    template <typename _Ct, typename _Ot = void*>
-    __forceinline static void ExecHookEvery(const char* ShortName, void* _Detour, _Ot& _Orig = _NpFH)
-    {
-        for (int i = 0; i < TUObjectArray::Num(); i++)
-        {
-            auto Obj = TUObjectArray::GetObjectByIndex(i);
-            if (Obj && Obj->IsA<_Ct>())
-            {
-                ExecHook(Obj->Class->GetFunction(ShortName)->GetFullName().c_str(), _Detour, _Orig);
-            }
-        }
-    }
-
-    template <typename _Is>
-    static __forceinline void Patch(uintptr_t ptr, _Is byte)
-    {
-        DWORD og;
-        VirtualProtect(LPVOID(ptr), sizeof(_Is), PAGE_EXECUTE_READWRITE, &og);
-        *(_Is*)ptr = byte;
-        VirtualProtect(LPVOID(ptr), sizeof(_Is), og, &og);
-    }
-
     static void GetAllInternal(const UClass* Class, TArray<AActor*>& ret)
     {
         UGameplayStatics::GetAllActorsOfClass(UWorld::GetWorld(), Class, &ret);
@@ -82,25 +23,6 @@ public:
     __forceinline static void GetAll(TArray<_At*>& ret)
     {
         GetAllInternal(_At::StaticClass(), *(TArray<AActor*>*)&ret);
-    }
-
-    template <typename _Ot = void*>
-    __forceinline static void ExecHook(UFunction* _Fn, void* _Detour, _Ot& _Orig = _NpFH)
-    {
-        if (!_Fn)
-            return;
-
-        if (!std::is_same_v<_Ot, void*>)
-            _Orig = (_Ot)_Fn->ExecFunction;
-
-        _Fn->ExecFunction = _Detour;
-    }
-
-    template <typename _Ot = void*>
-    __forceinline static void ExecHook(const wchar_t* _Name, void* _Detour, _Ot& _Orig = _NpFH)
-    {
-        UFunction* _Fn = (UFunction*)FindObject<UFunction>(_Name);
-        ExecHook(_Fn, _Detour, _Orig);
     }
 
     static double precision(double f, double places)

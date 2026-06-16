@@ -339,11 +339,11 @@ void UFortKismetLibrary::Hook()
             else if (Param.Name == "OptionalOwnerPC")
                 bHasOptionalOwnerPC = true;
         }
-    Utils::ExecHook(K2_SpawnPickupInWorldFn, K2_SpawnPickupInWorld);
+    Hooking::ExecHook(K2_SpawnPickupInWorldFn, K2_SpawnPickupInWorld);
 
-    Utils::ExecHook(GetDefaultObj()->GetFunction("K2_SpawnPickupInWorldWithClassAndItemEntry"), K2_SpawnPickupInWorldWithClassAndItemEntry);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("K2_SpawnPickupInWorldWithClassAndItemEntry"), K2_SpawnPickupInWorldWithClassAndItemEntry);
 
-    Utils::ExecHook(GetDefaultObj()->GetFunction("SpawnItemVariantPickupInWorld"), SpawnItemVariantPickupInWorld);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("SpawnItemVariantPickupInWorld"), SpawnItemVariantPickupInWorld);
 
     auto PickLootDropsFn = GetDefaultObj()->GetFunction("PickLootDrops");
 
@@ -355,7 +355,7 @@ void UFortKismetLibrary::Hook()
             else if (Param.Name == "WorldContextObject")
                 bHasWorldContextObject2 = true;
         }
-    Utils::ExecHook(PickLootDropsFn, PickLootDrops);
+    Hooking::ExecHook(PickLootDropsFn, PickLootDrops);
 }
 
 void UFortKismetLibrary::PostLoadHook()
@@ -375,7 +375,7 @@ void UFortKismetLibrary::PostLoadHook()
             else if (Param.Name == "WeaponAmmoOverride")
                 bHasWeaponAmmoOverride = true;
         }
-    Utils::ExecHook(GiveItemToInventoryOwnerFn, GiveItemToInventoryOwner);
+    Hooking::ExecHook(GiveItemToInventoryOwnerFn, GiveItemToInventoryOwner);
 
     auto K2_RemoveItemFromPlayerFn = GetDefaultObj()->GetFunction("K2_RemoveItemFromPlayer");
     if (K2_RemoveItemFromPlayerFn)
@@ -386,11 +386,11 @@ void UFortKismetLibrary::PostLoadHook()
             else if (Param.Name == "bForceRemoval")
                 bHasbForceRemoval = true;
         }
-    Utils::ExecHook(K2_RemoveItemFromPlayerFn, K2_RemoveItemFromPlayer);
+    Hooking::ExecHook(K2_RemoveItemFromPlayerFn, K2_RemoveItemFromPlayer);
 
-    Utils::ExecHook(GetDefaultObj()->GetFunction("K2_RemoveItemFromPlayerByGuid"), K2_RemoveItemFromPlayerByGuid);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("K2_RemoveItemFromPlayerByGuid"), K2_RemoveItemFromPlayerByGuid);
 
     SetIsDoorOpen = decltype(SetIsDoorOpen)(FindSetIsDoorOpen());
-    Utils::ExecHook(GetDefaultObj()->GetFunction("OpenActor"), OpenActor_, OpenActor_OG);
-    Utils::ExecHook(GetDefaultObj()->GetFunction("CloseActor"), CloseActor_, CloseActor_OG);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("OpenActor"), OpenActor_, OpenActor_OG);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("CloseActor"), CloseActor_, CloseActor_OG);
 }

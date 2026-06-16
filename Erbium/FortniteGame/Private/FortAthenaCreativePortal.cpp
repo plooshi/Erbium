@@ -190,7 +190,7 @@ void AFortAthenaCreativePortal::Hook()
     if (!GetDefaultObj())
         return;
 
-    Utils::ExecHook(GetDefaultObj()->GetFunction("TeleportPlayerToLinkedVolume"), TeleportPlayerToLinkedVolume);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("TeleportPlayerToLinkedVolume"), TeleportPlayerToLinkedVolume);
 }
 
 void AFortMinigameSettingsBuilding::Hook()
@@ -198,5 +198,5 @@ void AFortMinigameSettingsBuilding::Hook()
     if (!GetDefaultObj())
         return;
 
-    // Utils::Hook(FindMinigameSettingsBuilding__BeginPlay(), BeginPlay, BeginPlayOG);
+    // Hooking::Hook(FindMinigameSettingsBuilding__BeginPlay(), BeginPlay, BeginPlayOG);
 }

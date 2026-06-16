@@ -606,11 +606,11 @@ void ABuildingSMActor::PostLoadHook()
                                                                   : VersionInfo.EngineVersion == 4.19 || VersionInfo.EngineVersion >= 4.27 ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 }
                                                                                                                                            : std::vector<uint8_t>{ 0x40, 0x55 });
 
-    Utils::Hook(OnDamageServerAddr, OnDamageServer, OnDamageServerOG);
+    Hooking::Hook(OnDamageServerAddr, OnDamageServer, OnDamageServerOG);
 
     if (VersionInfo.FortniteVersion >= 18)
-        Utils::ExecHook(AFortDecoTool::GetDefaultObj()->GetFunction("ServerSpawnDeco"), AFortDecoTool::ServerSpawnDeco_, AFortDecoTool::ServerSpawnDeco_OG);
-    Utils::ExecHook(AFortDecoTool::GetDefaultObj()->GetFunction("ServerCreateBuildingAndSpawnDeco"), AFortDecoTool::ServerCreateBuildingAndSpawnDeco, AFortDecoTool::ServerCreateBuildingAndSpawnDecoOG);
+        Hooking::ExecHook(AFortDecoTool::GetDefaultObj()->GetFunction("ServerSpawnDeco"), AFortDecoTool::ServerSpawnDeco_, AFortDecoTool::ServerSpawnDeco_OG);
+    Hooking::ExecHook(AFortDecoTool::GetDefaultObj()->GetFunction("ServerCreateBuildingAndSpawnDeco"), AFortDecoTool::ServerCreateBuildingAndSpawnDeco, AFortDecoTool::ServerCreateBuildingAndSpawnDecoOG);
     if (AFortDecoTool_ContextTrap::StaticClass())
     {
         auto Func = AFortDecoTool_ContextTrap::GetDefaultObj()->GetFunction("ServerSpawnDeco");
@@ -619,13 +619,13 @@ void ABuildingSMActor::PostLoadHook()
             Func = AFortDecoTool_ContextTrap::GetDefaultObj()->GetFunction("ServerSpawnDeco_Implementation");
 
         if (VersionInfo.FortniteVersion >= 18)
-            Utils::ExecHook(Func, AFortDecoTool_ContextTrap::ServerSpawnDeco_Implementation, AFortDecoTool_ContextTrap::ServerSpawnDeco_ImplementationOG);
+            Hooking::ExecHook(Func, AFortDecoTool_ContextTrap::ServerSpawnDeco_Implementation, AFortDecoTool_ContextTrap::ServerSpawnDeco_ImplementationOG);
 
         auto Func2 = AFortDecoTool_ContextTrap::GetDefaultObj()->GetFunction("ServerCreateBuildingAndSpawnDeco_Implementation");
 
         if (!Func2)
             Func2 = AFortDecoTool_ContextTrap::GetDefaultObj()->GetFunction("ServerCreateBuildingAndSpawnDeco");
 
-        Utils::ExecHook(Func2, AFortDecoTool::ServerCreateBuildingAndSpawnDeco, AFortDecoTool::ServerCreateBuildingAndSpawnDecoOG);
+        Hooking::ExecHook(Func2, AFortDecoTool::ServerCreateBuildingAndSpawnDeco, AFortDecoTool::ServerCreateBuildingAndSpawnDecoOG);
     }
 }

@@ -769,5 +769,5 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Hook()
     Reset_ = FindReset();
     SetGamePhase_ = FindSetGamePhase();
 
-    Utils::Hook(FindHandleMatchHasStarted(), HandleMatchHasStarted, HandleMatchHasStartedOG);
+    Hooking::Hook(FindHandleMatchHasStarted(), HandleMatchHasStarted, HandleMatchHasStartedOG);
 }

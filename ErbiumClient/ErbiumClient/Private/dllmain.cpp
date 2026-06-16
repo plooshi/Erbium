@@ -18,7 +18,7 @@ void ForceIris(uintptr_t IrisBool)
             {
                 add = Memcury::PE::Address(&scanBytes[i]);
 
-                Utils::Patch<uint32_t>(__int64(&scanBytes[i]) + 2, 0x0); // the next bytes will always be greater than 0
+                Hooking::Patch<uint32_t>(__int64(&scanBytes[i]) + 2, 0x0); // the next bytes will always be greater than 0
             }
         }
     }

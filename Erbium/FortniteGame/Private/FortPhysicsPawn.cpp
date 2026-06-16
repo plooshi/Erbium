@@ -202,15 +202,15 @@ void AFortPhysicsPawn::Hook()
 
         if (ServerMoveFn)
         {
-            Utils::ExecHook(ServerMoveFn, ServerMove);
-            Utils::ExecHook(DefaultPhysPawn->GetFunction("ServerMoveReliable"), ServerMove);
+            Hooking::ExecHook(ServerMoveFn, ServerMove);
+            Hooking::ExecHook(DefaultPhysPawn->GetFunction("ServerMoveReliable"), ServerMove);
         }
         else
         {
             auto ServerUpdatePhysicsParamsFn = DefaultPhysPawn->GetFunction("ServerUpdatePhysicsParams");
 
             if (ServerUpdatePhysicsParamsFn)
-                Utils::ExecHook(ServerUpdatePhysicsParamsFn, ServerMove);
+                Hooking::ExecHook(ServerUpdatePhysicsParamsFn, ServerMove);
         }
     }
     else
@@ -218,20 +218,20 @@ void AFortPhysicsPawn::Hook()
         auto DefaultVehicle = DefaultObjImpl("FortAthenaVehicle");
 
         if (DefaultVehicle)
-            Utils::ExecHook(DefaultVehicle->GetFunction("ServerUpdatePhysicsParams"), ServerMove);
+            Hooking::ExecHook(DefaultVehicle->GetFunction("ServerUpdatePhysicsParams"), ServerMove);
     }
 
     auto DefaultOctopusVehicle = AFortOctopusVehicle::GetDefaultObj();
 
     if (DefaultOctopusVehicle)
     {
-        Utils::ExecHook(DefaultOctopusVehicle->GetFunction("ServerUpdateTowhook"), AFortOctopusVehicle::ServerUpdateTowhook);
+        Hooking::ExecHook(DefaultOctopusVehicle->GetFunction("ServerUpdateTowhook"), AFortOctopusVehicle::ServerUpdateTowhook);
     }
 
     auto DefaultSpaghettiVehicle = AFortSpaghettiVehicle::GetDefaultObj();
 
     if (DefaultSpaghettiVehicle)
-        Utils::ExecHook(DefaultSpaghettiVehicle->GetFunction("ServerUpdateTowhook"), AFortSpaghettiVehicle::ServerUpdateTowhook);
+        Hooking::ExecHook(DefaultSpaghettiVehicle->GetFunction("ServerUpdateTowhook"), AFortSpaghettiVehicle::ServerUpdateTowhook);
 
     if (AFortOctopusTowhookAttachableProjectile::StaticClass())
     {
@@ -260,6 +260,6 @@ void AFortPhysicsPawn::Hook()
         }
         //.ScanFor({ 0x48, 0x8B, 0xFF, 0xE8 }, false, 0, 1, 2048, true).RelativeOffset(4).Get();
 
-        Utils::Hook<AFortOctopusTowhookAttachableProjectile>(OnRep_ReplicatedAttachedInfoIdx, OnRep_ReplicatedAttachedInfo, OnRep_ReplicatedAttachedInfoOG);
+        Hooking::Hook<AFortOctopusTowhookAttachableProjectile>(OnRep_ReplicatedAttachedInfoIdx, OnRep_ReplicatedAttachedInfo, OnRep_ReplicatedAttachedInfoOG);
     }
 }

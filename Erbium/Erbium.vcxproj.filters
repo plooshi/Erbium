@@ -117,9 +117,6 @@
     <ClInclude Include="Erbium\Public\Finders.h">
       <Filter>Erbium\Public</Filter>
     </ClInclude>
-    <ClInclude Include="Erbium\Public\MinHook.h">
-      <Filter>Erbium\Public</Filter>
-    </ClInclude>
     <ClInclude Include="Erbium\Public\Misc.h">
       <Filter>Erbium\Public</Filter>
     </ClInclude>
@@ -222,6 +219,15 @@
     <ClInclude Include="..\SDK\Engine.h">
       <Filter>SDK</Filter>
     </ClInclude>
+    <ClInclude Include="Erbium\Public\table64.hpp">
+      <Filter>Erbium\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Erbium\Public\hde64.hpp">
+      <Filter>Erbium\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="Erbium\Public\Hooking.hpp">
+      <Filter>Erbium\Public</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Erbium\Private\dllmain.cpp">
@@ -316,6 +322,12 @@
     </ClCompile>
     <ClCompile Include="FortniteGame\Private\FortQuestManager.cpp">
       <Filter>FortniteGame\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="Erbium\Private\hde64.cpp">
+      <Filter>Erbium\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="Erbium\Private\Hooking.cpp">
+      <Filter>Erbium\Private</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

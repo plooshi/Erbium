@@ -114,9 +114,9 @@ void PatchAllNetModes(uintptr_t AttemptDeriveFromURL)
                                 if (*(uint32_t*)Scuffness != 0xF0 && (scanBytes[i + j + k + 4] != 0xC || scanBytes[i + j + k + 5] != 0xB) && scanBytes[i + j + k + 4] != 0x09)
                                     continue;
 
-                                Utils::Patch<uint16_t>(__int64(&scanBytes[i + j + k]), 0x9090);
+                                Hooking::Patch<uint16_t>(__int64(&scanBytes[i + j + k]), 0x9090);
                                 if ((scanBytes[i + j + 1] & 0xF8) == 0x38)
-                                    Utils::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
+                                    Hooking::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
                                 else if ((scanBytes[i + j + 1] & 0xFC) == 0x80)
                                 {
                                     DWORD og;
@@ -138,9 +138,9 @@ void PatchAllNetModes(uintptr_t AttemptDeriveFromURL)
                                 if (*(uint32_t*)(Scuffness + 3) != 0xF0 && (*(uint8_t*)(Scuffness + 2) != 0xC || *(uint8_t*)(Scuffness + 3) != 0xB) && *(uint8_t*)(Scuffness + 2) != 0x09)
                                     continue;
 
-                                Utils::Patch<uint8_t>(__int64(&scanBytes[i + j + k]), 0xeb);
+                                Hooking::Patch<uint8_t>(__int64(&scanBytes[i + j + k]), 0xeb);
                                 if ((scanBytes[i + j + 1] & 0xF8) == 0x38)
-                                    Utils::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
+                                    Hooking::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
                                 else if ((scanBytes[i + j + 1] & 0xFC) == 0x80)
                                 {
                                     DWORD og;
@@ -167,7 +167,7 @@ void PatchAllNetModes(uintptr_t AttemptDeriveFromURL)
                                 *(uint16*)(&scanBytes[i + j + k + 4]) = 0x9090;
                                 VirtualProtect(&scanBytes[i + j + k], 6, og, &og);
                                 if ((scanBytes[i + j + 1] & 0xF8) == 0x38)
-                                    Utils::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
+                                    Hooking::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
                                 else if ((scanBytes[i + j + 1] & 0xFC) == 0x80)
                                 {
                                     DWORD og;
@@ -189,9 +189,9 @@ void PatchAllNetModes(uintptr_t AttemptDeriveFromURL)
                                 if (*(uint32_t*)(Scuffness + 3) != 0xF0 && (*(uint8_t*)(Scuffness + 2) != 0xC || *(uint8_t*)(Scuffness + 3) != 0xB) && *(uint8_t*)(Scuffness + 2) != 0x09)
                                     continue;
 
-                                Utils::Patch<uint16_t>(__int64(&scanBytes[i + j + k]), 0xe990);
+                                Hooking::Patch<uint16_t>(__int64(&scanBytes[i + j + k]), 0xe990);
                                 if ((scanBytes[i + j + 1] & 0xF8) == 0x38)
-                                    Utils::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
+                                    Hooking::Patch<uint32_t>(__int64(&scanBytes[i + j]), 0x90909090);
                                 else if ((scanBytes[i + j + 1] & 0xFC) == 0x80)
                                 {
                                     DWORD og;
@@ -535,7 +535,7 @@ void Misc::Hook()
         if (!AttemptDeriveFromURL)
             AttemptDeriveFromURL = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 4C 8B D1").Get();
 
-        Utils::Hook(AttemptDeriveFromURL, GetNetMode);
+        Hooking::Hook(AttemptDeriveFromURL, GetNetMode);
         PatchAllNetModes(AttemptDeriveFromURL);
     }
     else if (VersionInfo.FortniteVersion >= 28)
@@ -546,16 +546,16 @@ void Misc::Hook()
         if (!AttemptDeriveFromURL)
             AttemptDeriveFromURL = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 81 EC ? ? ? ? 4C 8B D1").Get();
 
-        Utils::Hook(AttemptDeriveFromURL, GetNetMode);
+        Hooking::Hook(AttemptDeriveFromURL, GetNetMode);
         PatchAllNetModes(AttemptDeriveFromURL);
 
-        Utils::Hook(FindGetNetMode(), GetNetMode);
+        Hooking::Hook(FindGetNetMode(), GetNetMode);
     }
     else
-        Utils::Hook(FindGetNetMode(), GetNetMode);
+        Hooking::Hook(FindGetNetMode(), GetNetMode);
 
-    Utils::Hook(FindSendRequestNow(), SendRequestNow, SendRequestNowOG);
-    Utils::Hook(FindGetMaxTickRate(), GetMaxTickRate);
+    Hooking::Hook(FindSendRequestNow(), SendRequestNow, SendRequestNowOG);
+    Hooking::Hook(FindGetMaxTickRate(), GetMaxTickRate);
     if (VersionInfo.FortniteVersion >= 17)
     {
         auto pattern = Memcury::Scanner::FindPattern("48 89 5C 24 10 48 89 6C 24 20 56 57 41 54 41 56 41 57 48 81 EC ? ? ? ? 65 48 8B 04 25 ? ? ? ? 4C 8B F9").Get();
@@ -566,17 +566,17 @@ void Misc::Hook()
         if (!pattern)
             pattern = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 56 57 41 54 41 55 41 56 48 81 EC ? ? ? ? 65 48 8B 04 25").Get();
 
-        Utils::Hook(pattern, CheckCheckpointHeartBeat);
+        Hooking::Hook(pattern, CheckCheckpointHeartBeat);
     }
     if (VersionInfo.EngineVersion < 4.20)
     {
         auto ApplyHomebaseEffectsOnPlayerSetupAddr = Memcury::Scanner::FindPattern("40 55 53 57 41 54 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 00 4C 8B").Get();
 
-        Utils::Hook(ApplyHomebaseEffectsOnPlayerSetupAddr, ApplyHomebaseEffectsOnPlayerSetup, ApplyHomebaseEffectsOnPlayerSetupOG);
+        Hooking::Hook(ApplyHomebaseEffectsOnPlayerSetupAddr, ApplyHomebaseEffectsOnPlayerSetup, ApplyHomebaseEffectsOnPlayerSetupOG);
     }
     if (VersionInfo.FortniteVersion >= 25 && VersionInfo.FortniteVersion < 28)
     {
-        Utils::Hook(Memcury::Scanner::FindPattern("48 89 5C ? ? 57 48 83 EC ? 48 8B D1 48 85 C9 74 ?").Get(), RetFalse);
+        Hooking::Hook(Memcury::Scanner::FindPattern("48 89 5C ? ? 57 48 83 EC ? 48 8B D1 48 85 C9 74 ?").Get(), RetFalse);
     }
 
     auto PedestalBeginPlay = Memcury::Scanner::FindStringRef(L"AFortTeamMemberPedestal::BeginPlay - Begun play on pedestal %s", true, 0, VersionInfo.EngineVersion >= 5.0).Get();
@@ -606,7 +606,7 @@ void Misc::Hook()
         {
             if (ActorVft[i] == (void*)RealBeginPlay)
             {
-                Utils::Hook<AFortTeamMemberPedestal>(uint32_t(i), AActor::GetDefaultObj()->Vft[i]);
+                Hooking::Hook<AFortTeamMemberPedestal>(uint32_t(i), AActor::GetDefaultObj()->Vft[i]);
                 break;
             }
         }
@@ -618,7 +618,7 @@ void Misc::Hook()
 
         auto patchPoint = pattern.ScanFor(VersionInfo.EngineVersion < 5.5 ? std::vector<uint8_t>{ 0x48, 0x89, 0x5C } : std::vector<uint8_t>{ 0x40, 0x53 }, false).ScanFor({ 0x83, 0xF8, 0x02 }).Get();
 
-        Utils::Patch<uint8_t>(patchPoint + 2, 0x1);
+        Hooking::Patch<uint8_t>(patchPoint + 2, 0x1);
     }
 
     if (VersionInfo.FortniteVersion >= 24.30)
@@ -629,17 +629,17 @@ void Misc::Hook()
         if (!sig)
             sig = Memcury::Scanner::FindPattern("40 53 48 83 EC ? 48 8B DA 48 8B D1 48 81 C1 ? ? ? ? E8 ? ? ? ? 48 85 C0 74 ? 4C 8B 0B 45 33 C0").Get();
 
-        Utils::Hook(sig, CrashSomething, CrashSomethingOG);
+        Hooking::Hook(sig, CrashSomething, CrashSomethingOG);
     }
 
-    // Utils::Hook(ImageBase + 0x1CE85F4, Test);
-    // Utils::Hook(ImageBase + 0x2788BEC, Test, TestOG);
-    // Utils::Hook(Memcury::Scanner::FindPattern("48 89 5C 24 ?? 57 48 83 EC ?? 48 8B DA 48 8B F9 E8 ?? ?? ?? ?? 84 C0 75 ?? 48 83 79").Get(), Test2, Test2OG);
+    // Hooking::Hook(ImageBase + 0x1CE85F4, Test);
+    // Hooking::Hook(ImageBase + 0x2788BEC, Test, TestOG);
+    // Hooking::Hook(Memcury::Scanner::FindPattern("48 89 5C 24 ?? 57 48 83 EC ?? 48 8B DA 48 8B F9 E8 ?? ?? ?? ?? 84 C0 75 ?? 48 83 79").Get(), Test2, Test2OG);
     /*if (ABuildingProp_LockDevice::StaticClass())
     {
             auto Fn = ABuildingProp_LockDevice::GetDefaultObj()->GetFunction("UnlockObject");
 
-            Utils::Hook<ABuildingProp_LockDevice>(Fn->GetVTableIndex(), Ohio);
+            Hooking::Hook<ABuildingProp_LockDevice>(Fn->GetVTableIndex(), Ohio);
     }
 
     auto ListenCall = FindListenCall();
@@ -648,11 +648,11 @@ void Misc::Hook()
     {
             auto OverrideFunc = __int64(DefaultObjImpl("FortHUDContext")->GetFunction("EnterCameraMode")->ExecFunction);
 
-            Utils::Hook(OverrideFunc, Listen);
+            Hooking::Hook(OverrideFunc, Listen);
 
             auto NewRel = uint32(OverrideFunc - (ListenCall + 5));
 
-            Utils::Patch<uint32>(ListenCall + 1, NewRel);
+            Hooking::Patch<uint32>(ListenCall + 1, NewRel);
     }*/
 
     if (VersionInfo.FortniteVersion >= 11 && VersionInfo.FortniteVersion < 16)
@@ -672,13 +672,7 @@ void Misc::Hook()
         {
             auto Rel32 = NearGetOverrideCosmeticLoadout.ScanFor({ 0xE8 }).Get();
 
-            auto OverrideFunc = __int64(DefaultObjImpl("FortHUDContext")->GetFunction("EnterCursorMode")->ExecFunction);
-
-            Utils::Hook(OverrideFunc, InitializeCosmeticLoadout);
-
-            auto NewRel = uint32(OverrideFunc - (Rel32 + 5));
-
-            Utils::Patch<uint32>(Rel32 + 1, NewRel);
+            Hooking::Rel32Hook(Rel32 + 1, InitializeCosmeticLoadout);
         }
     }
 }

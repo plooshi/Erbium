@@ -564,7 +564,7 @@ void UFortQuestManager::PostLoadHook()
     auto QueueStatEventAddr = FindQueueStatEvent();
 
     bHasQueueStatEvent = QueueStatEventAddr != 0;
-    Utils::Hook(QueueStatEventAddr, QueueStatEvent);
+    Hooking::Hook(QueueStatEventAddr, QueueStatEvent);
 
     if (!bHasQueueStatEvent)
     {
@@ -579,6 +579,6 @@ void UFortQuestManager::PostLoadHook()
                     bHasQuestCompleted = true;
             }
 
-        Utils::ExecHook(SendComplexCustomStatEventFn, SendComplexCustomStatEvent);
+        Hooking::ExecHook(SendComplexCustomStatEventFn, SendComplexCustomStatEvent);
     }
 }

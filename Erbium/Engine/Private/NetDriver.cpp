@@ -959,7 +959,7 @@ void UNetDriver::PostLoadHook()
             FindSendClientAdjustment();
             FindUpdateIrisReplicationViews();
             FindPreSendUpdate();
-            Utils::Hook(FindTickFlush(), TickFlush__Iris, TickFlushOG);
+            Hooking::Hook(FindTickFlush(), TickFlush__Iris, TickFlushOG);
             return;
         }
         // cache
@@ -985,18 +985,18 @@ void UNetDriver::PostLoadHook()
 
         GetActorLocation = (void (*)(AActor*, FFrame&, FVector*))AActor::GetDefaultObj()->GetFunction("K2_GetActorLocation")->GetNativeFunc();
 
-        Utils::Hook(FindTickFlush(), TickFlush, TickFlushOG);
+        Hooking::Hook(FindTickFlush(), TickFlush, TickFlushOG);
     }
     else
     {
         ServerReplicateActors_ = FindServerReplicateActors();
 
-        Utils::Hook(FindTickFlush(), TickFlush__RepGraph, TickFlushOG);
+        Hooking::Hook(FindTickFlush(), TickFlush__RepGraph, TickFlushOG);
     }
 
     if (VersionInfo.FortniteVersion < 3.4 && FindFlushDormancy())
     {
-        Utils::Hook(__int64(AActor::GetDefaultObj()->GetFunction("FlushNetDormancy")->GetImpl()), FlushNetDormancy, FlushNetDormancyOG);
-        Utils::Hook(__int64(AActor::GetDefaultObj()->GetFunction("SetNetDormancy")->GetImpl()), SetNetDormancy, SetNetDormancyOG);
+        Hooking::Hook(__int64(AActor::GetDefaultObj()->GetFunction("FlushNetDormancy")->GetImpl()), FlushNetDormancy, FlushNetDormancyOG);
+        Hooking::Hook(__int64(AActor::GetDefaultObj()->GetFunction("SetNetDormancy")->GetImpl()), SetNetDormancy, SetNetDormancyOG);
     }
 }

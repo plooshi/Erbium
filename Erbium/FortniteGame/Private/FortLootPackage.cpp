@@ -680,15 +680,15 @@ void UFortLootPackage::Hook()
                                .ScanFor({ 0x40, 0x53 }, false)
                                .Get();
 
-        Utils::Hook(PostUpdate_, PostUpdate);
+        Hooking::Hook(PostUpdate_, PostUpdate);
     }*/
 
     if (VersionInfo.FortniteVersion >= 11.00)
     {
-        Utils::Hook(FindSpawnLoot(), SpawnLootHook);
+        Hooking::Hook(FindSpawnLoot(), SpawnLootHook);
 
         auto OnAuthorityRandomUpgradeAppliedAddr = FindFunctionCall(L"OnAuthorityRandomUpgradeApplied", std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
-        Utils::Hook(OnAuthorityRandomUpgradeAppliedAddr, OnAuthorityRandomUpgradeApplied, OnAuthorityRandomUpgradeAppliedOG);
+        Hooking::Hook(OnAuthorityRandomUpgradeAppliedAddr, OnAuthorityRandomUpgradeApplied, OnAuthorityRandomUpgradeAppliedOG);
         return;
     }
     else
@@ -706,7 +706,7 @@ void UFortLootPackage::Hook()
 
                 if (VFTIndex != 0)
                 {
-                    Utils::Hook<ABuildingContainer>(VFTIndex / 8, ServerOnAttemptInteract);
+                    Hooking::Hook<ABuildingContainer>(VFTIndex / 8, ServerOnAttemptInteract);
 
                     return;
                 }

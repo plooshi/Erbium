@@ -3559,24 +3559,24 @@ void AFortPlayerControllerAthena::PostLoadHook()
 
     auto DefaultFortPC = DefaultObjImpl("FortPlayerController");
 
-    Utils::Hook(FindGetPlayerViewPoint(), GetPlayerViewPoint, GetPlayerViewPointOG);
+    Hooking::Hook(FindGetPlayerViewPoint(), GetPlayerViewPoint, GetPlayerViewPointOG);
     // they only stripped it on athena for some reason
     // auto ServerAcknowledgePossessionIdx = GetDefaultObj()->GetFunction("ServerAcknowledgePossession")->GetVTableIndex();
-    // Utils::Hook<AFortPlayerControllerAthena>(ServerAcknowledgePossessionIdx, DefaultFortPC->Vft[ServerAcknowledgePossessionIdx]);
+    // Hooking::Hook<AFortPlayerControllerAthena>(ServerAcknowledgePossessionIdx, DefaultFortPC->Vft[ServerAcknowledgePossessionIdx]);
 
     if (VersionInfo.FortniteVersion >= 11)
     {
         auto ServerRestartPlayerIdx = GetDefaultObj()->GetFunction("ServerRestartPlayer")->GetVTableIndex();
         auto DefaultFortPCZone = DefaultObjImpl("FortPlayerControllerZone");
-        Utils::Hook<AFortPlayerControllerAthena>(ServerRestartPlayerIdx, DefaultFortPCZone->Vft[ServerRestartPlayerIdx]);
+        Hooking::Hook<AFortPlayerControllerAthena>(ServerRestartPlayerIdx, DefaultFortPCZone->Vft[ServerRestartPlayerIdx]);
 
         if (VersionInfo.FortniteVersion >= 15 && VersionInfo.FortniteVersion < 16)
-            Utils::Hook(uint64_t(DefaultObjImpl("PlayerController")->Vft[ServerRestartPlayerIdx]), ServerRestartPlayer_);
+            Hooking::Hook(uint64_t(DefaultObjImpl("PlayerController")->Vft[ServerRestartPlayerIdx]), ServerRestartPlayer_);
     }
 
     auto ServerSuicideIdx = GetDefaultObj()->GetFunction("ServerSuicide")->GetVTableIndex();
     auto DefaultFortPCZone = DefaultObjImpl("FortPlayerControllerZone");
-    Utils::Hook<AFortPlayerControllerAthena>(ServerSuicideIdx, DefaultFortPCZone->Vft[ServerSuicideIdx]);
+    Hooking::Hook<AFortPlayerControllerAthena>(ServerSuicideIdx, DefaultFortPCZone->Vft[ServerSuicideIdx]);
 
     // if (VersionInfo.FortniteVersion >= 11)
     //{
@@ -3585,55 +3585,55 @@ void AFortPlayerControllerAthena::PostLoadHook()
 
     auto ServerAttemptAircraftJumpPC = GetDefaultObj()->GetFunction("ServerAttemptAircraftJump");
     if (!ServerAttemptAircraftJumpPC)
-        Utils::ExecHook(DefaultObjImpl("FortControllerComponent_Aircraft")->GetFunction("ServerAttemptAircraftJump"), ServerAttemptAircraftJump_, ServerAttemptAircraftJump_OG);
+        Hooking::ExecHook(DefaultObjImpl("FortControllerComponent_Aircraft")->GetFunction("ServerAttemptAircraftJump"), ServerAttemptAircraftJump_, ServerAttemptAircraftJump_OG);
     else
-        Utils::ExecHook(ServerAttemptAircraftJumpPC, ServerAttemptAircraftJump_);
+        Hooking::ExecHook(ServerAttemptAircraftJumpPC, ServerAttemptAircraftJump_);
     //}
 
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerAcknowledgePossession"), ServerAcknowledgePossession);
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerExecuteInventoryItem"), ServerExecuteInventoryItem_);
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerExecuteInventoryWeapon"), ServerExecuteInventoryWeapon); // S9 shenanigans
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerAcknowledgePossession"), ServerAcknowledgePossession);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerExecuteInventoryItem"), ServerExecuteInventoryItem_);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerExecuteInventoryWeapon"), ServerExecuteInventoryWeapon); // S9 shenanigans
 
     // same as serveracknowledgepossession
     auto ServerReturnToMainMenuIdx = GetDefaultObj()->GetFunction("ServerReturnToMainMenu")->GetVTableIndex();
-    Utils::Hook<AFortPlayerControllerAthena>(ServerReturnToMainMenuIdx, DefaultFortPC->Vft[ServerReturnToMainMenuIdx]);
+    Hooking::Hook<AFortPlayerControllerAthena>(ServerReturnToMainMenuIdx, DefaultFortPC->Vft[ServerReturnToMainMenuIdx]);
 
     // if (VersionInfo.FortniteVersion != 1.72 && VersionInfo.FortniteVersion != 1.8)
     {
-        Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCreateBuildingActor"), ServerCreateBuildingActor);
-        Utils::ExecHook(GetDefaultObj()->GetFunction("ServerBeginEditingBuildingActor"), ServerBeginEditingBuildingActor);
-        Utils::ExecHook(GetDefaultObj()->GetFunction("ServerEditBuildingActor"), ServerEditBuildingActor);
-        Utils::ExecHook(GetDefaultObj()->GetFunction("ServerEndEditingBuildingActor"), ServerEndEditingBuildingActor);
-        Utils::ExecHook(GetDefaultObj()->GetFunction("ServerRepairBuildingActor"), ServerRepairBuildingActor);
+        Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerCreateBuildingActor"), ServerCreateBuildingActor);
+        Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerBeginEditingBuildingActor"), ServerBeginEditingBuildingActor);
+        Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerEditBuildingActor"), ServerEditBuildingActor);
+        Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerEndEditingBuildingActor"), ServerEndEditingBuildingActor);
+        Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerRepairBuildingActor"), ServerRepairBuildingActor);
     }
     auto ServerAttemptInventoryDropFn = GetDefaultObj()->GetFunction("ServerAttemptInventoryDrop");
     if (ServerAttemptInventoryDropFn)
-        Utils::ExecHook(ServerAttemptInventoryDropFn, ServerAttemptInventoryDrop);
+        Hooking::ExecHook(ServerAttemptInventoryDropFn, ServerAttemptInventoryDrop);
     else
-        Utils::ExecHook(GetDefaultObj()->GetFunction("ServerSpawnInventoryDrop"), ServerAttemptInventoryDrop);
+        Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerSpawnInventoryDrop"), ServerAttemptInventoryDrop);
 
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerPlayEmoteItem"), ServerPlayEmoteItem_);
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerPlaySprayItem"), ServerPlayEmoteItem_);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerPlayEmoteItem"), ServerPlayEmoteItem_);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerPlaySprayItem"), ServerPlayEmoteItem_);
 
     auto ClientOnPawnDiedAddr =
         FindFunctionCall(L"ClientOnPawnDied", VersionInfo.EngineVersion == 4.16
                                                   ? std::vector<uint8_t>{ 0x48, 0x89, 0x54 }
                                                   : (VersionInfo.FortniteVersion >= 24 && VersionInfo.FortniteVersion < 25 ? std::vector<uint8_t>{ 0x48, 0x8B, 0xC4 } : std::vector<uint8_t>{ 0x48, 0x89, 0x5C }));
-    Utils::Hook(ClientOnPawnDiedAddr, ClientOnPawnDied, ClientOnPawnDiedOG);
+    Hooking::Hook(ClientOnPawnDiedAddr, ClientOnPawnDied, ClientOnPawnDiedOG);
 
     if (VersionInfo.FortniteVersion >= 16)
-        Utils::ExecHook(GetDefaultObj()->GetFunction("ServerClientIsReadyToRespawn"), ServerClientIsReadyToRespawn);
+        Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerClientIsReadyToRespawn"), ServerClientIsReadyToRespawn);
 
     if (FConfiguration::bEnableCheats)
-        Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCheat"), ServerCheat);
+        Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerCheat"), ServerCheat);
 
     auto ServerAttemptInteractPC = GetDefaultObj()->GetFunction("ServerAttemptInteract");
     if (!ServerAttemptInteractPC)
-        Utils::ExecHook(DefaultObjImpl("FortControllerComponent_Interaction")->GetFunction("ServerAttemptInteract"), ServerAttemptInteract_, ServerAttemptInteract_OG);
+        Hooking::ExecHook(DefaultObjImpl("FortControllerComponent_Interaction")->GetFunction("ServerAttemptInteract"), ServerAttemptInteract_, ServerAttemptInteract_OG);
     else
-        Utils::ExecHook(ServerAttemptInteractPC, ServerAttemptInteract_, ServerAttemptInteract_OG);
+        Hooking::ExecHook(ServerAttemptInteractPC, ServerAttemptInteract_, ServerAttemptInteract_OG);
 
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerDropAllItems"), ServerDropAllItems);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerDropAllItems"), ServerDropAllItems);
 
     auto DefaultWeaponComp = DefaultObjImpl("FortWeaponComponent");
 
@@ -3641,43 +3641,43 @@ void AFortPlayerControllerAthena::PostLoadHook()
     {
         auto OnUnEquipAddr = FindFunctionCall(L"K2_OnUnEquip", std::vector<uint8_t>{ 0x48, 0x89, 0x5C });
 
-        Utils::Hook(OnUnEquipAddr, OnUnEquip, OnUnEquipOG);
+        Hooking::Hook(OnUnEquipAddr, OnUnEquip, OnUnEquipOG);
 
-        // Utils::ExecHook(DefaultWeaponComp->GetFunction("OnUnEquip"), OnUnEquip);
+        // Hooking::ExecHook(DefaultWeaponComp->GetFunction("OnUnEquip"), OnUnEquip);
     }
 
     auto DefaultHeldObjComp = DefaultObjImpl("FortHeldObjectComponent");
 
     if (DefaultHeldObjComp)
     {
-        Utils::ExecHook(DefaultHeldObjComp->GetFunction("PickupHeldObject"), PickupHeldObject);
-        Utils::ExecHook(DefaultHeldObjComp->GetFunction("DropHeldObject"), DropHeldObject);
-        Utils::ExecHook(DefaultHeldObjComp->GetFunction("PlaceHeldObject"), PlaceHeldObject);
-        Utils::ExecHook(DefaultHeldObjComp->GetFunction("ThrowHeldObject"), ThrowHeldObject);
+        Hooking::ExecHook(DefaultHeldObjComp->GetFunction("PickupHeldObject"), PickupHeldObject);
+        Hooking::ExecHook(DefaultHeldObjComp->GetFunction("DropHeldObject"), DropHeldObject);
+        Hooking::ExecHook(DefaultHeldObjComp->GetFunction("PlaceHeldObject"), PlaceHeldObject);
+        Hooking::ExecHook(DefaultHeldObjComp->GetFunction("ThrowHeldObject"), ThrowHeldObject);
     }
 
-    Utils::ExecHook(GetDefaultObj()->GetFunction("SpawnToyInstance"), SpawnToyInstance);
-    Utils::Hook(FindEnterAircraft(), EnterAircraft, EnterAircraftOG);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("SpawnToyInstance"), SpawnToyInstance);
+    Hooking::Hook(FindEnterAircraft(), EnterAircraft, EnterAircraftOG);
 
     if (wcsstr(FConfiguration::Playlist, L"/Game/Athena/Playlists/Creative/Playlist_PlaygroundV2.Playlist_PlaygroundV2")) // on 24.20+ u get killed for going into water without this
-        Utils::ExecHook(GetDefaultObj()->GetFunction("ServerTeleportToPlaygroundLobbyIsland"), ServerTeleportToPlaygroundLobbyIsland);
+        Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerTeleportToPlaygroundLobbyIsland"), ServerTeleportToPlaygroundLobbyIsland);
 
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCraftSchematic"), ServerCraftSchematic);
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerGiveCreativeItem"), ServerGiveCreativeItem);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerCraftSchematic"), ServerCraftSchematic);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerGiveCreativeItem"), ServerGiveCreativeItem);
 
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerRequestSeatChange"), ServerRequestSeatChange_, ServerRequestSeatChange_OG);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerRequestSeatChange"), ServerRequestSeatChange_, ServerRequestSeatChange_OG);
 
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerLoadingScreenDropped"), ServerLoadingScreenDropped_, ServerLoadingScreenDropped_OG);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerLoadingScreenDropped"), ServerLoadingScreenDropped_, ServerLoadingScreenDropped_OG);
 
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCreativeSetFlightSpeedIndex"), ServerCreativeSetFlightSpeedIndex);
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerCreativeSetFlightSprint"), ServerCreativeSetFlightSprint);
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerAwardVehicleTrickPoints"), ServerAwardVehicleTrickPoints_, ServerAwardVehicleTrickPoints_OG);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerCreativeSetFlightSpeedIndex"), ServerCreativeSetFlightSpeedIndex);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerCreativeSetFlightSprint"), ServerCreativeSetFlightSprint);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerAwardVehicleTrickPoints"), ServerAwardVehicleTrickPoints_, ServerAwardVehicleTrickPoints_OG);
 
     auto DefaultIndicatedActorLibrary = DefaultObjImpl("FortIndicatedActorManagementLibrary");
 
     if (DefaultIndicatedActorLibrary)
-        Utils::ExecHook(DefaultIndicatedActorLibrary->GetFunction("AddActorsToIndicatedList"), AddActorsToIndicatedList);
+        Hooking::ExecHook(DefaultIndicatedActorLibrary->GetFunction("AddActorsToIndicatedList"), AddActorsToIndicatedList);
 
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerOnMaterialSelection"), ServerOnMaterialSelection);
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ServerPlaySquadQuickChatMessage"), ServerPlaySquadQuickChatMessage);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerOnMaterialSelection"), ServerOnMaterialSelection);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerPlaySquadQuickChatMessage"), ServerPlaySquadQuickChatMessage);
 }

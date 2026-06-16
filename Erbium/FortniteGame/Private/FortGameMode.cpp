@@ -810,7 +810,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                     }
                 }
 
-                Utils::Patch<uint8_t>(CollectGarbage, 0xC3);
+                Hooking::Patch<uint8_t>(CollectGarbage, 0xC3);
             }
         }
         else if (VersionInfo.EngineVersion <= 4.20)
@@ -818,7 +818,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
             auto pattern = VersionInfo.FortniteVersion > 3.2 ? Memcury::Scanner::FindPattern("E8 ? ? ? ? EB 26 40 38 3D ? ? ? ?") : Memcury::Scanner::FindPattern("E8 ? ? ? ? F0 FF 0D ? ? ? ? 0F B6 C3");
 
             if (pattern.IsValid())
-                Utils::Patch<uint8_t>(pattern.RelativeOffset(1).Get(), 0xC3);
+                Hooking::Patch<uint8_t>(pattern.RelativeOffset(1).Get(), 0xC3);
         }
 
         if (GameState->HasAllPlayerBuildableClassesIndexLookup())
@@ -2113,10 +2113,10 @@ void AFortGameMode::FinishWorldInitialization(AFortGameMode* _this, AActor* Worl
         }
         Collectors.Free();
 
-        Utils::ExecHook((UFunction*)FindObject<UFunction>(L"/Game/Athena/Items/Gameplay/VendingMachine/B_Athena_VendingMachine.B_Athena_VendingMachine_C:VendWobble__FinishedFunc"), VendWobble__FinishedFunc,
+        Hooking::ExecHook((UFunction*)FindObject<UFunction>(L"/Game/Athena/Items/Gameplay/VendingMachine/B_Athena_VendingMachine.B_Athena_VendingMachine_C:VendWobble__FinishedFunc"), VendWobble__FinishedFunc,
                         VendWobble__FinishedFuncOG);
     }
-    // Utils::ExecHook((UFunction*)FindObject<UFunction>(L"/Game/Athena/Items/Consumables/Parents/GA_Athena_MedConsumable_Parent.GA_Athena_MedConsumable_Parent_C:Triggered_4C02BFB04B18D9E79F84848FFE6D2C32"),
+    // Hooking::ExecHook((UFunction*)FindObject<UFunction>(L"/Game/Athena/Items/Consumables/Parents/GA_Athena_MedConsumable_Parent.GA_Athena_MedConsumable_Parent_C:Triggered_4C02BFB04B18D9E79F84848FFE6D2C32"),
     // AFortPlayerPawnAthena::Athena_MedConsumable_Triggered, AFortPlayerPawnAthena::Athena_MedConsumable_TriggeredOG);
 }
 
@@ -2132,10 +2132,10 @@ void PlayerCanRestart(UObject* Context, FFrame& Stack, bool* Ret)
 
 void AFortGameMode::Hook()
 {
-    Utils::ExecHook(GetDefaultObj()->GetFunction("ReadyToStartMatch"), ReadyToStartMatch_, ReadyToStartMatch_OG);
-    Utils::Hook(FindFinishWorldInitialization(), FinishWorldInitialization, FinishWorldInitializationOG);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("ReadyToStartMatch"), ReadyToStartMatch_, ReadyToStartMatch_OG);
+    Hooking::Hook(FindFinishWorldInitialization(), FinishWorldInitialization, FinishWorldInitializationOG);
     // if (VersionInfo.EngineVersion == 4.16)
-    //     Utils::Hook(Memcury::Scanner::FindPattern("40 55 53 56 41 56 48 8D 6C 24 ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 48 8B 01 48 8B F1").Get(),
+    //     Hooking::Hook(Memcury::Scanner::FindPattern("40 55 53 56 41 56 48 8D 6C 24 ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 48 8B 01 48 8B F1").Get(),
     //     OnWorldInitDone, OnWorldInitDoneOG);
 }
 
@@ -2147,26 +2147,26 @@ void AFortGameMode::PostLoadHook()
     auto spdf = GetDefaultObj()->GetFunction("SpawnDefaultPawnFor");
     SpawnDefaultPawnForIdx = spdf->GetVTableIndex();
 
-    Utils::ExecHook(spdf, SpawnDefaultPawnFor);
-    Utils::ExecHook(GetDefaultObj()->GetFunction("HandleStartingNewPlayer"), HandleStartingNewPlayer_, HandleStartingNewPlayer_OG);
-    Utils::Hook(FindPickTeam(), PickTeam, PickTeamOG);
+    Hooking::ExecHook(spdf, SpawnDefaultPawnFor);
+    Hooking::ExecHook(GetDefaultObj()->GetFunction("HandleStartingNewPlayer"), HandleStartingNewPlayer_, HandleStartingNewPlayer_OG);
+    Hooking::Hook(FindPickTeam(), PickTeam, PickTeamOG);
     if (VersionInfo.FortniteVersion < 25.20)
     {
-        Utils::Hook(FindStartAircraftPhase(), StartAircraftPhase, StartAircraftPhaseOG);
-        Utils::Hook(FindHandlePostSafeZonePhaseChanged(), HandlePostSafeZonePhaseChanged, HandlePostSafeZonePhaseChangedOG);
+        Hooking::Hook(FindStartAircraftPhase(), StartAircraftPhase, StartAircraftPhaseOG);
+        Hooking::Hook(FindHandlePostSafeZonePhaseChanged(), HandlePostSafeZonePhaseChanged, HandlePostSafeZonePhaseChangedOG);
     }
-    Utils::ExecHook(AFortGameModeAthena::GetDefaultObj()->GetFunction("OnAircraftExitedDropZone"), OnAircraftExitedDropZone_, OnAircraftExitedDropZone_OG);
+    Hooking::ExecHook(AFortGameModeAthena::GetDefaultObj()->GetFunction("OnAircraftExitedDropZone"), OnAircraftExitedDropZone_, OnAircraftExitedDropZone_OG);
 
     if (VersionInfo.FortniteVersion >= 21.10)
     {
         if (VersionInfo.FortniteVersion < 25.20)
         {
-            Utils::Hook(FindSpawnInitialSafeZone(), SpawnInitialSafeZone, SpawnInitialSafeZoneOG);
-            Utils::Hook(FindUpdateSafeZonesPhase(), UpdateSafeZonesPhase, UpdateSafeZonesPhaseOG);
+            Hooking::Hook(FindSpawnInitialSafeZone(), SpawnInitialSafeZone, SpawnInitialSafeZoneOG);
+            Hooking::Hook(FindUpdateSafeZonesPhase(), UpdateSafeZonesPhase, UpdateSafeZonesPhaseOG);
         }
-        Utils::ExecHook(L"/Script/FortniteGame.FortSafeZoneIndicator.GetPhaseInfo", GetPhaseInfo);
+        Hooking::ExecHook((UFunction*)FindObject<UFunction>(L"/Script/FortniteGame.FortSafeZoneIndicator.GetPhaseInfo"), GetPhaseInfo);
     }
 
     // if (VersionInfo.FortniteVersion >= 15)
-    //     Utils::ExecHook(AFortGameModeAthena::GetDefaultObj()->GetFunction("PlayerCanRestart"), PlayerCanRestart);
+    //     Hooking::ExecHook(AFortGameModeAthena::GetDefaultObj()->GetFunction("PlayerCanRestart"), PlayerCanRestart);
 }
