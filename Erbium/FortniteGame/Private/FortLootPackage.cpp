@@ -206,7 +206,7 @@ void UFortLootPackage::SetupLDSForPackage(TArray<FFortItemEntry*>& LootDrops, SD
                     if (Interface3)
                     {
                         auto GetOwnedGameplayTags = (void (*)(IGameplayTagAssetInterface*, FGameplayTagContainer*))Interface3->Vft[0x2];
-                        GetOwnedGameplayTags(Interface3, &WeaponTags);
+                        GetOwnedGameplayTags(Interface3, &SourceTags);
                         // Interface->GetOwnedGameplayTags(&TargetTags);
                     }
 
