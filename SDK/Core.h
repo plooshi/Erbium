@@ -20,11 +20,27 @@ namespace SDK
         int32 ComparisonIndex;
         int32 Number;
 
-        FName(int32 InComparisonIndex = 0, int32 InNumber = 0)
+        FName(int32 InComparisonIndex = 0, int32 InNumber = 0) noexcept
             : ComparisonIndex(InComparisonIndex)
         {
             if (VersionInfo.FortniteVersion < 20.00)
                 Number = InNumber;
+        }
+
+        FName(const FName& Other) noexcept
+        {
+            ComparisonIndex = Other.ComparisonIndex;
+
+            if (VersionInfo.FortniteVersion < 20.00)
+                Number = Other.Number;
+        }
+
+        FName(FName&& Other) noexcept
+        {
+            ComparisonIndex = Other.ComparisonIndex;
+
+            if (VersionInfo.FortniteVersion < 20.00)
+                Number = Other.Number;
         }
 
         FName(const wchar_t* String)
@@ -147,10 +163,31 @@ namespace SDK
             return ComparisonIndex == Other.ComparisonIndex ? (VersionInfo.FortniteVersion < 20.00 && Number < Other.Number) : ComparisonIndex < Other.ComparisonIndex;
         }
 
+        FName& operator=(const FName& Other) noexcept
+        {
+            ComparisonIndex = Other.ComparisonIndex;
+
+            if (VersionInfo.FortniteVersion < 20.00)
+                Number = Other.Number;
+
+            return *this;
+        }
+
+        FName& operator=(FName&& Other) noexcept
+        {
+            ComparisonIndex = Other.ComparisonIndex;
+
+            if (VersionInfo.FortniteVersion < 20.00)
+                Number = Other.Number;
+
+            return *this;
+        }
+
         operator bool() const
         {
             return IsValid();
         }
+
     };
 
     class ParamPair
@@ -982,7 +1019,7 @@ namespace SDK
         int32 ObjectIndex;        // 0x0000(0x0004)(NOT AUTO-GENERATED PROPERTY)
         int32 ObjectSerialNumber; // 0x0004(0x0004)(NOT AUTO-GENERATED PROPERTY)
 
-        FWeakObjectPtr(int32 Index = 0, int32 SerialNumber = 0)
+        FWeakObjectPtr(int32 Index = -1, int32 SerialNumber = 0)
             : ObjectIndex(Index)
             , ObjectSerialNumber(SerialNumber)
         {
@@ -1165,9 +1202,9 @@ namespace SDK
                 }
                 else if (VersionInfo.FortniteVersion >= 23)
                 {
-                    auto& PackageName = *(FName*)(__int64(this) + (VersionInfo.EngineVersion < 5.3 ? 0xC : 0x8));
-                    auto& AssetName = *(FName*)(__int64(this) + (VersionInfo.EngineVersion < 5.3 ? 0x10 : 0xC));
-                    auto& SubPathString = *(FString*)(__int64(this) + (VersionInfo.EngineVersion < 5.3 ? 0x14 : 0x10));
+                    auto& PackageName = *(FName*)(__int64(this) + (VersionInfo.EngineVersion < 5.3 ? 0x10 : 0x8));
+                    auto& AssetName = *(FName*)(__int64(this) + (VersionInfo.EngineVersion < 5.3 ? 0x14 : 0xC));
+                    auto& SubPathString = *(FString*)(__int64(this) + (VersionInfo.EngineVersion < 5.3 ? 0x18 : 0x10));
 
                     if (PackageName.ComparisonIndex > 0)
                     {
@@ -1240,8 +1277,6 @@ namespace SDK
         TSoftClassPtr(UClass* Obj)
         {
             WeakPtr = FWeakObjectPtr(Obj);
-            if (VersionInfo.FortniteVersion)
-                ObjectID.AssetPathName = FName(0);
         }
 
         UClass* Get()
