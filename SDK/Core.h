@@ -27,22 +27,6 @@ namespace SDK
                 Number = InNumber;
         }
 
-        FName(const FName& Other) noexcept
-        {
-            ComparisonIndex = Other.ComparisonIndex;
-
-            if (VersionInfo.FortniteVersion < 20.00)
-                Number = Other.Number;
-        }
-
-        FName(FName&& Other) noexcept
-        {
-            ComparisonIndex = Other.ComparisonIndex;
-
-            if (VersionInfo.FortniteVersion < 20.00)
-                Number = Other.Number;
-        }
-
         FName(const wchar_t* String)
         {
             auto& FName__Ctor = (void (*&)(FName*, const wchar_t*, int))Offsets::FNameConstructor;
@@ -161,26 +145,6 @@ namespace SDK
         bool operator<(const FName& Other) const
         {
             return ComparisonIndex == Other.ComparisonIndex ? (VersionInfo.FortniteVersion < 20.00 && Number < Other.Number) : ComparisonIndex < Other.ComparisonIndex;
-        }
-
-        FName& operator=(const FName& Other) noexcept
-        {
-            ComparisonIndex = Other.ComparisonIndex;
-
-            if (VersionInfo.FortniteVersion < 20.00)
-                Number = Other.Number;
-
-            return *this;
-        }
-
-        FName& operator=(FName&& Other) noexcept
-        {
-            ComparisonIndex = Other.ComparisonIndex;
-
-            if (VersionInfo.FortniteVersion < 20.00)
-                Number = Other.Number;
-
-            return *this;
         }
 
         operator bool() const
