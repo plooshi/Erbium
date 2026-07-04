@@ -527,9 +527,9 @@ void SendComplexCustomStatEvent(UObject* Context, FFrame& Stack)
     Stack.StepCompiledIn(&AdditionalSourceTags);
     Stack.StepCompiledIn(&TargetTags);
     if (bHasQuestActive)
-        QuestActive = &Stack->StepCompiledInRef<bool>();
+        QuestActive = &Stack.StepCompiledInRef<bool>();
     if (bHasQuestCompleted)
-        QuestCompleted = &Stack->StepCompiledInRef<bool>();
+        QuestCompleted = &Stack.StepCompiledInRef<bool>();
     Stack.StepCompiledIn(&Count);
     Stack.IncrementCode();
     auto QuestManager = (UFortQuestManager*)Context;
