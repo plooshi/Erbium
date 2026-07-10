@@ -228,6 +228,9 @@
     <ClInclude Include="Erbium\Public\Hooking.hpp">
       <Filter>Erbium\Public</Filter>
     </ClInclude>
+    <ClInclude Include="FortniteGame\Public\FortAthenaSpawningPolicyManager.h">
+      <Filter>FortniteGame\Public</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Erbium\Private\dllmain.cpp">

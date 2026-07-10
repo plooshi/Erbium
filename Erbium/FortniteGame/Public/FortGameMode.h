@@ -6,6 +6,7 @@
 #include "FortPlayerControllerAthena.h"
 #include "FortPlayerPawnAthena.h"
 #include "FortSafeZoneIndicator.h"
+#include "FortAthenaSpawningPolicyManager.h"
 
 class AFortGameMode : public AActor
 {
@@ -52,6 +53,8 @@ public:
     DEFINE_PROP(bEnableReplicationGraph, bool);
     DEFINE_PROP(bAllowSpectateAfterDeath, bool);
     DEFINE_PROP(ServerBotManager, UObject*);
+    DEFINE_PROP(SpawningPolicyManager, AFortAthenaSpawningPolicyManager*);
+    DEFINE_PROP(OnPlaylistLootTablesAppliedDelegate, TMulticastInlineDelegate<void()>);
 
     DEFINE_FUNC(SpawnDefaultPawnAtTransform, AFortPlayerPawnAthena*);
     DEFINE_FUNC(RestartPlayer, void);

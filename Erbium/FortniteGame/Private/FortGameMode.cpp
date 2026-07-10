@@ -20,6 +20,7 @@
 #include "../Public/FortPlayerControllerAthena.h"
 #include "../Public/FortSafeZoneIndicator.h"
 #include "../Public/LevelStreamingDynamic.h"
+#include "../Public/FortAthenaSpawningPolicyManager.h"
 #include <random>
 
 void ShowFoundation(const ABuildingFoundation* Foundation)
@@ -132,8 +133,61 @@ void SetupPlaylist(AFortGameMode* GameMode, AFortGameStateAthena* GameState)
 
         bIsLargeTeamGame = Playlist->bIsLargeTeamGame;
 
-        // if (GameState->HasAdditionalPlaylistLevelsStreamed())
-        //     GameState->OnRep_AdditionalPlaylistLevelsStreamed();
+        if (Playlist)
+        {
+            auto AdditionalPlaylistLevelsStreamed__Off = GameState->GetOffset("AdditionalPlaylistLevelsStreamed");
+
+            if (AdditionalPlaylistLevelsStreamed__Off != -1)
+            {
+                TArray<FPlaylistStreamedLevelData>& AdditionalPlaylistLevels = *(TArray<FPlaylistStreamedLevelData>*)(__int64(GameState) + AdditionalPlaylistLevelsStreamed__Off - 0x10);
+
+                AdditionalPlaylistLevels.Free();
+
+                auto AdditionalLevelStruct = FAdditionalLevelStreamed::StaticStruct();
+                if (Playlist->HasAdditionalLevels())
+                    for (auto& Level : Playlist->AdditionalLevels)
+                    {
+                        bool Success = false;
+                        // ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
+                        if (AdditionalLevelStruct)
+                        {
+                            auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
+                            memset((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
+                            level->bIsServerOnly = false;
+                            level->LevelName = Level.ObjectID.AssetPathName;
+                            if (Success)
+                                GameState->AdditionalPlaylistLevelsStreamed.Add(*level, FAdditionalLevelStreamed::Size());
+                            free(level);
+                        }
+                        else
+                            GetFromOffset<TArray<FName>>(GameState, AdditionalPlaylistLevelsStreamed__Off).Add(Level.ObjectID.AssetPathName);
+                    }
+
+                if (Playlist->HasAdditionalLevelsServerOnly())
+                    for (auto& Level : Playlist->AdditionalLevelsServerOnly)
+                    {
+                        bool Success = false;
+                        // ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
+
+                        if (AdditionalLevelStruct)
+                        {
+
+                            auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
+                            memset((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
+                            level->bIsServerOnly = true;
+                            level->LevelName = Level.ObjectID.AssetPathName;
+                            if (Success)
+                                GameState->AdditionalPlaylistLevelsStreamed.Add(*level, FAdditionalLevelStreamed::Size());
+                            free(level);
+                        }
+                        else
+                            GetFromOffset<TArray<FName>>(GameState, AdditionalPlaylistLevelsStreamed__Off).Add(Level.ObjectID.AssetPathName);
+                    }
+            }
+        }
+
+        if (GameState->HasAdditionalPlaylistLevelsStreamed())
+             GameState->OnRep_AdditionalPlaylistLevelsStreamed();
     }
     else
     {
@@ -298,68 +352,13 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
         if (GameMode->HasWarmupRequiredPlayerCount())
             GameMode->WarmupRequiredPlayerCount = 1;
 
-        if (VersionInfo.FortniteVersion > 4.0 /*&& (VersionInfo.EngineVersion != 4.25)*/)
+        if (VersionInfo.FortniteVersion > 4.0)
             SetupPlaylist(GameMode, GameState);
 
         auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
 
         if (!Playlist)
             Playlist = FindObject<UFortPlaylistAthena>(L"/Game/Athena/Playlists/Playlist_DefaultSolo.Playlist_DefaultSolo");
-
-        if (Playlist)
-        {
-            auto AdditionalPlaylistLevelsStreamed__Off = GameState->GetOffset("AdditionalPlaylistLevelsStreamed");
-
-            if (AdditionalPlaylistLevelsStreamed__Off != -1)
-            {
-                TArray<FPlaylistStreamedLevelData>& AdditionalPlaylistLevels = *(TArray<FPlaylistStreamedLevelData>*)(__int64(GameState) + AdditionalPlaylistLevelsStreamed__Off - 0x10);
-
-                AdditionalPlaylistLevels.Free();
-
-                auto AdditionalLevelStruct = FAdditionalLevelStreamed::StaticStruct();
-                if (Playlist->HasAdditionalLevels())
-                    for (auto& Level : Playlist->AdditionalLevels)
-                    {
-                        bool Success = false;
-                        // ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
-                        if (AdditionalLevelStruct)
-                        {
-                            auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
-                            memset((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
-                            level->bIsServerOnly = false;
-                            level->LevelName = Level.ObjectID.AssetPathName;
-                            if (Success)
-                                GameState->AdditionalPlaylistLevelsStreamed.Add(*level, FAdditionalLevelStreamed::Size());
-                            free(level);
-                        }
-                        else
-                            GetFromOffset<TArray<FName>>(GameState, AdditionalPlaylistLevelsStreamed__Off).Add(Level.ObjectID.AssetPathName);
-                    }
-
-                if (Playlist->HasAdditionalLevelsServerOnly())
-                    for (auto& Level : Playlist->AdditionalLevelsServerOnly)
-                    {
-                        bool Success = false;
-                        // ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
-
-                        if (AdditionalLevelStruct)
-                        {
-
-                            auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
-                            memset((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
-                            level->bIsServerOnly = true;
-                            level->LevelName = Level.ObjectID.AssetPathName;
-                            if (Success)
-                                GameState->AdditionalPlaylistLevelsStreamed.Add(*level, FAdditionalLevelStreamed::Size());
-                            free(level);
-                        }
-                        else
-                            GetFromOffset<TArray<FName>>(GameState, AdditionalPlaylistLevelsStreamed__Off).Add(Level.ObjectID.AssetPathName);
-                    }
-            }
-        }
-
-        GameState->OnRep_AdditionalPlaylistLevelsStreamed();
 
         // misc C1 poi things
         if (VersionInfo.FortniteVersion >= 6 && VersionInfo.FortniteVersion < 7)
@@ -448,9 +447,12 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
         if (!AIDirectorClass)
             AIDirectorClass = FindClass("FortAIDirector");
 
-        GameMode->AIDirector = UWorld::SpawnActor(AIDirectorClass, FVector{}, GameMode);
-        if (GameMode->AIDirector)
-            GameMode->AIDirector->Call(GameMode->AIDirector->GetFunction("Activate"));
+        if (!GameMode->AIDirector)
+        {
+            GameMode->AIDirector = UWorld::SpawnActor(AIDirectorClass, FVector{}, GameMode);
+            if (GameMode->AIDirector)
+                GameMode->AIDirector->Call(GameMode->AIDirector->GetFunction("Activate"));
+        }
 
         if (GameMode->HasServerBotManager())
         {
@@ -466,9 +468,19 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
             }
         }
 
-        auto GoalManagerClass = GameMode->HasWarmupRequiredPlayerCount() ? FindClass("FortAIGoalManager") : FindObject<UClass>("/Game/AI/GoalSelection/AIGoalManager.AIGoalManager_C");
+        if (!GameMode->AIGoalManager)
+        {
+            auto GoalManagerClass = GameMode->HasWarmupRequiredPlayerCount() ? FindClass("FortAIGoalManager") : FindObject<UClass>("/Game/AI/GoalSelection/AIGoalManager.AIGoalManager_C");
 
-        GameMode->AIGoalManager = UWorld::SpawnActor(GoalManagerClass, FVector{}, GameMode);
+            GameMode->AIGoalManager = UWorld::SpawnActor(GoalManagerClass, FVector{}, GameMode);
+        }
+
+        if (GameMode->HasSpawningPolicyManager() && !GameMode->SpawningPolicyManager)
+        {
+            GameMode->SpawningPolicyManager = UWorld::SpawnActor<AFortAthenaSpawningPolicyManager>(AFortAthenaSpawningPolicyManager::StaticClass(), {});
+            GameMode->SpawningPolicyManager->GameStateAthena = GameState;
+            GameMode->SpawningPolicyManager->GameModeAthena = GameMode;
+        }
 
         auto MissionManagerClass = GameMode->HasWarmupRequiredPlayerCount() ? nullptr : FindObject<UClass>("/Game/Blueprints/MissionManager.MissionManager_C");
 
@@ -535,8 +547,8 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
 
         if ((VersionInfo.FortniteVersion >= 3.5 && VersionInfo.FortniteVersion <= 4.0))
             SetupPlaylist(GameMode, GameState);
-        else if (VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.26)
-            GameState->OnRep_CurrentPlaylistInfo();
+        // else if (VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.26)
+        //     GameState->OnRep_CurrentPlaylistInfo();
 
         if (VersionInfo.FortniteVersion >= 25.20 && GameState->HasMapInfo() && GameState->MapInfo)
         {
@@ -1715,11 +1727,11 @@ void AFortGameMode::FinishWorldInitialization(AFortGameMode* _this, AActor* Worl
     auto GameMode = (AFortGameModeAthena*)_this;
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 
-    // if (VersionInfo.EngineVersion == 4.25)
-    //      SetupPlaylist(GameMode, GameState);
-
     printf("[GameMode] FinishWorldInitialization\n");
     FinishWorldInitializationOG(_this, WorldManager);
+
+    if (VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.26)
+        GameState->OnRep_CurrentPlaylistInfo();
 
     auto AddToTierData = [&](const UDataTable* Table, TArray<FFortLootTierData*>& TempArr)
     {
@@ -1929,6 +1941,12 @@ void AFortGameMode::FinishWorldInitialization(AFortGameMode* _this, AActor* Worl
             }
         }
 
+    if (_this->HasOnPlaylistLootTablesAppliedDelegate())
+    {
+        *(bool*)(__int64(&_this->OnPlaylistLootTablesAppliedDelegate) + 0x10) = true;
+        _this->OnPlaylistLootTablesAppliedDelegate.Process();
+    }
+
     UFortLootPackage::SpawnFloorLootForContainer(FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_Warmup.Tiered_Athena_FloorLoot_Warmup_C"));
     UFortLootPackage::SpawnFloorLootForContainer(FindObject<UClass>(L"/Game/Athena/Environments/Blueprints/Tiered_Athena_FloorLoot_01.Tiered_Athena_FloorLoot_01_C"));
 
@@ -2114,7 +2132,7 @@ void AFortGameMode::FinishWorldInitialization(AFortGameMode* _this, AActor* Worl
         Collectors.Free();
 
         Hooking::ExecHook((UFunction*)FindObject<UFunction>(L"/Game/Athena/Items/Gameplay/VendingMachine/B_Athena_VendingMachine.B_Athena_VendingMachine_C:VendWobble__FinishedFunc"), VendWobble__FinishedFunc,
-                        VendWobble__FinishedFuncOG);
+                          VendWobble__FinishedFuncOG);
     }
     // Hooking::ExecHook((UFunction*)FindObject<UFunction>(L"/Game/Athena/Items/Consumables/Parents/GA_Athena_MedConsumable_Parent.GA_Athena_MedConsumable_Parent_C:Triggered_4C02BFB04B18D9E79F84848FFE6D2C32"),
     // AFortPlayerPawnAthena::Athena_MedConsumable_Triggered, AFortPlayerPawnAthena::Athena_MedConsumable_TriggeredOG);

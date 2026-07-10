@@ -179,6 +179,7 @@
     <ClInclude Include="Erbium\Public\Misc.h" />
     <ClInclude Include="Erbium\Public\table64.hpp" />
     <ClInclude Include="Erbium\Public\Utils.h" />
+    <ClInclude Include="FortniteGame\Public\FortAthenaSpawningPolicyManager.h" />
     <ClInclude Include="FortniteGame\Public\BattleRoyaleGamePhaseLogic.h" />
     <ClInclude Include="FortniteGame\Public\BuildingContainer.h" />
     <ClInclude Include="FortniteGame\Public\BuildingFoundation.h" />
