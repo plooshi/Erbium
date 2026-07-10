@@ -174,7 +174,10 @@ void Events::StartEvent()
 
                 auto EventModeActivator = FindObject<UFortItemDefinition>(L"/EventMode/Items/WID_EventMode_Activator.WID_EventMode_Activator");
 
-                PlayerController->WorldInventory->GiveItem(EventModeActivator);
+                auto Item = PlayerController->WorldInventory->GiveItem(EventModeActivator);
+
+                PlayerController->ServerExecuteInventoryItem(Item->ItemEntry.ItemGuid);
+                PlayerController->ClientEquipItem(Item->ItemEntry.ItemGuid, true);
             }
         }
 
