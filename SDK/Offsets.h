@@ -157,7 +157,7 @@ namespace SDK
         for (auto& sig : sigs)
         {
             auto Scanner = SRef;
-            Scanner.ScanFor(sig, true, 0, 1, VersionInfo.EngineVersion >= 5.0 ? 0x100 : 0x50);
+            Scanner.ScanFor(sig, true, 0, 1, VersionInfo.EngineVersion == 5.0 || VersionInfo.EngineVersion == 5.1 ? 0x100 : 0x50);
 
             if (Scanner.Get() != SRef.Get())
             {
