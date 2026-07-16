@@ -1529,7 +1529,7 @@ void AFortPlayerControllerAthena::InternalPickup(FFortItemEntry* PickupEntry)
         auto itemEntry = WorldInventory->Inventory.ReplicatedEntries.Search([PickupEntry, MaxStack](FFortItemEntry& entry) { return entry.ItemDefinition == PickupEntry->ItemDefinition && entry.Count < MaxStack; },
                                                                             FFortItemEntry::Size());
 
-        if (item)
+        if (item && *item)
         {
             bool bFound = false;
             /*for (int i = 0; i < itemEntry->StateValues.Num(); i++)

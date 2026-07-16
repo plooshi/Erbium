@@ -318,7 +318,7 @@ void UFortKismetLibrary::CloseActor_(UObject* Context, FFrame& Stack)
 
 int32 RemoveItemFromPlayer(AFortPlayerControllerAthena* PlayerController, UFortItemDefinition* ItemDefinition, int32 AmountToRemove, bool bForceRemoval)
 {
-    if (!PlayerController || !ItemDefinition)
+    if (!PlayerController || !PlayerController->WorldInventory || !ItemDefinition)
         return 0;
 
     printf(__FUNCTION__ " %s %d\n", ItemDefinition->Name.ToString().c_str(), AmountToRemove);
@@ -412,9 +412,13 @@ void UFortKismetLibrary::PostLoadHook()
     if (VersionInfo.FortniteVersion <= 16)
     {
         auto K2_RemoveItemFromPlayerFn = GetDefaultObj()->GetFunction("K2_RemoveItemFromPlayer");
-        auto RemoveItemFromPlayer_ = K2_RemoveItemFromPlayerFn->GetNativeFunc();
 
-        Hooking::Hook(RemoveItemFromPlayer_, RemoveItemFromPlayer);
+        if (K2_RemoveItemFromPlayerFn)
+        {
+            auto RemoveItemFromPlayer_ = K2_RemoveItemFromPlayerFn->GetImpl();
+
+            Hooking::Hook(RemoveItemFromPlayer_, RemoveItemFromPlayer);
+        }
     }
     else
     {

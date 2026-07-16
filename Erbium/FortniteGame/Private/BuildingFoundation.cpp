@@ -9,11 +9,6 @@ void ABuildingFoundation::SetDynamicFoundationEnabled_(UObject* Context, FFrame&
     bool bEnabled;
     Stack.StepCompiledIn(&bEnabled);
     Stack.IncrementCode();
-    if (Foundation->LevelToStream.ComparisonIndex == 0 && SelectAndSetupMyBuildingLevel_)
-    {
-        auto SelectAndSetupMyBuildingLevel = (bool (*)(ABuildingFoundation*, void*))SelectAndSetupMyBuildingLevel_;
-        SelectAndSetupMyBuildingLevel(Foundation, nullptr);
-    }
 
     if (Foundation->HasDynamicFoundationRepData())
     {
@@ -23,8 +18,11 @@ void ABuildingFoundation::SetDynamicFoundationEnabled_(UObject* Context, FFrame&
     if (Foundation->HasFoundationEnabledState())
         Foundation->FoundationEnabledState = bEnabled ? 1 : 2;
 
-    // if (VersionInfo.FortniteVersion >= 14 and VersionInfo.FortniteVersion < 15)// Idk why, but it is not called on s14 maybe on more szns
-    Foundation->SetDynamicFoundationTransform(Foundation->GetTransform());
+    if (Foundation->LevelToStream.ComparisonIndex == 0 && SelectAndSetupMyBuildingLevel_)
+    {
+        auto SelectAndSetupMyBuildingLevel = (bool (*)(ABuildingFoundation*, void*))SelectAndSetupMyBuildingLevel_;
+        SelectAndSetupMyBuildingLevel(Foundation, nullptr);
+    }
 }
 
 void ABuildingFoundation::SetDynamicFoundationTransform_(UObject* Context, FFrame& Stack)
@@ -32,7 +30,7 @@ void ABuildingFoundation::SetDynamicFoundationTransform_(UObject* Context, FFram
     auto Foundation = (ABuildingFoundation*)Context;
     auto& Transform = Stack.StepCompiledInRef<FTransform>();
     Stack.IncrementCode();
-
+    
     Foundation->DynamicFoundationTransform = Transform;
     if (Foundation->HasDynamicFoundationRepData())
     {
@@ -43,6 +41,12 @@ void ABuildingFoundation::SetDynamicFoundationTransform_(UObject* Context, FFram
     // Foundation->StreamingData.BoundingBox = Foundation->StreamingBoundingBox;
     if (Foundation->HasDynamicFoundationRepData())
         Foundation->OnRep_DynamicFoundationRepData();
+
+    if (Foundation->LevelToStream.ComparisonIndex == 0 && SelectAndSetupMyBuildingLevel_)
+    {
+        auto SelectAndSetupMyBuildingLevel = (bool (*)(ABuildingFoundation*, void*))SelectAndSetupMyBuildingLevel_;
+        SelectAndSetupMyBuildingLevel(Foundation, nullptr);
+    }
 }
 
 void ABuildingFoundation::Hook()
