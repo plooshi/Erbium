@@ -178,9 +178,9 @@ struct FGameplayEffectContext
 {
 public:
     USCRIPTSTRUCT_COMMON_MEMBERS(FGameplayEffectContext);
-    DEFINE_STRUCT_PROP(Instigator, TWeakObjectPtr<class AActor>);
-    DEFINE_STRUCT_PROP(EffectCauser, TWeakObjectPtr<class AActor>);
-    DEFINE_STRUCT_PROP(InstigatorAbilitySystemComponent, TWeakObjectPtr<class UAbilitySystemComponent>);
+    DEFINE_STRUCT_NEWOBJ_PROP(Instigator, AActor);
+    DEFINE_STRUCT_NEWOBJ_PROP(EffectCauser, AActor);
+    DEFINE_STRUCT_NEWOBJ_PROP(InstigatorAbilitySystemComponent, UAbilitySystemComponent);
     DEFINE_STRUCT_PROP(WorldOrigin, FVector);
 };
 
@@ -188,7 +188,7 @@ struct FFortGameplayEffectContext : FGameplayEffectContext
 {
 public:
     USCRIPTSTRUCT_COMMON_MEMBERS(FFortGameplayEffectContext);
-    DEFINE_STRUCT_PROP(DamageSourceObject, TWeakObjectPtr<class UObject>);
+    DEFINE_STRUCT_NEWOBJ_PROP(DamageSourceObject, UObject);
 };
 
 class UAbilitySystemBlueprintLibrary : UObject

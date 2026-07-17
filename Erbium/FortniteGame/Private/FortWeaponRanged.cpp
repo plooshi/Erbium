@@ -48,10 +48,10 @@ void AFortWeaponRanged::ServerNotifyPawnHit(UObject* Context, FFrame& Stack)
             ASC->BP_ApplyGameplayEffectSpecToTarget(SpecHandle, TargetASC);
         }
     }
-
 }
 
 void AFortWeaponRanged::PostLoadHook()
 {
-    Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerNotifyPawnHit"), ServerNotifyPawnHit);
+    if (VersionInfo.FortniteVersion >= 28.00)
+        Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerNotifyPawnHit"), ServerNotifyPawnHit);
 }

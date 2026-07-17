@@ -11,6 +11,7 @@ public:
 class AFortWeaponRanged : AFortWeapon
 {
 public:
+    UCLASS_COMMON_MEMBERS(AFortWeaponRanged);
     static void ServerNotifyPawnHit(UObject* Context, FFrame& Stack);
     InitPostLoadHooks;
 };
