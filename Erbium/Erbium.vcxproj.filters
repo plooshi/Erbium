@@ -231,6 +231,7 @@
     <ClInclude Include="FortniteGame\Public\FortAthenaSpawningPolicyManager.h">
       <Filter>FortniteGame\Public</Filter>
     </ClInclude>
+    <ClInclude Include="FortniteGame\Public\FortWeaponRanged.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Erbium\Private\dllmain.cpp">
@@ -332,5 +333,6 @@
     <ClCompile Include="Erbium\Private\Hooking.cpp">
       <Filter>Erbium\Private</Filter>
     </ClCompile>
+    <ClCompile Include="FortniteGame\Private\FortWeaponRanged.cpp" />
   </ItemGroup>
 </Project>

@@ -9,10 +9,19 @@ public:
     int Handle;
 };
 
+struct FFortGameplayEffectContainer
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FFortGameplayEffectContainer);
+    DEFINE_STRUCT_PROP(TargetGameplayEffectClasses, TArray<class UClass*>);
+};
+
 class UFortGameplayAbility : public UObject
 {
 public:
     UCLASS_COMMON_MEMBERS(UFortGameplayAbility);
+
+    DEFINE_PROP(EffectContainers, FFortGameplayEffectContainer*);
 
     DEFINE_FUNC(K2_ExecuteGameplayCue, void);
     DEFINE_FUNC(K2_ExecuteGameplayCueWithParams, void);
@@ -132,6 +141,12 @@ public:
     UCLASS_COMMON_MEMBERS(IFortAbilitySystemInterface);
 };
 
+struct FGameplayEffectSpecHandle
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FGameplayEffectSpecHandle);
+};
+
 class UAbilitySystemComponent : public UActorComponent
 {
 public:
@@ -146,7 +161,9 @@ public:
     DEFINE_FUNC(NetMulticast_InvokeGameplayCueExecuted, void);
     DEFINE_FUNC(NetMulticast_InvokeGameplayCueExecuted_WithParams, void);
     DEFINE_FUNC(MakeEffectContext, FGameplayEffectContextHandle);
+    DEFINE_FUNC(MakeOutgoingSpec, FGameplayEffectSpecHandle);
     DEFINE_FUNC(BP_ApplyGameplayEffectToSelf, FActiveGameplayEffectHandle);
+    DEFINE_FUNC(BP_ApplyGameplayEffectSpecToTarget, FActiveGameplayEffectHandle);
     DEFINE_FUNC(UpdateActiveGameplayEffectSetByCallerMagnitude, void);
     DEFINE_FUNC(SetActiveGameplayEffectLevel, void);
 
@@ -155,4 +172,29 @@ public:
     static void InternalServerTryActivateAbility(UAbilitySystemComponent*, FGameplayAbilitySpecHandle, bool, FPredictionKey*, void*);
 
     InitHooks;
+};
+
+struct FGameplayEffectContext
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FGameplayEffectContext);
+    DEFINE_STRUCT_PROP(Instigator, TWeakObjectPtr<class AActor>);
+    DEFINE_STRUCT_PROP(EffectCauser, TWeakObjectPtr<class AActor>);
+    DEFINE_STRUCT_PROP(InstigatorAbilitySystemComponent, TWeakObjectPtr<class UAbilitySystemComponent>);
+    DEFINE_STRUCT_PROP(WorldOrigin, FVector);
+};
+
+struct FFortGameplayEffectContext : FGameplayEffectContext
+{
+public:
+    USCRIPTSTRUCT_COMMON_MEMBERS(FFortGameplayEffectContext);
+    DEFINE_STRUCT_PROP(DamageSourceObject, TWeakObjectPtr<class UObject>);
+};
+
+class UAbilitySystemBlueprintLibrary : UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UAbilitySystemBlueprintLibrary);
+    DEFINE_STATIC_FUNC(EffectContextAddHitResult, void);
+    DEFINE_STATIC_FUNC(GetAbilitySystemComponent, UAbilitySystemComponent*);
 };

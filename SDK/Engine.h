@@ -550,6 +550,8 @@ namespace SDK
         DEFINE_FUNC(K2_AttachToComponent, void);
         DEFINE_FUNC(SetActorHiddenInGame, void);
         DEFINE_FUNC(GetActorEyesViewPoint, void);
+        DEFINE_FUNC(GetInstigator, AActor*);
+
     };
 
     class UGameplayStatics : public SDK::UObject
