@@ -409,7 +409,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                 {
                     bEvent = true;
                     if (VersionInfo.FortniteVersion == 7.30)
-                        ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.PleasentParkFestivus"));
+                        ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.PleasantParkFestivus"));
 
                     break;
                 }
@@ -427,7 +427,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
         }
 
         if (VersionInfo.FortniteVersion == 7.30 && !bEvent)
-            ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.PleasentParkDefault"));
+            ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.PleasantParkDefault"));
 
         if (VersionInfo.FortniteVersion == 17.50)
         {
