@@ -33,11 +33,11 @@ void ABuildingFoundation::SetDynamicFoundationEnabled_(UObject* Context, FFrame&
     if (bEnabled && Foundation->LevelToStream.ComparisonIndex == 0 && SelectAndSetupMyBuildingLevel_)
     {
         auto SelectAndSetupMyBuildingLevel = (bool (*)(ABuildingFoundation*, void*))SelectAndSetupMyBuildingLevel_;
-        auto StreamInMyBuilding = (void (*)(ABuildingFoundation*))StreamInMyBuilding_;
+        auto StreamInMyBuilding = (void (*)(ABuildingFoundation*, bool))StreamInMyBuilding_;
         
         if (SelectAndSetupMyBuildingLevel(Foundation, nullptr))
             if (StreamInMyBuilding_)
-                StreamInMyBuilding(Foundation);
+                StreamInMyBuilding(Foundation, false);
     }
 }
 
