@@ -396,7 +396,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
             {
                 auto& PlaylistTag = Playlist->GameplayTagContainer.GameplayTags.Get(i, FGameplayTag::Size());
 
-                if (PlaylistTag.TagName.ToString() == "Athena.Playlist.SpecialEvent")
+                if (PlaylistTag.TagName.ToString() == "Athena.Playlist.SpecialEvent" || PlaylistTag.TagName.ToString() == "Athena.Playlist.Concert")
                 {
                     bEvent = true;
                     if (VersionInfo.FortniteVersion == 7.30)
