@@ -39,6 +39,7 @@ public:
     DEFINE_PROP(DynamicFoundationType, uint8);
     DEFINE_PROP(LevelToStream, FName);
     DEFINE_BITFIELD_PROP(bServerStreamedInLevel);
+    DEFINE_BITFIELD_PROP(bFoundationEnabled);
 
     DEFINE_FUNC(OnRep_DynamicFoundationRepData, void);
     // DEFINE_FUNC(SetDynamicFoundationTransform, void);

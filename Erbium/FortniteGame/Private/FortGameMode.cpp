@@ -33,20 +33,11 @@ void ShowFoundation(const ABuildingFoundation* Foundation)
     Foundation->SetDynamicFoundationEnabled(true);*/
     // Foundation->SetDynamicFoundationTransform(Foundation->GetTransform());
 
-    if (Foundation->HasDynamicFoundationType())
-        Foundation->DynamicFoundationType = 0;
     if (Foundation->HasbServerStreamedInLevel())
     {
-        Foundation->bServerStreamedInLevel = true;
-        Foundation->OnRep_ServerStreamedInLevel();
+        //Foundation->bServerStreamedInLevel = true;
+        //Foundation->OnRep_ServerStreamedInLevel();
     }
-    if (Foundation->HasDynamicFoundationRepData())
-    {
-        Foundation->DynamicFoundationRepData.EnabledState = 1;
-        Foundation->OnRep_DynamicFoundationRepData();
-    }
-    if (Foundation->HasFoundationEnabledState())
-        Foundation->FoundationEnabledState = 1;
 
     Foundation->SetDynamicFoundationEnabled(true);
 }
@@ -409,7 +400,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                 {
                     bEvent = true;
                     if (VersionInfo.FortniteVersion == 7.30)
-                        ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.PleasantParkFestivus"));
+                        ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.PleasentParkFestivus"));
 
                     break;
                 }
@@ -427,7 +418,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
         }
 
         if (VersionInfo.FortniteVersion == 7.30 && !bEvent)
-            ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Apollo/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.PleasantParkDefault"));
+            ShowFoundation(FindObject<ABuildingFoundation>("/Game/Athena/Maps/Athena_POI_Foundations.Athena_POI_Foundations.PersistentLevel.PleasentParkDefault"));
 
         if (VersionInfo.FortniteVersion == 17.50)
         {

@@ -10,6 +10,8 @@ void ABuildingFoundation::SetDynamicFoundationEnabled_(UObject* Context, FFrame&
     Stack.StepCompiledIn(&bEnabled);
     Stack.IncrementCode();
 
+    if (Foundation->HasbFoundationEnabled())
+        Foundation->bFoundationEnabled = bEnabled;
     if (Foundation->HasDynamicFoundationRepData())
     {
         Foundation->DynamicFoundationRepData.EnabledState = bEnabled ? 1 : 2;
