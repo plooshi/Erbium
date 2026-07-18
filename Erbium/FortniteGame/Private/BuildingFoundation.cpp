@@ -2,6 +2,7 @@
 #include "../Public/BuildingFoundation.h"
 
 uint64_t SelectAndSetupMyBuildingLevel_ = 0;
+uint64_t StreamInMyBuilding_ = 0;
 
 void ABuildingFoundation::SetDynamicFoundationEnabled_(UObject* Context, FFrame& Stack)
 {
@@ -11,19 +12,32 @@ void ABuildingFoundation::SetDynamicFoundationEnabled_(UObject* Context, FFrame&
     Stack.IncrementCode();
 
     if (Foundation->HasbFoundationEnabled())
+    {
+        auto OldEnabled = Foundation->bFoundationEnabled;
+
         Foundation->bFoundationEnabled = bEnabled;
+
+        Foundation->OnRep_FoundationEnabled(OldEnabled);
+    }
     if (Foundation->HasDynamicFoundationRepData())
     {
         Foundation->DynamicFoundationRepData.EnabledState = bEnabled ? 1 : 2;
         Foundation->OnRep_DynamicFoundationRepData();
     }
     if (Foundation->HasFoundationEnabledState())
+    {
         Foundation->FoundationEnabledState = bEnabled ? 1 : 2;
+        Foundation->OnRep_FoundationEnabledState();
+    }
 
-    if (Foundation->LevelToStream.ComparisonIndex == 0 && SelectAndSetupMyBuildingLevel_)
+    if (bEnabled && Foundation->LevelToStream.ComparisonIndex == 0 && SelectAndSetupMyBuildingLevel_)
     {
         auto SelectAndSetupMyBuildingLevel = (bool (*)(ABuildingFoundation*, void*))SelectAndSetupMyBuildingLevel_;
-        SelectAndSetupMyBuildingLevel(Foundation, nullptr);
+        auto StreamInMyBuilding = (void (*)(ABuildingFoundation*))StreamInMyBuilding_;
+        
+        if (SelectAndSetupMyBuildingLevel(Foundation, nullptr))
+            if (StreamInMyBuilding_)
+                StreamInMyBuilding(Foundation);
     }
 }
 
@@ -32,7 +46,7 @@ void ABuildingFoundation::SetDynamicFoundationTransform_(UObject* Context, FFram
     auto Foundation = (ABuildingFoundation*)Context;
     auto& Transform = Stack.StepCompiledInRef<FTransform>();
     Stack.IncrementCode();
-    
+
     Foundation->DynamicFoundationTransform = Transform;
     if (Foundation->HasDynamicFoundationRepData())
     {
@@ -43,12 +57,6 @@ void ABuildingFoundation::SetDynamicFoundationTransform_(UObject* Context, FFram
     // Foundation->StreamingData.BoundingBox = Foundation->StreamingBoundingBox;
     if (Foundation->HasDynamicFoundationRepData())
         Foundation->OnRep_DynamicFoundationRepData();
-
-    if (Foundation->LevelToStream.ComparisonIndex == 0 && SelectAndSetupMyBuildingLevel_)
-    {
-        auto SelectAndSetupMyBuildingLevel = (bool (*)(ABuildingFoundation*, void*))SelectAndSetupMyBuildingLevel_;
-        SelectAndSetupMyBuildingLevel(Foundation, nullptr);
-    }
 }
 
 void ABuildingFoundation::Hook()
@@ -57,6 +65,7 @@ void ABuildingFoundation::Hook()
         return;
 
     SelectAndSetupMyBuildingLevel_ = FindSelectAndSetupMyBuildingLevel();
+    StreamInMyBuilding_ = FindStreamInMyBuilding();
 
     Hooking::ExecHook(GetDefaultObj()->GetFunction("SetDynamicFoundationEnabled"), SetDynamicFoundationEnabled_);
     Hooking::ExecHook(GetDefaultObj()->GetFunction("SetDynamicFoundationTransform"), SetDynamicFoundationTransform_);

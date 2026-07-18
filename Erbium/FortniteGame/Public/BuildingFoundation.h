@@ -46,6 +46,8 @@ public:
     DEFINE_FUNC(SetDynamicFoundationEnabled, void);
     DEFINE_FUNC(OnRep_ServerStreamedInLevel, void);
     DEFINE_FUNC(OnRep_LevelToStream, void);
+    DEFINE_FUNC(OnRep_FoundationEnabledState, void);
+    DEFINE_FUNC(OnRep_FoundationEnabled, void);
 
     static void SetDynamicFoundationEnabled_(UObject*, FFrame&);
     static void SetDynamicFoundationTransform_(UObject*, FFrame&);

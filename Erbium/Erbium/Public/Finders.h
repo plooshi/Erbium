@@ -80,6 +80,7 @@ uint64 FindFinishWorldInitialization();
 uint64 FindSetIsDoorOpen();
 uint64 FindActivatePhase();
 uint64 FindSelectAndSetupMyBuildingLevel();
+uint64 FindStreamInMyBuilding();
 
 template <typename CVarT>
 CVarT* FindCVar(const wchar_t* CVarStr)
