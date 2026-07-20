@@ -150,6 +150,8 @@ public:
     DefHookOg(void, EndSkydiving, AFortPlayerPawnAthena*);
     DefUHookOg(ServerReviveFromDBNO);
     DefUHookOg(ServerThrowCarriedPlayer_);
+    static void SetIsInsideSafeZone(AFortPlayerPawnAthena* _this, bool bNewValue);
+    static void UpdateOutsideSafeZone(AFortPlayerPawnAthena* _this);
 
     InitPostLoadHooks;
 };

@@ -550,7 +550,8 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                 auto InitializeFlightPath = (void (*)(AFortAthenaMapInfo*, AFortGameStateAthena*, UFortGameStateComponent_BattleRoyaleGamePhaseLogic*, bool, double, float, float))FindInitializeFlightPath();
                 if (InitializeFlightPath)
                     InitializeFlightPath(GameState->MapInfo, GameState, GamePhaseLogic, false, 0.f, 0.f, 360.f);
-                UFortGameStateComponent_BattleRoyaleGamePhaseLogic::GenerateStormCircles(GameState->MapInfo);
+
+                GamePhaseLogic->InitializeSafeZoneLocations();
             }
         }
 
@@ -710,12 +711,8 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
                     if (!Row)
                         continue;
 
-                    for (int i = 0; i < Row->Keys.Num(); i++)
-                    {
-                        auto& Key = Row->Keys.Get(i, FSimpleCurveKey::Size());
-
+                    for (auto& Key : Row->Keys)
                         Key.Value = 0.f;
-                    }
                 }
             }
         }

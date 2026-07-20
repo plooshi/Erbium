@@ -9,10 +9,8 @@ struct FRealCurve
 struct FSimpleCurveKey
 {
 public:
-    USCRIPTSTRUCT_COMMON_MEMBERS(FSimpleCurveKey);
-
-    DEFINE_STRUCT_PROP(Time, float);
-    DEFINE_STRUCT_PROP(Value, float);
+    float Time;
+    float Value;
 };
 
 struct FSimpleCurve : FRealCurve

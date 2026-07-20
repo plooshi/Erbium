@@ -39,6 +39,7 @@ public:
     static inline bool bEnableZones = true;
     static inline bool bPausedZone = false;
     static inline bool bStartAircraft = false;
+    static inline TArray<FVector> SafeZoneLocations;
 
     DEFINE_PROP(WarmupCountdownStartTime, float);
     DEFINE_PROP(WarmupCountdownEndTime, float);
@@ -72,8 +73,8 @@ public:
     void Tick();
     AFortSafeZoneIndicator* SetupSafeZoneIndicator();
     void StartNewSafeZonePhase(int NewSafeZonePhase, bool bInitial = false);
-    static void GenerateStormCircles(AFortAthenaMapInfo* MapInfo);
     void StartAircraftPhase();
+    void InitializeSafeZoneLocations();
 
     InitHooks;
 };

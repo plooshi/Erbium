@@ -110,11 +110,6 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
                 AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(SpecHandle, FGameplayTag(FName(L"SetByCaller.StormCampingDamage")), 1.f);
             }
         }
-
-        FortPawn->bIsInAnyStorm = false;
-        FortPawn->OnRep_IsInAnyStorm();
-        FortPawn->bIsInsideSafeZone = true;
-        FortPawn->OnRep_IsInsideSafeZone();
     }
 
     auto Interface = PlayerController->PlayerState->GetInterface(IFortAbilitySystemInterface::StaticClass());

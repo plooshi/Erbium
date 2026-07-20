@@ -55,214 +55,6 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::HandleMatchHasStarted(A
     }
 }
 
-constexpr float KINDA_SMALL_NUMBER = 1.e-4f;
-
-// thanks mariki
-struct FStormCircle
-{
-    FVector Center;
-    float Radius;
-};
-
-std::vector<FStormCircle> StormCircles;
-
-struct FVector2D
-{
-public:
-    double X;
-    double Y;
-};
-
-inline FVector2D GetSafeNormal(FVector2D v)
-{
-    double sizeSq = v.X * v.X + v.Y * v.Y;
-    if (sizeSq > KINDA_SMALL_NUMBER)
-    {
-        double inv = 1. / sqrt(sizeSq);
-        return FVector2D(v.X * inv, v.Y * inv);
-    }
-    return FVector2D(0.f, 0.f);
-}
-
-inline FVector GetSafeNormal(FVector v)
-{
-    double sizeSq = v.X * v.X + v.Y * v.Y + v.Z * v.Z;
-    if (sizeSq > KINDA_SMALL_NUMBER)
-    {
-        double inv = 1. / sqrt(sizeSq);
-        return FVector(v.X * inv, v.Y * inv, v.Z * inv);
-    }
-    return FVector(0.f, 0.f, 0.f);
-}
-
-inline bool IsNearlyZero(FVector2D v)
-{
-    return (v.X * v.X + v.Y * v.Y) < KINDA_SMALL_NUMBER * KINDA_SMALL_NUMBER;
-}
-
-FVector ClampToPlayableBounds(const FVector& Candidate, float Radius, const FBoxSphereBounds& Bounds)
-{
-    FVector Clamped = Candidate;
-
-    Clamped.X = std::clamp(Clamped.X, Bounds.Origin.X - Bounds.BoxExtent.X + Radius, Bounds.Origin.X + Bounds.BoxExtent.X - Radius);
-    Clamped.Y = std::clamp(Clamped.Y, Bounds.Origin.Y - Bounds.BoxExtent.Y + Radius, Bounds.Origin.Y + Bounds.BoxExtent.Y - Radius);
-
-    return Clamped;
-}
-
-#define INV_PI (0.31830988618f)
-#define HALF_PI (1.57079632679f)
-#define PI (3.1415926535897932f)
-
-float RadiansToDegrees(float Radians)
-{
-    return Radians * (180.0f / PI);
-}
-inline void SinCos(float* ScalarSin, float* ScalarCos, float Value)
-{
-    // Map Value to y in [-pi,pi], x = 2*pi*quotient + remainder.
-    float quotient = (INV_PI * 0.5f) * Value;
-    if (Value >= 0.0f)
-    {
-        quotient = (float)((int)(quotient + 0.5f));
-    }
-    else
-    {
-        quotient = (float)((int)(quotient - 0.5f));
-    }
-    float y = Value - (2.0f * PI) * quotient;
-
-    // Map y to [-pi/2,pi/2] with sin(y) = sin(Value).
-    float sign;
-    if (y > HALF_PI)
-    {
-        y = PI - y;
-        sign = -1.0f;
-    }
-    else if (y < -HALF_PI)
-    {
-        y = -PI - y;
-        sign = -1.0f;
-    }
-    else
-    {
-        sign = +1.0f;
-    }
-
-    float y2 = y * y;
-
-    // 11-degree minimax approximation
-    *ScalarSin = (((((-2.3889859e-08f * y2 + 2.7525562e-06f) * y2 - 0.00019840874f) * y2 + 0.0083333310f) * y2 - 0.16666667f) * y2 + 1.0f) * y;
-
-    // 10-degree minimax approximation
-    float p = ((((-2.6051615e-07f * y2 + 2.4760495e-05f) * y2 - 0.0013888378f) * y2 + 0.041666638f) * y2 - 0.5f) * y2 + 1.0f;
-    *ScalarCos = sign * p;
-}
-
-void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::GenerateStormCircles(AFortAthenaMapInfo* MapInfo)
-{
-    if (StormCircles.size() > 0)
-        return;
-
-    StormCircles.clear();
-
-    auto FRandSeeded = [&]() { return (float)rand() / 32767.f; };
-
-    float Radii[13] = { 150000, 120000, 95000, 70000, 55000, 32500, 20000, 10000, 5000, 2500, 1650, 1090, 0 };
-
-    FVector FirstCenter = MapInfo->GetMapCenter();
-    StormCircles.push_back(FStormCircle{ FirstCenter, Radii[0] });
-
-    float DirAngle = FRandSeeded() * 2.f * PI;
-    float DirSin, DirCos;
-    SinCos(&DirSin, &DirCos, DirAngle);
-    FVector2D Dir(DirCos, DirSin);
-    /*for (int i = 1; i < 5; ++i)
-    {
-            FVector PrevCenter = StormCircles[i - 1].Center;
-            float rPrev = StormCircles[i - 1].Radius;
-            float rNew = Radii[i];
-
-            double baseAngle = atan2(Dir.Y, Dir.X);
-            float delta = (FRandSeeded() - 0.5f) * (PI / 36.f);
-            double angle = baseAngle + delta;
-
-            FVector2D MoveDir(cos(angle), sin(angle));
-            MoveDir = GetSafeNormal(MoveDir);
-
-            float f_i = 0.4f + FRandSeeded() * 0.5f;
-            float Offset = f_i * (rPrev - rNew);
-
-            FVector NewCenter = PrevCenter + FVector(MoveDir.X, MoveDir.Y, 0.f) * Offset;
-
-            StormCircles.push_back({ NewCenter, rNew });
-            Dir = MoveDir;
-    }*/
-
-    /*for (int i = 5; i < 8; ++i)
-    {
-            FVector PrevCenter = StormCircles[i - 1].Center;
-            float rPrev = StormCircles[i - 1].Radius;
-            float rNew = Radii[i];
-
-            float angle = FRandSeeded() * 2.f * PI;
-            float s, c; SinCos(&s, &c, angle);
-            FVector2D RandDir(c, s);
-            RandDir = GetSafeNormal(RandDir);
-
-            float d = sqrt(rPrev * rPrev - rNew * rNew);;
-            FVector NewCenter = PrevCenter + FVector(RandDir.X, RandDir.Y, 0.f) * d;
-
-            NewCenter = ClampToPlayableBounds(NewCenter, rNew, MapInfo->CachedPlayableBoundsForClients);
-
-            StormCircles.push_back(FStormCircle{ NewCenter, rNew });
-    }*/
-
-    // FVector RefCenter = StormCircles[6].Center;
-    // float RefRadius = StormCircles[6].Radius;
-
-    // for (int i = 8; i < 13; ++i)
-    for (int i = 1; i < 7; ++i)
-    {
-        FVector RefCenter = StormCircles[i - 1].Center;
-        float RefRadius = StormCircles[i - 1].Radius;
-        float angle = FRandSeeded() * 2.f * PI;
-        float s, c;
-        SinCos(&s, &c, angle);
-        float Dist = FRandSeeded() * RefRadius * 0.4f;
-        FVector2D RandDir(c, s);
-        RandDir = GetSafeNormal(RandDir);
-
-        FVector NewCenter = RefCenter + FVector(RandDir.X, RandDir.Y, 0.f) * Dist;
-
-        NewCenter = ClampToPlayableBounds(NewCenter, Radii[i], MapInfo->CachedPlayableBoundsForClients);
-
-        StormCircles.push_back(FStormCircle{ NewCenter, Radii[i] });
-    }
-
-    for (int i = 7; i < 13; ++i)
-    {
-        FVector PrevCenter = StormCircles[i - 1].Center;
-        float rPrev = StormCircles[i - 1].Radius;
-        float rNew = Radii[i];
-
-        float angle = FRandSeeded() * 2.f * PI;
-        float s, c;
-        SinCos(&s, &c, angle);
-        FVector2D RandDir(c, s);
-        RandDir = GetSafeNormal(RandDir);
-
-        float d = sqrt(rPrev * rPrev - rNew * rNew);
-        ;
-        FVector NewCenter = PrevCenter + FVector(RandDir.X, RandDir.Y, 0.f) * d;
-
-        NewCenter = ClampToPlayableBounds(NewCenter, rNew, MapInfo->CachedPlayableBoundsForClients);
-
-        StormCircles.push_back(FStormCircle{ NewCenter, rNew });
-    }
-}
-// end
-
 AFortSafeZoneIndicator* UFortGameStateComponent_BattleRoyaleGamePhaseLogic::SetupSafeZoneIndicator()
 {
     // thanks heliato
@@ -307,7 +99,7 @@ AFortSafeZoneIndicator* UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Setu
                 if (FFortSafeZonePhaseInfo::HasUsePOIStormCenter())
                     PhaseInfo->UsePOIStormCenter = false;
 
-                PhaseInfo->Center = StormCircles[(int)i].Center;
+                PhaseInfo->Center = SafeZoneLocations[(int)i];
 
                 Array.Add(*PhaseInfo, FFortSafeZonePhaseInfo::Size());
                 free(PhaseInfo);
@@ -477,14 +269,7 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::StartAircraftPhase()
 
             GameState->DefaultParachuteDeployTraceForGroundDistance = 2500.f;
 
-            GenerateStormCircles(GameState->MapInfo);
-
-            if (StormCircles.size() < FConfiguration::LateGameZone)
-            {
-                printf("LateGame is not supported on this version!\n");
-                return;
-            }
-            FVector Loc = StormCircles[FConfiguration::LateGameZone + 2].Center;
+            FVector Loc = SafeZoneLocations[FConfiguration::LateGameZone + 2];
             Loc.Z = 17500.f;
 
             FlightInfo.FlightSpeed = 0.f;
@@ -758,6 +543,79 @@ void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Tick()
                 }
             }
         }
+    }
+}
+
+struct FVector4 // Size: 0x20
+{
+public:
+    double X; // 0x0 // Size: 0x8
+    double Y; // 0x8 // Size: 0x8
+    double Z; // 0x10 // Size: 0x8
+    double W; // 0x18 // Size: 0x8
+};
+
+void UFortGameStateComponent_BattleRoyaleGamePhaseLogic::InitializeSafeZoneLocations()
+{
+    auto GameState = (AFortGameStateAthena*)UWorld::GetWorld()->GameState;
+    auto Playlist = (UFortPlaylistAthena*)GameState->CurrentPlaylistInfo.BasePlaylist;
+
+    auto SafeZoneBlacklist = Playlist->SafeZoneLocationBlacklist.Get();
+
+    if (!SafeZoneBlacklist)
+        SafeZoneBlacklist = FindObject<UCurveTable>(L"/Game/Athena/Balance/DataTables/AthenaSafeZoneBlacklist.AthenaSafeZoneBlacklist");
+
+    auto& SZBCurve = (TMap<FName, FRealCurve*>&)SafeZoneBlacklist->RowMap;
+
+    TArray<FVector4> BlacklistLocations;
+
+    for (auto& [Key, Curve] : SZBCurve)
+    {
+        FSimpleCurve* Row = (FSimpleCurve*)Curve;
+
+        if (!Row)
+            continue;
+
+        FVector4 Loc{};
+
+        for (auto& Key : Row->Keys)
+        {
+            if (Key.Time == 0.f)
+                Loc.X = Key.Value;
+            else if (Key.Time == 1.f)
+                Loc.Y = Key.Value;
+            else if (Key.Time == 2.f)
+                Loc.Z = Key.Value;
+            else if (Key.Time == 3.f)
+                Loc.W = Key.Value;
+        }
+
+        if (Loc.X == 0 && Loc.Y == 0 && Loc.Z == 0 && Loc.W == 0)
+            continue;
+
+        BlacklistLocations.Add(Loc);
+    }
+
+    auto ZeroVector = FVector(0, 0, 0);
+    auto SafeZoneCount = (float)Playlist->LastSafeZoneIndex;
+
+    if (SafeZoneCount == -1)
+        SafeZoneCount = GameState->MapInfo->SafeZoneDefinition.Count.Evaluate(0.f);
+    else
+        SafeZoneCount++;
+
+    auto Center = GameState->MapInfo->GetMapCenter();
+
+    SafeZoneLocations.Clear();
+    SafeZoneLocations.Reserve((int)SafeZoneCount);
+
+    for (int i = (int)(SafeZoneCount - 1); i >= 0; i--)
+    {
+        auto Params = GameState->MapInfo->ConstructSafeZoneLocationParams(i, Center, i == SafeZoneCount - 1 ? ZeroVector : SafeZoneLocations[i + 1], i == SafeZoneCount - 1, 0);
+
+        auto Location = GameState->MapInfo->PickSafeZoneLocation(Params, BlacklistLocations);
+
+        SafeZoneLocations[i] = Location;
     }
 }
 

@@ -106,6 +106,12 @@ public:
     double SphereRadius;      // 0x0030(0x0008)(Edit, BlueprintVisible, ZeroConstructor, SaveGame, IsPlainOldData, NoDestructor, HasGetValueTypeHash, NativeAccessSpecifierPublic)
 };
 
+struct FSafeZoneLocationParams
+{
+public:
+    uint8_t Padding[0x100];
+};
+
 class AFortAthenaMapInfo : public AActor
 {
 public:
@@ -123,6 +129,8 @@ public:
     DEFINE_PROP(SupplyDropClass, TSubclassOf<UObject>);
 
     DEFINE_FUNC(GetMapCenter, FVector);
+    DEFINE_FUNC(ConstructSafeZoneLocationParams, FSafeZoneLocationParams);
+    DEFINE_FUNC(PickSafeZoneLocation, FVector);
 };
 
 class AFortVolumeManager : public AActor

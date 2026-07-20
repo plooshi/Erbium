@@ -585,6 +585,18 @@ void AFortPlayerPawnAthena::ServerThrowCarriedPlayer_(UObject* Context, FFrame& 
     Pawn->LocalThrowCarriedPlayer();
 }
 
+void AFortPlayerPawnAthena::SetIsInsideSafeZone(AFortPlayerPawnAthena* _this, bool bNewValue)
+{
+    _this->bIsInsideSafeZone = bNewValue;
+    _this->OnRep_IsInsideSafeZone();
+}
+
+void AFortPlayerPawnAthena::UpdateOutsideSafeZone(AFortPlayerPawnAthena* _this)
+{
+    _this->bIsInsideSafeZone = !_this->bIsInAnyStorm;
+    _this->OnRep_IsInsideSafeZone();
+}
+
 void AFortPlayerPawnAthena::PostLoadHook()
 {
     OnRep_ZiplineState = FindOnRep_ZiplineState();
@@ -617,4 +629,24 @@ void AFortPlayerPawnAthena::PostLoadHook()
 
     Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerReviveFromDBNO"), ServerReviveFromDBNO);
     Hooking::ExecHook(GetDefaultObj()->GetFunction("ServerThrowCarriedPlayer"), ServerThrowCarriedPlayer_, ServerThrowCarriedPlayer_OG);
+
+    // zone fix for s18+
+    if (VersionInfo.FortniteVersion >= 18)
+    {
+        auto SetIsInsideSafeZoneBase = Memcury::Scanner::FindPattern("74 ? 33 D2 48 8B ? E8 ? ? ? ? 48 8B ? B2 01 48 8B ? FF 90"); // mov dl, 1 variant
+
+        if (!SetIsInsideSafeZoneBase.IsValid())
+            SetIsInsideSafeZoneBase = Memcury::Scanner::FindPattern("74 ? 33 D2 48 8B ? E8 ? ? ? ? 48 8B ? 41 8A ? 48 8B ? FF 90"); // mov dl, rXXb variant
+
+        if (!SetIsInsideSafeZoneBase.IsValid())
+            SetIsInsideSafeZoneBase = Memcury::Scanner::FindPattern("0F 84 ? ? ? ? 33 D2 48 8B ? E8 ? ? ? ? 48 8B ? B2 01 48 8B ? FF 90"); // imm32 jz variant: first two should find it, but just incase.
+
+        if (SetIsInsideSafeZoneBase.IsValid())
+        {
+            auto SetIsInsideSafeZoneVftPtr = SetIsInsideSafeZoneBase.ScanFor({ 0xFF, 0x90 }).AbsoluteOffset(2).Get();
+
+            Hooking::Hook<AFortPlayerPawnAthena>(*(uint32_t*)SetIsInsideSafeZoneVftPtr / 8, SetIsInsideSafeZone);
+            Hooking::Hook<AFortPlayerPawnAthena>(*(uint32_t*)SetIsInsideSafeZoneVftPtr / 8 + 1, UpdateOutsideSafeZone);
+        }
+    }
 }
