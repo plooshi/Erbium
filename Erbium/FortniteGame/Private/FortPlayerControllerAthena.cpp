@@ -2380,7 +2380,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
             FinalLoc.X += cos(FinalAngle) * 100.f;
             FinalLoc.Y += sin(FinalAngle) * 100.f;
 
-            auto Pickup = AFortInventory::SpawnPickup(FinalLoc, ItemDefinition, Count, 0, EFortPickupSourceTypeFlag::GetOther(), EFortPickupSpawnSource::GetUnset(), Pawn);
+            auto Pickup = AFortInventory::SpawnPickup(FinalLoc, ItemDefinition, Count, -1, EFortPickupSourceTypeFlag::GetOther(), EFortPickupSpawnSource::GetUnset(), Pawn);
 
             Pawn->ServerHandlePickup(Pickup, Pickup->PickupLocationData.FlyTime, FVector(), true);
             PlayerController->ClientMessage(FString(L"Gave item!"), FName(), 1.f);
@@ -2408,7 +2408,7 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 
             if (PlayerController->Pawn)
             {
-                AFortInventory::SpawnPickup(PlayerController->Pawn->K2_GetActorLocation(), ItemDefinition, Count, 0, EFortPickupSourceTypeFlag::GetTossed(), EFortPickupSpawnSource::GetUnset(),
+                AFortInventory::SpawnPickup(PlayerController->Pawn->K2_GetActorLocation(), ItemDefinition, Count, -1, EFortPickupSourceTypeFlag::GetTossed(), EFortPickupSpawnSource::GetUnset(),
                                             PlayerController->Pawn);
                 PlayerController->ClientMessage(FString(L"Spawned pickup!"), FName(), 1.f);
             }

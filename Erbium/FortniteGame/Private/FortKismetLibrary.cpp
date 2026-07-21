@@ -53,7 +53,7 @@ void UFortKismetLibrary::K2_SpawnPickupInWorld(UObject* Object, FFrame& Stack, A
         Stack.StepCompiledIn(&bPickupOnlyRelevantToOwner);
     Stack.IncrementCode();
 
-    *Ret = AFortInventory::SpawnPickup(Position, ItemDefinition, NumberToSpawn, 0, SourceType, Source, OptionalOwnerPC ? OptionalOwnerPC->MyFortPawn : nullptr, bToss, bRandomRotation);
+    *Ret = AFortInventory::SpawnPickup(Position, ItemDefinition, NumberToSpawn, -1, SourceType, Source, OptionalOwnerPC ? OptionalOwnerPC->MyFortPawn : nullptr, bToss, bRandomRotation);
 }
 
 bool bHasItemVariantGuid2 = false;
@@ -198,7 +198,7 @@ void UFortKismetLibrary::SpawnItemVariantPickupInWorld(UObject* Object, FFrame& 
     Stack.StepCompiledIn(&Params);
     Stack.IncrementCode();
 
-    *Ret = AFortInventory::SpawnPickup(FSpawnItemVariantParams::HasPosition() ? Params.Position : Params.position, Params.WorldItemDefinition, Params.NumberToSpawn, 0, Params.SourceType, Params.Source, nullptr,
+    *Ret = AFortInventory::SpawnPickup(FSpawnItemVariantParams::HasPosition() ? Params.Position : Params.position, Params.WorldItemDefinition, Params.NumberToSpawn, -1, Params.SourceType, Params.Source, nullptr,
                                        Params.bToss, Params.bRandomRotation);
 }
 
@@ -267,7 +267,7 @@ void UFortKismetLibrary::K2_SpawnPickupInWorldWithClassAndItemEntry(UObject* Con
     Stack.StepCompiledIn(&bPickupOnlyRelevantToOwner);
     Stack.IncrementCode();
 
-    *Ret = AFortInventory::SpawnPickup(Position, Entry->ItemDefinition, Entry->Count, Entry->Level, SourceType, Source, OptionalOwnerPC ? OptionalOwnerPC->MyFortPawn : nullptr, bToss, bRandomRotation);
+    *Ret = AFortInventory::SpawnPickup(Position, Entry->ItemDefinition, Entry->Count, Entry->LoadedAmmo, SourceType, Source, OptionalOwnerPC ? OptionalOwnerPC->MyFortPawn : nullptr, bToss, bRandomRotation);
     free(Entry);
 }
 
