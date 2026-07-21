@@ -3250,7 +3250,7 @@ uint64 FindSelectAndSetupMyBuildingLevel()
 
 uint64 FindStreamInMyBuilding()
 {
-    auto sRef = Memcury::Scanner::FindStringRef(L"%s.%s trying to load invalid level %s", false, 0, VersionInfo.FortniteVersion >= 19, false);
+    auto sRef = Memcury::Scanner::FindStringRef(L"%s.%s trying to load invalid level %s", false, 0, VersionInfo.FortniteVersion >= 17, false);
 
     if (!sRef.IsValid())
         return 0;
