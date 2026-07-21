@@ -633,10 +633,10 @@ void AFortPlayerPawnAthena::PostLoadHook()
     // zone fix for s18+
     if (VersionInfo.FortniteVersion >= 18)
     {
-        auto SetIsInsideSafeZoneBase = Memcury::Scanner::FindPattern("74 ? 33 D2 48 8B ? E8 ? ? ? ? 48 8B ? B2 01 48 8B ? FF 90"); // mov dl, 1 variant
+        auto SetIsInsideSafeZoneBase = Memcury::Scanner::FindPattern("74 ? 33 D2 48 8B ? E8 ? ? ? ? 48 8B ? 41 8A ? 48 8B ? FF 90"); // mov dl, rXXb variant
 
         if (!SetIsInsideSafeZoneBase.IsValid())
-            SetIsInsideSafeZoneBase = Memcury::Scanner::FindPattern("74 ? 33 D2 48 8B ? E8 ? ? ? ? 48 8B ? 41 8A ? 48 8B ? FF 90"); // mov dl, rXXb variant
+            SetIsInsideSafeZoneBase = Memcury::Scanner::FindPattern("74 ? 33 D2 48 8B ? E8 ? ? ? ? 48 8B ? B2 01 48 8B ? FF 90"); // mov dl, 1 variant
 
         if (!SetIsInsideSafeZoneBase.IsValid())
             SetIsInsideSafeZoneBase = Memcury::Scanner::FindPattern("0F 84 ? ? ? ? 33 D2 48 8B ? E8 ? ? ? ? 48 8B ? B2 01 48 8B ? FF 90"); // imm32 jz variant: first two should find it, but just incase.
