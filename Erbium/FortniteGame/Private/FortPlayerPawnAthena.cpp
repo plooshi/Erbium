@@ -587,12 +587,18 @@ void AFortPlayerPawnAthena::ServerThrowCarriedPlayer_(UObject* Context, FFrame& 
 
 void AFortPlayerPawnAthena::SetIsInsideSafeZone(AFortPlayerPawnAthena* _this, bool bNewValue)
 {
+    if (_this->bIsInsideSafeZone == bNewValue)
+        return;
+    
     _this->bIsInsideSafeZone = bNewValue;
     _this->OnRep_IsInsideSafeZone();
 }
 
 void AFortPlayerPawnAthena::UpdateOutsideSafeZone(AFortPlayerPawnAthena* _this)
 {
+    if (_this->bIsInsideSafeZone == !_this->bIsInAnyStorm)
+        return;
+    
     _this->bIsInsideSafeZone = !_this->bIsInAnyStorm;
     _this->OnRep_IsInsideSafeZone();
 }
