@@ -3247,14 +3247,12 @@ uint64 FindSelectAndSetupMyBuildingLevel()
     return 0;
 }
 
-
 uint64 FindStreamInMyBuilding()
 {
-    if (VersionInfo.EngineVersion == 4.27)
-        return Memcury::Scanner::FindPattern(
-            "48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 55 41 54 41 55 41 56 41 57 48 8D 6C 24 ? 48 81 EC ? ? ? ? 0F 29 70 ? 0F 29 78 ? 44 0F 29 40 ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 45 ? 45 33 F6").Get();
+    auto sRef = Memcury::Scanner::FindStringRef(L"&ABuildingFoundation::OnLevelStreamedIn");
 
-    auto sRef = Memcury::Scanner::FindStringRef(L"%s.%s trying to load invalid level %s", false, 0, VersionInfo.FortniteVersion >= 17, false);
+    if (!sRef.IsValid())
+        sRef = Memcury::Scanner::FindStringRef(L"%s.%s trying to load invalid level %s", false, 0, VersionInfo.FortniteVersion >= 17, false);
 
     if (!sRef.IsValid())
         return 0;
@@ -3275,6 +3273,9 @@ uint64 FindStreamInMyBuilding()
             break;
         }
     }
+
+    if (!StreamInMyBuildingPart)
+        return 0;
 
     for (int i = 0; i < 2000; i++)
     {
