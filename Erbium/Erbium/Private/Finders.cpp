@@ -2858,10 +2858,10 @@ uint64_t FindPickSupplyDropLocation()
 
 uint64_t FindSetPickupTarget()
 {
-    auto sRef = Memcury::Scanner::FindStringRef(L"%s: Attempted to spawn non-world item %s!", false, 0, VersionInfo.FortniteVersion >= 17, false);
+    auto sRef = Memcury::Scanner::FindStringRef(L"%s: Attempted to spawn non-world item %s!", false, 0, VersionInfo.FortniteVersion >= 16, false);
 
     if (!sRef.IsValid())
-        sRef = Memcury::Scanner::FindStringRef(L"Attempted to spawn non-world item %s!", false, 0, VersionInfo.FortniteVersion >= 17, false);
+        sRef = Memcury::Scanner::FindStringRef(L"Attempted to spawn non-world item %s!", false, 0, VersionInfo.FortniteVersion >= 16, false);
 
     for (int i = 0; i < 0x1500; i++)
     {
