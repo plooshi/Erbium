@@ -1166,6 +1166,8 @@ void AFortGameMode::HandlePostSafeZonePhaseChanged(AFortGameMode* GameMode, int 
     TArray<float>& Durations = *(TArray<float>*)(SafeZoneDefinition + DurationsOffset);
     TArray<float>& HoldDurations = *(TArray<float>*)(SafeZoneDefinition + DurationsOffset - 0x10);
 
+    printf("GameMode->SafeZonePhase: %d\n", GameMode->SafeZonePhase);
+
     if (VersionInfo.FortniteVersion >= 13.00)
     {
         static bool bSetDurations = false;
@@ -1187,15 +1189,6 @@ void AFortGameMode::HandlePostSafeZonePhaseChanged(AFortGameMode* GameMode, int 
                 UDataTableFunctionLibrary::EvaluateCurveTableRow(GameData, HoldTime, (float)i, nullptr, &HoldDurations[i], FString());
             }
         }
-
-        if (!FConfiguration::bLateGame || GameMode->SafeZonePhase > FConfiguration::LateGameZone)
-        {
-            auto Duration = Durations[NewSafeZonePhase];
-            auto HoldDuration = HoldDurations[NewSafeZonePhase];
-
-            GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = TimeSeconds + HoldDuration;
-            GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
-        }
     }
 
     HandlePostSafeZonePhaseChangedOG(GameMode, NewSafeZonePhase_Inp);
@@ -1209,6 +1202,15 @@ void AFortGameMode::HandlePostSafeZonePhaseChanged(AFortGameMode* GameMode, int 
         GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = TimeSeconds + HoldDuration;
         GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
     }*/
+
+    if (VersionInfo.FortniteVersion >= 13.00 && (!FConfiguration::bLateGame || GameMode->SafeZonePhase > FConfiguration::LateGameZone))
+    {
+        auto Duration = Durations[NewSafeZonePhase];
+        auto HoldDuration = HoldDurations[NewSafeZonePhase];
+
+        GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = TimeSeconds + HoldDuration;
+        GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Duration;
+    }
 
     if (FConfiguration::bLateGame && GameMode->SafeZonePhase < FConfiguration::LateGameZone)
     {
