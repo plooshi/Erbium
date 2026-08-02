@@ -55,6 +55,22 @@ public:
     DEFINE_PROP(PersistentAbilitySets, TArray<FFortAbilitySetDeliveryInfo>);
 };
 
+class UFortSharedAssetList : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortGameplayModifierItemDefinition);
+
+    DEFINE_PROP(SharedAdditionalLevels, TArray<TSoftObjectPtr<class UWorld>>);
+};
+
+class UFortSharedAssetGroup : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UFortGameplayModifierItemDefinition);
+
+    DEFINE_PROP(SharedAssetsToLoad, TArray<class UFortSharedAssetList*>);
+};
+
 class UFortPlaylistAthena : public UObject
 {
 public:
@@ -90,4 +106,5 @@ public:
     DEFINE_PROP(JoinInProgressMatchType, FText);
     DEFINE_PROP(SafeZoneLocationBlacklist, TSoftObjectPtr<UCurveTable>);
     DEFINE_PROP(LastSafeZoneIndex, int32);
+    DEFINE_PROP(SharedAssetGroup, UFortSharedAssetGroup*);
 };

@@ -81,6 +81,8 @@ uint64 FindSetIsDoorOpen();
 uint64 FindActivatePhase();
 uint64 FindSelectAndSetupMyBuildingLevel();
 uint64 FindStreamInMyBuilding();
+uint64 FindStartStreamingAdditionalPlaylistLevel();
+uint64 FindUnEquipVehicleWeapon();
 
 template <typename CVarT>
 CVarT* FindCVar(const wchar_t* CVarStr)

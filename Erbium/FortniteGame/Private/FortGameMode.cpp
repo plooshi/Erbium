@@ -35,14 +35,71 @@ void ShowFoundation(const ABuildingFoundation* Foundation)
 
     if (Foundation->HasbServerStreamedInLevel())
     {
-        //Foundation->bServerStreamedInLevel = true;
-        //Foundation->OnRep_ServerStreamedInLevel();
+        // Foundation->bServerStreamedInLevel = true;
+        // Foundation->OnRep_ServerStreamedInLevel();
     }
 
     Foundation->SetDynamicFoundationEnabled(true);
 }
 
 bool bIsLargeTeamGame = false;
+
+uint64_t StartStreamingAdditionalPlaylistLevel_ = 0;
+
+void StreamAdditionalPlaylistLevels(AFortGameStateAthena* _this)
+{
+    auto Playlist = _this->CurrentPlaylistInfo.OverridePlaylist ? _this->CurrentPlaylistInfo.OverridePlaylist : _this->CurrentPlaylistInfo.BasePlaylist;
+
+    auto& StartStreamingAdditionalPlaylistLevel = (void (*&)(AFortGameStateAthena*, FName, bool))StartStreamingAdditionalPlaylistLevel_;
+
+    if (!Playlist->HasAdditionalLevels())
+        return;
+
+    auto GetLongPackageName = [](FName& Name)
+    {
+        auto NameStr = Name.ToString();
+        return FName(NameStr.substr(NameStr.rfind('.')));
+    };
+
+    auto AdditionalPlaylistLevelsStreamed__Off = _this->GetOffset("AdditionalPlaylistLevelsStreamed");
+    auto AdditionalLevelStruct = FAdditionalLevelStreamed::StaticStruct();
+
+    auto StreamLevel = [&](TSoftObjectPtr<UWorld>& World, bool bServerOnly)
+    {
+        if (StartStreamingAdditionalPlaylistLevel)
+            StartStreamingAdditionalPlaylistLevel(_this, GetLongPackageName(World.ObjectID.AssetPathName), bServerOnly);
+        else
+        {
+            bool Success = true;
+            //ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), World, FVector(), FRotator(), &Success, FString(), nullptr);
+
+            if (AdditionalLevelStruct)
+            {
+                auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
+                memset((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
+                level->bIsServerOnly = bServerOnly;
+                level->LevelName = World.ObjectID.AssetPathName;
+                if (Success)
+                    _this->AdditionalPlaylistLevelsStreamed.Add(*level, FAdditionalLevelStreamed::Size());
+                free(level);
+            }
+            else
+                GetFromOffset<TArray<FName>>(_this, AdditionalPlaylistLevelsStreamed__Off).Add(World.ObjectID.AssetPathName);
+        }
+    };
+
+    for (auto& AdditionalLevel : Playlist->AdditionalLevels)
+        StreamLevel(AdditionalLevel, false);
+
+    if (Playlist->HasAdditionalLevelsServerOnly())
+        for (auto& AdditionalLevel : Playlist->AdditionalLevelsServerOnly)
+            StreamLevel(AdditionalLevel, true);
+
+    if (Playlist->HasSharedAssetGroup() && Playlist->SharedAssetGroup)
+        for (auto& SharedAsset : Playlist->SharedAssetGroup->SharedAssetsToLoad)
+            for (auto& AdditionalLevel : SharedAsset->SharedAdditionalLevels)
+                StreamLevel(AdditionalLevel, false);
+}
 
 void SetupPlaylist(AFortGameMode* GameMode, AFortGameStateAthena* GameState)
 {
@@ -125,60 +182,7 @@ void SetupPlaylist(AFortGameMode* GameMode, AFortGameStateAthena* GameState)
         bIsLargeTeamGame = Playlist->bIsLargeTeamGame;
 
         if (Playlist)
-        {
-            auto AdditionalPlaylistLevelsStreamed__Off = GameState->GetOffset("AdditionalPlaylistLevelsStreamed");
-
-            if (AdditionalPlaylistLevelsStreamed__Off != -1)
-            {
-                TArray<FPlaylistStreamedLevelData>& AdditionalPlaylistLevels = *(TArray<FPlaylistStreamedLevelData>*)(__int64(GameState) + AdditionalPlaylistLevelsStreamed__Off - 0x10);
-
-                AdditionalPlaylistLevels.Free();
-
-                auto AdditionalLevelStruct = FAdditionalLevelStreamed::StaticStruct();
-                if (Playlist->HasAdditionalLevels())
-                    for (auto& Level : Playlist->AdditionalLevels)
-                    {
-                        bool Success = false;
-                        // ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
-                        if (AdditionalLevelStruct)
-                        {
-                            auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
-                            memset((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
-                            level->bIsServerOnly = false;
-                            level->LevelName = Level.ObjectID.AssetPathName;
-                            if (Success)
-                                GameState->AdditionalPlaylistLevelsStreamed.Add(*level, FAdditionalLevelStreamed::Size());
-                            free(level);
-                        }
-                        else
-                            GetFromOffset<TArray<FName>>(GameState, AdditionalPlaylistLevelsStreamed__Off).Add(Level.ObjectID.AssetPathName);
-                    }
-
-                if (Playlist->HasAdditionalLevelsServerOnly())
-                    for (auto& Level : Playlist->AdditionalLevelsServerOnly)
-                    {
-                        bool Success = false;
-                        // ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), Level, FVector(), FRotator(), &Success, FString(), nullptr);
-
-                        if (AdditionalLevelStruct)
-                        {
-
-                            auto level = (FAdditionalLevelStreamed*)malloc(FAdditionalLevelStreamed::Size());
-                            memset((PBYTE)level, 0, FAdditionalLevelStreamed::Size());
-                            level->bIsServerOnly = true;
-                            level->LevelName = Level.ObjectID.AssetPathName;
-                            if (Success)
-                                GameState->AdditionalPlaylistLevelsStreamed.Add(*level, FAdditionalLevelStreamed::Size());
-                            free(level);
-                        }
-                        else
-                            GetFromOffset<TArray<FName>>(GameState, AdditionalPlaylistLevelsStreamed__Off).Add(Level.ObjectID.AssetPathName);
-                    }
-            }
-        }
-
-        if (GameState->HasAdditionalPlaylistLevelsStreamed())
-             GameState->OnRep_AdditionalPlaylistLevelsStreamed();
+            StreamAdditionalPlaylistLevels(GameState);
     }
     else
     {
@@ -343,7 +347,7 @@ void AFortGameMode::ReadyToStartMatch_(UObject* Context, FFrame& Stack, bool* Re
         if (GameMode->HasWarmupRequiredPlayerCount())
             GameMode->WarmupRequiredPlayerCount = 1;
 
-        if (VersionInfo.FortniteVersion > 4.0)
+        if (VersionInfo.FortniteVersion > 4.0 /* && VersionInfo.EngineVersion != 4.25*/)
             SetupPlaylist(GameMode, GameState);
 
         auto Playlist = FindObject<UFortPlaylistAthena>(FConfiguration::Playlist);
@@ -1217,8 +1221,10 @@ void AFortGameMode::HandlePostSafeZonePhaseChanged(AFortGameMode* GameMode, int 
         // auto Duration = Durations[FConfiguration::LateGameZone];
         // auto HoldDuration = HoldDurations[FConfiguration::LateGameZone];
 
-        if (FConfiguration::bLateGame && FConfiguration::bLateGameLongZone)
+        if (FConfiguration::bLateGameLongZone)
             GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = 676767.f;
+        else if (VersionInfo.FortniteVersion >= 13)
+            GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime = TimeSeconds + HoldDurations[FConfiguration::LateGameZone];
         if (VersionInfo.FortniteVersion >= 13)
             GameMode->SafeZoneIndicator->SafeZoneFinishShrinkTime = GameMode->SafeZoneIndicator->SafeZoneStartShrinkTime + Durations[FConfiguration::LateGameZone];
     }
@@ -1715,11 +1721,13 @@ void AFortGameMode::FinishWorldInitialization(AFortGameMode* _this, AActor* Worl
     auto GameMode = (AFortGameModeAthena*)_this;
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
 
+    /*if (VersionInfo.EngineVersion == 4.25)
+        SetupPlaylist(_this, GameState);
+    else */if (VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.26)
+        GameState->OnRep_CurrentPlaylistInfo();
+
     printf("[GameMode] FinishWorldInitialization\n");
     FinishWorldInitializationOG(_this, WorldManager);
-
-    if (VersionInfo.EngineVersion >= 4.22 && VersionInfo.EngineVersion < 4.26)
-        GameState->OnRep_CurrentPlaylistInfo();
 
     auto AddToTierData = [&](const UDataTable* Table, TArray<FFortLootTierData*>& TempArr)
     {
@@ -2149,6 +2157,7 @@ void AFortGameMode::PostLoadHook()
 {
     ApplyCharacterCustomization = FindApplyCharacterCustomization();
     NotifyGameMemberAdded_ = FindNotifyGameMemberAdded();
+    StartStreamingAdditionalPlaylistLevel_ = FindStartStreamingAdditionalPlaylistLevel();
 
     auto spdf = GetDefaultObj()->GetFunction("SpawnDefaultPawnFor");
     SpawnDefaultPawnForIdx = spdf->GetVTableIndex();

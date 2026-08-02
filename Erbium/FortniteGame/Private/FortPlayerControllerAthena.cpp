@@ -13,6 +13,7 @@
 #include "../Public/FortLootPackage.h"
 #include "../Public/FortPhysicsPawn.h"
 #include "../Public/FortWeapon.h"
+#include "../Public/FortVehicleSeatWeaponComponent.h"
 
 void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena* PlayerController, FVector& Loc, FRotator& Rot)
 {
@@ -2552,7 +2553,7 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
 
     if (auto Container = bDidntFind ? ReceivingActor->Cast<ABuildingContainer>() : nullptr)
         UFortLootPackage::SpawnLootHook(Container);
-    else if (auto Vehicle = ReceivingActor->Cast<AFortAthenaVehicle>())
+    /*else if (auto Vehicle = ReceivingActor->Cast<AFortAthenaVehicle>())
     {
         ServerAttemptInteract_OG(Context, Stack);
         sendStat();
@@ -2637,7 +2638,7 @@ void AFortPlayerControllerAthena::ServerAttemptInteract_(UObject* Context, FFram
             }
         }
         return;
-    }
+    }*/
     else if (auto CollectorActor = ReceivingActor->Cast<ABuildingItemCollectorActor>())
     {
         CollectorActor->ControllingPlayer = PlayerController;
@@ -3250,7 +3251,7 @@ void AFortPlayerControllerAthena::ServerRequestSeatChange_(UObject* Context, FFr
             break;
         }
 
-        if (OldWeapon)
+        /*if (OldWeapon)
         {
             auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) { return entry.ItemDefinition == OldWeapon; }, FFortItemEntry::Size());
 
@@ -3267,7 +3268,7 @@ void AFortPlayerControllerAthena::ServerRequestSeatChange_(UObject* Context, FFr
 
             NewWeapon = WeaponDefinition.VehicleWeapon;
             break;
-        }
+        }*/
     }
 
     callOG(PlayerController, Stack.GetCurrentNativeFunction(), ServerRequestSeatChange, TargetSeatIndex);
@@ -3294,7 +3295,7 @@ void AFortPlayerControllerAthena::ServerRequestSeatChange_(UObject* Context, FFr
         }
     }
 
-    if (NewWeapon)
+    /*if (NewWeapon)
     {
         auto NewItem = PlayerController->WorldInventory->GiveItem(NewWeapon, 1, AFortInventory::GetStats(NewWeapon)->ClipSize);
         auto ItemEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& entry) { return entry.ItemDefinition == NewWeapon; }, FFortItemEntry::Size());
@@ -3340,7 +3341,7 @@ void AFortPlayerControllerAthena::ServerRequestSeatChange_(UObject* Context, FFr
 
             free(RepWeaponInfo);
         }
-    }
+    }*/
 }
 
 void AFortPlayerControllerAthena::ServerLoadingScreenDropped_(UObject* Context, FFrame& Stack)

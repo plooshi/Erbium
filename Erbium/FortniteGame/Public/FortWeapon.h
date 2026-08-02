@@ -3,6 +3,7 @@
 #include "../../Engine/Public/AbilitySystemComponent.h"
 #include "FortInventory.h"
 #include "FortPhysicsPawn.h"
+#include "FortVehicleSeatWeaponComponent.h"
 
 struct FFortAbilitySetHandle final
 {

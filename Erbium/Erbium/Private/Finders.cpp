@@ -3292,6 +3292,94 @@ uint64 FindStreamInMyBuilding()
     return 0;
 }
 
+uint64_t FindStartStreamingAdditionalPlaylistLevel()
+{
+    auto sRef = Memcury::Scanner::FindStringRef(L"PLAYLIST: Failed to locate valid level to be streamed %s", false, 0, VersionInfo.FortniteVersion >= 19);
+
+    if (!sRef.IsValid())
+        return 0;
+
+    uint64_t StartStreamingAdditionalPlaylistLevelPart = 0;
+    for (int i = 0; i < 0x10000; i++)
+    {
+        auto Ptr = (uint8_t*)(sRef.Get() - i);
+
+        if (*Ptr == 0x48 && *(Ptr + 1) == 0x83 && *(Ptr + 2) == 0xEC)
+        {
+            StartStreamingAdditionalPlaylistLevelPart = uint64_t(Ptr);
+            break;
+        }
+        else if (*Ptr == 0x48 && *(Ptr + 1) == 0x81 && *(Ptr + 2) == 0xEC)
+        {
+            StartStreamingAdditionalPlaylistLevelPart = uint64_t(Ptr);
+            break;
+        }
+    }
+
+    if (!StartStreamingAdditionalPlaylistLevelPart)
+        return 0;
+
+    for (int i = 0; i < 2000; i++)
+    {
+        auto Ptr = (uint8_t*)(StartStreamingAdditionalPlaylistLevelPart - i);
+
+        if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4)
+            return uint64_t(Ptr);
+        else if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
+            return uint64_t(Ptr);
+        else if (*Ptr == 0x40 && *(Ptr + 1) == 0x55)
+            return uint64_t(Ptr);
+    }
+
+    return 0;
+}
+
+uint64_t FindUnEquipVehicleWeapon()
+{
+    auto sRef = Memcury::Scanner::FindStringRef(L"UFortVehicleSeatWeaponComponent::UnEquipVehicleWeapon failed to cleanup WeaponSeatDefinition.VehicleGrantedWeaponItem properly. PawnValid:%d", false, 0, VersionInfo.FortniteVersion >= 19);
+
+    if (!sRef.IsValid())
+        return 0;
+
+    uint64_t UnequipVehicleWeaponPart = 0;
+    for (int i = 0; i < 0x10000; i++)
+    {
+        auto Ptr = (uint8_t*)(sRef.Get() - i);
+
+        if (*Ptr == 0x48 && *(Ptr + 1) == 0x83 && *(Ptr + 2) == 0xEC)
+        {
+            UnequipVehicleWeaponPart = uint64_t(Ptr);
+            break;
+        }
+        else if (*Ptr == 0x48 && *(Ptr + 1) == 0x81 && *(Ptr + 2) == 0xEC)
+        {
+            UnequipVehicleWeaponPart = uint64_t(Ptr);
+            break;
+        }
+    }
+
+    if (!UnequipVehicleWeaponPart)
+        return 0;
+
+    for (int i = 0; i < 2000; i++)
+    {
+        auto Ptr = (uint8_t*)(UnequipVehicleWeaponPart - i);
+
+        if (*Ptr == 0x48 && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xC4)
+            return uint64_t(Ptr);
+        else if (*Ptr == 0x48 && *(Ptr + 1) == 0x89 && *(Ptr + 2) == 0x5C)
+            return uint64_t(Ptr);
+        else if (*Ptr == 0x4C && *(Ptr + 1) == 0x8B && *(Ptr + 2) == 0xDC)
+            return uint64_t(Ptr);
+        else if (*Ptr == 0x40 && *(Ptr + 1) == 0x55)
+            return uint64_t(Ptr);
+        else if (*Ptr == 0x40 && *(Ptr + 1) == 0x53)
+            return uint64_t(Ptr);
+    }
+
+    return 0;
+}
+
 void FindNullsAndRetTrues()
 {
     if (VersionInfo.EngineVersion == 4.16)

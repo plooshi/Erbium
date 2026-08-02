@@ -1,6 +1,7 @@
 #pragma once
 #include "../../pch.h"
 #include "FortInventory.h"
+#include "FortVehicleSeatWeaponComponent.h"
 
 class AFortPhysicsPawn : public AActor
 {
@@ -12,30 +13,6 @@ public:
     InitHooks;
 };
 
-struct FWeaponSeatDefinition
-{
-public:
-    USCRIPTSTRUCT_COMMON_MEMBERS(FWeaponSeatDefinition);
-
-    DEFINE_STRUCT_PROP(SeatIndex, int32);
-    DEFINE_STRUCT_PROP(VehicleWeapon, UFortWeaponItemDefinition*);
-};
-
-struct FAthenaCarPlayerSlot
-{
-public:
-    USCRIPTSTRUCT_COMMON_MEMBERS(FAthenaCarPlayerSlot);
-
-    DEFINE_STRUCT_NEWOBJ_PROP(Player, AFortPlayerPawnAthena);
-};
-
-class UFortVehicleSeatWeaponComponent : public UActorComponent
-{
-public:
-    UCLASS_COMMON_MEMBERS(UFortVehicleSeatWeaponComponent);
-
-    DEFINE_PROP(WeaponSeatDefinitions, TArray<FWeaponSeatDefinition>);
-};
 
 class UFortVehicleSeatComponent : public UActorComponent
 {
@@ -82,23 +59,6 @@ public:
     DEFINE_STRUCT_PROP(Component, UActorComponent*);
     DEFINE_STRUCT_PROP(LocalLocation, FVector);
     DEFINE_STRUCT_PROP(LocalNormal, FVector);
-};
-
-class IFortVehicleInterface : IInterface
-{
-public:
-    UCLASS_COMMON_MEMBERS(IFortVehicleInterface);
-};
-
-struct FMountedWeaponInfoRepped
-{
-public:
-    USCRIPTSTRUCT_COMMON_MEMBERS(FMountedWeaponInfoRepped);
-    uint8_t Padding[0x48];
-
-    DEFINE_STRUCT_PROP(HostVehicleCached, TScriptInterface<IFortVehicleInterface>);
-    DEFINE_STRUCT_PROP(HostVehicleCachedActor, AActor*);
-    DEFINE_STRUCT_PROP(HostVehicleSeatIndexCached, int32);
 };
 
 class AFortOctopusVehicle : public AFortPhysicsPawn
