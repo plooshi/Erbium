@@ -123,10 +123,12 @@ void UFortVehicleSeatWeaponComponent::OnPawnEnterSeat(UFortVehicleSeatWeaponComp
     }
 }
 
+// for some reason this just doesnt get called
+// need to make this get called
+// or find the proper way to do it
 void UFortVehicleSeatWeaponComponent::UnEquipVehicleWeapon(UFortVehicleSeatWeaponComponent* _this, AFortPlayerPawnAthena* FortPawn, FWeaponSeatDefinition* WeaponSeatDefinition, bool bRequiresEquipValidWeapon)
 {
     printf(__FUNCTION__ "\n");
-    MessageBoxA(nullptr, __FUNCTION__, "boobs", MB_OK);
 
     return UnEquipVehicleWeaponOG(_this, FortPawn, WeaponSeatDefinition, bRequiresEquipValidWeapon);
 }
@@ -170,6 +172,6 @@ void UFortVehicleSeatWeaponComponent::PostLoadHook()
         if (!UnequipVehicleWeaponFunc)
             UnequipVehicleWeaponFunc = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 68 ? 48 89 70 ? 44 88 48 ? 57 41 54 41 55 41 56 41 57 48 83 EC ? 4D 8B E8").Get();
 
-        Hooking::Hook(UnequipVehicleWeaponFunc, UnEquipVehicleWeapon, UnEquipVehicleWeaponOG);
+        //Hooking::Hook(UnequipVehicleWeaponFunc, UnEquipVehicleWeapon, UnEquipVehicleWeaponOG);
     }
 }

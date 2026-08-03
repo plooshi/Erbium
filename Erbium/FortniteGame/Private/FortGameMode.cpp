@@ -1166,8 +1166,6 @@ void AFortGameMode::HandlePostSafeZonePhaseChanged(AFortGameMode* GameMode, int 
     TArray<float>& Durations = *(TArray<float>*)(SafeZoneDefinition + DurationsOffset);
     TArray<float>& HoldDurations = *(TArray<float>*)(SafeZoneDefinition + DurationsOffset - 0x10);
 
-    printf("GameMode->SafeZonePhase: %d\n", GameMode->SafeZonePhase);
-
     if (VersionInfo.FortniteVersion >= 13.00)
     {
         static bool bSetDurations = false;
