@@ -52,7 +52,7 @@ void StreamAdditionalPlaylistLevels(AFortGameStateAthena* _this)
 
     auto& StartStreamingAdditionalPlaylistLevel = (void (*&)(AFortGameStateAthena*, FName, bool))StartStreamingAdditionalPlaylistLevel_;
 
-    if (!Playlist->HasAdditionalLevels())
+    if (!Playlist || !Playlist->HasAdditionalLevels())
         return;
 
     auto GetLongPackageName = [](FName& Name)
