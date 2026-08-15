@@ -48,7 +48,7 @@ uint64_t StartStreamingAdditionalPlaylistLevel_ = 0;
 
 void StreamAdditionalPlaylistLevels(AFortGameStateAthena* _this)
 {
-    auto Playlist = _this->CurrentPlaylistInfo.OverridePlaylist ? _this->CurrentPlaylistInfo.OverridePlaylist : _this->CurrentPlaylistInfo.BasePlaylist;
+    auto Playlist = _this->HasCurrentPlaylistData() ? _this->CurrentPlaylistData : (_this->HasCurrentPlaylistInfo() ? (_this->CurrentPlaylistInfo.OverridePlaylist ? _this->CurrentPlaylistInfo.OverridePlaylist : _this->CurrentPlaylistInfo.BasePlaylist) : nullptr);
 
     auto& StartStreamingAdditionalPlaylistLevel = (void (*&)(AFortGameStateAthena*, FName, bool))StartStreamingAdditionalPlaylistLevel_;
 
@@ -71,7 +71,7 @@ void StreamAdditionalPlaylistLevels(AFortGameStateAthena* _this)
         else
         {
             bool Success = true;
-            //ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), World, FVector(), FRotator(), &Success, FString(), nullptr);
+            ULevelStreamingDynamic::LoadLevelInstanceBySoftObjectPtr(UWorld::GetWorld(), World, FVector(), FRotator(), &Success, FString(), nullptr);
 
             if (AdditionalLevelStruct)
             {
