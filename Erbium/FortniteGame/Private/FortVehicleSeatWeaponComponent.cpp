@@ -20,24 +20,13 @@ void UFortVehicleSeatWeaponComponent::EquipVehicleWeapon(UFortVehicleSeatWeaponC
                                                                                     FFortItemEntry::HasTrackerGuid() ? VehicleItem->ItemEntry.TrackerGuid : FGuid(), false);
     Weapon->ForceNetUpdate();
 
-    if (VersionInfo.FortniteVersion >= 21.20) // guess
-    {
-        auto& VehicleGrantedWeaponItem = *(TWeakObjectPtr<UFortWorldItem>*)(uint64_t(&WeaponSeatDefinition->LastEquippedVehicleWeapon) + 0xC);
-        auto& VehicleGrantedWeapon = *(TWeakObjectPtr<AFortWeapon>*)(uint64_t(&WeaponSeatDefinition->LastEquippedVehicleWeapon) + 0x14);
+    auto Inc = VersionInfo.FortniteVersion >= 20 ? 4 : 0;
 
-        VehicleGrantedWeaponItem = VehicleItem;
-        VehicleGrantedWeapon = Weapon;
-    }
-    else
-    {
-        auto Inc = VersionInfo.FortniteVersion >= 20 ? 4 : 0;
+    auto& VehicleGrantedWeaponItem = *(TWeakObjectPtr<UFortWorldItem>*)(uint64_t(&WeaponSeatDefinition->LastEquippedVehicleWeapon) + 0x8 + Inc);
+    auto& VehicleGrantedWeapon = *(TWeakObjectPtr<AFortWeapon>*)(uint64_t(&WeaponSeatDefinition->LastEquippedVehicleWeapon) + 0x10 + Inc);
 
-        auto& VehicleGrantedWeaponItem = *(UFortWorldItem**)(uint64_t(&WeaponSeatDefinition->LastEquippedVehicleWeapon) + 0x8 + Inc);
-        auto& VehicleGrantedWeapon = *(AFortWeapon**)(uint64_t(&WeaponSeatDefinition->LastEquippedVehicleWeapon) + 0x10 + Inc);
-
-        VehicleGrantedWeaponItem = VehicleItem;
-        VehicleGrantedWeapon = Weapon;
-    }
+    VehicleGrantedWeaponItem = VehicleItem;
+    VehicleGrantedWeapon = Weapon;
 
     _this->CachedWeapon = Weapon;
     _this->CachedWeaponDef = Weapon->WeaponData;
@@ -94,8 +83,8 @@ uint32_t GetPlayerSlotsIdx = 0;
 
 void UFortVehicleSeatWeaponComponent::OnPawnEnterSeat(UFortVehicleSeatWeaponComponent* _this, IFortVehicleInterface* VehicleOwnerInterface, int SeatIndex, bool bSeatSwitch)
 {
-    auto& GetMountedWeaponOperatorSeatIndex = (int (*&)(IFortVehicleInterface*))VehicleOwnerInterface->Vft[GetMountedWeaponOperatorSeatIndexIdx];
-    auto& GetPlayerSlots = (TArray<FAthenaCarPlayerSlot>& (*&)(IFortVehicleInterface*))VehicleOwnerInterface->Vft[GetPlayerSlotsIdx];
+    auto& GetMountedWeaponOperatorSeatIndex = (int (*&)(IFortVehicleInterface*, UFortVehicleSeatWeaponComponent*))VehicleOwnerInterface->Vft[GetMountedWeaponOperatorSeatIndexIdx];
+    auto& GetPlayerSlots = (TArray<FAthenaCarPlayerSlot> & (*&)(IFortVehicleInterface*)) VehicleOwnerInterface->Vft[GetPlayerSlotsIdx];
 
     for (int i = 0; i < _this->WeaponSeatDefinitions.Num(); i++)
     {
@@ -104,12 +93,12 @@ void UFortVehicleSeatWeaponComponent::OnPawnEnterSeat(UFortVehicleSeatWeaponComp
         if (SeatIndex != SeatDefinition.SeatIndex)
             continue;
 
-        int OperatorIdx = GetMountedWeaponOperatorSeatIndex(VehicleOwnerInterface);
+        int OperatorIdx = GetMountedWeaponOperatorSeatIndex(VehicleOwnerInterface, _this);
 
         if (OperatorIdx == -1 || OperatorIdx == SeatIndex)
             _this->ActiveSeatIdx = SeatIndex;
 
-        auto PlayerSlots = GetPlayerSlots(VehicleOwnerInterface);
+        auto& PlayerSlots = GetPlayerSlots(VehicleOwnerInterface);
 
         if (!PlayerSlots.IsValidIndex(i))
             continue;
@@ -152,7 +141,7 @@ void UFortVehicleSeatWeaponComponent::PostLoadHook()
 
         Hooking::Hook(OnPawnEnterSeatFunc, OnPawnEnterSeat);
 
-        //Hooking::Hook(FindUnEquipVehicleWeapon(), UnEquipVehicleWeapon, UnEquipVehicleWeaponOG);
+        // Hooking::Hook(FindUnEquipVehicleWeapon(), UnEquipVehicleWeapon, UnEquipVehicleWeaponOG);
     }
     else
     {
@@ -161,7 +150,7 @@ void UFortVehicleSeatWeaponComponent::PostLoadHook()
         auto EquipVehicleWeaponFunc = Memcury::Scanner::FindPattern("48 89 5C 24 ? 57 48 83 EC ? 41 80 78 ? ? 48 8B DA 48 8B F9").Get();
 
         Hooking::Hook(EquipVehicleWeaponFunc, EquipVehicleWeapon_, EquipVehicleWeapon_OG);
-        
+
         // new path: SetVehicleSeatWeaponOverride doesnt have a string, so we have to find it based on sigs
         // the string inside UnequipVehicleWeapon is in a function chunk
         auto UnequipVehicleWeaponFunc = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 54 41 55 41 56 41 57 48 83 EC ? 45 33 F6 45 8A E9").Get();
@@ -172,6 +161,6 @@ void UFortVehicleSeatWeaponComponent::PostLoadHook()
         if (!UnequipVehicleWeaponFunc)
             UnequipVehicleWeaponFunc = Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 68 ? 48 89 70 ? 44 88 48 ? 57 41 54 41 55 41 56 41 57 48 83 EC ? 4D 8B E8").Get();
 
-        //Hooking::Hook(UnequipVehicleWeaponFunc, UnEquipVehicleWeapon, UnEquipVehicleWeaponOG);
+        // Hooking::Hook(UnequipVehicleWeaponFunc, UnEquipVehicleWeapon, UnEquipVehicleWeaponOG);
     }
 }

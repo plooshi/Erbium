@@ -11,6 +11,7 @@ void ABuildingFoundation::SetDynamicFoundationEnabled_(UObject* Context, FFrame&
     Stack.StepCompiledIn(&bEnabled);
     Stack.IncrementCode();
 
+    printf("[Runtime] %s on %s\n", __FUNCTION__, Foundation->Name.ToString().c_str());
     if (Foundation->HasbFoundationEnabled())
     {
         auto OldEnabled = Foundation->bFoundationEnabled;
@@ -30,15 +31,17 @@ void ABuildingFoundation::SetDynamicFoundationEnabled_(UObject* Context, FFrame&
         Foundation->OnRep_FoundationEnabledState();
     }
 
+    bool bSetup = true;
     if (bEnabled && Foundation->LevelToStream.ComparisonIndex == 0 && SelectAndSetupMyBuildingLevel_)
     {
         auto SelectAndSetupMyBuildingLevel = (bool (*)(ABuildingFoundation*, void*))SelectAndSetupMyBuildingLevel_;
-        auto StreamInMyBuilding = (void (*)(ABuildingFoundation*, bool))StreamInMyBuilding_;
         
-        if (SelectAndSetupMyBuildingLevel(Foundation, nullptr))
-            if (StreamInMyBuilding_)
-                StreamInMyBuilding(Foundation, false);
+        bSetup = SelectAndSetupMyBuildingLevel(Foundation, nullptr);
     }
+
+    auto StreamInMyBuilding = (void (*)(ABuildingFoundation*, bool))StreamInMyBuilding_;
+    if (bSetup && StreamInMyBuilding_)
+        StreamInMyBuilding(Foundation, false);
 }
 
 void ABuildingFoundation::SetDynamicFoundationTransform_(UObject* Context, FFrame& Stack)
@@ -47,6 +50,7 @@ void ABuildingFoundation::SetDynamicFoundationTransform_(UObject* Context, FFram
     auto& Transform = Stack.StepCompiledInRef<FTransform>();
     Stack.IncrementCode();
 
+    printf("[Runtime] %s on %s\n", __FUNCTION__, Foundation->Name.ToString().c_str());
     Foundation->DynamicFoundationTransform = Transform;
     if (Foundation->HasDynamicFoundationRepData())
     {

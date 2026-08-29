@@ -61,13 +61,29 @@ void StreamAdditionalPlaylistLevels(AFortGameStateAthena* _this)
         return FName(NameStr.substr(NameStr.rfind('.')));
     };
 
+    auto GetLongPackageNameForPath = [&](FSoftObjectPath& Path)
+    {
+        if (VersionInfo.FortniteVersion >= 23)
+        {
+            auto& PackageName = *(FName*)&Path;
+
+            return PackageName;
+        }
+
+        return GetLongPackageName(Path.AssetPathName);
+    };
+
     auto AdditionalPlaylistLevelsStreamed__Off = _this->GetOffset("AdditionalPlaylistLevelsStreamed");
     auto AdditionalLevelStruct = FAdditionalLevelStreamed::StaticStruct();
 
     auto StreamLevel = [&](TSoftObjectPtr<UWorld>& World, bool bServerOnly)
     {
         if (StartStreamingAdditionalPlaylistLevel)
-            StartStreamingAdditionalPlaylistLevel(_this, GetLongPackageName(World.ObjectID.AssetPathName), bServerOnly);
+        {
+            auto& ObjectID = *(FSoftObjectPath*)(__int64(&World) + (VersionInfo.EngineVersion < 5.3 ? 0x10 : 0x8));
+
+            StartStreamingAdditionalPlaylistLevel(_this, GetLongPackageNameForPath(ObjectID), bServerOnly);
+        }
         else
         {
             bool Success = true;
