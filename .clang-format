@@ -29,5 +29,5 @@ SortIncludes: Never
 AccessModifierOffset: -4
 BreakConstructorInitializers: BeforeComma
 PointerAlignment: Left
-SpacesInContainerLiterals: true
+SpacesInContainerLiterals: false
 Cpp11BracedListStyle: false

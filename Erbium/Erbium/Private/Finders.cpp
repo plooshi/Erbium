@@ -1037,6 +1037,12 @@ uint64_t FindFinishedTargetSpline()
             if (!FinishedTargetSpline)
                 FinishedTargetSpline =
                     Memcury::Scanner::FindPattern(
+                        "48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 55 41 55 41 56 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 44 8B 89")
+                        .Get();
+
+            if (!FinishedTargetSpline)
+                FinishedTargetSpline =
+                    Memcury::Scanner::FindPattern(
                         "48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 55 41 54 41 55 41 56 41 57 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 44 8B 89 ? ? ? ? 45 33 ED")
                         .Get();
         }
@@ -1743,7 +1749,7 @@ uint64_t FindCallPreReplication()
             if (!CallPreReplication)
                 CallPreReplication = Memcury::Scanner::FindPattern("48 85 D2 0F 84 ? ? ? ? 48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC 40 F6 41 58 30 48 8B EA 48 8B D9 75").Get();
         }
-        else if (VersionInfo.FortniteVersion < 22)
+        else if (VersionInfo.FortniteVersion <= 22.20)
         {
             CallPreReplication = Memcury::Scanner::FindPattern("48 85 D2 0F 84 ? ? ? ? 48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC 40 F6 41 58 30 4C 8B F2").Get();
 
@@ -1838,6 +1844,9 @@ uint64 FindSetChannelActor()
                 SetChannelActor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 33 F6 4C 8D 3D").Get();
 
             if (!SetChannelActor)
+                SetChannelActor = Memcury::Scanner::FindPattern("40 55 53 56 57 41 55 41 56 41 57 48 8D AC ? ? ? ? ? 48 81 EC ? ? ? ? 45 33 F6 48 8D 3D").Get();
+
+            if (!SetChannelActor)
                 SetChannelActor = Memcury::Scanner::FindPattern("48 89 5C 24 ? 48 89 74 24 ? 55 57 41 54 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 45 33 FF").Get();
         }
     }
@@ -1885,6 +1894,9 @@ uint64 FindSendDestructionInfo()
 
         for (int i = 0; i < 2000; i++)
         {
+            if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x8B && *(uint8_t*)(sRef - i + 2) == 0xC4)
+                return SendDestructionInfo = sRef - i;
+
             if (*(uint8_t*)(sRef - i) == 0x48 && *(uint8_t*)(sRef - i + 1) == 0x89 && *(uint8_t*)(sRef - i + 2) == 0x4c)
             {
                 if (*(uint8_t*)(sRef - i - 5) == 0x48 && *(uint8_t*)(sRef - i - 4) == 0x89 && *(uint8_t*)(sRef - i - 3) == 0x5c)
@@ -3336,7 +3348,8 @@ uint64_t FindStartStreamingAdditionalPlaylistLevel()
 
 uint64_t FindUnEquipVehicleWeapon()
 {
-    auto sRef = Memcury::Scanner::FindStringRef(L"UFortVehicleSeatWeaponComponent::UnEquipVehicleWeapon failed to cleanup WeaponSeatDefinition.VehicleGrantedWeaponItem properly. PawnValid:%d", false, 0, VersionInfo.FortniteVersion >= 19);
+    auto sRef = Memcury::Scanner::FindStringRef(L"UFortVehicleSeatWeaponComponent::UnEquipVehicleWeapon failed to cleanup WeaponSeatDefinition.VehicleGrantedWeaponItem properly. PawnValid:%d", false, 0,
+                                                VersionInfo.FortniteVersion >= 19);
 
     if (!sRef.IsValid())
         return 0;
