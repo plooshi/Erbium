@@ -1755,6 +1755,9 @@ uint64_t FindCallPreReplication()
 
             if (!CallPreReplication)
                 CallPreReplication = Memcury::Scanner::FindPattern("48 85 D2 0F 84 ? ? ? ? 48 89 5C 24 ? 48 89 6C 24 ? 48 89 74 24 ? 57 41 56 41 57 48 83 EC ? F6 41").Get();
+
+            if (!CallPreReplication)
+                CallPreReplication = Memcury::Scanner::FindPattern("48 85 D2 0F 84 ? ? ? ? 48 89 5C 24 ? 48 89 74 24 ? 48 89 7C 24 ? 55 41 54 41 55 41 56 41 57 48 8B EC 48 83 EC ? F6 41").Get();
         }
         else if (VersionInfo.FortniteVersion <= 22.30)
             return CallPreReplication = Memcury::Scanner::FindPattern("48 85 D2 0F 84 ? ? ? ? 48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 4C 89 60 ? 55 41 56 41 57 48 8B EC 48 83 EC ? F6 41 ? ? 4C 8B FA 48 8B").Get();
