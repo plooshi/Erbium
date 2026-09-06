@@ -228,8 +228,6 @@ void UFortKismetLibrary::PickLootDrops(UObject* Object, FFrame& Stack, bool* Ret
 
     for (auto& LootDrop : LootDrops)
     {
-        printf("PickLootDrops %s\n", LootDrop->ItemDefinition->Name.ToString().c_str());
-
         OutLootToDrop.Add(*LootDrop, FFortItemEntry::Size());
         free(LootDrop);
     }
