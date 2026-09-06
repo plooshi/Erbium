@@ -1036,9 +1036,7 @@ uint64_t FindFinishedTargetSpline()
 
             if (!FinishedTargetSpline)
                 FinishedTargetSpline =
-                    Memcury::Scanner::FindPattern(
-                        "48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 55 41 55 41 56 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 44 8B 89")
-                        .Get();
+                    Memcury::Scanner::FindPattern("48 8B C4 48 89 58 ? 48 89 70 ? 48 89 78 ? 55 41 55 41 56 48 8D A8 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 44 8B 89").Get();
 
             if (!FinishedTargetSpline)
                 FinishedTargetSpline =
@@ -1204,6 +1202,10 @@ uint64_t FindKickPlayer()
         if (!pattern)
             pattern =
                 Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 45 33 F6 48 89 4C 24 ? 45 8B FE").Get();
+
+        if (!pattern)
+            pattern =
+                Memcury::Scanner::FindPattern("48 89 5C 24 ? 55 56 57 41 54 41 55 41 56 41 57 48 8D AC 24 ? ? ? ? 48 81 EC ? ? ? ? 48 8B 05 ? ? ? ? 48 33 C4 48 89 85 ? ? ? ? 45 33 ED 48 89 55 ? 41 8B FD").Get();
 
         return pattern;
     }

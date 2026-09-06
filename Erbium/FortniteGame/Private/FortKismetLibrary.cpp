@@ -228,6 +228,8 @@ void UFortKismetLibrary::PickLootDrops(UObject* Object, FFrame& Stack, bool* Ret
 
     for (auto& LootDrop : LootDrops)
     {
+        printf("PickLootDrops %s\n", LootDrop->ItemDefinition->Name.ToString().c_str());
+
         OutLootToDrop.Add(*LootDrop, FFortItemEntry::Size());
         free(LootDrop);
     }
@@ -387,7 +389,9 @@ void UFortKismetLibrary::Hook()
             else if (Param.Name == "WorldContextObject")
                 bHasWorldContextObject2 = true;
         }
-    Hooking::ExecHook(PickLootDropsFn, PickLootDrops);
+
+    if (VersionInfo.FortniteVersion >= 27)
+        Hooking::ExecHook(PickLootDropsFn, PickLootDrops);
 }
 
 void UFortKismetLibrary::PostLoadHook()
