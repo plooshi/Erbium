@@ -388,7 +388,7 @@ void UFortKismetLibrary::Hook()
                 bHasWorldContextObject2 = true;
         }
 
-    if (VersionInfo.FortniteVersion >= 27)
+    if (VersionInfo.FortniteVersion < 27)
         Hooking::ExecHook(PickLootDropsFn, PickLootDrops);
 }
 
