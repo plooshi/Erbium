@@ -373,6 +373,9 @@ public:
     DEFINE_FUNC(ServerPlayEmoteItem, void);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
+    // Player setup steps normally triggered by the client's ServerAcknowledgePossession; also used for bots.
+    static void GrantPlayerAbilities(AFortPlayerControllerAthena*);
+    static void GiveStartingItems(AFortPlayerControllerAthena*);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);
     DefHookOg(void, ServerAttemptAircraftJump_, UObject*, FFrame&);
     static void ServerExecuteInventoryItem_(UObject*, FFrame&);

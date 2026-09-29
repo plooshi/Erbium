@@ -1,6 +1,15 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
+    <Filter Include="BotSystem">
+      <UniqueIdentifier>{0ff99640-1ebc-4bf5-8d87-da7f2d621fb8}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BotSystem\Public">
+      <UniqueIdentifier>{ec7efc53-9775-46c7-8b0c-784c1c741b0c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BotSystem\Private">
+      <UniqueIdentifier>{682b3c9c-8642-4a84-9c66-8db6bd355ba1}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Engine">
       <UniqueIdentifier>{bf7becbc-c9a6-4671-8262-0472d74df6ce}</UniqueIdentifier>
     </Filter>
@@ -48,6 +57,30 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BotSystem\Public\BotBehavior.h">
+      <Filter>BotSystem\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="BotSystem\Public\BotCompat.h">
+      <Filter>BotSystem\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="BotSystem\Public\BotConfig.h">
+      <Filter>BotSystem\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="BotSystem\Public\BotController.h">
+      <Filter>BotSystem\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="BotSystem\Public\BotLog.h">
+      <Filter>BotSystem\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="BotSystem\Public\BotManager.h">
+      <Filter>BotSystem\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="BotSystem\Public\BotSpawner.h">
+      <Filter>BotSystem\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="BotSystem\Public\BotState.h">
+      <Filter>BotSystem\Public</Filter>
+    </ClInclude>
     <ClInclude Include="framework.h">
       <Filter>Erbium\Public</Filter>
     </ClInclude>
@@ -260,6 +293,21 @@
     </ClCompile>
     <ClCompile Include="Engine\Private\AbilitySystemComponent.cpp">
       <Filter>Engine\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="BotSystem\Private\BotBehavior.cpp">
+      <Filter>BotSystem\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="BotSystem\Private\BotCompat.cpp">
+      <Filter>BotSystem\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="BotSystem\Private\BotController.cpp">
+      <Filter>BotSystem\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="BotSystem\Private\BotManager.cpp">
+      <Filter>BotSystem\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="BotSystem\Private\BotSpawner.cpp">
+      <Filter>BotSystem\Private</Filter>
     </ClCompile>
     <ClCompile Include="Engine\Private\NetDriver.cpp">
       <Filter>Engine\Private</Filter>

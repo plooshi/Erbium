@@ -156,6 +156,14 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BotSystem\Public\BotBehavior.h" />
+    <ClInclude Include="BotSystem\Public\BotCompat.h" />
+    <ClInclude Include="BotSystem\Public\BotConfig.h" />
+    <ClInclude Include="BotSystem\Public\BotController.h" />
+    <ClInclude Include="BotSystem\Public\BotLog.h" />
+    <ClInclude Include="BotSystem\Public\BotManager.h" />
+    <ClInclude Include="BotSystem\Public\BotSpawner.h" />
+    <ClInclude Include="BotSystem\Public\BotState.h" />
     <ClInclude Include="..\SDK\Containers.h" />
     <ClInclude Include="..\SDK\Core.h" />
     <ClInclude Include="..\SDK\Defs.h" />
@@ -220,6 +228,11 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BotSystem\Private\BotBehavior.cpp" />
+    <ClCompile Include="BotSystem\Private\BotCompat.cpp" />
+    <ClCompile Include="BotSystem\Private\BotController.cpp" />
+    <ClCompile Include="BotSystem\Private\BotManager.cpp" />
+    <ClCompile Include="BotSystem\Private\BotSpawner.cpp" />
     <ClCompile Include="Engine\Private\AbilitySystemComponent.cpp" />
     <ClCompile Include="Engine\Private\NetDriver.cpp" />
     <ClCompile Include="Erbium\Plugins\CrashReporter\Private\CrashReporter.cpp" />

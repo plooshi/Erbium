@@ -7,6 +7,7 @@
 #include "../../ImGui/imgui_impl_win32.h"
 #include "../Public/Configuration.h"
 #include "../Public/Events.h"
+#include "../../BotSystem/Public/BotManager.h"
 #include <d3d11.h>
 #include <fstream>
 #include <sstream>
@@ -405,6 +406,22 @@ void GUI::Init()
 
             ImGui::SliderInt("Siphon Amount:", &FConfiguration::SiphonAmount, 0, 200);
             ImGui::SliderInt("Tick Rate:", &FConfiguration::MaxTickRate, 30, 120);
+
+            if (gsStatus >= Joinable)
+            {
+                // Bot requests are queued and executed on the game thread by FBotManager::Tick.
+                static int BotSpawnCount = 10;
+                ImGui::SeparatorText("Bots");
+                ImGui::Text("Bots: %d / %d", FBotManager::GetPublishedBotCount(), FBotSystemConfig::MaxBots);
+                ImGui::SliderInt("Bots to spawn", &BotSpawnCount, 1, 100);
+                if (ImGui::Button("Spawn Bots"))
+                    FBotManager::RequestSpawnBots(BotSpawnCount);
+                ImGui::SameLine();
+                if (ImGui::Button("Remove All Bots"))
+                    FBotManager::RequestRemoveAllBots();
+                ImGui::Checkbox("Remove dead bots", &FBotSystemConfig::bRemoveDeadBots);
+                ImGui::Checkbox("Verbose bot logging", &FBotSystemConfig::bVerboseLogging);
+            }
 
             if (ImGui::Button("Reset Builds"))
             {
