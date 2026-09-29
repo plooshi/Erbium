@@ -17,6 +17,22 @@ public:
     DEFINE_PROP(FilterConfigs, TArray<FObjectReplicationBridgeFilterConfig>);
 };
 
+// FKey (InputCore): the key's name plus a TSharedPtr<FKeyDetails> the engine looks up lazily, so a
+// zeroed pointer is valid. 0x18 bytes on every UE4/UE5 build Erbium supports.
+struct FInputKey
+{
+    FName KeyName;
+    void* KeyDetails[2] = {};
+};
+
+class UInputSettings : public UObject
+{
+public:
+    UCLASS_COMMON_MEMBERS(UInputSettings);
+
+    DEFINE_PROP(ConsoleKeys, TArray<FInputKey>);
+};
+
 class Client
 {
 public:

@@ -38,11 +38,88 @@ void PerformBuildingEditInteraction(AFortPlayerControllerAthena* _this)
     return PerformBuildingEditInteractionOG(_this);
 }
 
+// The in-game console only exists if something creates it: shipping builds leave
+// GameViewport->ViewportConsole empty. The viewport may not exist yet when the DLL is injected early,
+// so this is retried from ClientThread until it succeeds.
+static bool EnsureConsole()
+{
+    auto Engine = UEngine::GetEngine();
+    if (!Engine || !Engine->GameViewport || !Engine->ConsoleClass)
+        return false;
+
+    if (!Engine->GameViewport->ViewportConsole)
+        Engine->GameViewport->ViewportConsole = UGameplayStatics::SpawnObject(Engine->ConsoleClass, Engine->GameViewport);
+
+    return Engine->GameViewport->ViewportConsole != nullptr;
+}
+
+// UConsole opens on any key in UInputSettings::ConsoleKeys (read from the default object on every key
+// press). Fortnite's list usually only has the tilde key, which many keyboard layouts do not have, so
+// F8 is added.
+static void AddConsoleKey(UInputSettings* Settings, const wchar_t* KeyName)
+{
+    FName Name(KeyName);
+    auto& ConsoleKeys = Settings->ConsoleKeys;
+    for (int i = 0; i < ConsoleKeys.Num(); i++)
+        if (ConsoleKeys[i].KeyName.ComparisonIndex == Name.ComparisonIndex)
+            return;
+
+    FInputKey Key{};
+    Key.KeyName = Name;
+    ConsoleKeys.Add(Key);
+}
+
+// Returns true once the keys are in place. Not UInputSettings::GetDefaultObj(): that caches its first
+// result, so a call made before the settings object exists (early injection) would fail forever.
+static bool EnsureConsoleKeys()
+{
+    static UInputSettings* Settings = nullptr;
+    static bool bUnsupported = false;
+
+    if (bUnsupported)
+        return true;
+
+    if (!Settings)
+    {
+        auto SettingsClass = FindClass("InputSettings");
+        if (!SettingsClass)
+            return false;
+
+        Settings = (UInputSettings*)SettingsClass->GetDefaultObj();
+        if (!Settings)
+            return false;
+
+        // Only append if the engine's FKey has the layout FInputKey assumes.
+        auto KeyStruct = FindStruct("Key");
+        if (!Settings->HasConsoleKeys() || (KeyStruct && KeyStruct->GetPropertiesSize() != sizeof(FInputKey)))
+        {
+            bUnsupported = true;
+            return true;
+        }
+    }
+
+    // Re-checked periodically: a settings reload would replace the list.
+    AddConsoleKey(Settings, L"F8");
+    AddConsoleKey(Settings, L"Tilde");
+    return true;
+}
+
 void ClientThread()
 {
     bool bPressed = false;
+    bool bConsoleKeysSet = false;
+    int ConsoleKeyCheckTimer = 0;
     while (true)
     {
+        EnsureConsole();
+
+        // Every tick until it worked, then about every 3 seconds.
+        if (!bConsoleKeysSet || ++ConsoleKeyCheckTimer >= 90)
+        {
+            ConsoleKeyCheckTimer = 0;
+            bConsoleKeysSet = EnsureConsoleKeys();
+        }
+
         if (UWorld::GetWorld() && UWorld::GetWorld()->OwningGameInstance)
         {
             auto& LocalPlayers = UWorld::GetWorld()->OwningGameInstance->LocalPlayers;
@@ -86,7 +163,8 @@ void ClientThread()
 
 void Client::Init()
 {
-    UEngine::GetEngine()->GameViewport->ViewportConsole = UGameplayStatics::SpawnObject(UEngine::GetEngine()->ConsoleClass, UEngine::GetEngine()->GameViewport);
+    EnsureConsole();
+    EnsureConsoleKeys();
 
     if (VersionInfo.FortniteVersion >= 10 || FConfiguration::bForceRespawns)
     {

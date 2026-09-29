@@ -373,11 +373,17 @@ public:
     DEFINE_FUNC(ServerPlayEmoteItem, void);
 
     static void ServerAcknowledgePossession(UObject*, FFrame&);
+    // Player setup steps normally triggered by the client's ServerAcknowledgePossession; also used for bots.
+    static void GrantPlayerAbilities(AFortPlayerStateAthena*);
+    static void GiveStartingItems(AFortPlayerControllerAthena*);
+    static void ApplyStormDamageEffect(AFortPlayerStateAthena*);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);
     DefHookOg(void, ServerAttemptAircraftJump_, UObject*, FFrame&);
     static void ServerExecuteInventoryItem_(UObject*, FFrame&);
     static void ServerExecuteInventoryWeapon(UObject*, FFrame&);
     static void ServerCreateBuildingActor(UObject*, FFrame&);
+    static class ABuildingSMActor* PlaceBuildingActor(AActor* Owner, AFortPlayerControllerAthena* SpawningController, AFortPlayerStateAthena* PlayerState, TSubclassOf<AActor> BuildingClass,
+                                                      FBuildingClassData& BuildingClassData, FVector BuildLoc, FRotator BuildRot, bool bMirrored);
     static void ServerBeginEditingBuildingActor(UObject*, FFrame&);
     static void ServerEditBuildingActor(UObject*, FFrame&);
     static void ServerEndEditingBuildingActor(UObject*, FFrame&);

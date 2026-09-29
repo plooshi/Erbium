@@ -7,6 +7,8 @@
 #include "../../ImGui/imgui_impl_win32.h"
 #include "../Public/Configuration.h"
 #include "../Public/Events.h"
+#include "../../BotSystem/Public/BotManager.h"
+#include "../../BotSystem/Public/BotSpawner.h"
 #include <d3d11.h>
 #include <fstream>
 #include <sstream>
@@ -270,6 +272,12 @@ void GUI::Init()
                 ImGui::EndTabItem();
             }
 
+            if (ImGui::BeginTabItem("AI"))
+            {
+                SelectedUI = 5;
+                ImGui::EndTabItem();
+            }
+
             // do not remove
             if (ImGui::TabItemButton("Made by Sarah (@ustruct on Discord)"))
                 ImGui::EndTabItem();
@@ -398,6 +406,107 @@ void GUI::Init()
                 Events::StartEvent();
 
             break;
+        case 5:
+        {
+            // Bot system. Everything here is read on the game thread by FBotManager::Tick; buttons only
+            // queue requests. The main view has the everyday controls; the rest is under Advanced.
+            ImGui::Checkbox("Enable AI bots", &FBotSystemConfig::bEnabled);
+            ImGui::SameLine();
+            ImGui::Checkbox("Pause", &FBotSystemConfig::bPaused);
+            ImGui::SameLine();
+            ImGui::Text("   Bots: %d / %d", FBotManager::GetPublishedBotCount(), FBotSystemConfig::MaxBots);
+
+            // Problems only, when there are any.
+            if (auto Stuck = FBotManager::DiagPlayerControllerBots.load(); Stuck > 0)
+                ImGui::TextColored(ImVec4(1.f, 0.75f, 0.2f, 1.f), "%d bot(s) cannot move (no AI controller: %s)", Stuck, BotSpawner::GetLastAIControllerError());
+            if (strcmp(BotSpawner::GetLastError(), "none") != 0)
+                ImGui::TextColored(ImVec4(1.f, 0.75f, 0.2f, 1.f), "Last spawn error: %s", BotSpawner::GetLastError());
+
+            ImGui::Checkbox("Auto spawn on join", &FBotSystemConfig::bAutoSpawn);
+            ImGui::SameLine();
+            ImGui::SetNextItemWidth(160.f);
+            ImGui::SliderInt("##AutoSpawnCount", &FBotSystemConfig::AutoSpawnCount, 1, 100);
+
+            if (FBotSystemConfig::bEnabled && gsStatus >= Joinable)
+            {
+                static int BotSpawnCount = 10;
+                ImGui::SetNextItemWidth(160.f);
+                ImGui::SliderInt("##BotSpawnCount", &BotSpawnCount, 1, 100);
+                ImGui::SameLine();
+                if (ImGui::Button("Spawn"))
+                    FBotManager::RequestSpawnBots(BotSpawnCount);
+                ImGui::SameLine();
+                if (ImGui::Button("Fill"))
+                    FBotManager::RequestAutoFill();
+                ImGui::SameLine();
+                if (ImGui::Button("Remove all"))
+                    FBotManager::RequestRemoveAllBots();
+            }
+
+            // Apply to bots spawned afterwards.
+            static int Difficulty = (int)FBotSystemConfig::DefaultDifficulty;
+            ImGui::SetNextItemWidth(160.f);
+            if (ImGui::Combo("Difficulty", &Difficulty, "Easy\0Normal\0Hard\0"))
+                FBotSystemConfig::DefaultDifficulty = (EBotDifficulty)Difficulty;
+            ImGui::SameLine();
+            ImGui::Checkbox("Build", &FBotSystemConfig::bAllowBuilding);
+            ImGui::SameLine();
+            ImGui::Checkbox("Random cosmetics", &FBotCosmeticSettings::bEnabled);
+
+            if (ImGui::CollapsingHeader("Advanced"))
+            {
+                static int ControllerMode = (int)FBotSystemConfig::ControllerMode;
+                if (ImGui::Combo("Bot controller", &ControllerMode, "Auto\0AI controller\0Player controller (cannot move)\0"))
+                    FBotSystemConfig::ControllerMode = (EBotControllerMode)ControllerMode;
+                ImGui::Checkbox("Prefer Fortnite bot controller", &FBotSystemConfig::bPreferFortniteBotController);
+                ImGui::Checkbox("Use nav mesh", &FBotSystemConfig::bUseNavMesh);
+                ImGui::SameLine();
+                ImGui::Checkbox("Force steering", &FBotSystemConfig::bForceSteering);
+                ImGui::Checkbox("Ride the battle bus", &FBotSystemConfig::bBotsUseBattleBus);
+                ImGui::SameLine();
+                ImGui::Checkbox("Remove dead bots", &FBotSystemConfig::bRemoveDeadBots);
+                ImGui::Checkbox("Emulate consumables (virtual inventory)", &FBotSystemConfig::bEmulateConsumablesForVirtualInventory);
+
+                for (int Slot = 0; Slot < (int)EBotCosmeticSlot::Count; Slot++)
+                {
+                    int Mode = (int)FBotCosmeticSettings::Slots[Slot].Mode;
+                    ImGui::SetNextItemWidth(160.f);
+                    if (ImGui::Combo(BotCosmetics::ToString((EBotCosmeticSlot)Slot), &Mode, "Random\0Specific\0None\0"))
+                        FBotCosmeticSettings::Slots[Slot].Mode = (EBotCosmeticMode)Mode;
+                }
+                if (ImGui::Button("Reload BotCosmetics.txt"))
+                    BotCosmetics::RequestReload();
+
+                ImGui::Checkbox("Verbose bot logging", &FBotSystemConfig::bVerboseLogging);
+
+                if (ImGui::TreeNode("Diagnostics"))
+                {
+                    static uint32 LastTickCount = 0;
+                    static double LastTickChange = 0.0;
+                    auto TickCount = FBotManager::DiagTickCount.load();
+                    if (TickCount != LastTickCount)
+                    {
+                        LastTickCount = TickCount;
+                        LastTickChange = ImGui::GetTime();
+                    }
+                    bool bTicking = TickCount != 0 && ImGui::GetTime() - LastTickChange < 2.0;
+
+                    ImGui::Text("Bot system running: %s | players connected: %d", bTicking ? "yes" : "NO", FBotManager::DiagClientConnections.load());
+                    ImGui::Text("Auto spawn: %s", FBotManager::DiagAutoSpawn.load());
+                    ImGui::Text("Movement: %s | bots that can move: %d", FBotManager::DiagNavMode.load(), FBotManager::DiagAIControllerBots.load());
+                    ImGui::Text("Outfits: %d dressed, %d known | last problem: %s", FBotManager::DiagDressedBots.load(), BotCosmetics::GetKnownCount(EBotCosmeticSlot::Outfit),
+                                BotCosmetics::GetLastProblem());
+                    ImGui::Text("Last rejected spawn: %s | bot tick: %.1f us", FBotManager::DiagLastReject.load(), FBotManager::GetLastAverageTickMicros());
+                    ImGui::TextWrapped("First bot: %s", FBotManager::GetFirstBotStatus().c_str());
+                    if (ImGui::Button("Run movement test"))
+                        FBotManager::RequestMovementTest();
+                    ImGui::SameLine();
+                    ImGui::TextWrapped("%s", FBotManager::GetMovementTestResult().c_str());
+                    ImGui::TreePop();
+                }
+            }
+            break;
+        }
         case 3:
             ImGui::Checkbox("Infinite Materials", &FConfiguration::bInfiniteMats);
             ImGui::Checkbox("Infinite Ammo", &FConfiguration::bInfiniteAmmo);

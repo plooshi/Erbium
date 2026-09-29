@@ -192,7 +192,9 @@ bool AFortPlayerPawnAthena::FinishedTargetSpline(void* _Pickup)
         return FinishedTargetSplineOG(Pickup);
 
     auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
-    if (!PlayerController)
+    // Everything below needs a player controller (inventory, swap state); AI-controlled pawns
+    // (bot system) pick items up through their own inventory instead.
+    if (!PlayerController || !PlayerController->IsA<AFortPlayerControllerAthena>())
         return FinishedTargetSplineOG(Pickup);
 
     // if (auto entry = PlayerController->HasSwappingItemDefinition() ? (FFortItemEntry*)PlayerController->SwappingItemDefinition : nullptr)
@@ -558,7 +560,12 @@ void AFortPlayerPawnAthena::EndSkydiving(AFortPlayerPawnAthena* Pawn)
 
     auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
 
-    if (PlayerController && Pawn->bIsSkydiving)
+    // Runs for every pawn that lands, including AI-controlled bots (bot system): quests only exist
+    // on player controllers.
+    if (!PlayerController || !PlayerController->IsA<AFortPlayerControllerAthena>())
+        return;
+
+    if (Pawn->bIsSkydiving)
         PlayerController->GetQuestManager(1)->SendStatEvent(PlayerController, EFortQuestObjectiveStatEvent::GetLand(), 1, Pawn);
 
     if (Pawn->bIsSkydivingFromBus)

@@ -5,6 +5,7 @@
 #include "../../Erbium/Public/GUI.h"
 #include "../../FortniteGame/Public/BattleRoyaleGamePhaseLogic.h"
 #include "../../FortniteGame/Public/FortGameMode.h"
+#include "../../BotSystem/Public/BotManager.h"
 
 uint32_t NetworkObjectListOffset = 0;
 uint32_t ReplicationFrameOffset = 0;
@@ -482,6 +483,8 @@ void ServerReplicateActors(UNetDriver* Driver, float DeltaSeconds)
 
 void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 {
+    FBotManager::Tick(Driver, DeltaSeconds);
+
     if (VersionInfo.FortniteVersion >= 25.20)
     {
         auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());
@@ -556,6 +559,8 @@ void UNetDriver::TickFlush(UNetDriver* Driver, float DeltaSeconds)
 uint64_t ServerReplicateActors_;
 void UNetDriver::TickFlush__RepGraph(UNetDriver* Driver, float DeltaSeconds)
 {
+    FBotManager::Tick(Driver, DeltaSeconds);
+
     if (Driver->ReplicationDriver)
     {
         // this is our main netdriver
@@ -664,6 +669,8 @@ void SendClientMoveAdjustments(UNetDriver* Driver)
 
 void UNetDriver::TickFlush__Iris(UNetDriver* Driver, float DeltaSeconds)
 {
+    FBotManager::Tick(Driver, DeltaSeconds);
+
     if (VersionInfo.FortniteVersion >= 25.20)
     {
         auto GamePhaseLogic = UFortGameStateComponent_BattleRoyaleGamePhaseLogic::Get(UWorld::GetWorld());

@@ -6,6 +6,7 @@
 #include "../Public/FortPlayerPawnAthena.h"
 #include "../Public/FortWeapon.h"
 #include <ShlObj.h>
+#include "../../BotSystem/Public/BotManager.h"
 
 uint32_t OnItemInstanceAddedVft;
 
@@ -532,6 +533,12 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
     if (FConfiguration::bInfiniteAmmo)
         return true;
 
+    // The code below assumes the interface belongs to a player controller. AI-controlled bots with a
+    // native inventory implement the interface on a different class; the bot system handles those.
+    bool bRemoved = false;
+    if (FBotManager::HandleRemoveInventoryItem(Interface, ItemGuid, Count, bForceRemoval, bRemoved))
+        return bRemoved;
+
     static auto InterfaceOffset = FindClass("FortPlayerController")->GetSuper()->GetPropertiesSize() + (VersionInfo.EngineVersion >= 4.27 ? 16 : 8);
     auto PlayerController = (AFortPlayerControllerAthena*)(__int64(Interface) - InterfaceOffset);
 
@@ -611,8 +618,33 @@ bool RemoveInventoryItem(IInterface* Interface, FGuid& ItemGuid, int Count, bool
     return false;
 }
 
+// Items owned by something other than a player controller (AI-controlled bots): update the entry in the
+// item's own inventory instead of a player controller's WorldInventory.
+template <typename ApplyFn>
+static bool UpdateNonPlayerItem(UFortWorldItem* Item, ApplyFn&& Apply)
+{
+    auto Owner = (AActor*)Item->GetOwningController();
+    if (Owner && Owner->IsA<AFortPlayerControllerAthena>())
+        return false;
+
+    Apply(Item->ItemEntry);
+
+    if (auto Inventory = (AFortInventory*)Item->ItemEntry.ParentInventory.Get())
+        if (auto repEnt = Inventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& Entry) { return Entry.ItemGuid == Item->ItemEntry.ItemGuid; }, FFortItemEntry::Size()))
+        {
+            Apply(*repEnt);
+            Inventory->UpdateEntry(*repEnt);
+        }
+
+    Item->ItemEntry.bIsDirty = true;
+    return true;
+}
+
 void SetLoadedAmmo(UFortWorldItem* Item, int LoadedAmmo)
 {
+    if (UpdateNonPlayerItem(Item, [&](FFortItemEntry& Entry) { Entry.LoadedAmmo = LoadedAmmo; }))
+        return;
+
     auto PlayerController = (AFortPlayerControllerAthena*)Item->GetOwningController();
     // PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
     auto repEnt = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& item) { return item.ItemGuid == Item->ItemEntry.ItemGuid; }, FFortItemEntry::Size());
@@ -625,6 +657,9 @@ void SetLoadedAmmo(UFortWorldItem* Item, int LoadedAmmo)
 
 void SetPhantomReserveAmmo(UFortWorldItem* Item, unsigned int PhantomReserveAmmo)
 {
+    if (UpdateNonPlayerItem(Item, [&](FFortItemEntry& Entry) { Entry.PhantomReserveAmmo = PhantomReserveAmmo; }))
+        return;
+
     auto PlayerController = (AFortPlayerControllerAthena*)Item->GetOwningController();
     // PlayerController->WorldInventory->UpdateEntry(Item->ItemEntry);
     auto repEnt = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([&](FFortItemEntry& item) { return item.ItemGuid == Item->ItemEntry.ItemGuid; }, FFortItemEntry::Size());

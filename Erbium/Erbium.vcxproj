@@ -156,6 +156,30 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BotSystem\Public\BotEngineTypes.h" />
+    <ClInclude Include="BotSystem\Public\Navigation\BotNavigation.h" />
+    <ClInclude Include="BotSystem\Public\Navigation\BotMovement.h" />
+    <ClInclude Include="BotSystem\Public\Perception\BotPerception.h" />
+    <ClInclude Include="BotSystem\Public\Behaviors\BotBehaviors.h" />
+    <ClInclude Include="BotSystem\Public\Cosmetics\BotCosmetics.h" />
+    <ClInclude Include="BotSystem\Public\Building\BotBuildCatalog.h" />
+    <ClInclude Include="BotSystem\Public\Building\BotBuildGrid.h" />
+    <ClInclude Include="BotSystem\Public\Building\BotBuilder.h" />
+    <ClInclude Include="BotSystem\Public\Inventory\BotItems.h" />
+    <ClInclude Include="BotSystem\Public\Inventory\BotInventory.h" />
+    <ClInclude Include="BotSystem\Public\Loot\BotLoot.h" />
+    <ClInclude Include="BotSystem\Public\Combat\BotWeapons.h" />
+    <ClInclude Include="BotSystem\Public\Combat\BotCombat.h" />
+    <ClInclude Include="BotSystem\Public\Decision\BotBrain.h" />
+    <ClInclude Include="BotSystem\Public\World\BotWorld.h" />
+    <ClInclude Include="BotSystem\Public\BotBehavior.h" />
+    <ClInclude Include="BotSystem\Public\BotCompat.h" />
+    <ClInclude Include="BotSystem\Public\BotConfig.h" />
+    <ClInclude Include="BotSystem\Public\BotController.h" />
+    <ClInclude Include="BotSystem\Public\BotLog.h" />
+    <ClInclude Include="BotSystem\Public\BotManager.h" />
+    <ClInclude Include="BotSystem\Public\BotSpawner.h" />
+    <ClInclude Include="BotSystem\Public\BotState.h" />
     <ClInclude Include="..\SDK\Containers.h" />
     <ClInclude Include="..\SDK\Core.h" />
     <ClInclude Include="..\SDK\Defs.h" />
@@ -220,6 +244,26 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BotSystem\Private\Navigation\BotNavigation.cpp" />
+    <ClCompile Include="BotSystem\Private\Navigation\BotMovement.cpp" />
+    <ClCompile Include="BotSystem\Private\Perception\BotPerception.cpp" />
+    <ClCompile Include="BotSystem\Private\Behaviors\BotBehaviors.cpp" />
+    <ClCompile Include="BotSystem\Private\Cosmetics\BotCosmetics.cpp" />
+    <ClCompile Include="BotSystem\Private\Building\BotBuildCatalog.cpp" />
+    <ClCompile Include="BotSystem\Private\Building\BotBuildGrid.cpp" />
+    <ClCompile Include="BotSystem\Private\Building\BotBuilder.cpp" />
+    <ClCompile Include="BotSystem\Private\Inventory\BotItems.cpp" />
+    <ClCompile Include="BotSystem\Private\Inventory\BotInventory.cpp" />
+    <ClCompile Include="BotSystem\Private\Loot\BotLoot.cpp" />
+    <ClCompile Include="BotSystem\Private\Combat\BotWeapons.cpp" />
+    <ClCompile Include="BotSystem\Private\Combat\BotCombat.cpp" />
+    <ClCompile Include="BotSystem\Private\Decision\BotBrain.cpp" />
+    <ClCompile Include="BotSystem\Private\World\BotWorld.cpp" />
+    <ClCompile Include="BotSystem\Private\BotBehavior.cpp" />
+    <ClCompile Include="BotSystem\Private\BotCompat.cpp" />
+    <ClCompile Include="BotSystem\Private\BotController.cpp" />
+    <ClCompile Include="BotSystem\Private\BotManager.cpp" />
+    <ClCompile Include="BotSystem\Private\BotSpawner.cpp" />
     <ClCompile Include="Engine\Private\AbilitySystemComponent.cpp" />
     <ClCompile Include="Engine\Private\NetDriver.cpp" />
     <ClCompile Include="Erbium\Plugins\CrashReporter\Private\CrashReporter.cpp" />
