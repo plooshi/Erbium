@@ -480,6 +480,7 @@ void GUI::Init()
             if (ImGui::Combo("Difficulty (new bots)", &Difficulty, "Easy\0Normal\0Hard\0"))
                 FBotSystemConfig::DefaultDifficulty = (EBotDifficulty)Difficulty;
             ImGui::Checkbox("Use nav mesh", &FBotSystemConfig::bUseNavMesh);
+            ImGui::Checkbox("Force steering movement (test)", &FBotSystemConfig::bForceSteering);
             ImGui::Checkbox("Bots can build", &FBotSystemConfig::bAllowBuilding);
             ImGui::Checkbox("Prefer Fortnite bot controller", &FBotSystemConfig::bPreferFortniteBotController);
             ImGui::Checkbox("Bots ride the battle bus", &FBotSystemConfig::bBotsUseBattleBus);

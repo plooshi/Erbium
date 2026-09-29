@@ -274,7 +274,7 @@ void FBotMovement::Update(double Now)
     auto& Config = Bot.GetConfig();
     bool bMovingGoal = GoalType != EBotMoveGoal::Location;
     // The mode in use was dropped (see BotNavigation::ReportProgress): re-issue with the new one.
-    bool bModeDropped = bRequestActive && BotNavigation::IsDisabled(NavMode);
+    bool bModeDropped = bRequestActive && (BotNavigation::IsDisabled(NavMode) || (FBotSystemConfig::bForceSteering && NavMode != EBotNavMode::Steering && ForcedNavMode == EBotNavMode::None));
     if (bModeDropped)
         BotNavigation::Get(NavMode)->Stop(Bot);
     bool bNeedsIssue = bModeDropped || !bRequestActive || (bMovingGoal && Now - LastIssueTime >= Config.RepathInterval) ||

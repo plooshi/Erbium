@@ -224,8 +224,39 @@ namespace BotNavigation
         }
     }
 
+    // Once per match, when the world exists: without a navigation system there is no nav mesh to path
+    // on (Erbium does not set one up; see OnWorldInitDone in FortGameMode.cpp), so pathfinding is
+    // skipped instead of failing its way down to the fallback. Target build for this check: 12.61
+    // (UE 4.25), where Erbium's nav setup (OnWorldInitDone) is disabled.
+    static void CheckNavigationSystem()
+    {
+        static bool bChecked = false;
+        if (bChecked)
+            return;
+
+        auto World = UWorld::GetWorld();
+        if (!World)
+            return;
+
+        bChecked = true;
+        if (World->HasNavigationSystem() && World->NavigationSystem)
+        {
+            BOT_LOG(BOT_CATEGORY_NAV, "Navigation system present (%s): trying pathfinding first.", World->NavigationSystem->Class->GetName().ToString().c_str());
+            return;
+        }
+
+        Stats[(int)EBotNavMode::Pathfinding].bDisabled = true;
+        bNavQueriesBroken = true;
+        BOT_LOG(BOT_CATEGORY_NAV, "No navigation system in this world: no pathfinding, bots use direct moves / steering.");
+    }
+
     EBotNavMode GetPreferredMode()
     {
+        if (FBotSystemConfig::bForceSteering)
+            return EBotNavMode::Steering;
+
+        CheckNavigationSystem();
+
         auto Mode = FBotSystemConfig::bUseNavMesh ? EBotNavMode::Pathfinding : EBotNavMode::DirectPath;
 
         while (Mode != EBotNavMode::Steering && Stats[(int)Mode].bDisabled)

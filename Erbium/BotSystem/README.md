@@ -473,6 +473,25 @@ Two Erbium hooks assumed the pawn or instigator always has a player controller. 
 | Winner | A later death with one team left could replay the win screen. | `DeclareWinner` runs once per match. |
 | Diagnostics | The first-bot line and the counters kept stale values after all bots were removed. | Reset with the rest of the world state. |
 
+
+## Round 15: primary target 12.61 (UE 4.25)
+
+The build being tested is **Fortnite 12.61 / UE 4.25**. Checked against it:
+
+| Topic | 12.61 | Status |
+|---|---|---|
+| Game phase | `AFortGameStateAthena::GamePhase`, `EAthenaGamePhase` Warmup 2 / Aircraft 3 / SafeZones 4 / EndGame 5 (the phase-logic component is 25.20+ only) | matches `BotWorld::ReadPhase` |
+| Bus | `GameState->Aircrafts[0]`, drop window from `DropStartTime/DropEndTime` or `FlightInfo` | matches `ReadAircraft` / `GetDropWindow` |
+| Match start | Erbium's `StartAircraftPhase` hook sets `GUI::gsStatus = StartedMatch` | used by `IsBusPhase / IsBusGone` |
+| Storm damage effect | the 25.20+ path, not used on 12.61 | skipped by the version check |
+| Navigation | Erbium's nav setup (`OnWorldInitDone`) is commented out, so the world may have no navigation system | new: `CheckNavigationSystem` skips pathfinding when there is none |
+
+New GUI toggle **Force steering movement (test)** steers every bot with movement input and skips MoveTo entirely:
+- Bots walk with it on: the problem was navigation.
+- They still do not walk: the pawn itself does not take movement (see the AI tab's first-bot line).
+
+Other versions are handled by the same runtime lookups (properties and functions by name); version-specific fixes go into this table when they are confirmed on a build.
+
 ## Where to find everything
 
 **Branch:** `claude/erbium-ai-bot-system-sus0gw` on `wieseichwiesenicht-art/Erbium-AI-Fork2`, one commit per phase on top of `main`.

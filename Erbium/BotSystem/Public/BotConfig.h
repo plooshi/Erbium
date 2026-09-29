@@ -70,6 +70,10 @@ struct FBotSystemConfig
     // automatically falls back to direct paths and then to steering (see BotNavigation.h).
     static inline bool bUseNavMesh = true;
 
+    // Skip the engine's MoveTo entirely and steer every bot with movement input (GUI toggle). Use it to
+    // tell a navigation problem (bots move with this on) from a pawn that cannot walk at all.
+    static inline bool bForceSteering = false;
+
     // Global switch for Phase 4 building on top of the per-bot FBotConfig::bCanBuild.
     static inline bool bAllowBuilding = true;
 
