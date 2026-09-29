@@ -461,6 +461,72 @@ uint64_t CantBuild_ = 0;
 uint64_t CanAffordToPlaceBuildableClass_;
 uint64_t PayBuildableClassPlacementCost_;
 uint64_t CanPlaceBuildableClassInStructuralGrid_;
+// Validation + placement part of ServerCreateBuildingActor, shared with the bot system
+// (BotSystem/Private/Building/BotBuilder.cpp). Resource checks/payment stay with the caller.
+// SpawningController may be nullptr (AI-controller bots).
+ABuildingSMActor* AFortPlayerControllerAthena::PlaceBuildingActor(AActor* Owner, AFortPlayerControllerAthena* SpawningController, AFortPlayerStateAthena* PlayerState, TSubclassOf<AActor> BuildingClass,
+                                                                  FBuildingClassData& BuildingClassData, FVector BuildLoc, FRotator BuildRot, bool bMirrored)
+{
+    struct _Pad_0xC
+    {
+        uint8_t Padding[0xC];
+    };
+    struct _Pad_0x18
+    {
+        uint8_t Padding[0x18];
+    };
+
+    if (!CantBuild_ || !BuildingClass)
+        return nullptr;
+
+    TArray<ABuildingSMActor*> RemoveBuildings;
+    if (VersionInfo.FortniteVersion >= 27)
+    {
+        char _Unk_OutVar1;
+        auto CantBuild = (__int64 (*)(UWorld*, TSubclassOf<AActor>&, _Pad_0x18, _Pad_0x18, bool, TArray<ABuildingSMActor*>*, char*))CantBuild_;
+
+        if (CantBuild(UWorld::GetWorld(), BuildingClass, *(_Pad_0x18*)&BuildLoc, *(_Pad_0x18*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1))
+            return nullptr;
+    }
+    else
+    {
+        char _Unk_OutVar1;
+        auto CantBuild = (__int64 (*)(UWorld*, const UClass*, _Pad_0xC, _Pad_0xC, bool, TArray<ABuildingSMActor*>*, char*))CantBuild_;
+        auto CantBuildNew = (__int64 (*)(UWorld*, const UClass*, _Pad_0x18, _Pad_0x18, bool, TArray<ABuildingSMActor*>*, char*))CantBuild_;
+
+        if (VersionInfo.FortniteVersion >= 20.00 ? CantBuildNew(UWorld::GetWorld(), BuildingClass, *(_Pad_0x18*)&BuildLoc, *(_Pad_0x18*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1)
+                                                 : CantBuild(UWorld::GetWorld(), BuildingClass, *(_Pad_0xC*)&BuildLoc, *(_Pad_0xC*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1))
+            return nullptr;
+    }
+
+    for (auto& RemoveBuilding : RemoveBuildings)
+        RemoveBuilding->K2_DestroyActor();
+    RemoveBuildings.Free();
+
+    ABuildingSMActor* Building = UWorld::SpawnActorUnfinished<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, Owner);
+    if (!Building)
+        return nullptr;
+
+    Building->InitializeKismetSpawnedBuildingActor(Building, SpawningController, true, nullptr, false);
+    UWorld::FinishSpawnActor(Building, BuildLoc, BuildRot);
+
+    static auto UpgradeLevelOffset = FBuildingClassData::StaticStruct()->GetOffset("UpgradeLevel");
+    Building->CurrentBuildingLevel = VersionInfo.EngineVersion >= 5.3 ? *(uint8*)(__int64(&BuildingClassData) + UpgradeLevelOffset) : *(uint32*)(__int64(&BuildingClassData) + UpgradeLevelOffset);
+    Building->OnRep_CurrentBuildingLevel();
+
+    Building->SetMirrored(bMirrored);
+
+    Building->bPlayerPlaced = true;
+
+    if (PlayerState && PlayerState->HasTeamIndex())
+        Building->Team = PlayerState->TeamIndex;
+
+    if (Building->HasTeamIndex())
+        Building->TeamIndex = Building->Team;
+
+    return Building;
+}
+
 void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FFrame& Stack)
 {
     TSubclassOf<AActor> BuildingClass;
@@ -587,60 +653,9 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
         }
     }
 
-    TArray<ABuildingSMActor*> RemoveBuildings;
-    if (VersionInfo.FortniteVersion >= 27)
-    {
-        char _Unk_OutVar1;
-        auto CantBuild = (__int64 (*)(UWorld*, TSubclassOf<AActor>&, _Pad_0x18, _Pad_0x18, bool, TArray<ABuildingSMActor*>*, char*))CantBuild_;
-
-        if (CantBuild(UWorld::GetWorld(), BuildingClass, *(_Pad_0x18*)&BuildLoc, *(_Pad_0x18*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1))
-            return;
-    }
-    else
-    {
-        char _Unk_OutVar1;
-        auto CantBuild = (__int64 (*)(UWorld*, const UClass*, _Pad_0xC, _Pad_0xC, bool, TArray<ABuildingSMActor*>*, char*))CantBuild_;
-        auto CantBuildNew = (__int64 (*)(UWorld*, const UClass*, _Pad_0x18, _Pad_0x18, bool, TArray<ABuildingSMActor*>*, char*))CantBuild_;
-
-        if (VersionInfo.FortniteVersion >= 20.00 ? CantBuildNew(UWorld::GetWorld(), BuildingClass, *(_Pad_0x18*)&BuildLoc, *(_Pad_0x18*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1)
-                                                 : CantBuild(UWorld::GetWorld(), BuildingClass, *(_Pad_0xC*)&BuildLoc, *(_Pad_0xC*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1))
-            return;
-    }
-
-    for (auto& RemoveBuilding : RemoveBuildings)
-        RemoveBuilding->K2_DestroyActor();
-    RemoveBuildings.Free();
-
-    static auto K2_SpawnBuildingActor = ABuildingSMActor::GetDefaultObj()->GetFunction("K2_SpawnBuildingActor");
-
-    ABuildingSMActor* Building = nullptr;
-    /*if (K2_SpawnBuildingActor)
-    {
-        FTransform SpawnTransform(BuildLoc, BuildRot);
-        Building = ABuildingSMActor::K2_SpawnBuildingActor(PlayerController, BuildingClass, SpawnTransform, PlayerController, nullptr, false, false);
-    }
-    else*/
-    Building = UWorld::SpawnActorUnfinished<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, PlayerController);
-
-    Building->InitializeKismetSpawnedBuildingActor(Building, PlayerController, true, nullptr, false);
-    UWorld::FinishSpawnActor(Building, BuildLoc, BuildRot);
-
+    auto Building = PlaceBuildingActor(PlayerController, PlayerController, PlayerController->PlayerState, BuildingClass, BuildingClassData, BuildLoc, BuildRot, bMirrored);
     if (!Building)
         return;
-
-    static auto UpgradeLevelOffset = FBuildingClassData::StaticStruct()->GetOffset("UpgradeLevel");
-    Building->CurrentBuildingLevel = VersionInfo.EngineVersion >= 5.3 ? *(uint8*)(__int64(&BuildingClassData) + UpgradeLevelOffset) : *(uint32*)(__int64(&BuildingClassData) + UpgradeLevelOffset);
-    Building->OnRep_CurrentBuildingLevel();
-
-    Building->SetMirrored(bMirrored);
-
-    Building->bPlayerPlaced = true;
-
-    if (((AFortPlayerStateAthena*)PlayerController->PlayerState)->HasTeamIndex())
-        Building->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
-
-    if (Building->HasTeamIndex())
-        Building->TeamIndex = Building->Team;
 
     if (!PlayerController->bBuildFree && !FConfiguration::bInfiniteMats)
     {
@@ -1676,6 +1691,8 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
     cheat botgoto <Id = all> - Bots walk to your location
     cheat botwander <Id = all> - Bots wander around
     cheat botidle <Id = all> - Bots stand still
+    cheat botbuild <wall|floor|ramp|cone> <Id = all> - Bots build a piece facing you
+    cheat botoutfit <CID_...> <Id = all> - Changes bot outfits
     cheat startevent - Starts the event for the current version
     cheat tp <X> <Y> <Z> - Teleports to a location
     cheat launch <X> <Y> <Z> - Launches the player
@@ -2080,11 +2097,50 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 
             for (auto Bot : FBotManager::GetActiveBots())
             {
-                std::string Info = std::string(ToString(Bot->GetAIState())) + " " + ToString(Bot->GetControllerKind()) + " nav=" + BotNavigation::ToString(Bot->GetMovement().GetNavMode());
+                std::string Info = std::string(ToString(Bot->GetAIState())) + " " + ToString(Bot->GetControllerKind()) + " nav=" + BotNavigation::ToString(Bot->GetMovement().GetNavMode()) +
+                                   " builds=" + std::to_string(Bot->GetBuilder().GetPlacedCount()) + " [" + Bot->Cosmetics.Describe() + "]";
                 List += L"\n#" + std::to_wstring(Bot->GetId()) + L" " + std::wstring(Info.begin(), Info.end());
             }
 
             PlayerController->ClientMessage(FString(List.c_str()), FName(), 1.f);
+        }
+        else if (command == "botbuild" || command == "botoutfit")
+        {
+            // botbuild <wall|floor|ramp|cone> [id]   botoutfit <CID_...> [id]
+            if (args.size() < 2)
+            {
+                PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1.f);
+                return;
+            }
+
+            uint32 BotId = 0;
+            if (args.size() >= 3)
+            {
+                try
+                {
+                    BotId = (uint32)std::stoul(args[2].c_str(), nullptr);
+                }
+                catch (...)
+                {
+                }
+            }
+
+            int Count = 0;
+            if (command == "botoutfit")
+            {
+                std::string Id = args[1].c_str();
+                Count = FBotManager::CommandOutfit(BotId, std::wstring(Id.begin(), Id.end()));
+            }
+            else if (PlayerController->Pawn)
+            {
+                std::string PieceName = args[1].c_str();
+                std::transform(PieceName.begin(), PieceName.end(), PieceName.begin(), tolower);
+
+                auto Piece = PieceName == "floor" ? EBotBuildPiece::Floor : PieceName == "ramp" ? EBotBuildPiece::Ramp : PieceName == "cone" ? EBotBuildPiece::Cone : EBotBuildPiece::Wall;
+                Count = FBotManager::CommandBuild(BotId, Piece, PlayerController->Pawn);
+            }
+
+            PlayerController->ClientMessage(FString(std::wstring(L"Commanded " + std::to_wstring(Count) + L" bot(s).").c_str()), FName(), 1.f);
         }
         else if (command == "botfollow" || command == "botgoto" || command == "botwander" || command == "botidle")
         {

@@ -424,6 +424,18 @@ void GUI::Init()
                 if (ImGui::Combo("Bot controller", &ControllerMode, "Auto\0AI controller\0Player controller (cannot move)\0"))
                     FBotSystemConfig::ControllerMode = (EBotControllerMode)ControllerMode;
                 ImGui::Checkbox("Use nav mesh", &FBotSystemConfig::bUseNavMesh);
+                ImGui::Checkbox("Bots can build", &FBotSystemConfig::bAllowBuilding);
+
+                // Cosmetics apply to bots spawned afterwards.
+                ImGui::Checkbox("Random cosmetics", &FBotCosmeticSettings::bEnabled);
+                for (int Slot = 0; Slot < (int)EBotCosmeticSlot::Count; Slot++)
+                {
+                    int Mode = (int)FBotCosmeticSettings::Slots[Slot].Mode;
+                    if (ImGui::Combo(BotCosmetics::ToString((EBotCosmeticSlot)Slot), &Mode, "Random\0Specific\0None\0"))
+                        FBotCosmeticSettings::Slots[Slot].Mode = (EBotCosmeticMode)Mode;
+                }
+                if (ImGui::Button("Reload BotCosmetics.txt"))
+                    BotCosmetics::RequestReload();
                 ImGui::Checkbox("Remove dead bots", &FBotSystemConfig::bRemoveDeadBots);
                 ImGui::Checkbox("Verbose bot logging", &FBotSystemConfig::bVerboseLogging);
             }

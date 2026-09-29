@@ -74,6 +74,19 @@ void FBotMovement::Stop()
     bRequestActive = false;
 }
 
+bool FBotMovement::ConsumeStuckFailure(FVector& OutGoal, double Now, double MaxAge)
+{
+    if (!bStuckFailurePending)
+        return false;
+
+    bStuckFailurePending = false;
+    if (Now - StuckFailureTime > MaxAge)
+        return false;
+
+    OutGoal = FVector(StuckFailureGoal);
+    return true;
+}
+
 void FBotMovement::SetSpeedOverride(bool bEnabled, EBotMoveSpeed Speed)
 {
     bSpeedOverride = bEnabled;
@@ -166,6 +179,10 @@ void FBotMovement::CheckProgress(double Now, double Distance)
 
             if (StuckChecks >= Config.MaxStuckChecks)
             {
+                bStuckFailurePending = true;
+                StuckFailureTime = Now;
+                StuckFailureGoal = FVector(GoalLocation);
+
                 BotNavigation::Get(NavMode)->Stop(Bot);
                 Status = EBotMoveStatus::Failed;
                 GoalType = EBotMoveGoal::None;

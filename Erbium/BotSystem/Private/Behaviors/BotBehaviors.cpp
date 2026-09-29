@@ -103,6 +103,84 @@ void FBotFollowingBehavior::OnExit(FBotController& Bot)
     Bot.GetMovement().Stop();
 }
 
+// --- Building -------------------------------------------------------------------------------------
+
+// How long a bot may spend walking over a ramp before giving up and carrying on.
+static constexpr float MaxTraverseTime = 6.f;
+
+void FBotBuildingBehavior::OnEnter(FBotController& Bot)
+{
+    Bot.GetMovement().Stop();
+    Phase = EPhase::Reacting;
+    Timer = Bot.GetConfig().BuildReactionTime * RandomRange(0.5f, 1.5f);
+}
+
+void FBotBuildingBehavior::Tick(FBotController& Bot, float DeltaSeconds)
+{
+    auto& Builder = Bot.GetBuilder();
+    Timer -= DeltaSeconds;
+
+    switch (Phase)
+    {
+    case EPhase::Reacting:
+    {
+        if (Timer > 0.f)
+            return;
+
+        if (!Builder.bHasPending)
+            return Finish(Bot);
+
+        auto Request = Builder.Pending;
+        auto Result = Builder.Build(Request, Bot.GetNow());
+        BOT_VERBOSE(BOT_CATEGORY_BUILDING, "Bot #%u build %s: %s", Bot.GetId(), BotBuildCatalog::ToString(Request.Piece), FBotBuilder::ToString(Result));
+
+        if (Result != EBotBuildResult::Placed)
+            return Finish(Bot);
+
+        if (Request.Reason == EBotBuildReason::Obstacle && Request.bHasResumeGoal)
+        {
+            // Walk over the ramp towards the goal that was blocked.
+            Phase = EPhase::Traversing;
+            Timer = MaxTraverseTime;
+            Bot.GetMovement().MoveToLocation(Request.ResumeGoal);
+            return;
+        }
+
+        if (Request.Reason == EBotBuildReason::Defensive)
+        {
+            Phase = EPhase::Holding;
+            Timer = Bot.GetConfig().DefensiveHoldTime;
+            return;
+        }
+
+        return Finish(Bot);
+    }
+    case EPhase::Holding:
+        if (Timer <= 0.f)
+            Finish(Bot);
+        return;
+    case EPhase::Traversing:
+        if (Timer <= 0.f || Bot.GetMovement().GetStatus() != EBotMoveStatus::Moving)
+            Finish(Bot);
+        return;
+    }
+}
+
+void FBotBuildingBehavior::OnExit(FBotController& Bot)
+{
+    Bot.GetBuilder().bHasPending = false;
+    Bot.GetMovement().Stop();
+}
+
+void FBotBuildingBehavior::Finish(FBotController& Bot)
+{
+    auto ReturnState = Bot.GetBuilder().Pending.ReturnState;
+    if (ReturnState == EBotAIState::Building || ReturnState == EBotAIState::Dead || ReturnState == EBotAIState::None)
+        ReturnState = EBotAIState::Searching;
+
+    Bot.SetAIState(ReturnState);
+}
+
 // --- Dead -----------------------------------------------------------------------------------------
 
 void FBotDeadBehavior::OnEnter(FBotController& Bot)

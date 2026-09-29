@@ -1,6 +1,7 @@
 #pragma once
 #include "../../pch.h"
 #include "BotState.h"
+#include <array>
 
 class AController;
 class AFortGameMode;
@@ -68,8 +69,17 @@ namespace BotCompat
     // AGameModeBase::ChangeName, which accepts any controller.
     void SetPlayerName(AFortGameMode* GameMode, AController* Controller, EBotControllerKind Kind, AFortPlayerStateAthena* PlayerState, const wchar_t* Name);
 
-    // Default (non-random) appearance. CharacterParts layout differs between builds (raw array vs
-    // FCustomCharacterParts). Phase 3 replaces this with cosmetic loadouts.
+    // Character parts indexed by EFortCustomPartType (Head, Body, Hat, Backpack, ...). nullptr = unset.
+    using FCharacterParts = std::array<const UObject*, 8>;
+
+    // Shows the given parts on the bot. Two mechanisms, both used when available:
+    //  - APawn ServerChoosePart per part (what Erbium's native-bot cosmetics use),
+    //  - the player state's CharacterParts (raw array or FCustomCharacterParts, depending on the build)
+    //    followed by the same visual refresh ServerAcknowledgePossession uses for real players.
+    // Returns false if neither mechanism exists on this build.
+    bool ApplyCharacterParts(AFortPlayerStateAthena* PlayerState, AFortPlayerPawnAthena* Pawn, const FCharacterParts& Parts);
+
+    // Fallback appearance (default commando) when cosmetics are disabled or the outfit fails.
     void ApplyDefaultAppearance(AFortPlayerStateAthena* PlayerState, AFortPlayerPawnAthena* Pawn);
 
     // Counts the bot as an alive player.

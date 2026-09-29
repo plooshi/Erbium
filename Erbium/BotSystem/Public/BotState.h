@@ -31,6 +31,7 @@ enum class EBotAIState : uint8
     Searching, // Wander around the area looking for something to do.
     Moving,    // Go to a commanded location, then Idle.
     Following, // Stay close to a commanded actor.
+    Building,  // Place a piece (defensive wall / obstacle ramp / commanded), then return (Phase 4).
     Dead,
 };
 
@@ -69,6 +70,8 @@ inline const char* ToString(EBotAIState State)
         return "Moving";
     case EBotAIState::Following:
         return "Following";
+    case EBotAIState::Building:
+        return "Building";
     case EBotAIState::Dead:
         return "Dead";
     }

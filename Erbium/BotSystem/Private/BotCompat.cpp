@@ -217,6 +217,77 @@ namespace BotCompat
         PlayerState->OnRep_PlayerName();
     }
 
+    // Number of slots in the player state's raw CharacterParts array (EFortCustomPartType::NumTypes on
+    // the builds that use the raw layout).
+    static constexpr size_t RawCharacterPartCount = 6;
+
+    static const UObject** FindPlayerStateCharacterParts(AFortPlayerStateAthena* PlayerState)
+    {
+        // Layout 1: CharacterParts is an FCustomCharacterParts struct (0x100000 = StructProperty cast flag).
+        // Layout 2: CharacterParts/LocalCharacterParts is a raw fixed-size array of part pointers.
+        static auto StructPartsOffset = PlayerState->GetOffset("CharacterParts", 0x100000);
+
+        if (StructPartsOffset != -1)
+        {
+            static auto CustomCharacterPartsStruct = SDK::FindStruct("CustomCharacterParts");
+            static auto PartsOffset = CustomCharacterPartsStruct ? CustomCharacterPartsStruct->GetOffset("Parts") : -1;
+
+            return PartsOffset != -1 ? (const UObject**)(__int64(PlayerState) + StructPartsOffset + PartsOffset) : nullptr;
+        }
+
+        static auto RawPartsOffset = PlayerState->GetOffset("CharacterParts");
+        static auto LocalPartsOffset = PlayerState->GetOffset("LocalCharacterParts");
+        auto Offset = RawPartsOffset != -1 ? RawPartsOffset : LocalPartsOffset;
+
+        return Offset != -1 ? (const UObject**)(__int64(PlayerState) + Offset) : nullptr;
+    }
+
+    bool ApplyCharacterParts(AFortPlayerStateAthena* PlayerState, AFortPlayerPawnAthena* Pawn, const FCharacterParts& Parts)
+    {
+        bool bApplied = false;
+
+        static auto ServerChoosePartFunc = Pawn->GetFunction("ServerChoosePart");
+        if (ServerChoosePartFunc)
+        {
+            for (size_t i = 0; i < Parts.size(); i++)
+                if (Parts[i])
+                {
+                    uint8 PartType = (uint8)i;
+                    auto Part = Parts[i];
+                    Pawn->ServerChoosePart(PartType, Part);
+                }
+
+            bApplied = true;
+        }
+
+        if (auto CharacterParts = FindPlayerStateCharacterParts(PlayerState))
+        {
+            for (size_t i = 0; i < RawCharacterPartCount; i++)
+                if (Parts[i])
+                    CharacterParts[i] = Parts[i];
+
+            bApplied = true;
+        }
+
+        if (!bApplied)
+        {
+            static bool bLogged = false;
+            if (!bLogged)
+            {
+                bLogged = true;
+                BOT_LOG(BOT_CATEGORY_COMPAT, "No way to set character parts on this build; bots use the engine default appearance.");
+            }
+            return false;
+        }
+
+        // Same visual refresh ServerAcknowledgePossession uses for real players.
+        UFortKismetLibrary::UpdatePlayerCustomCharacterPartsVisualization(PlayerState);
+        if (!UFortKismetLibrary::UpdatePlayerCustomCharacterPartsVisualization__Ptr && ApplyCharacterCustomization)
+            ((void (*)(AActor*, AActor*))ApplyCharacterCustomization)(PlayerState, Pawn);
+
+        return true;
+    }
+
     void ApplyDefaultAppearance(AFortPlayerStateAthena* PlayerState, AFortPlayerPawnAthena* Pawn)
     {
         static auto Commando = FindObject(L"/Game/Athena/Heroes/HID_001_Athena_Commando_F.HID_001_Athena_Commando_F", nullptr);
@@ -228,43 +299,13 @@ namespace BotCompat
         static auto Body = FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Bodies/F_Med_Soldier_01.F_Med_Soldier_01");
         static auto Backpack = FindObject<UObject>(L"/Game/Characters/CharacterParts/Backpacks/NoBackpack.NoBackpack");
 
-        // Layout 1: CharacterParts is an FCustomCharacterParts struct (0x100000 = StructProperty cast flag).
-        // Layout 2: CharacterParts/LocalCharacterParts is a raw fixed-size array of part pointers.
-        static auto StructPartsOffset = PlayerState->GetOffset("CharacterParts", 0x100000);
-        const UObject** CharacterParts = nullptr;
+        // Indices follow EFortCustomPartType: 0 = Head, 1 = Body, 3 = Backpack.
+        FCharacterParts Parts{};
+        Parts[0] = Head;
+        Parts[1] = Body;
+        Parts[3] = Backpack;
 
-        if (StructPartsOffset != -1)
-        {
-            static auto CustomCharacterPartsStruct = SDK::FindStruct("CustomCharacterParts");
-            static auto PartsOffset = CustomCharacterPartsStruct ? CustomCharacterPartsStruct->GetOffset("Parts") : -1;
-
-            if (PartsOffset != -1)
-                CharacterParts = (const UObject**)(__int64(PlayerState) + StructPartsOffset + PartsOffset);
-        }
-        else
-        {
-            static auto RawPartsOffset = PlayerState->GetOffset("CharacterParts");
-            static auto LocalPartsOffset = PlayerState->GetOffset("LocalCharacterParts");
-            auto Offset = RawPartsOffset != -1 ? RawPartsOffset : LocalPartsOffset;
-
-            if (Offset != -1)
-                CharacterParts = (const UObject**)(__int64(PlayerState) + Offset);
-        }
-
-        if (CharacterParts)
-        {
-            // Indices follow EFortCustomPartType: 0 = Head, 1 = Body, 3 = Backpack.
-            CharacterParts[0] = Head;
-            CharacterParts[1] = Body;
-            CharacterParts[3] = Backpack;
-        }
-        else
-            BOT_LOG(BOT_CATEGORY_COMPAT, "Could not locate CharacterParts on this build; bot will use engine default appearance.");
-
-        // Same visual refresh ServerAcknowledgePossession uses for real players.
-        UFortKismetLibrary::UpdatePlayerCustomCharacterPartsVisualization(PlayerState);
-        if (!UFortKismetLibrary::UpdatePlayerCustomCharacterPartsVisualization__Ptr && ApplyCharacterCustomization)
-            ((void (*)(AActor*, AActor*))ApplyCharacterCustomization)(PlayerState, Pawn);
+        ApplyCharacterParts(PlayerState, Pawn, Parts);
     }
 
     static int32 FindAlivePlayerIndex(AFortGameMode* GameMode, AController* Controller)

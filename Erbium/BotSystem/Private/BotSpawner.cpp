@@ -4,6 +4,7 @@
 #include "../Public/BotController.h"
 #include "../Public/BotEngineTypes.h"
 #include "../Public/BotLog.h"
+#include "../Public/Cosmetics/BotCosmetics.h"
 #include "../../FortniteGame/Public/FortGameMode.h"
 
 // ESpawnActorCollisionHandlingMethod
@@ -164,10 +165,16 @@ namespace BotSpawner
         BotCompat::AssignTeam(GameMode, Controller, PlayerState);
         AFortPlayerControllerAthena::GrantPlayerAbilities(PlayerState);
 
+        // Cosmetics before starting items: for player-controller bots the chosen pickaxe goes into
+        // CosmeticLoadoutPC, which GiveStartingItems reads.
+        Bot.Cosmetics = BotCosmetics::ChooseLoadout();
+        bool bDressed = BotCosmetics::ApplyLoadout(Bot, Bot.Cosmetics);
+
         if (Inventory && Config.bGiveStartingItems)
             AFortPlayerControllerAthena::GiveStartingItems((AFortPlayerControllerAthena*)Controller);
 
-        BotCompat::ApplyDefaultAppearance(PlayerState, Pawn);
+        if (!bDressed)
+            BotCompat::ApplyDefaultAppearance(PlayerState, Pawn);
         BotCompat::SetPlayerName(GameMode, Controller, Kind, PlayerState, MakeBotName(Bot).c_str());
 
         // 8. Alive players (last, so a failure above never leaves a half-built bot in the match)

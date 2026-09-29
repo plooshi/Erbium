@@ -39,6 +39,10 @@ public:
     static int CommandMoveTo(uint32 BotId, const FVector& Location);
     static int CommandFollow(uint32 BotId, AActor* Target);
     static int CommandState(uint32 BotId, EBotAIState State);
+    // Build a piece facing Towards (e.g. the commanding player).
+    static int CommandBuild(uint32 BotId, EBotBuildPiece Piece, AActor* Towards);
+    // Dress one bot (or all) in a specific outfit id; returns how many changed.
+    static int CommandOutfit(uint32 BotId, const std::wstring& OutfitId);
 
     static FBotController* FindBot(uint32 BotId);
     static FBotController* FindBotByController(const AActor* Controller);

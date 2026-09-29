@@ -381,6 +381,8 @@ public:
     static void ServerExecuteInventoryItem_(UObject*, FFrame&);
     static void ServerExecuteInventoryWeapon(UObject*, FFrame&);
     static void ServerCreateBuildingActor(UObject*, FFrame&);
+    static class ABuildingSMActor* PlaceBuildingActor(AActor* Owner, AFortPlayerControllerAthena* SpawningController, AFortPlayerStateAthena* PlayerState, TSubclassOf<AActor> BuildingClass,
+                                                      FBuildingClassData& BuildingClassData, FVector BuildLoc, FRotator BuildRot, bool bMirrored);
     static void ServerBeginEditingBuildingActor(UObject*, FFrame&);
     static void ServerEditBuildingActor(UObject*, FFrame&);
     static void ServerEndEditingBuildingActor(UObject*, FFrame&);

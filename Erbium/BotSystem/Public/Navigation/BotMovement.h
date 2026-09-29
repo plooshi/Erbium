@@ -54,6 +54,10 @@ public:
     // Current goal position (actor goals: last known actor location).
     const FVector& GetGoalLocation() const { return GoalLocation; }
 
+    // True once after a goal failed because the bot stopped making progress (not because the target
+    // vanished). OutGoal = the goal it was trying to reach. Used by the build decision (ramp over it).
+    bool ConsumeStuckFailure(FVector& OutGoal, double Now, double MaxAge);
+
     // Speed override. When not set, speed is chosen from distance (sprint when far).
     void SetSpeedOverride(bool bEnabled, EBotMoveSpeed Speed = EBotMoveSpeed::Run);
 
@@ -81,6 +85,10 @@ private:
     FVector LastProgressLocation{};
     int StuckChecks = 0;
     bool bJumpPressed = false;
+
+    bool bStuckFailurePending = false;
+    double StuckFailureTime = 0.0;
+    FVector StuckFailureGoal{};
 
     bool bSpeedOverride = false;
     EBotMoveSpeed SpeedOverride = EBotMoveSpeed::Run;

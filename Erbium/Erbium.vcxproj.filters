@@ -28,6 +28,18 @@
     <Filter Include="BotSystem\Private\Behaviors">
       <UniqueIdentifier>{3c5b857f-169b-4e29-92fe-13ada9f913a7}</UniqueIdentifier>
     </Filter>
+    <Filter Include="BotSystem\Public\Cosmetics">
+      <UniqueIdentifier>{46b089b4-0221-4ce0-8745-0ba3ef463296}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BotSystem\Public\Building">
+      <UniqueIdentifier>{d06310c8-944f-47ce-a369-023226c59c7e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BotSystem\Private\Cosmetics">
+      <UniqueIdentifier>{815eb2f7-8ce2-4a68-b2ce-e37a7a02632f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BotSystem\Private\Building">
+      <UniqueIdentifier>{943aa326-6ce3-4a2b-85b2-dc0f0e4d58ea}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Engine">
       <UniqueIdentifier>{bf7becbc-c9a6-4671-8262-0472d74df6ce}</UniqueIdentifier>
     </Filter>
@@ -89,6 +101,18 @@
     </ClInclude>
     <ClInclude Include="BotSystem\Public\Behaviors\BotBehaviors.h">
       <Filter>BotSystem\Public\Behaviors</Filter>
+    </ClInclude>
+    <ClInclude Include="BotSystem\Public\Cosmetics\BotCosmetics.h">
+      <Filter>BotSystem\Public\Cosmetics</Filter>
+    </ClInclude>
+    <ClInclude Include="BotSystem\Public\Building\BotBuildCatalog.h">
+      <Filter>BotSystem\Public\Building</Filter>
+    </ClInclude>
+    <ClInclude Include="BotSystem\Public\Building\BotBuildGrid.h">
+      <Filter>BotSystem\Public\Building</Filter>
+    </ClInclude>
+    <ClInclude Include="BotSystem\Public\Building\BotBuilder.h">
+      <Filter>BotSystem\Public\Building</Filter>
     </ClInclude>
     <ClInclude Include="BotSystem\Public\BotBehavior.h">
       <Filter>BotSystem\Public</Filter>
@@ -338,6 +362,18 @@
     </ClCompile>
     <ClCompile Include="BotSystem\Private\Behaviors\BotBehaviors.cpp">
       <Filter>BotSystem\Private\Behaviors</Filter>
+    </ClCompile>
+    <ClCompile Include="BotSystem\Private\Cosmetics\BotCosmetics.cpp">
+      <Filter>BotSystem\Private\Cosmetics</Filter>
+    </ClCompile>
+    <ClCompile Include="BotSystem\Private\Building\BotBuildCatalog.cpp">
+      <Filter>BotSystem\Private\Building</Filter>
+    </ClCompile>
+    <ClCompile Include="BotSystem\Private\Building\BotBuildGrid.cpp">
+      <Filter>BotSystem\Private\Building</Filter>
+    </ClCompile>
+    <ClCompile Include="BotSystem\Private\Building\BotBuilder.cpp">
+      <Filter>BotSystem\Private\Building</Filter>
     </ClCompile>
     <ClCompile Include="BotSystem\Private\BotBehavior.cpp">
       <Filter>BotSystem\Private</Filter>

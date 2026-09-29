@@ -1,8 +1,10 @@
 # Erbium Bot System
 
 A modular system for AI-controlled players in a local/private Erbium test server. It is being built in
-phases. **Implemented: Phase 1 (spawning and lifecycle), Phase 2A (movement, navigation, perception).**
-Next: Phase 2B (loot and inventory), then Phase 2C (combat and healing).
+phases. **Implemented: Phase 1 (spawning and lifecycle), Phase 2A (movement, navigation, perception),
+Phase 3 (cosmetics), and Phase 4 (building, the parts that don't depend on combat).**
+Still open: Phase 2B (loot and inventory), Phase 2C (combat and healing), Phase 4 combat building
+(needs 2C), and Phase 5.
 
 ## How Erbium works (and why this matters for bots)
 
@@ -31,7 +33,9 @@ BotSystem/
     BotEngineTypes.h AController / AAIController / ACharacter / NavigationSystemV1 views
     Navigation/      IBotNavigation strategies + FBotMovement (goals, arrival, stuck, speed)
     Perception/      shared world snapshot + per-bot FBotPerception
-    Behaviors/       Idle / Searching / Moving / Following / Dead
+    Behaviors/       Idle / Searching / Moving / Following / Building / Dead
+    Cosmetics/       catalogue from the build's asset registry, loadouts, application
+    Building/        piece catalogue, grid + self-calibration, per-bot builder
     BotConfig.h      FBotSystemConfig (server-wide, GUI-editable) + FBotConfig (per bot)
     BotState.h       EBotLifeState (exists/dead/removing) and EBotAIState (what it is doing)
     BotBehavior.h    IBotBehavior: OnEnter / Tick / OnExit, one object per AI state
@@ -141,6 +145,74 @@ No mode teleports. All movement goes through the character movement component. A
 - AI-controller bots have no inventory or items yet (Phase 2B), so they can't fight (Phase 2C).
 - Killing an AI-controller bot doesn't go through Erbium's `ClientOnPawnDied`, which is a PlayerController function. The bot is detected as dead and removed, but kill-feed and killer stats for these kills aren't handled yet. This comes with combat (2C).
 - Bots don't board the battle bus. Bus and drop handling is planned with 2C and Phase 5.
+
+## Phase 3: cosmetics
+
+**Catalogue.** For each slot (Outfit, Backpack, Pickaxe, Glider, Contrail), `UKismetSystemLibrary::GetPrimaryAssetIdList` asks the running build's asset manager for every id of that primary asset type (`AthenaCharacter`, `AthenaBackpack`, `AthenaPickaxe`, `AthenaGlider`, `AthenaSkyDiveContrail`). This is the per-version compatibility layer: a cosmetic that doesn't exist in a build isn't in that build's list, so there's no hard-coded 12.x…29.x table to go stale. If the asset manager returns nothing for a type, the catalogue falls back to cosmetics already loaded in memory. The log shows the count and source for each slot:
+
+```
+[BotCosmetics] Outfit: 1034 available (asset registry).
+```
+
+Ids containing `random`, `npc`, `test` or `tbd` are excluded, because they aren't wearable player cosmetics.
+
+**Loading.** Only chosen cosmetics are loaded: a soft reference comes from `GetSoftObjectReferenceFromPrimaryAssetId`, and Erbium's soft-pointer code loads it. Each one is validated before use (it must be the right item class, and an outfit must have a hero definition). An id that fails is dropped from the pool, so it's never picked again.
+
+**Selection.** For each slot the mode is `Random`, `Specific` (a random pick among the listed ids, falling back to Random if none of them are valid), or `None`. It can be set in code (`FBotCosmeticSettings`), in the GUI (Misc → Bots), or in an optional `BotCosmetics.txt` in the server's working directory:
+```
+Outfit=CID_028_Athena_Commando_F, CID_029_Athena_Commando_F_Halloween
+Backpack=Random
+Pickaxe=Random
+Glider=None
+```
+Ids are the ones the game uses, which are also the ones listed on fortnite.gg. The GUI's reload button re-reads the file.
+
+**Applying.** Parts are resolved the same way as Erbium's native-bot cosmetics (`Misc.cpp`): hero specializations plus backpack parts. They're shown through the pawn's `ServerChoosePart` and the player state's `CharacterParts` (both layouts), followed by the usual visual refresh. For player-controller bots the controller's `CosmeticLoadoutPC` is filled too, so `GiveStartingItems` gives them their pickaxe. If the outfit can't be applied, the bot gets the default appearance.
+
+**Limitations.**
+- AI-controller bots don't get their cosmetic pickaxe or glider yet. They have no inventory (Phase 2B) and don't skydive yet. The choice is kept in `FBotController::Cosmetics` for when they do.
+- Styles/variants use the defaults.
+- Loading a cosmetic is a synchronous asset load. Spawning is spread over frames (`MaxSpawnsPerTick`), but mass spawns can still hitch. Watch `avgSpawn` in `[BotPerf]`.
+
+**Test plan.** Spawn 25 bots: outfits and backpacks should differ, and the `[BotCosmetics]` counts should be above 0. Set `Outfit=CID_DOES_NOT_EXIST` in the file, reload and spawn: you should get a log line and a random valid outfit, with no crash. Set every slot to `None`: bots use the default appearance. `cheat botoutfit CID_... [id]` changes a living bot's outfit. `cheat listbots` shows each bot's loadout.
+
+## Phase 4: building
+
+**Existing code reused.** The validation and placement part of `ServerCreateBuildingActor` was moved unchanged into `AFortPlayerControllerAthena::PlaceBuildingActor`. It runs the native `CantBuild` structural/collision check, removes replaced pieces, spawns and initialises the piece, and sets level, mirroring and team. Players and bots now use the same code. The helper returns `nullptr` instead of crashing when `CantBuild_` wasn't found on a build, or when the spawn fails.
+
+**Pieces** (`BotBuildCatalog`). Built from `GameState->AllPlayerBuildableClasses`, classified by each class default's `BuildingType` (`EFortBuildingType` Wall/Floor/Stairs/Roof, looked up by name) and `ResourceType`. No class paths are hard-coded.
+
+**Where** (`BotBuildGrid`). Positions come from the structural grid (512 × 512 × 384 uu). For a wall this is the cell edge facing the threat; for a ramp, the next cell in the direction of travel; for a floor, the next cell; for a cone, the top of the current cell. Pivot position and wall orientation aren't assumed. The first placed piece of each type is measured with `GetActorBounds`, and the pivot offset and wall yaw are learned from it (logged as `Calibrated Wall: pivot offset (...)`). A misplaced piece is removed and placed again once with the correction.
+
+**Pipeline** (`FBotBuilder::Build`), without ever assuming success:
+1. Choose a material that has the piece and can be afforded.
+2. Get the grid candidates.
+3. Run the game's placement validation for each candidate.
+4. Check the spawned actor exists.
+5. Measure it and correct it if needed.
+6. Pay.
+
+If every candidate fails, the builder backs off for `BuildCooldown`.
+
+**Materials.** Player-controller bots with an inventory use the game's own `CanAffordToPlaceBuildableClass` and `PayBuildableClassPlacementCost`, like players, and respect `bInfiniteMats`/`bBuildFree`. AI-controller bots have no inventory yet, so they use a per-bot budget (`FBotConfig::StartingMaterials`, 300 wood, 150 stone, 0 metal by default). This is a stand-in until Phase 2B.
+
+**Decisions** (every `BuildDecisionInterval`, only when Idle, Searching, Moving or Following):
+- **Defensive:** the bot's health or shield dropped within `DamageMemory` seconds and an enemy is visible. With probability `DefensiveBuildChance` it places a wall toward the nearest visible enemy, then holds behind it for `DefensiveHoldTime`.
+- **Obstacle:** movement gave up because the bot stopped making progress. It places a ramp toward the blocked goal and walks over it.
+- Every decision waits `BuildReactionTime` (±50%) before placing, and is limited by `BuildCooldown` and `MaxBuildsPerMinute`, so behaviour isn't instant or deterministic.
+
+**Not implemented yet.**
+- **Combat building** (shoot → build → reposition): needs Phase 2C.
+- **Editing and repairing:** Erbium's edit and repair paths run through PlayerController RPCs with edit-tool state. They're left for a later step rather than bypassed.
+- **Ramp facing:** it can't be measured from bounds. If ramps rise toward the bot, set `FBotConfig::RampYawOffset = 180` and report it, so the default can be fixed for that build.
+
+**Test plan.**
+1. Spawn a few bots, stand near them, and run `cheat botbuild wall`. Each bot should place a wall between itself and you. The first one logs `Calibrated Wall`. If a wall faces the wrong way, the log says so, and the next walls must be correct.
+2. `cheat botbuild ramp` and `cheat botbuild floor`: check the pieces sit on the grid and connect to player-built pieces.
+3. Shoot a bot that can see you. It should build a wall within about a second (the chance is 60% per decision).
+4. `cheat botgoto` from behind a wall or cliff. Bots should get stuck, place a ramp, and walk over it.
+5. Materials: AI bots stop building after 45 pieces (300 wood + 150 stone at 10 each). With `bInfiniteMats` they keep going.
+6. Invalid spots (inside buildings or terrain): no crash, the build is rejected, and `builds=` in `listbots` doesn't increase.
 
 ### Build verification
 There is no Windows toolchain in the development container. Each changed translation unit was checked with clang in MSVC-compatibility mode against mingw-w64 headers (`-fms-extensions -fms-compatibility -fsyntax-only`). The error output is identical to the untouched baseline: only libstdc++-internal errors that the toolchain itself causes. The authoritative build is MSBuild (`.github/workflows/Build.yml`).

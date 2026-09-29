@@ -1,5 +1,6 @@
 #pragma once
 #include "BotState.h"
+#include "Building/BotBuildCatalog.h"
 
 // Bot system configuration.
 //
@@ -60,6 +61,9 @@ struct FBotSystemConfig
     // automatically falls back to direct paths and then to steering (see BotNavigation.h).
     static inline bool bUseNavMesh = true;
 
+    // Global switch for Phase 4 building on top of the per-bot FBotConfig::bCanBuild.
+    static inline bool bAllowBuilding = true;
+
     // Log aggregated tick timings every PerfReportInterval seconds while bots exist (0 disables).
     static inline float PerfReportInterval = 30.f;
 
@@ -96,4 +100,26 @@ struct FBotConfig
     int MaxStuckChecks = 3;            // Give up on a goal after this many stuck checks in a row.
     bool bCanSprint = true;
     bool bCanJump = true;              // Jump when stuck.
+
+    // --- Building (Phase 4) ---
+    bool bCanBuild = true;
+    float BuildDecisionInterval = 0.5f; // Seconds between "should I build?" evaluations.
+    float BuildReactionTime = 0.4f;     // Seconds from decision to placement (randomised +-50%).
+    float BuildCooldown = 1.5f;         // Minimum seconds between placements (also back-off after a failure).
+    int MaxBuildsPerMinute = 12;
+    float DefensiveBuildChance = 0.6f;  // Chance to wall up when hit by a visible enemy (per decision).
+    float DamageMemory = 1.5f;          // Seconds a hit counts as "being shot at".
+    float DefensiveHoldTime = 1.5f;     // Seconds to stay behind a fresh wall before carrying on.
+    bool bBuildRampsWhenStuck = true;
+    int BuildCost = 10;                 // Materials per piece (the game's standard cost).
+
+    // Stand-in materials for bots without an inventory (AI-controller bots until Phase 2B).
+    int StartingMaterials[(int)EBotBuildMaterial::Count] = { 300, 150, 0 };
+
+    // Material preference; the first affordable one with a buildable class is used.
+    EBotBuildMaterial MaterialOrder[(int)EBotBuildMaterial::Count] = { EBotBuildMaterial::Wood, EBotBuildMaterial::Stone, EBotBuildMaterial::Metal };
+
+    // Ramp facing cannot be measured automatically (see BotBuildGrid.h). If ramps come out rising
+    // towards the bot instead of away from it on a build, set this to 180.
+    float RampYawOffset = 0.f;
 };

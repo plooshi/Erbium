@@ -18,6 +18,8 @@
 #define BOT_CATEGORY_COMPAT "BotCompat"
 #define BOT_CATEGORY_NAV "BotNavigation"
 #define BOT_CATEGORY_PERCEPTION "BotPerception"
+#define BOT_CATEGORY_COSMETICS "BotCosmetics"
+#define BOT_CATEGORY_BUILDING "BotBuilding"
 
 #define BOT_LOG(Category, Format, ...) printf("[" Category "] " Format "\n", ##__VA_ARGS__)
 

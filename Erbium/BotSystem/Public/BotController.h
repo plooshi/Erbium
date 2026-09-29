@@ -3,6 +3,8 @@
 #include "BotBehavior.h"
 #include "BotConfig.h"
 #include "BotState.h"
+#include "Building/BotBuilder.h"
+#include "Cosmetics/BotCosmetics.h"
 #include "Navigation/BotMovement.h"
 #include "Perception/BotPerception.h"
 
@@ -57,6 +59,14 @@ public:
     const FBotMovement& GetMovement() const { return Movement; }
     FBotPerception& GetPerception() { return Perception; }
     const FBotPerception& GetPerception() const { return Perception; }
+    FBotBuilder& GetBuilder() { return Builder; }
+    const FBotBuilder& GetBuilder() const { return Builder; }
+
+    // World time of the current/last think. Behaviors use it where they need absolute time.
+    double GetNow() const { return LastThinkTime; }
+
+    // World time the bot last lost health or shield (0 = never).
+    double GetLastDamageTime() const { return LastDamageTime; }
 
     // Called by the spawner once the controller exists. Possession is done separately so failures
     // can be detected and reported.
@@ -87,7 +97,13 @@ public:
     void CommandMoveTo(const FVector& Location);
     void CommandFollow(AActor* Target);
     const FVector& GetCommandLocation() const { return CommandLocation; }
+
+    // Queue a build and switch to the Building behavior, which returns to the current state afterwards.
+    bool RequestBuild(EBotBuildPiece Piece, const FVector& Direction, EBotBuildReason Reason, const FVector* ResumeGoal = nullptr);
     AActor* GetCommandTarget() const;
+
+    // Chosen at spawn (Phase 3). Purely visual; no behavior reads it.
+    FBotCosmeticLoadout Cosmetics;
 
     // Whether the bot currently counts towards the match's alive players (see BotCompat::RegisterAlive).
     bool bRegisteredAlive = false;
@@ -106,8 +122,18 @@ private:
     EBotControllerKind ControllerKind = EBotControllerKind::PlayerController;
     std::unique_ptr<IBotBehavior> Behavior;
 
+    // Decides whether building would help right now (Phase 4 triggers; Phase 5 generalizes this into
+    // the high-level decision system).
+    void EvaluateBuildDecision(double Now);
+    void TrackDamage(double Now);
+
     FBotMovement Movement;
     FBotPerception Perception;
+    FBotBuilder Builder;
+
+    float LastHealthAndShield = -1.f;
+    double LastDamageTime = 0.0;
+    double NextBuildDecisionTime = 0.0;
 
     TWeakObjectPtr<AController> Controller;
     TWeakObjectPtr<AFortPlayerPawnAthena> Pawn;

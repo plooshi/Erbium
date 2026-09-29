@@ -161,6 +161,10 @@
     <ClInclude Include="BotSystem\Public\Navigation\BotMovement.h" />
     <ClInclude Include="BotSystem\Public\Perception\BotPerception.h" />
     <ClInclude Include="BotSystem\Public\Behaviors\BotBehaviors.h" />
+    <ClInclude Include="BotSystem\Public\Cosmetics\BotCosmetics.h" />
+    <ClInclude Include="BotSystem\Public\Building\BotBuildCatalog.h" />
+    <ClInclude Include="BotSystem\Public\Building\BotBuildGrid.h" />
+    <ClInclude Include="BotSystem\Public\Building\BotBuilder.h" />
     <ClInclude Include="BotSystem\Public\BotBehavior.h" />
     <ClInclude Include="BotSystem\Public\BotCompat.h" />
     <ClInclude Include="BotSystem\Public\BotConfig.h" />
@@ -237,6 +241,10 @@
     <ClCompile Include="BotSystem\Private\Navigation\BotMovement.cpp" />
     <ClCompile Include="BotSystem\Private\Perception\BotPerception.cpp" />
     <ClCompile Include="BotSystem\Private\Behaviors\BotBehaviors.cpp" />
+    <ClCompile Include="BotSystem\Private\Cosmetics\BotCosmetics.cpp" />
+    <ClCompile Include="BotSystem\Private\Building\BotBuildCatalog.cpp" />
+    <ClCompile Include="BotSystem\Private\Building\BotBuildGrid.cpp" />
+    <ClCompile Include="BotSystem\Private\Building\BotBuilder.cpp" />
     <ClCompile Include="BotSystem\Private\BotBehavior.cpp" />
     <ClCompile Include="BotSystem\Private\BotCompat.cpp" />
     <ClCompile Include="BotSystem\Private\BotController.cpp" />

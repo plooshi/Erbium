@@ -332,6 +332,46 @@ int FBotManager::CommandState(uint32 BotId, EBotAIState State)
     return ForEachCommandTarget(BotId, [&](FBotController& Bot) { Bot.SetAIState(State); });
 }
 
+int FBotManager::CommandBuild(uint32 BotId, EBotBuildPiece Piece, AActor* Towards)
+{
+    if (!Towards)
+        return 0;
+
+    auto Target = Towards->K2_GetActorLocation();
+    int Count = 0;
+
+    ForEachCommandTarget(BotId, [&](FBotController& Bot)
+    {
+        auto Pawn = Bot.GetPawn();
+        if (!Pawn)
+            return;
+
+        auto Location = Pawn->K2_GetActorLocation();
+        FVector Direction(Target.X - Location.X, Target.Y - Location.Y, 0.0);
+        if (Bot.RequestBuild(Piece, Direction, EBotBuildReason::Manual))
+            Count++;
+    });
+
+    return Count;
+}
+
+int FBotManager::CommandOutfit(uint32 BotId, const std::wstring& OutfitId)
+{
+    int Count = 0;
+
+    ForEachCommandTarget(BotId, [&](FBotController& Bot)
+    {
+        auto Loadout = Bot.Cosmetics;
+        if (BotCosmetics::ChooseSpecific(Loadout, EBotCosmeticSlot::Outfit, OutfitId) && BotCosmetics::ApplyLoadout(Bot, Loadout))
+        {
+            Bot.Cosmetics = Loadout;
+            Count++;
+        }
+    });
+
+    return Count;
+}
+
 void FBotManager::Tick(const UObject* NetDriver, float DeltaSeconds)
 {
     auto World = UWorld::GetWorld();

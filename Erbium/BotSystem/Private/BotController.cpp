@@ -17,6 +17,7 @@ FBotController::FBotController(uint32 InId, const FBotConfig& InConfig)
     , Config(InConfig)
     , Movement(*this)
     , Perception(*this)
+    , Builder(*this)
 {
 }
 
@@ -78,6 +79,7 @@ void FBotController::Activate(double Now)
 {
     LifeState = EBotLifeState::Active;
     LastThinkTime = Now;
+    Builder.Initialize();
     SetAIState(CanMove() ? Config.DefaultAIState : EBotAIState::Idle);
 }
 
@@ -132,6 +134,8 @@ void FBotController::Think(double Now)
 
     // Order matters: behaviors decide on fresh perception, movement executes what they decided.
     Perception.Update(Now);
+    TrackDamage(Now);
+    EvaluateBuildDecision(Now);
 
     if (Behavior)
         Behavior->Tick(*this, DeltaSeconds);
@@ -159,6 +163,91 @@ void FBotController::SetAIState(EBotAIState NewState)
         Behavior->OnEnter(*this);
 
     BOT_VERBOSE(BOT_CATEGORY_AI, "Bot #%u: %s -> %s", Id, ToString(OldState), ToString(NewState));
+}
+
+void FBotController::TrackDamage(double Now)
+{
+    auto CurrentPawn = GetPawn();
+    if (!CurrentPawn)
+        return;
+
+    auto HealthAndShield = CurrentPawn->GetHealth() + CurrentPawn->GetShield();
+    if (LastHealthAndShield >= 0.f && HealthAndShield < LastHealthAndShield - 0.5f)
+        LastDamageTime = Now;
+
+    LastHealthAndShield = HealthAndShield;
+}
+
+static float RandomUnit()
+{
+    return (float)rand() / (float)RAND_MAX;
+}
+
+void FBotController::EvaluateBuildDecision(double Now)
+{
+    if (Now < NextBuildDecisionTime || !IsAlive() || !CanMove() || !Config.bCanBuild || !FBotSystemConfig::bAllowBuilding)
+        return;
+
+    NextBuildDecisionTime = Now + Config.BuildDecisionInterval;
+
+    // Only interrupt "ordinary" states; never an ongoing build.
+    auto State = GetAIState();
+    if (State != EBotAIState::Idle && State != EBotAIState::Searching && State != EBotAIState::Moving && State != EBotAIState::Following)
+        return;
+
+    if (!Builder.IsReady(Now))
+        return;
+
+    auto CurrentPawn = GetPawn();
+    if (!CurrentPawn)
+        return;
+
+    auto Location = CurrentPawn->K2_GetActorLocation();
+
+    // Obstacle: movement gave up because it stopped making progress -> ramp towards where it was going.
+    FVector StuckGoal{};
+    if (Config.bBuildRampsWhenStuck && Movement.ConsumeStuckFailure(StuckGoal, Now, 2.0))
+    {
+        FVector Direction(StuckGoal.X - Location.X, StuckGoal.Y - Location.Y, 0.0);
+        RequestBuild(EBotBuildPiece::Ramp, Direction, EBotBuildReason::Obstacle, &StuckGoal);
+        return;
+    }
+
+    // Defensive: recently hit and an enemy is in sight -> wall between us and the nearest one.
+    // Uses only what a player knows: own health dropping and enemies it can actually see.
+    if (LastDamageTime > 0.0 && Now - LastDamageTime <= Config.DamageMemory)
+    {
+        auto Enemy = Perception.GetNearestVisibleEnemy();
+        if (Enemy && RandomUnit() < Config.DefensiveBuildChance)
+        {
+            FVector Direction(Enemy->Location.X - Location.X, Enemy->Location.Y - Location.Y, 0.0);
+            RequestBuild(EBotBuildPiece::Wall, Direction, EBotBuildReason::Defensive);
+        }
+    }
+}
+
+bool FBotController::RequestBuild(EBotBuildPiece Piece, const FVector& Direction, EBotBuildReason Reason, const FVector* ResumeGoal)
+{
+    if (!IsAlive() || !CanMove() || GetAIState() == EBotAIState::Building)
+        return false;
+
+    if (fabs(Direction.X) < 1.0 && fabs(Direction.Y) < 1.0)
+        return false;
+
+    Builder.Pending = FBotBuildRequest{};
+    Builder.Pending.Piece = Piece;
+    Builder.Pending.Direction = FVector(Direction);
+    Builder.Pending.Reason = Reason;
+    Builder.Pending.ReturnState = GetAIState() == EBotAIState::None ? EBotAIState::Searching : GetAIState();
+    if (ResumeGoal)
+    {
+        Builder.Pending.bHasResumeGoal = true;
+        Builder.Pending.ResumeGoal = FVector(*ResumeGoal);
+    }
+    Builder.bHasPending = true;
+
+    SetAIState(EBotAIState::Building);
+    return true;
 }
 
 void FBotController::CommandMoveTo(const FVector& Location)
