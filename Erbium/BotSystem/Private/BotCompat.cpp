@@ -451,23 +451,57 @@ namespace BotCompat
         return (AController*)Killer;
     }
 
-    void SetPlacement(AFortGameMode* GameMode, AFortPlayerStateAthena* VictimState)
+    void SetPlacement(AFortPlayerStateAthena* VictimState, int TeamsLeftBefore)
     {
-        auto GameState = GameMode->GameState;
-        if (!VictimState || !VictimState->HasPlace() || !GameState->HasPlayersLeft())
+        if (!VictimState || !VictimState->HasPlace() || TeamsLeftBefore <= 0)
             return;
 
-        VictimState->Place = GameState->PlayersLeft;
+        VictimState->Place = TeamsLeftBefore;
         VictimState->OnRep_Place();
     }
 
-    void CheckForWinner(AFortGameMode* GameMode, AController* Killer)
+    void SetDeathInfo(AFortPlayerStateAthena* VictimState, AController* Killer, AFortPlayerPawnAthena* KillerPawnOrNull, const FVector& DeathLocation)
     {
-        auto GameState = GameMode->GameState;
-        if (!Killer || !GameState->HasPlayersLeft() || GameState->PlayersLeft > 1)
+        if (!VictimState)
             return;
 
-        auto KillerState = Killer->PlayerState;
+        auto KillerState = Killer ? Killer->PlayerState : nullptr;
+
+        if (VictimState->HasPawnDeathLocation())
+            VictimState->PawnDeathLocation = FVector(DeathLocation);
+
+        if (!VictimState->HasDeathInfo())
+            return;
+
+        // Same fields as ClientOnPawnDied; the cause stays 0 (generic) because the damage tags of the
+        // final hit are not available here.
+        auto& DeathInfo = VictimState->DeathInfo;
+        memset(&DeathInfo, 0, FDeathInfo::Size());
+        DeathInfo.bDBNO = false;
+        if (FDeathInfo::HasKiller())
+            DeathInfo.Killer = KillerState;
+        if (FDeathInfo::HasDeathLocation())
+            DeathInfo.DeathLocation = FVector(DeathLocation);
+        if (FDeathInfo::HasDeathClassSlot())
+            DeathInfo.DeathClassSlot = (uint8)-1;
+        if (FDeathInfo::HasFinisherOrDowner())
+            DeathInfo.FinisherOrDowner = KillerState ? (AActor*)KillerState : (AActor*)VictimState;
+        if (FDeathInfo::HasDistance() && KillerPawnOrNull)
+        {
+            auto KillerLocation = KillerPawnOrNull->K2_GetActorLocation();
+            auto DX = KillerLocation.X - DeathLocation.X, DY = KillerLocation.Y - DeathLocation.Y, DZ = KillerLocation.Z - DeathLocation.Z;
+            DeathInfo.Distance = (float)sqrt(DX * DX + DY * DY + DZ * DZ);
+        }
+        if (FDeathInfo::HasbInitialized())
+            DeathInfo.bInitialized = true;
+
+        VictimState->OnRep_DeathInfo();
+    }
+
+    void DeclareWinner(AFortGameMode* GameMode, AController* Killer)
+    {
+        auto GameState = GameMode->GameState;
+        auto KillerState = Killer ? Killer->PlayerState : nullptr;
         if (!KillerState)
             return;
 
@@ -500,6 +534,28 @@ namespace BotCompat
         }
 
         BOT_LOG(BOT_CATEGORY_SYSTEM, "Match won by team %d.", (int)KillerState->TeamIndex);
+    }
+
+    void RemoveGameMember(AFortGameMode* GameMode, AFortPlayerStateAthena* PlayerState)
+    {
+        auto GameState = GameMode->GameState;
+        if (!PlayerState || !GameState->HasGameMemberInfoArray())
+            return;
+
+        auto& Members = GameState->GameMemberInfoArray.Members;
+        for (int i = Members.Num() - 1; i >= 0; i--)
+        {
+            auto& Member = Members.Get(i, FGameMemberInfo::Size());
+            if (Member.TeamIndex != PlayerState->TeamIndex || Member.SquadId != PlayerState->SquadId)
+                continue;
+
+            if (FUniqueNetIdRepl::HasReplicationBytes() && Member.MemberUniqueId.ReplicationBytes.Num() > 0)
+                continue; // a real player's entry
+
+            Members.Remove(i, FGameMemberInfo::Size());
+            GameState->GameMemberInfoArray.MarkArrayDirty();
+            return;
+        }
     }
 
     void SetPawnInPlay(AFortPlayerPawnAthena* Pawn, bool bInPlay)

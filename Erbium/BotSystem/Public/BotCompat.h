@@ -63,13 +63,22 @@ namespace BotCompat
     // killer's controller, or nullptr.
     AController* CreditBotKill(AFortPlayerPawnAthena* VictimPawn, AFortPlayerStateAthena* VictimState);
 
-    // Placement for an eliminated AI-controller bot (players left before it is removed).
-    void SetPlacement(AFortGameMode* GameMode, AFortPlayerStateAthena* VictimState);
+    // Placement for an eliminated AI-controller bot (or its whole team): Place = teams still in the
+    // match before this elimination.
+    void SetPlacement(AFortPlayerStateAthena* VictimState, int TeamsLeftBefore);
 
-    // When only one player is left after an AI-controller bot was eliminated, declare the killer the
-    // winner the way ClientOnPawnDied does for player victims (win screen for a player-controller
-    // killer, winning team/player state for everyone). Counts players, so it is correct for solo modes.
-    void CheckForWinner(AFortGameMode* GameMode, AController* Killer);
+    // Elimination info on the victim's player state (kill feed, spectating, end-of-match screen), the
+    // same fields ClientOnPawnDied fills for player victims.
+    void SetDeathInfo(AFortPlayerStateAthena* VictimState, AController* Killer, AFortPlayerPawnAthena* KillerPawnOrNull, const FVector& DeathLocation);
+
+    // Declares the killer's team the winner the way ClientOnPawnDied does (win screen for a
+    // player-controller killer, winning team / player state for everyone). The caller decides when:
+    // FBotManager counts the teams still alive.
+    void DeclareWinner(AFortGameMode* GameMode, AController* Killer);
+
+    // Removes the GameMemberInfo entry AssignTeam added (squad UI). Only entries without a unique id
+    // (bots have none) are considered, so a human's entry in the same squad is never touched.
+    void RemoveGameMember(AFortGameMode* GameMode, AFortPlayerStateAthena* PlayerState);
 
     // Stops any behavior tree / brain the controller class starts on its own, so it cannot fight the
     // bot system for control of the pawn.

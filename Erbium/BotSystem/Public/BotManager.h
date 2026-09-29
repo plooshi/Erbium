@@ -53,6 +53,10 @@ public:
     // Log DescribeBot for this bot every few seconds (0 = off).
     static inline uint32 WatchedBotId = 0;
 
+    // Team indices still in the match: players in GameMode->AlivePlayers plus AI-controller bots that
+    // count as alive. Used for placement and the winner check (correct for solo and squad modes).
+    static std::vector<uint8> GetAliveTeams();
+
     static FBotController* FindBot(uint32 BotId);
     static FBotController* FindBotByController(const AActor* Controller);
     static bool IsBot(const AActor* Controller) { return FindBotByController(Controller) != nullptr; }

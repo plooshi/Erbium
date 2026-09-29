@@ -173,6 +173,7 @@ void FBotManager::FlushPendingRemovals()
         }
 
         BotSpawner::DestroyBot(*Bot);
+        BotLootWorld::ReleaseClaims(Bot->GetId());
         BOT_LOG(BOT_CATEGORY_SYSTEM, "Removed bot #%u (%d remaining).", Bot->GetId(), (int)Bots.size() - 1);
 
         Bots.erase(Bots.begin() + i);
@@ -336,8 +337,17 @@ void FBotManager::UpdateMatchFlow(double Now)
         for (auto& Bot : Bots)
         {
             auto State = Bot->GetAIState();
-            if (!Bot->IsAlive() || !Bot->CanMove() || State == EBotAIState::InBus || State == EBotAIState::Skydiving)
+            if (!Bot->IsAlive() || State == EBotAIState::InBus || State == EBotAIState::Skydiving)
                 continue;
+
+            if (!Bot->CanMove())
+            {
+                // Player-controller bots are in AlivePlayers, so the game puts them in the bus itself;
+                // they only need a jump time (Erbium's auto-jump skips bIsABot players).
+                double DropStart, DropEnd;
+                Bot->SetBusJumpTime(BotWorld::GetDropWindow(DropStart, DropEnd) ? DropStart + (DropEnd - DropStart) * ((double)rand() / RAND_MAX) : Now + 10.0);
+                continue;
+            }
 
             BoardBus(*Bot, Now);
             Boarded++;
@@ -345,6 +355,23 @@ void FBotManager::UpdateMatchFlow(double Now)
 
         BOT_LOG(BOT_CATEGORY_SYSTEM, "Battle bus: %d bot(s) boarded.", Boarded);
     }
+
+    // Player-controller bots: jump the way a client does (ServerAttemptAircraftJump, which Erbium hooks
+    // and turns into a respawn in the air), at their jump time.
+    if (Phase == EBotMatchPhase::Aircraft)
+        for (auto& Bot : Bots)
+        {
+            auto PlayerController = Bot->GetPlayerController();
+            if (!PlayerController || !Bot->IsAlive() || Bot->bJumpedFromBus || Bot->GetBusJumpTime() <= 0.0 || Now < Bot->GetBusJumpTime() || !PlayerController->IsInAircraft())
+                continue;
+
+            Bot->bJumpedFromBus = true;
+            FRotator Rotation{};
+            if (auto AircraftComponent = PlayerController->GetAircraftComponent())
+                AircraftComponent->ServerAttemptAircraftJump(Rotation);
+            else
+                PlayerController->ServerAttemptAircraftJump(Rotation);
+        }
 
     LastMatchPhase = Phase;
 }
@@ -354,6 +381,31 @@ void FBotManager::RunFrame(double Now, float DeltaSeconds)
     for (auto& Bot : Bots)
         if (Bot->GetLifeState() == EBotLifeState::Active)
             Bot->TickFrame(Now, DeltaSeconds);
+}
+
+std::vector<uint8> FBotManager::GetAliveTeams()
+{
+    std::vector<uint8> Teams;
+    auto AddTeam = [&](uint8 Team)
+    {
+        if (std::find(Teams.begin(), Teams.end(), Team) == Teams.end())
+            Teams.push_back(Team);
+    };
+
+    auto World = UWorld::GetWorld();
+    auto GameMode = World ? (AFortGameMode*)World->AuthorityGameMode : nullptr;
+    if (GameMode && GameMode->HasAlivePlayers())
+        for (auto& Player : GameMode->AlivePlayers)
+            if (auto State = Player ? ((AController*)Player)->PlayerState : nullptr)
+                AddTeam(State->TeamIndex);
+
+    // Player-controller bots are already in AlivePlayers; AI-controller bots are counted here.
+    for (auto& Bot : Bots)
+        if (Bot->GetControllerKind() == EBotControllerKind::AIController && Bot->bRegisteredAlive)
+            if (auto State = Bot->GetPlayerState())
+                AddTeam(State->TeamIndex);
+
+    return Teams;
 }
 
 int FBotManager::CommandDifficulty(uint32 BotId, EBotDifficulty Difficulty)
@@ -368,8 +420,7 @@ bool FBotManager::HandleRemoveInventoryItem(const IInterface* Interface, const F
         if (Bot->GetControllerKind() != EBotControllerKind::AIController)
             continue;
 
-        auto Controller = Bot->GetController();
-        if (!Controller || Controller->GetInterface(IFortInventoryOwnerInterface::StaticClass()) != Interface)
+        if (!Bot->InventoryOwnerInterface || Bot->InventoryOwnerInterface != Interface || !Bot->GetController())
             continue;
 
         bOutRemoved = Bot->GetInventory().Consume(ItemGuid, (Count < 0 || bForceRemoval) ? -1 : Count);
@@ -532,6 +583,10 @@ void FBotManager::Tick(const UObject* NetDriver, float DeltaSeconds)
     auto Start = NowMicros();
     auto Now = GetWorldTime();
 
+    // World state first, so bots spawned this tick already see the right match phase (a bot spawned
+    // during the storm phase must drop in, not stand on the warmup island).
+    UpdateMatchFlow(Now);
+
     ProcessQueuedRequests();
 
     bIsTicking = true;
@@ -545,7 +600,6 @@ void FBotManager::Tick(const UObject* NetDriver, float DeltaSeconds)
     // One shared actor snapshot per interval for all bots' perception and looting.
     if (!Bots.empty())
     {
-        UpdateMatchFlow(Now);
         BotPerceptionWorld::Update(Now);
         BotLootWorld::Update(Now);
     }

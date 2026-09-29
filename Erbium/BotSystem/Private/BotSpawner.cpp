@@ -153,6 +153,8 @@ namespace BotSpawner
         // Native inventory where the controller supports one, otherwise virtual (see BotInventory.h).
         auto Inventory = BotCompat::EnsureWorldInventory(Controller, Kind);
         Bot.GetInventory().Initialize(Inventory);
+        if (Inventory && Kind == EBotControllerKind::AIController)
+            Bot.InventoryOwnerInterface = Controller->GetInterface(IFortInventoryOwnerInterface::StaticClass());
 
         // 4. Location  5. Pawn
         auto PawnClass = BotCompat::GetBotPawnClass(GameMode, Controller);
@@ -245,6 +247,9 @@ namespace BotSpawner
             BotCompat::UnregisterAlive(GameMode, Controller, Bot.GetControllerKind());
             Bot.bRegisteredAlive = false;
         }
+
+        if (GameMode)
+            BotCompat::RemoveGameMember(GameMode, Bot.GetPlayerState());
 
         if (Controller && Pawn && Controller->Pawn == Pawn)
             Controller->UnPossess();

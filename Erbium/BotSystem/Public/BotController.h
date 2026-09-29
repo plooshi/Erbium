@@ -83,8 +83,19 @@ public:
     bool IsLootIgnored(int32 ObjectIndex) const;
 
     // Phase 6: world time this bot jumps off the battle bus.
-    void SetBusJumpTime(double Time) { BusJumpTime = Time; }
+    void SetBusJumpTime(double Time)
+    {
+        BusJumpTime = Time;
+        bJumpedFromBus = false;
+    }
     double GetBusJumpTime() const { return BusJumpTime; }
+
+    // Player-controller bots ride the game's own bus; set once they asked to jump.
+    bool bJumpedFromBus = false;
+
+    // AI-controller bots with a native inventory: the inventory-owner interface of their controller,
+    // cached so Erbium's inventory hook (called on every shot fired by anyone) only compares pointers.
+    const IInterface* InventoryOwnerInterface = nullptr;
 
     // Last position of the pawn (valid after it is gone, e.g. for death drops).
     const FVector& GetLastKnownLocation() const { return LastKnownLocation; }
@@ -166,6 +177,7 @@ private:
 
     bool bAimLock = false;
     std::unordered_map<int32, double> IgnoredLoot; // pickup object index -> ignore until (world time)
+    double NextIgnorePruneTime = 0.0;
     FVector LastKnownLocation{};
     double BusJumpTime = 0.0;
 

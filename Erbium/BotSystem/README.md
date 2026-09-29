@@ -3,10 +3,10 @@
 A modular system for AI-controlled players in a local/private Erbium test server. It is being built in
 phases. **All phases are implemented; none has been run in-game yet.** Phase 1 (spawning), 2A (movement,
 navigation, perception), 2B (loot, inventory), 2C (combat, healing, escaping), 3 (cosmetics),
-4 (building, including combat building), 5 (decision system, difficulty, debugging) and 6 (match flow:
-storm, battle bus, chests, placement/win) are all in the code. Everything was compile-checked (see Build
-verification) but not run against a game build in the development container. The test plans below are
-how each phase gets verified. Phase 7 (general code fixes) is planned.
+4 (building, including combat building), 5 (decision system, difficulty, debugging), 6 (match flow:
+storm, battle bus, chests, placement/win) and 7 (general fixes) are all in the code. Everything was
+compile-checked (see Build verification) but not run against a game build in the development
+container. The test plans below are how each phase gets verified.
 
 ## How Erbium works (and why this matters for bots)
 
@@ -104,7 +104,7 @@ For each of 1, 5, 10, 25, 50 and 100 bots:
 - **Not run-time tested yet.** It has been compiled and checked (see below) but not run against a game build in this environment.
 - Player-controller bots stand still. AI-controller bots move (Phase 2A).
 - Bots do not jump from the bus by themselves. Erbium's aircraft code already skips `bIsABot` players for auto-jump. Phase 2 will add a bus-exit behavior.
-- The `GameMemberInfoArray` entry is not removed when a bot is removed. Erbium has no removal code for real players either. The effect is limited to squad UI data.
+- ~~The `GameMemberInfoArray` entry is not removed when a bot is removed.~~ Fixed in Phase 7.
 - The default appearance is fixed. Random cosmetics are Phase 3.
 
 ## Phase 2A: movement, navigation, perception
@@ -357,7 +357,7 @@ The `Rotating` behaviour heads for the nearest side of the next circle, about 55
 - **Jumping:** at that time the pawn is placed at the bus with a small spread, like Erbium's late-game jump, and `BeginSkydiving(true)` starts the fall.
 - **Skydiving:** steering input takes the bot toward a chest near its jump point (inside the next circle), and it lands and starts playing.
 - **Late spawns:** bots spawned after the bus started drop in over the safe zone.
-- **Not covered:** player-controller bots are in `AlivePlayers`, so the game itself puts them in the bus. Their jumping isn't handled.
+- **Player-controller bots** are in `AlivePlayers`, so the game itself puts them in the bus. Since Phase 7 they also get a jump time and jump (see Phase 7).
 
 **Chests and ammo boxes.** They compete with ground loot in the brain's Loot score (`ChestValue`, `AmmoBoxValue`, with distance falloff). The bot claims the container, walks to it, stands for `ContainerSearchTime` (like holding interact), then opens it with `UFortLootPackage::SpawnLootHook`. That's the same function Erbium's `ServerAttemptInteract` uses for players. The loot drops as pickups, which the bot collects next.
 
@@ -367,7 +367,7 @@ The `Rotating` behaviour heads for the nearest side of the next circle, about 55
 3. The killer is credited.
 4. If one player is left, the killer is declared the winner: win screen for a human, then `WinningTeam`/`WinningPlayerState`.
 
-Counting players makes this correct for solo modes. Squad/team modes would need team counting, which is a Phase 7 candidate.
+Since Phase 7 this counts teams, which is correct for squads too, and is skipped during warmup.
 
 **Test plan.**
 1. Spawn 20 bots during warmup, then start the bus. The log should show `Battle bus: 20 bot(s) boarded.` Bots vanish from the island, then appear in the sky during the drop window, glide down near chests and start looting. `cheat botdebug <id>` shows `Match: Aircraft`, and later `SafeZones`.
@@ -379,7 +379,72 @@ Counting players makes this correct for solo modes. Squad/team modes would need 
 **Limitations.**
 - Gliding/auto-deploy is left to the game's movement. If a build needs an explicit deploy, bots will free-fall until they land. Report it if that happens.
 - The glider cosmetic isn't applied for AI-controlled bots.
-- Squad placement and team elimination aren't handled.
+- ~~Squad placement and team elimination aren't handled.~~ Fixed in Phase 7.
+
+## Phase 7: general fixes
+
+Found by reviewing all previous phases against each other and against the Erbium code they touch.
+
+| # | Problem | Fix |
+|---|---|---|
+| 1 | Placement and win counted *players*, so they were wrong in squad modes | `FBotManager::GetAliveTeams()` counts teams: `AlivePlayers` plus AI-controlled bots that are still alive. A bot gets a placement when its whole team is out, and the killer's team wins when it's the only team left. |
+| 2 | A bot dying in **warmup** could set placements or even declare a winner | Placement and the win check run only after the match has started (`GUI::gsStatus == StartedMatch`). |
+| 3 | **Player-controller bots stayed in the bus forever.** Erbium's auto-jump skips `bIsABot` players | They get a jump time in the drop window and jump through `ServerAttemptAircraftJump` (on the aircraft component when present), the same function a client calls. Erbium's hook then respawns them in the air. |
+| 4 | Eliminations of AI-controlled bots had no `DeathInfo` (elimination feed, spectating) | `BotCompat::SetDeathInfo` fills the same fields `ClientOnPawnDied` does for players: killer, location, distance, finisher. |
+| 5 | The squad-UI `GameMemberInfo` entry was never removed | `BotCompat::RemoveGameMember` on removal. Only entries without a unique id (bots) are touched, never a human's. |
+| 6 | Erbium's `RemoveInventoryItem` hook runs on **every shot by anyone**, and asked every bot's controller for its interface each time | The interface pointer is cached at spawn, so the hook now only compares pointers. |
+| 7 | Loot claims of a bot removed while alive were never released, and a bot's "unreachable loot" list only grew | Claims are released on removal, and expired entries are pruned every 10 s. |
+| 8 | The world state was refreshed after queued spawns, and not at all while no bots existed. The first bot spawned during the storm phase thought the phase was "Unknown" and stayed on the warmup island | The world refreshes first each tick. |
+
+Still open, because they need in-game results first:
+- whether weapons fire through the engine `AIController`
+- ramp facing (`RampYawOffset`)
+- movement-style speeds
+- glider auto-deploy
+- the glider cosmetic for AI-controlled bots
+
+## Where to find everything
+
+**Branch:** `claude/erbium-ai-bot-system-sus0gw` on `wieseichwiesenicht-art/Erbium-AI-Fork2`, one commit per phase on top of `main`.
+- Browse: https://github.com/wieseichwiesenicht-art/Erbium-AI-Fork2/tree/claude/erbium-ai-bot-system-sus0gw
+- All changes against `main`: https://github.com/wieseichwiesenicht-art/Erbium-AI-Fork2/compare/main...claude/erbium-ai-bot-system-sus0gw
+- Locally: `git fetch origin claude/erbium-ai-bot-system-sus0gw && git checkout claude/erbium-ai-bot-system-sus0gw`, then `git log --oneline main..HEAD` for the phase commits.
+
+**New code**, all under `Erbium/BotSystem/`:
+
+| Folder / file | What |
+|---|---|
+| `Public/BotManager.h`, `Private/BotManager.cpp` | owns all bots: spawn/remove, tick, match flow, commands, debug text, perf log |
+| `BotController`, `BotBehavior`, `BotState`, `BotConfig` | per-bot driver, behavior interface, states/enums, all settings |
+| `BotSpawner`, `BotCompat`, `BotEngineTypes`, `BotLog` | spawn/teardown, version/game compatibility layer, engine class views, logging |
+| `Navigation/` | `BotNavigation` (pathfinding / direct / steering), `BotMovement` (goals, stuck handling, speed) |
+| `Perception/` | shared pawn snapshot, per-bot visibility |
+| `Behaviors/` | all behaviors: Idle, Searching, Moving, Following, Building, Looting, Combat, Healing, Escaping, Rotating, InBus, Skydiving, Dead |
+| `Inventory/` | item classification/scoring, native/virtual inventory |
+| `Loot/` | pickup snapshot, claims, chests |
+| `Combat/` | weapon compat (fire/reload/ammo), targeting, aiming |
+| `Building/` | piece catalogue, grid + calibration, builder |
+| `Cosmetics/` | cosmetic catalogue, loadouts |
+| `Decision/` | brain (priorities), difficulty |
+| `World/` | match phase, bus, storm, containers |
+
+**Changed Erbium files** (every change is commented in the code):
+
+| File | Change |
+|---|---|
+| `FortniteGame/Private/FortPlayerControllerAthena.cpp` / `.h` | shared helpers extracted unchanged (`GrantPlayerAbilities`, `GiveStartingItems`, `PlaceBuildingActor`, `ApplyStormDamageEffect`); bot cheats replace the old `spawnbot`; death notification to the bot manager; `ClientOnPawnDied` only calls player-controller functions on a player-controller killer |
+| `FortniteGame/Private/FortInventory.cpp` | `RemoveInventoryItem` / `SetLoadedAmmo` / `SetPhantomReserveAmmo` are safe for non-player item owners |
+| `FortniteGame/Private/FortPlayerPawnAthena.cpp` | player-controller guard in pickup completion |
+| `Engine/Private/NetDriver.cpp` | bot manager tick in all three `TickFlush` variants |
+| `Erbium/Private/GUI.cpp` | Misc tab → Bots section |
+| `Erbium.vcxproj`, `Erbium.vcxproj.filters` | new files registered |
+
+**Cheats** (`cheat <command>` in game):
+- `spawnbot <n>`, `removebot <id>`, `removebots`, `listbots`
+- `botfollow`, `botgoto`, `botwander`, `botidle` (optional `[id]`)
+- `botbuild <wall|floor|ramp|cone> [id]`, `botoutfit <CID> [id]`
+- `botdifficulty <easy|normal|hard> [id]`
+- `botdebug <id>`, `botwatch <id|0>`
 
 ### Build verification
 There is no Windows toolchain in the development container. Each changed translation unit was checked with clang in MSVC-compatibility mode against mingw-w64 headers (`-fms-extensions -fms-compatibility -fsyntax-only`). The error output is identical to the untouched baseline: only libstdc++-internal errors that the toolchain itself causes. The authoritative build is MSBuild (`.github/workflows/Build.yml`).

@@ -5,6 +5,8 @@
 #include "../Public/BotLog.h"
 #include "../../FortniteGame/Public/FortPlayerControllerAthena.h"
 #include "../../FortniteGame/Public/FortGameMode.h"
+#include "../../Erbium/Public/GUI.h"
+#include "../Public/BotManager.h"
 
 template <typename T>
 static T* GetLiveActor(const TWeakObjectPtr<T>& Weak)
@@ -144,6 +146,14 @@ void FBotController::Think(double Now)
     if (auto CurrentPawn = GetPawn())
         LastKnownLocation = CurrentPawn->K2_GetActorLocation();
 
+    // Drop expired "unreachable loot" entries now and then so the map does not grow all match.
+    if (Now >= NextIgnorePruneTime)
+    {
+        NextIgnorePruneTime = Now + 10.0;
+        for (auto It = IgnoredLoot.begin(); It != IgnoredLoot.end();)
+            It = It->second <= Now ? IgnoredLoot.erase(It) : std::next(It);
+    }
+
     // Order matters: decisions use fresh perception, behaviors act on the decision, movement executes.
     Perception.Update(Now);
     TrackDamage(Now);
@@ -188,16 +198,29 @@ void FBotController::HandleAIDeath()
     if (!GameMode)
         return;
 
-    // Placement first (counts this bot), then it stops counting, then check whether someone won.
-    BotCompat::SetPlacement(GameMode, GetPlayerState());
+    auto VictimState = GetPlayerState();
+    auto Killer = BotCompat::CreditBotKill(DeadPawn, VictimState);
+    BotCompat::SetDeathInfo(VictimState, Killer, Killer ? Killer->Pawn : nullptr, LastKnownLocation);
+
+    // Teams before this bot stops counting, then after.
+    auto TeamsBefore = FBotManager::GetAliveTeams();
     if (bRegisteredAlive && GetController())
     {
         BotCompat::UnregisterAlive(GameMode, GetController(), ControllerKind);
         bRegisteredAlive = false;
     }
 
-    auto Killer = BotCompat::CreditBotKill(DeadPawn, GetPlayerState());
-    BotCompat::CheckForWinner(GameMode, Killer);
+    // Placement and the win only mean something once the match is on (warmup deaths do not count).
+    if (GUI::gsStatus != StartedMatch || !VictimState)
+        return;
+
+    auto TeamsAfter = FBotManager::GetAliveTeams();
+    bool bTeamEliminated = std::find(TeamsAfter.begin(), TeamsAfter.end(), VictimState->TeamIndex) == TeamsAfter.end();
+    if (bTeamEliminated)
+        BotCompat::SetPlacement(VictimState, (int)TeamsBefore.size());
+
+    if (Killer && TeamsAfter.size() == 1 && Killer->PlayerState && TeamsAfter[0] == Killer->PlayerState->TeamIndex)
+        BotCompat::DeclareWinner(GameMode, Killer);
 }
 
 void FBotController::SetAIState(EBotAIState NewState)
