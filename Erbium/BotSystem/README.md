@@ -3,9 +3,10 @@
 A modular system for AI-controlled players in a local/private Erbium test server. It is being built in
 phases. **All phases are implemented; none has been run in-game yet.** Phase 1 (spawning), 2A (movement,
 navigation, perception), 2B (loot, inventory), 2C (combat, healing, escaping), 3 (cosmetics),
-4 (building, including combat building) and 5 (decision system, difficulty, debugging) are all in the
-code. Everything was compile-checked (see Build verification) but not run against a game build in the
-development container. The test plans below are how each phase gets verified.
+4 (building, including combat building), 5 (decision system, difficulty, debugging) and 6 (match flow:
+storm, battle bus, chests, placement/win) are all in the code. Everything was compile-checked (see Build
+verification) but not run against a game build in the development container. The test plans below are
+how each phase gets verified. Phase 7 (general code fixes) is planned.
 
 ## How Erbium works (and why this matters for bots)
 
@@ -41,6 +42,7 @@ BotSystem/
     Loot/            shared pickup snapshot, claims, pickup execution
     Combat/          weapon compat (fire/reload/ammo), targeting + aiming + weapon handling
     Decision/        utility brain (priorities), difficulty presets
+    World/           match phase, battle bus, storm circles, chest/ammo box snapshot
     BotConfig.h      FBotSystemConfig (server-wide, GUI-editable) + FBotConfig (per bot)
     BotState.h       EBotLifeState (exists/dead/removing) and EBotAIState (what it is doing)
     BotBehavior.h    IBotBehavior: OnEnter / Tick / OnExit, one object per AI state
@@ -328,6 +330,56 @@ Measure with `[BotPerf]` as in Phase 1.
   - speed via movement styles
 - No chest opening, no bus/skydive handling, no editing or repairing.
 - AI-controller victims get kill credit and drops, but no placement or win handling.
+
+## Phase 6: match flow (storm, battle bus, chests, placement)
+
+**Two crash fixes in existing Erbium code** (both reachable once bots fight):
+- **`ClientOnPawnDied`, when a bot kills a human:** the killer's controller was always treated as a PlayerController. It got quest stats, the win screen and the victory crown, all PlayerController-only calls on what may be an AI controller. Those calls now run only when the killer really is a PlayerController. Kill score, the kill feed and the winning team still apply to bot killers.
+- **Storm damage on 25.20+:** it's a gameplay effect Erbium applied per player inside `ServerAcknowledgePossession`, which bots never send. It's been moved unchanged into `AFortPlayerControllerAthena::ApplyStormDamageEffect`, which players and bots both call.
+
+**World info** (`World/BotWorld.h`, all of it information players have as well):
+- **Match phase:** from `GameState` before 25.20 and `GamePhaseLogic` from 25.20.
+- **Battle bus and drop window:** `DropStartTime`/`DropEndTime`, or `FlightInfo`.
+- **Storm circles:** the current circle, interpolated while shrinking, and the next one.
+- **Chests and ammo boxes:** a snapshot every `ContainerSnapshotInterval`.
+- **Storm flags on 25.20+:** Erbium updates `bIsInAnyStorm`/`bIsInsideSafeZone` only for `AlivePlayers`, so `UpdatePawnStormState` does the same for bot pawns. That's what makes storm damage apply to them.
+
+**Storm.** A Storm priority in the brain is scored like this:
+- 1.8 when the bot is outside the current circle (taking damage), which beats combat.
+- 1.1 while the storm is shrinking and the bot is outside the next circle.
+- 0.9 in the last 30 s before a shrink.
+- Otherwise 0.45.
+
+The `Rotating` behaviour heads for the nearest side of the next circle, about 55% of the radius in. Wander points and chests prefer the inside of the next circle.
+
+**Battle bus** (`bBotsUseBattleBus`, GUI toggle).
+- **Boarding:** when the phase becomes Aircraft, every AI-controlled bot boards. Its pawn is hidden, has no collision and isn't perceived, the same as a player in the bus who has no pawn in the world. Each bot gets a random jump time in the drop window.
+- **Jumping:** at that time the pawn is placed at the bus with a small spread, like Erbium's late-game jump, and `BeginSkydiving(true)` starts the fall.
+- **Skydiving:** steering input takes the bot toward a chest near its jump point (inside the next circle), and it lands and starts playing.
+- **Late spawns:** bots spawned after the bus started drop in over the safe zone.
+- **Not covered:** player-controller bots are in `AlivePlayers`, so the game itself puts them in the bus. Their jumping isn't handled.
+
+**Chests and ammo boxes.** They compete with ground loot in the brain's Loot score (`ChestValue`, `AmmoBoxValue`, with distance falloff). The bot claims the container, walks to it, stands for `ContainerSearchTime` (like holding interact), then opens it with `UFortLootPackage::SpawnLootHook`. That's the same function Erbium's `ServerAttemptInteract` uses for players. The loot drops as pickups, which the bot collects next.
+
+**Placement and win for AI-controlled bot victims.**
+1. The victim's `Place` is set to the number of players left.
+2. It stops counting as alive.
+3. The killer is credited.
+4. If one player is left, the killer is declared the winner: win screen for a human, then `WinningTeam`/`WinningPlayerState`.
+
+Counting players makes this correct for solo modes. Squad/team modes would need team counting, which is a Phase 7 candidate.
+
+**Test plan.**
+1. Spawn 20 bots during warmup, then start the bus. The log should show `Battle bus: 20 bot(s) boarded.` Bots vanish from the island, then appear in the sky during the drop window, glide down near chests and start looting. `cheat botdebug <id>` shows `Match: Aircraft`, and later `SafeZones`.
+2. Chests near landed bots should open (bounce and loot drop) after about 1 s of the bot standing at them.
+3. When the storm closes, bots outside the next circle switch to `Rotating` and move in. On 25.20+ builds, check that bots standing in the storm take damage.
+4. Let a bot kill you. There should be no crash, and the kill should show in the feed. Then kill the others down to the last one: the winner is declared, with the win screen if that's you.
+5. Spawn bots mid-match with GUI → Spawn: they should drop in over the safe zone.
+
+**Limitations.**
+- Gliding/auto-deploy is left to the game's movement. If a build needs an explicit deploy, bots will free-fall until they land. Report it if that happens.
+- The glider cosmetic isn't applied for AI-controlled bots.
+- Squad placement and team elimination aren't handled.
 
 ### Build verification
 There is no Windows toolchain in the development container. Each changed translation unit was checked with clang in MSVC-compatibility mode against mingw-w64 headers (`-fms-extensions -fms-compatibility -fsyntax-only`). The error output is identical to the untouched baseline: only libstdc++-internal errors that the toolchain itself causes. The authoritative build is MSBuild (`.github/workflows/Build.yml`).

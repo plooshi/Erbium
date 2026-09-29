@@ -61,7 +61,10 @@ class ACharacter : public AActor
 public:
     UCLASS_COMMON_MEMBERS(ACharacter);
 
+    DEFINE_BITFIELD_PROP(bHidden); // AActor::bHidden, looked up on the pawn
+
     DEFINE_FUNC(AddMovementInput, void);
+    DEFINE_FUNC(SetActorEnableCollision, void);
     DEFINE_FUNC(Jump, void);
     DEFINE_FUNC(StopJumping, void);
 };

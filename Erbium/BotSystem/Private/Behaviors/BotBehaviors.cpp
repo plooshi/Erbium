@@ -5,6 +5,9 @@
 #include "../../Public/Navigation/BotNavigation.h"
 #include "../../Public/Combat/BotWeapons.h"
 #include "../../Public/Loot/BotLoot.h"
+#include "../../Public/World/BotWorld.h"
+#include "../../Public/BotCompat.h"
+#include "../../../FortniteGame/Public/BuildingContainer.h"
 #include "../../../FortniteGame/Public/FortPlayerPawnAthena.h"
 
 static float RandomRange(float Min, float Max)
@@ -52,7 +55,14 @@ void FBotSearchingBehavior::PickNewDestination(FBotController& Bot)
     if (!Pawn)
         return;
 
-    auto Destination = BotNavigation::GetRandomPointInRadius(Pawn->K2_GetActorLocation(), Bot.GetConfig().SearchRadius);
+    auto Location = Pawn->K2_GetActorLocation();
+    auto Destination = BotNavigation::GetRandomPointInRadius(Location, Bot.GetConfig().SearchRadius);
+
+    // Inside the next storm circle: prefer wander points that stay inside it (Phase 6).
+    if (BotWorld::GetSafeZone().bActive && BotWorld::IsInsideNextZone(Location))
+        for (int Attempt = 0; Attempt < 3 && !BotWorld::IsInsideNextZone(Destination); Attempt++)
+            Destination = BotNavigation::GetRandomPointInRadius(Location, Bot.GetConfig().SearchRadius);
+
     Bot.GetMovement().MoveToLocation(Destination);
 }
 
@@ -187,8 +197,24 @@ void FBotBuildingBehavior::Finish(FBotController& Bot)
 
 void FBotLootingBehavior::OnEnter(FBotController& Bot)
 {
-    auto Target = Bot.GetBrain().GetLootTarget().Pickup.Get();
     TimeLeft = 15.f;
+    SearchTimeLeft = -1.f;
+    Container = TWeakObjectPtr<AActor>();
+    bIsContainer = Bot.GetBrain().IsLootTargetContainer();
+
+    // Chest / ammo box target (Phase 6).
+    if (bIsContainer)
+    {
+        auto Target = (AActor*)Bot.GetBrain().GetContainerTarget().Container.Get();
+        if (!Target || ((ABuildingContainer*)Target)->bAlreadySearched || !BotLootWorld::Claim(Target, Bot.GetId()))
+            return;
+
+        Container = TWeakObjectPtr<AActor>(Target);
+        Bot.GetMovement().MoveToActor(Target, 120.f);
+        return;
+    }
+
+    auto Target = Bot.GetBrain().GetLootTarget().Pickup.Get();
 
     if (!Target || Target->bPickedUp || !BotLootWorld::Claim(Target, Bot.GetId()))
     {
@@ -203,6 +229,42 @@ void FBotLootingBehavior::OnEnter(FBotController& Bot)
 
 void FBotLootingBehavior::Tick(FBotController& Bot, float DeltaSeconds)
 {
+    TimeLeft -= DeltaSeconds;
+
+    if (bIsContainer)
+    {
+        auto Target = (ABuildingContainer*)Container.Get();
+        if (!Target || Target->bActorIsBeingDestroyed || Target->bAlreadySearched)
+            return Bot.SetAIState(EBotAIState::Searching);
+
+        // Standing at it: "hold interact" for the search time, then open.
+        if (SearchTimeLeft >= 0.f)
+        {
+            SearchTimeLeft -= DeltaSeconds;
+            if (SearchTimeLeft <= 0.f)
+            {
+                BotLoot::OpenContainer(Bot, Target);
+                return Bot.SetAIState(EBotAIState::Searching); // the brain picks up what dropped
+            }
+            return;
+        }
+
+        if (BotLoot::IsInReach(Bot, Target))
+        {
+            Bot.GetMovement().Stop();
+            SearchTimeLeft = Bot.GetConfig().ContainerSearchTime;
+            return;
+        }
+
+        auto Status = Bot.GetMovement().GetStatus();
+        if (TimeLeft <= 0.f || Status == EBotMoveStatus::Failed || Status == EBotMoveStatus::Arrived || Status == EBotMoveStatus::Idle)
+        {
+            Bot.IgnoreLoot(Target, 60.0);
+            return Bot.SetAIState(EBotAIState::Searching);
+        }
+        return;
+    }
+
     auto Target = Pickup.Get();
     if (!Target || Target->bActorIsBeingDestroyed || Target->bPickedUp)
         return Bot.SetAIState(EBotAIState::Searching);
@@ -213,7 +275,6 @@ void FBotLootingBehavior::Tick(FBotController& Bot, float DeltaSeconds)
         return Bot.SetAIState(EBotAIState::Searching);
     }
 
-    TimeLeft -= DeltaSeconds;
     auto Status = Bot.GetMovement().GetStatus();
 
     // Unreachable (stuck, no path, or arrived but still out of reach e.g. on a roof): skip it for a while.
@@ -476,6 +537,145 @@ void FBotEscapingBehavior::Tick(FBotController& Bot, float DeltaSeconds)
 void FBotEscapingBehavior::OnExit(FBotController& Bot)
 {
     Bot.GetMovement().SetSpeedOverride(false);
+    Bot.GetMovement().Stop();
+}
+
+// --- Rotating (Phase 6) ---------------------------------------------------------------------------
+
+void FBotRotatingBehavior::OnEnter(FBotController& Bot)
+{
+    NextRepathTime = 0.0;
+}
+
+void FBotRotatingBehavior::Tick(FBotController& Bot, float DeltaSeconds)
+{
+    auto Pawn = Bot.GetPawn();
+    if (!Pawn || !BotWorld::GetSafeZone().bActive)
+        return Bot.SetAIState(EBotAIState::Searching);
+
+    auto Location = Pawn->K2_GetActorLocation();
+    if (BotWorld::IsInsideNextZone(Location, Bot.GetConfig().StormMargin))
+        return Bot.SetAIState(EBotAIState::Searching);
+
+    // New destination when the last one is done or failed, or now and then (the circle can move).
+    auto Now = Bot.GetNow();
+    auto& Movement = Bot.GetMovement();
+    if (Now >= NextRepathTime || Movement.GetStatus() != EBotMoveStatus::Moving)
+    {
+        NextRepathTime = Now + 8.0;
+        Movement.MoveToLocation(BotWorld::GetRotationPoint(Location), 400.f);
+    }
+}
+
+void FBotRotatingBehavior::OnExit(FBotController& Bot)
+{
+    Bot.GetMovement().Stop();
+}
+
+// --- Battle bus (Phase 6) ---------------------------------------------------------------------------
+
+void FBotInBusBehavior::OnEnter(FBotController& Bot)
+{
+    Bot.GetMovement().Stop();
+    BotCompat::SetPawnInPlay(Bot.GetPawn(), false);
+}
+
+void FBotInBusBehavior::Tick(FBotController& Bot, float DeltaSeconds)
+{
+    auto Now = Bot.GetNow();
+    auto Bus = BotWorld::GetAircraft();
+
+    // Jump at our time, or at the latest when the bus is gone / the storm phase started.
+    bool bBusGone = !Bus || BotWorld::GetPhase() == EBotMatchPhase::SafeZones;
+    if (Now < Bot.GetBusJumpTime() && !bBusGone)
+        return;
+
+    auto Pawn = Bot.GetPawn();
+    if (!Pawn)
+        return;
+
+    // Place the pawn where a player jumping now would appear: at the bus, spread out a little
+    // (same offsetting Erbium's late-game jump uses). Without a bus (bot spawned mid-match), drop in
+    // over the safe zone.
+    FVector Origin;
+    auto& Zone = BotWorld::GetSafeZone();
+    if (Bus)
+        Origin = Bus->K2_GetActorLocation();
+    else if (Zone.bActive && Zone.NextRadius > 0.f)
+    {
+        auto Offset = RandomRange(0.f, Zone.NextRadius * 0.7f);
+        auto OffsetAngle = RandomRange(0.f, 6.2831853f);
+        Origin = FVector(Zone.NextCenter.X + cos(OffsetAngle) * Offset, Zone.NextCenter.Y + sin(OffsetAngle) * Offset, Zone.NextCenter.Z + 20000.0);
+    }
+    else
+        Origin = FVector(Bot.GetLastKnownLocation().X, Bot.GetLastKnownLocation().Y, Bot.GetLastKnownLocation().Z + 20000.0);
+    auto Angle = RandomRange(0.f, 6.2831853f);
+    auto Radius = RandomRange(0.f, 1000.f);
+    FVector JumpLocation(Origin.X + cos(Angle) * Radius, Origin.Y + sin(Angle) * Radius, Origin.Z - 500.0);
+
+    BotCompat::SetPawnInPlay(Pawn, true);
+    Pawn->K2_SetActorLocation(JumpLocation, false, nullptr, true);
+
+    bool bFromBus = true;
+    Pawn->BeginSkydiving(bFromBus);
+
+    Bot.SetAIState(EBotAIState::Skydiving);
+}
+
+void FBotSkydivingBehavior::OnEnter(FBotController& Bot)
+{
+    TimeLeft = 120.f;
+    GroundedTime = 0.f;
+
+    auto Pawn = Bot.GetPawn();
+    if (!Pawn)
+        return;
+
+    auto Location = Pawn->K2_GetActorLocation();
+
+    // Landing spot: a chest within a few hundred metres of the jump point if there is one (inside the
+    // next circle when a storm exists), else straight below with some spread.
+    FVector Landing(Location.X + RandomRange(-3000.f, 3000.f), Location.Y + RandomRange(-3000.f, 3000.f), Location.Z);
+    double BestDistance = 30000.0;
+    for (auto& Entry : BotWorld::GetContainers())
+    {
+        if (!Entry.bIsChest || !BotWorld::IsInsideNextZone(Entry.Location))
+            continue;
+
+        auto DX = Entry.Location.X - Location.X, DY = Entry.Location.Y - Location.Y;
+        auto Distance = sqrt(DX * DX + DY * DY) * RandomRange(0.7f, 1.3f); // not every bot picks the same chest
+        if (Distance < BestDistance)
+        {
+            BestDistance = Distance;
+            Landing = FVector(Entry.Location.X, Entry.Location.Y, Location.Z);
+        }
+    }
+
+    // Steering is the only navigation that works in the air (no nav mesh up there).
+    Bot.GetMovement().SetForcedNavMode(EBotNavMode::Steering);
+    Bot.GetMovement().MoveToLocation(Landing, 300.f);
+}
+
+void FBotSkydivingBehavior::Tick(FBotController& Bot, float DeltaSeconds)
+{
+    auto Pawn = Bot.GetPawn();
+    TimeLeft -= DeltaSeconds;
+    if (!Pawn || TimeLeft <= 0.f)
+        return Bot.SetAIState(EBotAIState::Searching);
+
+    // Landed: not skydiving any more and no longer falling.
+    bool bFalling = Pawn->bIsSkydiving;
+    if (!bFalling && Pawn->CharacterMovement)
+        bFalling = fabs(Pawn->CharacterMovement->Velocity.Z) > 50.0;
+
+    GroundedTime = bFalling ? 0.f : GroundedTime + DeltaSeconds;
+    if (GroundedTime >= 0.5f)
+        return Bot.SetAIState(EBotAIState::Searching);
+}
+
+void FBotSkydivingBehavior::OnExit(FBotController& Bot)
+{
+    Bot.GetMovement().SetForcedNavMode(EBotNavMode::None);
     Bot.GetMovement().Stop();
 }
 

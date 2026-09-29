@@ -4,6 +4,7 @@
 #include "../Public/BotLog.h"
 #include "../../FortniteGame/Public/FortGameMode.h"
 #include "../../FortniteGame/Public/FortKismetLibrary.h"
+#include "../../FortniteGame/Public/FortWeapon.h"
 
 // Engine functions Erbium locates at startup (see Finders.cpp / FortGameMode.cpp /
 // FortPlayerControllerAthena.cpp). Any of them may be 0 on a build where the pattern was not found.
@@ -411,20 +412,20 @@ namespace BotCompat
         }
     }
 
-    void CreditBotKill(AFortPlayerPawnAthena* VictimPawn, AFortPlayerStateAthena* VictimState)
+    AController* CreditBotKill(AFortPlayerPawnAthena* VictimPawn, AFortPlayerStateAthena* VictimState)
     {
         if (!VictimPawn || !VictimPawn->HasDamagers() || VictimPawn->Damagers.Num() == 0)
-            return;
+            return nullptr;
 
         // Most recent damager (entries are appended as damage comes in).
         auto& Damagers = VictimPawn->Damagers;
         auto Killer = Damagers[Damagers.Num() - 1].DamageCauser;
         if (!Killer || !Killer->IsA(AController::StaticClass()))
-            return;
+            return nullptr;
 
         auto KillerState = ((AController*)Killer)->PlayerState;
         if (!KillerState || KillerState == VictimState)
-            return;
+            return nullptr;
 
         if (KillerState->HasKillScore())
             KillerState->KillScore++;
@@ -446,6 +447,74 @@ namespace BotCompat
         };
         FReportKillParams Params{ VictimState };
         KillerState->ClientReportKill(Params);
+
+        return (AController*)Killer;
+    }
+
+    void SetPlacement(AFortGameMode* GameMode, AFortPlayerStateAthena* VictimState)
+    {
+        auto GameState = GameMode->GameState;
+        if (!VictimState || !VictimState->HasPlace() || !GameState->HasPlayersLeft())
+            return;
+
+        VictimState->Place = GameState->PlayersLeft;
+        VictimState->OnRep_Place();
+    }
+
+    void CheckForWinner(AFortGameMode* GameMode, AController* Killer)
+    {
+        auto GameState = GameMode->GameState;
+        if (!Killer || !GameState->HasPlayersLeft() || GameState->PlayersLeft > 1)
+            return;
+
+        auto KillerState = Killer->PlayerState;
+        if (!KillerState)
+            return;
+
+        if (KillerState->HasPlace())
+        {
+            KillerState->Place = 1;
+            KillerState->OnRep_Place();
+        }
+
+        // Win screen for a human (or player-controller bot) winner, like ClientOnPawnDied.
+        if (Killer->IsA<AFortPlayerControllerAthena>())
+        {
+            auto KillerController = (AFortPlayerControllerAthena*)Killer;
+            auto KillerPawn = KillerController->Pawn;
+            auto KillerWeapon = KillerPawn && KillerPawn->CurrentWeapon ? ((AFortWeapon*)KillerPawn->CurrentWeapon)->WeaponData : nullptr;
+            uint8 DeathCause = 0;
+
+            if (VersionInfo.FortniteVersion >= 16)
+                KillerController->PlayWinEffects(KillerPawn, KillerWeapon, DeathCause, false);
+            KillerController->ClientNotifyWon(KillerPawn, KillerWeapon, DeathCause);
+            KillerController->ClientNotifyTeamWon(KillerPawn, KillerWeapon, DeathCause);
+        }
+
+        GameState->WinningTeam = KillerState->TeamIndex;
+        GameState->OnRep_WinningTeam();
+        if (GameState->HasWinningPlayerState())
+        {
+            GameState->WinningPlayerState = KillerState;
+            GameState->OnRep_WinningPlayerState();
+        }
+
+        BOT_LOG(BOT_CATEGORY_SYSTEM, "Match won by team %d.", (int)KillerState->TeamIndex);
+    }
+
+    void SetPawnInPlay(AFortPlayerPawnAthena* Pawn, bool bInPlay)
+    {
+        if (!Pawn)
+            return;
+
+        bool bHidden = !bInPlay;
+        Pawn->SetActorHiddenInGame(bHidden);
+        ((ACharacter*)Pawn)->SetActorEnableCollision(bInPlay);
+    }
+
+    bool IsPawnInPlay(AFortPlayerPawnAthena* Pawn)
+    {
+        return Pawn && !((ACharacter*)Pawn)->bHidden;
     }
 
     bool IsPawnDead(AFortPlayerPawnAthena* Pawn)

@@ -108,7 +108,7 @@ bool FBotMovement::RefreshGoalLocation()
 
 void FBotMovement::IssueMove(double Now)
 {
-    auto Mode = Bot.CanMove() ? BotNavigation::GetPreferredMode() : EBotNavMode::None;
+    auto Mode = !Bot.CanMove() ? EBotNavMode::None : (ForcedNavMode != EBotNavMode::None ? ForcedNavMode : BotNavigation::GetPreferredMode());
     auto Actor = GoalType != EBotMoveGoal::Location ? GoalActor.Get() : nullptr;
 
     // Follow: aim a bit inside the follow distance so the bot ends up within it.
@@ -124,7 +124,7 @@ void FBotMovement::IssueMove(double Now)
         if (Result != EBotNavRequestResult::Failed)
             break;
 
-        Mode = BotNavigation::GetFallbackMode(Mode);
+        Mode = ForcedNavMode != EBotNavMode::None ? EBotNavMode::None : BotNavigation::GetFallbackMode(Mode);
     }
 
     if (Mode != NavMode)

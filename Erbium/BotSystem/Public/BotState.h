@@ -38,6 +38,9 @@ enum class EBotAIState : uint8
     Combat,    // Target, aim, shoot, reload, reposition (Phase 2C).
     Healing,   // Use a healing / shield item (Phase 2C).
     Escaping,  // Retreat from a threat (Phase 2C).
+    Rotating,  // Move into the next storm circle (Phase 6).
+    InBus,     // Riding the battle bus, waiting for its jump time (Phase 6).
+    Skydiving, // Falling/gliding towards a landing spot (Phase 6).
     Dead,
 };
 
@@ -49,6 +52,7 @@ enum class EBotPriority : uint8
     Combat,   // -> Combat
     Healing,  // -> Healing
     Survival, // -> Escaping
+    Storm,    // -> Rotating
     Count,
 };
 
@@ -108,6 +112,12 @@ inline const char* ToString(EBotAIState State)
         return "Healing";
     case EBotAIState::Escaping:
         return "Escaping";
+    case EBotAIState::Rotating:
+        return "Rotating";
+    case EBotAIState::InBus:
+        return "InBus";
+    case EBotAIState::Skydiving:
+        return "Skydiving";
     case EBotAIState::Dead:
         return "Dead";
     }

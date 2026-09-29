@@ -101,7 +101,10 @@ public:
 
 private:
     TWeakObjectPtr<AFortPickupAthena> Pickup;
+    TWeakObjectPtr<AActor> Container; // chest / ammo box (Phase 6) instead of a pickup
+    bool bIsContainer = false;
     float TimeLeft = 0.f;
+    float SearchTimeLeft = -1.f;      // >= 0 while standing at the container
 };
 
 // Phase 2C. Nested combat state machine driven by FBotCombat (targeting, aim, fire, reload) plus
@@ -154,6 +157,43 @@ public:
 
 private:
     float TimeLeft = 0.f;
+};
+
+// Phase 6. Move into the next storm circle (sprinting when far), then let the brain decide again.
+class FBotRotatingBehavior final : public IBotBehavior
+{
+public:
+    EBotAIState GetState() const override { return EBotAIState::Rotating; }
+    void OnEnter(FBotController& Bot) override;
+    void Tick(FBotController& Bot, float DeltaSeconds) override;
+    void OnExit(FBotController& Bot) override;
+
+private:
+    double NextRepathTime = 0.0;
+};
+
+// Phase 6. On the battle bus: the pawn is hidden and out of play until the bot's jump time inside the
+// drop window, then it is placed at the bus and starts skydiving (what a player's jump does).
+class FBotInBusBehavior final : public IBotBehavior
+{
+public:
+    EBotAIState GetState() const override { return EBotAIState::InBus; }
+    void OnEnter(FBotController& Bot) override;
+    void Tick(FBotController& Bot, float DeltaSeconds) override;
+};
+
+// Phase 6. Steer the fall/glide towards a landing spot (a chest when one is near), then Searching.
+class FBotSkydivingBehavior final : public IBotBehavior
+{
+public:
+    EBotAIState GetState() const override { return EBotAIState::Skydiving; }
+    void OnEnter(FBotController& Bot) override;
+    void Tick(FBotController& Bot, float DeltaSeconds) override;
+    void OnExit(FBotController& Bot) override;
+
+private:
+    float TimeLeft = 0.f;
+    float GroundedTime = 0.f;
 };
 
 // Terminal state while the bot is dead and waiting for cleanup.

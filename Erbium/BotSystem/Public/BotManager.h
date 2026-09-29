@@ -2,6 +2,7 @@
 #include "../../pch.h"
 #include "BotConfig.h"
 #include "BotController.h"
+#include "World/BotWorld.h"
 #include <atomic>
 #include <deque>
 
@@ -93,6 +94,8 @@ private:
     static void RunMaintenance(double Now);
     static void RunThink(double Now);
     static void RunFrame(double Now, float DeltaSeconds);
+    static void UpdateMatchFlow(double Now);
+    static void BoardBus(FBotController& Bot, double Now);
     template <typename Fn>
     static int ForEachCommandTarget(uint32 BotId, Fn&& Func);
     static void FlushPendingRemovals();
@@ -113,6 +116,7 @@ private:
 
     static inline double NextMaintenanceTime = 0.0;
     static inline double NextWatchTime = 0.0;
+    static inline EBotMatchPhase LastMatchPhase = EBotMatchPhase::Unknown;
 
     // Perf accounting (see RecordTickTime).
     static inline double PerfWindowStart = 0.0;

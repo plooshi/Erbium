@@ -67,6 +67,12 @@ struct FBotSystemConfig
     // How often (seconds) the shared pickup snapshot used for looting is rebuilt.
     static inline float LootSnapshotInterval = 1.0f;
 
+    // How often (seconds) the chest / ammo box snapshot is rebuilt (containers are many and static).
+    static inline float ContainerSnapshotInterval = 5.0f;
+
+    // Phase 6: AI-controller bots board the battle bus when it starts and jump during its drop window.
+    static inline bool bBotsUseBattleBus = true;
+
     // Difficulty applied to newly spawned bots (Phase 5.2).
     static inline EBotDifficulty DefaultDifficulty = EBotDifficulty::Normal;
 
@@ -104,8 +110,8 @@ struct FBotConfig
 
     // --- Decisions (Phase 5.1) ---
     float DecisionInterval = 0.4f;
-    // Weight per EBotPriority: Search, Loot, Combat, Healing, Survival.
-    float PriorityWeights[(int)EBotPriority::Count] = { 1.f, 1.f, 1.f, 1.f, 1.f };
+    // Weight per EBotPriority: Search, Loot, Combat, Healing, Survival, Storm.
+    float PriorityWeights[(int)EBotPriority::Count] = { 1.f, 1.f, 1.f, 1.f, 1.f, 1.f };
     float Aggression = 1.0f;            // Scales the Combat score.
 
     // --- Loot / inventory (Phase 2B) ---
@@ -131,6 +137,12 @@ struct FBotConfig
     float SafeHealDistance = 2500.f;    // no healing with a visible enemy closer than this (cm)
     float RetreatHealthFraction = 0.3f; // (health+shield)/200 below which the bot retreats when threatened
     float EscapeDistance = 2000.f;      // cm
+
+    // --- Match flow (Phase 6) ---
+    float ChestValue = 120.f;           // loot score of an unsearched chest (a gun when unarmed ~200)
+    float AmmoBoxValue = 45.f;
+    float ContainerSearchTime = 1.0f;   // s standing at a container before it opens (like holding interact)
+    float StormMargin = 0.1f;           // aim to be this fraction inside the next circle's edge
 
     // --- Perception ---
     float DetectionRadius = 5000.f;    // cm. Pawns further away are ignored entirely.

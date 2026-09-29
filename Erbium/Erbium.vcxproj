@@ -171,6 +171,7 @@
     <ClInclude Include="BotSystem\Public\Combat\BotWeapons.h" />
     <ClInclude Include="BotSystem\Public\Combat\BotCombat.h" />
     <ClInclude Include="BotSystem\Public\Decision\BotBrain.h" />
+    <ClInclude Include="BotSystem\Public\World\BotWorld.h" />
     <ClInclude Include="BotSystem\Public\BotBehavior.h" />
     <ClInclude Include="BotSystem\Public\BotCompat.h" />
     <ClInclude Include="BotSystem\Public\BotConfig.h" />
@@ -257,6 +258,7 @@
     <ClCompile Include="BotSystem\Private\Combat\BotWeapons.cpp" />
     <ClCompile Include="BotSystem\Private\Combat\BotCombat.cpp" />
     <ClCompile Include="BotSystem\Private\Decision\BotBrain.cpp" />
+    <ClCompile Include="BotSystem\Private\World\BotWorld.cpp" />
     <ClCompile Include="BotSystem\Private\BotBehavior.cpp" />
     <ClCompile Include="BotSystem\Private\BotCompat.cpp" />
     <ClCompile Include="BotSystem\Private\BotController.cpp" />

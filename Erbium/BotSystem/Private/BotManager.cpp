@@ -75,6 +75,12 @@ FBotController* FBotManager::SpawnBotInternal(const FSpawnRequest& Request)
     // Stagger thinking so bots spawned together do not all run on the same frame.
     Bot->NextThinkTime = Now + FBotSystemConfig::ThinkInterval * (double)(Bot->GetId() % 10) / 10.0;
 
+    // Spawned after the bus started (and not at an explicit spot): join the match from the air like
+    // everyone else instead of standing on the warmup island.
+    auto Phase = BotWorld::GetPhase();
+    if (!Request.bUseLocation && Bot->CanMove() && FBotSystemConfig::bBotsUseBattleBus && (Phase == EBotMatchPhase::Aircraft || Phase == EBotMatchPhase::SafeZones))
+        BoardBus(*Bot, Now);
+
     BOT_LOG(BOT_CATEGORY_SPAWN, "Spawned bot #%u (%s) in %.2fms (%d active).", Bot->GetId(), ToString(Bot->GetControllerKind()), Elapsed / 1000.0, (int)Bots.size() + 1);
 
     Bots.push_back(std::move(Bot));
@@ -283,6 +289,10 @@ void FBotManager::RunMaintenance(double Now)
 
         if (FBotSystemConfig::bRemoveDeadBots && Bot->GetLifeState() == EBotLifeState::Dead && Now - Bot->GetDeathTime() >= FBotSystemConfig::DeadBotCleanupDelay)
             Bot->MarkPendingRemoval();
+
+        // 25.20+: Erbium tracks storm state only for AlivePlayers; do the same for AI-controller bots.
+        if (Bot->IsAlive() && Bot->CanMove() && BotCompat::IsPawnInPlay(Bot->GetPawn()))
+            BotWorld::UpdatePawnStormState(Bot->GetPawn());
     }
 }
 
@@ -296,6 +306,47 @@ void FBotManager::RunThink(double Now)
         Bot->NextThinkTime = Now + FBotSystemConfig::ThinkInterval;
         Bot->Think(Now);
     }
+}
+
+void FBotManager::BoardBus(FBotController& Bot, double Now)
+{
+    double DropStart, DropEnd;
+    double JumpTime = Now + 1.0;
+
+    // A random moment in the bus's drop window, like players who all jump at different times.
+    if (BotWorld::GetPhase() == EBotMatchPhase::Aircraft && BotWorld::GetDropWindow(DropStart, DropEnd))
+    {
+        auto Earliest = (std::max)(DropStart + 2.0, Now + 1.0);
+        auto Latest = (std::max)(DropEnd - 5.0, Earliest);
+        JumpTime = Earliest + (Latest - Earliest) * ((double)rand() / RAND_MAX);
+    }
+
+    Bot.SetBusJumpTime(JumpTime);
+    Bot.SetAIState(EBotAIState::InBus);
+}
+
+void FBotManager::UpdateMatchFlow(double Now)
+{
+    BotWorld::Update(Now);
+
+    auto Phase = BotWorld::GetPhase();
+    if (Phase == EBotMatchPhase::Aircraft && LastMatchPhase != EBotMatchPhase::Aircraft && FBotSystemConfig::bBotsUseBattleBus)
+    {
+        int Boarded = 0;
+        for (auto& Bot : Bots)
+        {
+            auto State = Bot->GetAIState();
+            if (!Bot->IsAlive() || !Bot->CanMove() || State == EBotAIState::InBus || State == EBotAIState::Skydiving)
+                continue;
+
+            BoardBus(*Bot, Now);
+            Boarded++;
+        }
+
+        BOT_LOG(BOT_CATEGORY_SYSTEM, "Battle bus: %d bot(s) boarded.", Boarded);
+    }
+
+    LastMatchPhase = Phase;
 }
 
 void FBotManager::RunFrame(double Now, float DeltaSeconds)
@@ -377,6 +428,12 @@ std::string FBotManager::DescribeBot(uint32 BotId)
 
     Text += Format("Builds: %d placed, %d failed | Materials W%d S%d M%d\n", Bot->GetBuilder().GetPlacedCount(), Bot->GetBuilder().GetFailedCount(), Bot->GetBuilder().GetMaterials(EBotBuildMaterial::Wood),
                    Bot->GetBuilder().GetMaterials(EBotBuildMaterial::Stone), Bot->GetBuilder().GetMaterials(EBotBuildMaterial::Metal));
+    auto& Zone = BotWorld::GetSafeZone();
+    Text += Format("Match: %s | Storm: %s", BotWorld::ToString(BotWorld::GetPhase()), Zone.bActive ? "active" : "none");
+    if (Zone.bActive && Pawn)
+        Text += Format(" (%s current circle, %s next circle)", BotWorld::IsInsideCurrentZone(Pawn->K2_GetActorLocation()) ? "inside" : "OUTSIDE",
+                       BotWorld::IsInsideNextZone(Pawn->K2_GetActorLocation()) ? "inside" : "outside");
+    Text += "\n";
     Text += "Cosmetics: " + Bot->Cosmetics.Describe();
     return Text;
 }
@@ -466,6 +523,8 @@ void FBotManager::Tick(const UObject* NetDriver, float DeltaSeconds)
             PublishedBotCount = 0;
             BotPerceptionWorld::Reset();
             BotLootWorld::Reset();
+            BotWorld::Reset();
+            LastMatchPhase = EBotMatchPhase::Unknown;
         }
         return;
     }
@@ -486,6 +545,7 @@ void FBotManager::Tick(const UObject* NetDriver, float DeltaSeconds)
     // One shared actor snapshot per interval for all bots' perception and looting.
     if (!Bots.empty())
     {
+        UpdateMatchFlow(Now);
         BotPerceptionWorld::Update(Now);
         BotLootWorld::Update(Now);
     }

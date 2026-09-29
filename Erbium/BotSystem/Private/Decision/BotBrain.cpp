@@ -112,6 +112,8 @@ const char* FBotBrain::ToString(EBotPriority Priority)
         return "Healing";
     case EBotPriority::Survival:
         return "Survival";
+    case EBotPriority::Storm:
+        return "Storm";
     default:
         return "Unknown";
     }
@@ -129,6 +131,8 @@ EBotAIState FBotBrain::ToState(EBotPriority Priority)
         return EBotAIState::Healing;
     case EBotPriority::Survival:
         return EBotAIState::Escaping;
+    case EBotPriority::Storm:
+        return EBotAIState::Rotating;
     default:
         return EBotAIState::Searching;
     }
@@ -136,7 +140,8 @@ EBotAIState FBotBrain::ToState(EBotPriority Priority)
 
 bool FBotBrain::IsAutonomousState(EBotAIState State)
 {
-    return State == EBotAIState::Searching || State == EBotAIState::Looting || State == EBotAIState::Combat || State == EBotAIState::Healing || State == EBotAIState::Escaping;
+    return State == EBotAIState::Searching || State == EBotAIState::Looting || State == EBotAIState::Combat || State == EBotAIState::Healing || State == EBotAIState::Escaping ||
+           State == EBotAIState::Rotating;
 }
 
 // --- Scores ----------------------------------------------------------------------------------------
@@ -163,6 +168,17 @@ float FBotBrain::ScoreLoot(double Now)
         {
             LootTarget = Entry;
             CachedLootScore = Score;
+            bLootTargetIsContainer = false;
+        }
+
+        // Chests / ammo boxes compete with ground loot (Phase 6).
+        BotWorld::FContainer Container;
+        float ContainerScore = 0.f;
+        if (BotLoot::FindBestContainer(Bot, Container, ContainerScore) && ContainerScore > CachedLootScore)
+        {
+            ContainerTarget = Container;
+            CachedLootScore = ContainerScore;
+            bLootTargetIsContainer = true;
         }
     }
 
@@ -264,6 +280,30 @@ float FBotBrain::ScoreSurvival(double Now) const
     return 0.f;
 }
 
+float FBotBrain::ScoreStorm(double Now) const
+{
+    auto& Zone = BotWorld::GetSafeZone();
+    auto Pawn = Bot.GetPawn();
+    if (!Zone.bActive || !Pawn)
+        return 0.f;
+
+    auto Location = Pawn->K2_GetActorLocation();
+    auto& Config = Bot.GetConfig();
+
+    // Taking storm damage now: beats almost everything (players see the storm on their map too).
+    if (!BotWorld::IsInsideCurrentZone(Location))
+        return 1.8f;
+
+    if (BotWorld::IsInsideNextZone(Location, Config.StormMargin))
+        return 0.f;
+
+    // Outside the next circle: more urgent the closer the shrink is.
+    if (Zone.bShrinking)
+        return 1.1f;
+
+    return Zone.SecondsUntilShrinkStart < 30.f ? 0.9f : 0.45f;
+}
+
 // --- Decision --------------------------------------------------------------------------------------
 
 void FBotBrain::Update(double Now)
@@ -283,6 +323,7 @@ void FBotBrain::Update(double Now)
     Scores[(int)EBotPriority::Combat] = ScoreCombat(Now) * Config.PriorityWeights[(int)EBotPriority::Combat];
     Scores[(int)EBotPriority::Healing] = ScoreHealing(Now) * Config.PriorityWeights[(int)EBotPriority::Healing];
     Scores[(int)EBotPriority::Survival] = ScoreSurvival(Now) * Config.PriorityWeights[(int)EBotPriority::Survival];
+    Scores[(int)EBotPriority::Storm] = ScoreStorm(Now) * Config.PriorityWeights[(int)EBotPriority::Storm];
 
     auto Best = EBotPriority::Search;
     for (int i = 0; i < (int)EBotPriority::Count; i++)

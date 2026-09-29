@@ -3,6 +3,8 @@
 #include "../../Public/BotController.h"
 #include "../../Public/BotLog.h"
 #include "../../../FortniteGame/Public/FortInventory.h"
+#include "../../../FortniteGame/Public/FortLootPackage.h"
+#include "../../../FortniteGame/Public/BuildingContainer.h"
 
 // A pickup this close (2D, cm) is in reach; the game's own pickup radius is similar.
 static constexpr double PickupReach = 250.0;
@@ -63,9 +65,9 @@ namespace BotLootWorld
         NextSnapshotTime = 0.0;
     }
 
-    bool Claim(AFortPickupAthena* Pickup, uint32 BotId)
+    bool Claim(AActor* Target, uint32 BotId)
     {
-        auto [It, bInserted] = Claims.try_emplace(Pickup->Index, BotId);
+        auto [It, bInserted] = Claims.try_emplace(Target->Index, BotId);
         return bInserted || It->second == BotId;
     }
 
@@ -97,7 +99,7 @@ namespace BotLoot
             auto DY = Entry.Location.Y - Location.Y;
             auto DZ = Entry.Location.Z - Location.Z;
             auto DistanceSquared = DX * DX + DY * DY + DZ * DZ;
-            if (DistanceSquared > RadiusSquared || Bot.IsLootIgnored(Entry.Pickup))
+            if (DistanceSquared > RadiusSquared || Bot.IsLootIgnored(Entry.Pickup.ObjectIndex))
                 continue;
 
             auto Score = Bot.GetInventory().ScoreItem(Entry.Definition, Entry.Count);
@@ -116,6 +118,63 @@ namespace BotLoot
         }
 
         return bFound && OutScore >= Config.MinLootScore;
+    }
+
+    bool FindBestContainer(FBotController& Bot, BotWorld::FContainer& OutContainer, float& OutScore)
+    {
+        auto Pawn = Bot.GetPawn();
+        if (!Pawn)
+            return false;
+
+        auto& Config = Bot.GetConfig();
+        auto Location = Pawn->K2_GetActorLocation();
+        double RadiusSquared = (double)Config.LootSearchRadius * Config.LootSearchRadius;
+
+        OutScore = 0.f;
+        bool bFound = false;
+
+        for (auto& Entry : BotWorld::GetContainers())
+        {
+            auto DX = Entry.Location.X - Location.X, DY = Entry.Location.Y - Location.Y, DZ = Entry.Location.Z - Location.Z;
+            auto DistanceSquared = DX * DX + DY * DY + DZ * DZ;
+            if (DistanceSquared > RadiusSquared || !BotWorld::IsInsideNextZone(Entry.Location))
+                continue;
+
+            auto Container = Entry.Container.Get();
+            if (!Container || Container->bAlreadySearched || Bot.IsLootIgnored(Entry.Container.ObjectIndex))
+                continue;
+
+            auto Score = (Entry.bIsChest ? Config.ChestValue : Config.AmmoBoxValue) / (1.f + (float)sqrt(DistanceSquared) / 1500.f);
+            if (Score > OutScore)
+            {
+                OutScore = Score;
+                OutContainer = Entry;
+                bFound = true;
+            }
+        }
+
+        return bFound && OutScore >= Config.MinLootScore;
+    }
+
+    bool IsInReach(FBotController& Bot, AActor* Target)
+    {
+        auto Pawn = Bot.GetPawn();
+        if (!Pawn || !Target)
+            return false;
+
+        auto TargetLocation = Target->K2_GetActorLocation();
+        auto Location = Pawn->K2_GetActorLocation();
+        auto DX = TargetLocation.X - Location.X, DY = TargetLocation.Y - Location.Y;
+        return sqrt(DX * DX + DY * DY) <= PickupReach && fabs(TargetLocation.Z - Location.Z) <= 250.0;
+    }
+
+    bool OpenContainer(FBotController& Bot, ABuildingContainer* Container)
+    {
+        if (!Container || Container->bActorIsBeingDestroyed || Container->bAlreadySearched || !IsInReach(Bot, Container))
+            return false;
+
+        BOT_VERBOSE(BOT_CATEGORY_LOOT, "Bot #%u opens a container.", Bot.GetId());
+        return UFortLootPackage::SpawnLootHook(Container);
     }
 
     bool TryPickup(FBotController& Bot, AFortPickupAthena* Pickup)

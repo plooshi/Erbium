@@ -24,6 +24,12 @@ std::unique_ptr<IBotBehavior> CreateBotBehavior(EBotAIState State)
         return std::make_unique<FBotHealingBehavior>();
     case EBotAIState::Escaping:
         return std::make_unique<FBotEscapingBehavior>();
+    case EBotAIState::Rotating:
+        return std::make_unique<FBotRotatingBehavior>();
+    case EBotAIState::InBus:
+        return std::make_unique<FBotInBusBehavior>();
+    case EBotAIState::Skydiving:
+        return std::make_unique<FBotSkydivingBehavior>();
     case EBotAIState::Dead:
         return std::make_unique<FBotDeadBehavior>();
     case EBotAIState::None:

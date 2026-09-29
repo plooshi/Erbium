@@ -47,6 +47,39 @@ void AFortPlayerControllerAthena::GrantPlayerAbilities(AFortPlayerStateAthena* P
             PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
 }
 
+// Storm damage on 25.20+ builds is a gameplay effect Erbium applies per player (it used to be applied
+// right here in ServerAcknowledgePossession). Shared with the bot system, whose bots never send
+// ServerAcknowledgePossession.
+void AFortPlayerControllerAthena::ApplyStormDamageEffect(AFortPlayerStateAthena* PlayerState)
+{
+    static auto Effect = FindObject<UClass>(L"/Game/Athena/SafeZone/GE_OutsideSafeZoneDamage.GE_OutsideSafeZoneDamage_C");
+
+    bool Found = false;
+    auto AbilitySystemComponent = PlayerState->AbilitySystemComponent;
+
+    for (int i = 0; i < AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Num(); i++)
+    {
+        auto& ActiveEffect = AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Get(i, FActiveGameplayEffect::Size());
+
+        if (ActiveEffect.Spec.Def)
+            if (ActiveEffect.Spec.Def->IsA(Effect))
+            {
+                Found = true;
+                break;
+            }
+    }
+
+    if (!Found)
+    {
+        auto EffectHandle = FGameplayEffectContextHandle();
+        auto SpecHandle = AbilitySystemComponent->BP_ApplyGameplayEffectToSelf(Effect, 0.f, EffectHandle);
+
+        // AbilitySystemComponent->SetActiveGameplayEffectLevel(SpecHandle, 1);
+
+        AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(SpecHandle, FGameplayTag(FName(L"SetByCaller.StormCampingDamage")), 1.f);
+    }
+}
+
 void AFortPlayerControllerAthena::GiveStartingItems(AFortPlayerControllerAthena* PlayerController)
 {
     auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
@@ -144,38 +177,8 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
             PlayerController->WorldInventory->Remove(Guid);
     }
 
-    if (VersionInfo.FortniteVersion >= 18)
-    {
-        if (VersionInfo.FortniteVersion >= 25.20)
-        {
-            static auto Effect = FindObject<UClass>(L"/Game/Athena/SafeZone/GE_OutsideSafeZoneDamage.GE_OutsideSafeZoneDamage_C");
-
-            bool Found = false;
-            auto AbilitySystemComponent = PlayerController->PlayerState->AbilitySystemComponent;
-
-            for (int i = 0; i < AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Num(); i++)
-            {
-                auto& ActiveEffect = AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Get(i, FActiveGameplayEffect::Size());
-
-                if (ActiveEffect.Spec.Def)
-                    if (ActiveEffect.Spec.Def->IsA(Effect))
-                    {
-                        Found = true;
-                        break;
-                    }
-            }
-
-            if (!Found)
-            {
-                auto EffectHandle = FGameplayEffectContextHandle();
-                auto SpecHandle = AbilitySystemComponent->BP_ApplyGameplayEffectToSelf(Effect, 0.f, EffectHandle);
-
-                // AbilitySystemComponent->SetActiveGameplayEffectLevel(SpecHandle, 1);
-
-                AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(SpecHandle, FGameplayTag(FName(L"SetByCaller.StormCampingDamage")), 1.f);
-            }
-        }
-    }
+    if (VersionInfo.FortniteVersion >= 25.20)
+        ApplyStormDamageEffect(PlayerController->PlayerState);
 
     GrantPlayerAbilities(PlayerController->PlayerState);
 
@@ -1134,6 +1137,9 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
     auto KillerPlayerState = (AFortPlayerStateAthena*)DeathReport.KillerPlayerState;
     auto KillerPawn = (AFortPlayerPawnAthena*)DeathReport.KillerPawn;
     auto KillerPlayerController = KillerPlayerState ? (AFortPlayerControllerAthena*)KillerPlayerState->Owner : nullptr;
+    // The killer can be an AI-controlled bot (bot system): only call player-controller functions
+    // (quests, win screen, crown) when it really is a player controller.
+    bool bKillerIsPlayerController = KillerPlayerController && KillerPlayerController->IsA<AFortPlayerControllerAthena>();
 
     if (VersionInfo.FortniteVersion > 1.8 || VersionInfo.EngineVersion >= 4.19)
     {
@@ -1229,7 +1235,8 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
                 // Interface->GetOwnedGameplayTags(&TargetTags);
             }
 
-            KillerPlayerController->GetQuestManager(1)->SendStatEvent(KillerPlayerController, EFortQuestObjectiveStatEvent::GetKill(), 1, false, PlayerController->Pawn, TargetTags);
+            if (bKillerIsPlayerController)
+                KillerPlayerController->GetQuestManager(1)->SendStatEvent(KillerPlayerController, EFortQuestObjectiveStatEvent::GetKill(), 1, false, PlayerController->Pawn, TargetTags);
 
             TargetTags.GameplayTags.Free();
             TargetTags.ParentTags.Free();
@@ -1296,12 +1303,15 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 
                 auto KillerWeapon = DamageCauser ? DamageCauser->WeaponData : nullptr;
 
-                if (VersionInfo.FortniteVersion >= 16)
-                    KillerPlayerController->PlayWinEffects(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause, false);
-                KillerPlayerController->ClientNotifyWon(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause);
-                KillerPlayerController->ClientNotifyTeamWon(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause);
+                if (bKillerIsPlayerController)
+                {
+                    if (VersionInfo.FortniteVersion >= 16)
+                        KillerPlayerController->PlayWinEffects(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause, false);
+                    KillerPlayerController->ClientNotifyWon(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause);
+                    KillerPlayerController->ClientNotifyTeamWon(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause);
+                }
 
-                if (KillerPlayerState != PlayerState && VersionInfo.FortniteVersion >= 19)
+                if (bKillerIsPlayerController && KillerPlayerState != PlayerState && VersionInfo.FortniteVersion >= 19)
                 {
                     auto Crown = FindObject<UFortItemDefinition>(L"/VictoryCrownsGameplay/Items/AGID_VictoryCrown.AGID_VictoryCrown");
 

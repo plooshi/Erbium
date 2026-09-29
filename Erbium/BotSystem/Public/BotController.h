@@ -78,9 +78,13 @@ public:
     void SetAimLock(bool bLocked) { bAimLock = bLocked; }
     bool IsAimLocked() const { return bAimLock; }
 
-    // Pickups this bot failed to reach are skipped for a while.
-    void IgnoreLoot(AFortPickupAthena* Pickup, double Seconds);
-    bool IsLootIgnored(const TWeakObjectPtr<AFortPickupAthena>& Pickup) const;
+    // Pickups / containers this bot failed to reach are skipped for a while.
+    void IgnoreLoot(AActor* Target, double Seconds);
+    bool IsLootIgnored(int32 ObjectIndex) const;
+
+    // Phase 6: world time this bot jumps off the battle bus.
+    void SetBusJumpTime(double Time) { BusJumpTime = Time; }
+    double GetBusJumpTime() const { return BusJumpTime; }
 
     // Last position of the pawn (valid after it is gone, e.g. for death drops).
     const FVector& GetLastKnownLocation() const { return LastKnownLocation; }
@@ -163,6 +167,7 @@ private:
     bool bAimLock = false;
     std::unordered_map<int32, double> IgnoredLoot; // pickup object index -> ignore until (world time)
     FVector LastKnownLocation{};
+    double BusJumpTime = 0.0;
 
     float LastHealthAndShield = -1.f;
     double LastDamageTime = 0.0;

@@ -58,6 +58,9 @@ public:
     // vanished). OutGoal = the goal it was trying to reach. Used by the build decision (ramp over it).
     bool ConsumeStuckFailure(FVector& OutGoal, double Now, double MaxAge);
 
+    // Use only this navigation mode (no fallback), e.g. Steering while skydiving. None = automatic.
+    void SetForcedNavMode(EBotNavMode Mode) { ForcedNavMode = Mode; }
+
     // Speed override. When not set, speed is chosen from distance (sprint when far).
     void SetSpeedOverride(bool bEnabled, EBotMoveSpeed Speed = EBotMoveSpeed::Run);
 
@@ -89,6 +92,8 @@ private:
     bool bStuckFailurePending = false;
     double StuckFailureTime = 0.0;
     FVector StuckFailureGoal{};
+
+    EBotNavMode ForcedNavMode = EBotNavMode::None;
 
     bool bSpeedOverride = false;
     EBotMoveSpeed SpeedOverride = EBotMoveSpeed::Run;

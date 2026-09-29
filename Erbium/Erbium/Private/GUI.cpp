@@ -426,6 +426,7 @@ void GUI::Init()
                 ImGui::Checkbox("Use nav mesh", &FBotSystemConfig::bUseNavMesh);
                 ImGui::Checkbox("Bots can build", &FBotSystemConfig::bAllowBuilding);
                 ImGui::Checkbox("Prefer Fortnite bot controller", &FBotSystemConfig::bPreferFortniteBotController);
+                ImGui::Checkbox("Bots ride the battle bus", &FBotSystemConfig::bBotsUseBattleBus);
                 ImGui::Checkbox("Emulate consumables (virtual inventory)", &FBotSystemConfig::bEmulateConsumablesForVirtualInventory);
 
                 static int Difficulty = (int)FBotSystemConfig::DefaultDifficulty;

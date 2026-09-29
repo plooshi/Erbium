@@ -376,6 +376,7 @@ public:
     // Player setup steps normally triggered by the client's ServerAcknowledgePossession; also used for bots.
     static void GrantPlayerAbilities(AFortPlayerStateAthena*);
     static void GiveStartingItems(AFortPlayerControllerAthena*);
+    static void ApplyStormDamageEffect(AFortPlayerStateAthena*);
     DefHookOg(void, GetPlayerViewPoint, AFortPlayerControllerAthena*, FVector&, FRotator&);
     DefHookOg(void, ServerAttemptAircraftJump_, UObject*, FFrame&);
     static void ServerExecuteInventoryItem_(UObject*, FFrame&);

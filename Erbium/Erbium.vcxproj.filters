@@ -64,6 +64,12 @@
     <Filter Include="BotSystem\Private\Decision">
       <UniqueIdentifier>{08293fe0-3225-4663-af3e-b4dac33c7643}</UniqueIdentifier>
     </Filter>
+    <Filter Include="BotSystem\Public\World">
+      <UniqueIdentifier>{9e446a39-e50a-4957-b828-c672fe182fd7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BotSystem\Private\World">
+      <UniqueIdentifier>{a3a3251a-1340-47e1-9d4a-fff366278705}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Engine">
       <UniqueIdentifier>{bf7becbc-c9a6-4671-8262-0472d74df6ce}</UniqueIdentifier>
     </Filter>
@@ -155,6 +161,9 @@
     </ClInclude>
     <ClInclude Include="BotSystem\Public\Decision\BotBrain.h">
       <Filter>BotSystem\Public\Decision</Filter>
+    </ClInclude>
+    <ClInclude Include="BotSystem\Public\World\BotWorld.h">
+      <Filter>BotSystem\Public\World</Filter>
     </ClInclude>
     <ClInclude Include="BotSystem\Public\BotBehavior.h">
       <Filter>BotSystem\Public</Filter>
@@ -434,6 +443,9 @@
     </ClCompile>
     <ClCompile Include="BotSystem\Private\Decision\BotBrain.cpp">
       <Filter>BotSystem\Private\Decision</Filter>
+    </ClCompile>
+    <ClCompile Include="BotSystem\Private\World\BotWorld.cpp">
+      <Filter>BotSystem\Private\World</Filter>
     </ClCompile>
     <ClCompile Include="BotSystem\Private\BotBehavior.cpp">
       <Filter>BotSystem\Private</Filter>

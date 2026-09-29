@@ -4,6 +4,7 @@
 #include "../Public/BotEngineTypes.h"
 #include "../Public/BotLog.h"
 #include "../../FortniteGame/Public/FortPlayerControllerAthena.h"
+#include "../../FortniteGame/Public/FortGameMode.h"
 
 template <typename T>
 static T* GetLiveActor(const TWeakObjectPtr<T>& Weak)
@@ -163,15 +164,15 @@ void FBotController::TickFrame(double Now, float DeltaSeconds)
         Combat.UpdateAim(Now, DeltaSeconds);
 }
 
-void FBotController::IgnoreLoot(AFortPickupAthena* Pickup, double Seconds)
+void FBotController::IgnoreLoot(AActor* Target, double Seconds)
 {
-    if (Pickup)
-        IgnoredLoot[Pickup->Index] = LastThinkTime + Seconds;
+    if (Target)
+        IgnoredLoot[Target->Index] = LastThinkTime + Seconds;
 }
 
-bool FBotController::IsLootIgnored(const TWeakObjectPtr<AFortPickupAthena>& Pickup) const
+bool FBotController::IsLootIgnored(int32 ObjectIndex) const
 {
-    auto Found = IgnoredLoot.find(Pickup.ObjectIndex);
+    auto Found = IgnoredLoot.find(ObjectIndex);
     return Found != IgnoredLoot.end() && Found->second > LastThinkTime;
 }
 
@@ -181,7 +182,22 @@ void FBotController::HandleAIDeath()
     auto DeadPawn = Pawn.Get();
 
     Inventory.DropAll(LastKnownLocation);
-    BotCompat::CreditBotKill(DeadPawn, GetPlayerState());
+
+    auto World = UWorld::GetWorld();
+    auto GameMode = World ? (AFortGameMode*)World->AuthorityGameMode : nullptr;
+    if (!GameMode)
+        return;
+
+    // Placement first (counts this bot), then it stops counting, then check whether someone won.
+    BotCompat::SetPlacement(GameMode, GetPlayerState());
+    if (bRegisteredAlive && GetController())
+    {
+        BotCompat::UnregisterAlive(GameMode, GetController(), ControllerKind);
+        bRegisteredAlive = false;
+    }
+
+    auto Killer = BotCompat::CreditBotKill(DeadPawn, GetPlayerState());
+    BotCompat::CheckForWinner(GameMode, Killer);
 }
 
 void FBotController::SetAIState(EBotAIState NewState)

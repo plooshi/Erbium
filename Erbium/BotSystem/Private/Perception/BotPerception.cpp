@@ -25,7 +25,8 @@ namespace BotPerceptionWorld
 
         for (auto& Pawn : AllPawns)
         {
-            if (BotCompat::IsPawnDead(Pawn))
+            // Dead pawns and pawns out of play (bots riding the bus) are not perceivable.
+            if (BotCompat::IsPawnDead(Pawn) || !BotCompat::IsPawnInPlay(Pawn))
                 continue;
 
             FEntry Entry;

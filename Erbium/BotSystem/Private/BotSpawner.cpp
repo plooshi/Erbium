@@ -198,6 +198,11 @@ namespace BotSpawner
         BotCompat::AssignTeam(GameMode, Controller, PlayerState);
         AFortPlayerControllerAthena::GrantPlayerAbilities(PlayerState);
 
+        // 25.20+: storm damage is an effect Erbium applies per player in ServerAcknowledgePossession,
+        // which bots never send.
+        if (VersionInfo.FortniteVersion >= 25.20)
+            AFortPlayerControllerAthena::ApplyStormDamageEffect(PlayerState);
+
         // Cosmetics before starting items: for player-controller bots the chosen pickaxe goes into
         // CosmeticLoadoutPC, which GiveStartingItems reads.
         Bot.Cosmetics = BotCosmetics::ChooseLoadout();

@@ -59,8 +59,17 @@ namespace BotCompat
     AFortInventory* EnsureWorldInventory(AController* Controller, EBotControllerKind Kind);
 
     // Credits the kill of an AI-controller bot to whoever damaged it last (same score updates
-    // ClientOnPawnDied makes for player victims, which never runs for AI controllers).
-    void CreditBotKill(AFortPlayerPawnAthena* VictimPawn, AFortPlayerStateAthena* VictimState);
+    // ClientOnPawnDied makes for player victims, which never runs for AI controllers). Returns the
+    // killer's controller, or nullptr.
+    AController* CreditBotKill(AFortPlayerPawnAthena* VictimPawn, AFortPlayerStateAthena* VictimState);
+
+    // Placement for an eliminated AI-controller bot (players left before it is removed).
+    void SetPlacement(AFortGameMode* GameMode, AFortPlayerStateAthena* VictimState);
+
+    // When only one player is left after an AI-controller bot was eliminated, declare the killer the
+    // winner the way ClientOnPawnDied does for player victims (win screen for a player-controller
+    // killer, winning team/player state for everyone). Counts players, so it is correct for solo modes.
+    void CheckForWinner(AFortGameMode* GameMode, AController* Killer);
 
     // Stops any behavior tree / brain the controller class starts on its own, so it cannot fight the
     // bot system for control of the pawn.
@@ -100,6 +109,11 @@ namespace BotCompat
     // still counted. For player controllers uses the game's own RemoveFromAlivePlayers when Erbium
     // found it, then makes sure the (raw-pointer) AlivePlayers entry is gone before destruction.
     void UnregisterAlive(AFortGameMode* GameMode, AController* Controller, EBotControllerKind Kind);
+
+    // Takes a pawn out of play (hidden, no collision, not perceived) or back in. Used while a bot rides
+    // the battle bus: players in the bus have no pawn in the world at all.
+    void SetPawnInPlay(AFortPlayerPawnAthena* Pawn, bool bInPlay);
+    bool IsPawnInPlay(AFortPlayerPawnAthena* Pawn);
 
     // Health/death query that works whether or not the pawn exposes IsDead.
     bool IsPawnDead(AFortPlayerPawnAthena* Pawn);
