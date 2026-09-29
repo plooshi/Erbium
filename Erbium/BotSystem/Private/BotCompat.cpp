@@ -677,6 +677,15 @@ namespace BotCompat
 
         auto& Velocity = Pawn->CharacterMovement->Velocity;
         Info.Speed2D = (float)sqrt(Velocity.X * Velocity.X + Velocity.Y * Velocity.Y);
+
+        static auto IsTickEnabledFunc = Movement->GetFunction("IsComponentTickEnabled");
+        if (IsTickEnabledFunc)
+            Info.TickEnabled = Movement->Call<bool>(IsTickEnabledFunc) ? 1 : 0;
+
+        static auto IsLocallyControlledFunc = Pawn->GetFunction("IsLocallyControlled");
+        if (IsLocallyControlledFunc)
+            Info.LocallyControlled = Pawn->Call<bool>(IsLocallyControlledFunc) ? 1 : 0;
+
         return Info;
     }
 
@@ -688,6 +697,33 @@ namespace BotCompat
 
         auto Info = GetMovementInfo(Pawn);
         bool bChanged = false;
+        static int LoggedRepairs = 0;
+
+        // 1. Movement component not ticking: the pawn is never simulated (hangs in the air, ignores input).
+        if (Info.TickEnabled == 0)
+        {
+            static auto SetTickEnabledFunc = Movement->GetFunction("SetComponentTickEnabled");
+            if (SetTickEnabledFunc)
+            {
+                bool bEnabled = true;
+                Movement->Call(SetTickEnabledFunc, bEnabled);
+                bChanged = true;
+                if (LoggedRepairs++ < 5)
+                    BOT_LOG(BOT_CATEGORY_COMPAT, "Bot pawn's movement component was not ticking: enabled it.");
+            }
+        }
+
+        // 2. MOVE_None: frozen. Falling lets gravity take over; the engine switches to walking on landing.
+        // (While a bot rides the bus its pawn is deliberately None, but then it is not in play and this
+        // is not called.)
+        if (Info.Mode == 0)
+        {
+            uint8 Mode = 3, CustomMode = 0;
+            Pawn->CharacterMovement->SetMovementMode(Mode, CustomMode);
+            bChanged = true;
+            if (LoggedRepairs++ < 5)
+                BOT_LOG(BOT_CATEGORY_COMPAT, "Bot pawn had movement mode None (frozen): set it to falling.");
+        }
 
         // Standard player values (UE defaults for acceleration; Fortnite's running speed).
         static auto MaxWalkSpeedOffset = Movement->GetOffset("MaxWalkSpeed");

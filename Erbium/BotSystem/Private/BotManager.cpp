@@ -705,8 +705,9 @@ void FBotManager::Tick(const UObject* NetDriver, float DeltaSeconds)
                 continue;
 
             auto Info = BotCompat::GetMovementInfo(Pawn);
-            sprintf_s(Line, "#%u %s | move mode %d | speed limit %.0f | walk speed %.0f | accel %.0f | moving at %.0f | move %s", Bot->GetId(), ToString(Bot->GetAIState()), Info.Mode,
-                      Info.MaxSpeed, Info.MaxWalkSpeed, Info.MaxAcceleration, Info.Speed2D, MoveStatusName(Bot->GetMovement().GetStatus()));
+            sprintf_s(Line, "#%u %s | move mode %d | movement ticking %d | locally controlled %d | speed limit %.0f | walk speed %.0f | accel %.0f | moving at %.0f | move %s | nav %s",
+                      Bot->GetId(), ToString(Bot->GetAIState()), Info.Mode, Info.TickEnabled, Info.LocallyControlled, Info.MaxSpeed, Info.MaxWalkSpeed, Info.MaxAcceleration, Info.Speed2D,
+                      MoveStatusName(Bot->GetMovement().GetStatus()), BotNavigation::ToString(Bot->GetMovement().GetNavMode()));
             break;
         }
 

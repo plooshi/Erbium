@@ -145,12 +145,15 @@ namespace BotCompat
         float MaxWalkSpeed = -1.f;
         float MaxAcceleration = -1.f;
         float Speed2D = 0.f;
+        int TickEnabled = -1;       // UActorComponent::IsComponentTickEnabled on the movement component
+        int LocallyControlled = -1; // APawn::IsLocallyControlled: the server only simulates movement input for these
     };
     FMovementInfo GetMovementInfo(AFortPlayerPawnAthena* Pawn);
 
-    // A pawn that never went through a player's possession flow can end up with a walking speed or
-    // acceleration of 0: it can jump and use items but not walk. Restores player defaults when that is
-    // the case. Returns true if something was changed.
+    // A pawn that never went through a player's possession flow can end up unable to move. Repairs, in
+    // order: a movement component whose tick is off (nothing is simulated: no gravity, no input), movement
+    // mode None (frozen in place, even in the air), and a walking speed / acceleration of 0 (can jump and
+    // use items but not walk). Returns true if something was changed.
     bool EnsureCanWalk(AFortPlayerPawnAthena* Pawn);
 
     // Fall damage off/on (AActor::bCanBeDamaged) while a bot skydives: bots cannot open a glider.

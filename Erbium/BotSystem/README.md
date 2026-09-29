@@ -492,6 +492,15 @@ New GUI toggle **Force steering movement (test)** steers every bot with movement
 
 Other versions are handled by the same runtime lookups (properties and functions by name); version-specific fixes go into this table when they are confirmed on a build.
 
+
+## Round 16: bots frozen in the air after jumping
+
+Bots appeared at the bus but neither fell nor moved, and on the ground they never walked. A pawn that does not even fall is not being simulated. There are two engine-level causes, and `BotCompat::EnsureCanWalk` (run every maintenance tick for pawns in play) now repairs both, logging each repair:
+1. **The character movement component's tick is off.** It is turned back on with `SetComponentTickEnabled(true)`.
+2. **Movement mode `MOVE_None`.** It is set to falling, and the engine switches to walking on landing.
+
+The AI tab's first-bot line now also shows `movement ticking` and `locally controlled`. The server only simulates an AI pawn's movement when that pawn counts as locally controlled; a 0 there means the controller setup itself is the problem.
+
 ## Where to find everything
 
 **Branch:** `claude/erbium-ai-bot-system-sus0gw` on `wieseichwiesenicht-art/Erbium-AI-Fork2`, one commit per phase on top of `main`.
