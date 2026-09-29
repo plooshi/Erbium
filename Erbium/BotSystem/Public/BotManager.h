@@ -65,6 +65,8 @@ public:
 
     static void RequestSpawnBots(int Count);
     static void RequestRemoveAllBots();
+    // Tops the match up to FBotSystemConfig::AutoSpawnCount bots now (GUI "Fill now").
+    static void RequestAutoFill() { bAutoFillRequested = true; }
 
     // Bot count as of the last game-thread tick (safe to read from the GUI thread).
     static int GetPublishedBotCount() { return PublishedBotCount; }
@@ -99,6 +101,8 @@ private:
     static void RunThink(double Now);
     static void RunFrame(double Now, float DeltaSeconds);
     static void UpdateMatchFlow(double Now);
+    static void UpdateAutoSpawn(const UObject* NetDriver, double Now);
+    static void UpdatePause();
     static void BoardBus(FBotController& Bot, double Now);
     template <typename Fn>
     static int ForEachCommandTarget(uint32 BotId, Fn&& Func);
@@ -117,6 +121,13 @@ private:
     static inline std::atomic<int> RequestedSpawnCount = 0;
     static inline std::atomic<bool> bRemoveAllRequested = false;
     static inline std::atomic<int> PublishedBotCount = 0;
+    static inline std::atomic<bool> bAutoFillRequested = false;
+
+    // Auto spawn (see FBotSystemConfig::bAutoSpawn): world time the first player was seen, and
+    // whether the automatic fill already happened this match.
+    static inline double FirstPlayerTime = -1.0;
+    static inline bool bAutoFilled = false;
+    static inline bool bWasPaused = false;
 
     static inline double NextMaintenanceTime = 0.0;
     static inline double NextWatchTime = 0.0;

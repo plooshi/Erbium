@@ -23,8 +23,17 @@ enum class EBotControllerMode : uint8
 
 struct FBotSystemConfig
 {
-    // Master switch. When false, spawn requests are rejected.
+    // Master switch (GUI "AI" tab). When false, spawn requests are rejected and existing bots are removed.
     static inline bool bEnabled = true;
+
+    // Bots stay in the match but stop thinking and moving (debugging; the GUI "AI" tab).
+    static inline bool bPaused = false;
+
+    // Fill the match with AutoSpawnCount bots once the first player has connected and AutoSpawnDelay
+    // seconds have passed, so bots are there when you load in without using the GUI or cheats.
+    static inline bool bAutoSpawn = true;
+    static inline int AutoSpawnCount = 20;
+    static inline float AutoSpawnDelay = 5.f;
 
     static inline EBotControllerMode ControllerMode = EBotControllerMode::Auto;
 

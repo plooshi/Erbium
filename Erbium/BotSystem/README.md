@@ -78,7 +78,7 @@ Remove from `AlivePlayers` (the native `RemoveFromAlivePlayers` if Erbium found 
 | Where | Action |
 |---|---|
 | Cheat console | `cheat spawnbot <N>`, `cheat removebot <id>`, `cheat removebots`, `cheat listbots` |
-| GUI → Misc → Bots | Spawn N / Remove all / toggles |
+| GUI → AI tab | Spawn N / Remove all / toggles |
 | Code | `FBotManager::SpawnBot()`, `SpawnBot(Loc, Rot)`, `SpawnBots(N, &Near)`, `RemoveBot(id)`, `RemoveAllBots()`, `GetActiveBots()`, `GetBotCount()`, `IsBot(controller)` |
 
 Large requests are queued and spawned at `MaxSpawnsPerTick` per frame. `MaxBots` caps bots plus queued requests.
@@ -110,7 +110,7 @@ For each of 1, 5, 10, 25, 50 and 100 bots:
 ## Phase 2A: movement, navigation, perception
 
 ### Controller backends
-`FBotSystemConfig::ControllerMode` (GUI: Misc → Bots → "Bot controller"):
+`FBotSystemConfig::ControllerMode` (GUI: AI tab → "Bot controller"):
 - **Auto** (default): try the engine `AIController`, then `FortAthenaAIBotController`, then fall back to the Phase 1 player controller.
 - **AI controller**: `AAIController` subclasses. The pawn is simulated on the server, so it can move. It gets a player state (created if the class doesn't make one), a team, abilities, a name and appearance. Any built-in behavior tree is stopped (`BrainComponent->StopLogic`), so only the bot system drives the pawn.
 - **Player controller**: Phase 1 behavior. The bot cannot move (see Net mode above).
@@ -165,7 +165,7 @@ Ids containing `random`, `npc`, `test` or `tbd` are excluded, because they aren'
 
 **Loading.** Only chosen cosmetics are loaded: a soft reference comes from `GetSoftObjectReferenceFromPrimaryAssetId`, and Erbium's soft-pointer code loads it. Each one is validated before use (it must be the right item class, and an outfit must have a hero definition). An id that fails is dropped from the pool, so it's never picked again.
 
-**Selection.** For each slot the mode is `Random`, `Specific` (a random pick among the listed ids, falling back to Random if none of them are valid), or `None`. It can be set in code (`FBotCosmeticSettings`), in the GUI (Misc → Bots), or in an optional `BotCosmetics.txt` in the server's working directory:
+**Selection.** For each slot the mode is `Random`, `Specific` (a random pick among the listed ids, falling back to Random if none of them are valid), or `None`. It can be set in code (`FBotCosmeticSettings`), in the GUI (AI tab), or in an optional `BotCosmetics.txt` in the server's working directory:
 ```
 Outfit=CID_028_Athena_Commando_F, CID_029_Athena_Commando_F_Halloween
 Backpack=Random
@@ -402,6 +402,16 @@ Still open, because they need in-game results first:
 - movement-style speeds
 - glider auto-deploy
 - the glider cosmetic for AI-controlled bots
+
+
+## Round 8: auto spawn, AI tab, client console
+
+- **Bots now spawn on their own.** With `FBotSystemConfig::bAutoSpawn` (on by default) the manager waits for the first client connection once the server is joinable, then after `AutoSpawnDelay` (5 s) fills the match to `AutoSpawnCount` (20) bots. Before this, bots only appeared through the GUI button or `cheat` commands. The log shows `[BotSpawn] Player connected: auto spawning ...` and `Auto spawn: requesting N bot(s)`; a rejected spawn logs `Spawn rejected (enabled=.., bots=.., server ready=..)`.
+- **AI tab in the GUI.** All bot controls moved from Misc into their own tab:
+  - "Enable AI bots": off removes every bot and blocks spawning; on lets auto spawn run again via "Fill to auto spawn count".
+  - "Pause bot AI": bots stay but stop thinking, moving and shooting.
+  - Auto spawn toggle and count, manual spawn/fill/remove, and the behavior, cosmetic and debug settings.
+- **F8 console (ErbiumClient).** The client DLL created the console once at injection and crashed or did nothing if the viewport did not exist yet, and Fortnite's console key list usually only has the tilde key. `ErbiumClient/Private/Client.cpp` now retries creating the console every client tick until it exists and adds F8 (and Tilde) to `UInputSettings::ConsoleKeys`. This only helps if you inject ErbiumClient into your game client; the server DLL cannot give a client a console.
 
 ## Where to find everything
 

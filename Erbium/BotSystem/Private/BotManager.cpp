@@ -9,6 +9,7 @@
 #include "../Public/Combat/BotWeapons.h"
 #include "../../FortniteGame/Public/FortGameMode.h"
 #include "../../Erbium/Public/GUI.h"
+#include "../../Engine/Public/NetDriver.h"
 
 static double NowMicros()
 {
@@ -567,6 +568,20 @@ void FBotManager::Tick(const UObject* NetDriver, float DeltaSeconds)
     if (!World || NetDriver != World->NetDriver)
         return;
 
+    // AI switched off in the GUI: nothing may stay in the match.
+    if (!FBotSystemConfig::bEnabled)
+    {
+        RequestedSpawnCount = 0;
+        bAutoFillRequested = false;
+        if (!Bots.empty() || !SpawnQueue.empty())
+        {
+            BOT_LOG(BOT_CATEGORY_SPAWN, "Bot system disabled: removing %d bot(s).", (int)Bots.size());
+            bRemoveAllRequested = true;
+        }
+    }
+    else
+        UpdateAutoSpawn(NetDriver, GetWorldTime());
+
     if (Bots.empty() && SpawnQueue.empty() && !bRemoveAllRequested && RequestedSpawnCount == 0)
     {
         if (PublishedBotCount != 0)
@@ -604,8 +619,12 @@ void FBotManager::Tick(const UObject* NetDriver, float DeltaSeconds)
         BotLootWorld::Update(Now);
     }
 
-    RunThink(Now);
-    RunFrame(Now, DeltaSeconds);
+    UpdatePause();
+    if (!FBotSystemConfig::bPaused)
+    {
+        RunThink(Now);
+        RunFrame(Now, DeltaSeconds);
+    }
 
     if (WatchedBotId != 0 && Now >= NextWatchTime)
     {
@@ -618,6 +637,57 @@ void FBotManager::Tick(const UObject* NetDriver, float DeltaSeconds)
     PublishedBotCount = (int)Bots.size();
 
     RecordTickTime(Now, NowMicros() - Start);
+}
+
+void FBotManager::UpdateAutoSpawn(const UObject* NetDriver, double Now)
+{
+    bool bFillNow = bAutoFillRequested.exchange(false);
+
+    if (!bFillNow)
+    {
+        if (!FBotSystemConfig::bAutoSpawn || bAutoFilled || GUI::gsStatus < Joinable)
+            return;
+
+        // Wait for a real player: bots have no net connection, so any client connection is a human.
+        if (((UNetDriver*)NetDriver)->ClientConnections.Num() == 0)
+            return;
+
+        if (FirstPlayerTime < 0.0)
+        {
+            FirstPlayerTime = Now;
+            BOT_LOG(BOT_CATEGORY_SPAWN, "Player connected: auto spawning %d bot(s) in %.0f s.", FBotSystemConfig::AutoSpawnCount, FBotSystemConfig::AutoSpawnDelay);
+        }
+
+        if (Now - FirstPlayerTime < FBotSystemConfig::AutoSpawnDelay)
+            return;
+
+        bAutoFilled = true;
+    }
+
+    auto Missing = FBotSystemConfig::AutoSpawnCount - (int)Bots.size() - (int)SpawnQueue.size() - RequestedSpawnCount.load();
+    Missing = (std::min)(Missing, FBotSystemConfig::MaxBots - (int)Bots.size() - (int)SpawnQueue.size());
+
+    BOT_LOG(BOT_CATEGORY_SPAWN, "Auto spawn: requesting %d bot(s) (target %d).", (std::max)(Missing, 0), FBotSystemConfig::AutoSpawnCount);
+    if (Missing > 0)
+        RequestedSpawnCount += Missing;
+}
+
+void FBotManager::UpdatePause()
+{
+    if (FBotSystemConfig::bPaused == bWasPaused)
+        return;
+
+    bWasPaused = FBotSystemConfig::bPaused;
+    BOT_LOG(BOT_CATEGORY_AI, "Bot AI %s.", bWasPaused ? "paused" : "resumed");
+
+    // Stop what the controllers are doing, otherwise path following and firing would carry on.
+    if (bWasPaused)
+        for (auto& Bot : Bots)
+            if (Bot->IsAlive())
+            {
+                Bot->GetMovement().Stop();
+                Bot->GetCombat().Reset();
+            }
 }
 
 void FBotManager::RecordTickTime(double Now, double Micros)
