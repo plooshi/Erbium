@@ -14,6 +14,8 @@
 #include "../Public/FortPhysicsPawn.h"
 #include "../Public/FortWeapon.h"
 #include "../Public/FortVehicleSeatWeaponComponent.h"
+#include "../../BotSystem/Public/BotManager.h"
+#include "../../BotSystem/Public/Navigation/BotNavigation.h"
 
 void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena* PlayerController, FVector& Loc, FRotator& Rot)
 {
@@ -28,6 +30,101 @@ void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena
 
 extern uint64_t ApplyCharacterCustomization;
 uint64_t InitializePlayerGameplayAbilities_;
+
+// Shared by ServerAcknowledgePossession (real players) and the bot system (BotSystem/Private/BotSpawner.cpp),
+// which has no client to send ServerAcknowledgePossession.
+void AFortPlayerControllerAthena::GrantPlayerAbilities(AFortPlayerStateAthena* PlayerState)
+{
+    auto Interface = PlayerState->GetInterface(IFortAbilitySystemInterface::StaticClass());
+    if (InitializePlayerGameplayAbilities_ && Interface)
+    {
+        auto InitializePlayerGameplayAbilities = (void (*&)(const IInterface*))InitializePlayerGameplayAbilities_;
+
+        InitializePlayerGameplayAbilities(Interface);
+    }
+    else
+        for (auto& AbilitySet : AFortGameMode::AbilitySets)
+            PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
+}
+
+// Storm damage on 25.20+ builds is a gameplay effect Erbium applies per player (it used to be applied
+// right here in ServerAcknowledgePossession). Shared with the bot system, whose bots never send
+// ServerAcknowledgePossession.
+void AFortPlayerControllerAthena::ApplyStormDamageEffect(AFortPlayerStateAthena* PlayerState)
+{
+    static auto Effect = FindObject<UClass>(L"/Game/Athena/SafeZone/GE_OutsideSafeZoneDamage.GE_OutsideSafeZoneDamage_C");
+
+    bool Found = false;
+    auto AbilitySystemComponent = PlayerState->AbilitySystemComponent;
+
+    for (int i = 0; i < AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Num(); i++)
+    {
+        auto& ActiveEffect = AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Get(i, FActiveGameplayEffect::Size());
+
+        if (ActiveEffect.Spec.Def)
+            if (ActiveEffect.Spec.Def->IsA(Effect))
+            {
+                Found = true;
+                break;
+            }
+    }
+
+    if (!Found)
+    {
+        auto EffectHandle = FGameplayEffectContextHandle();
+        auto SpecHandle = AbilitySystemComponent->BP_ApplyGameplayEffectToSelf(Effect, 0.f, EffectHandle);
+
+        // AbilitySystemComponent->SetActiveGameplayEffectLevel(SpecHandle, 1);
+
+        AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(SpecHandle, FGameplayTag(FName(L"SetByCaller.StormCampingDamage")), 1.f);
+    }
+}
+
+void AFortPlayerControllerAthena::GiveStartingItems(AFortPlayerControllerAthena* PlayerController)
+{
+    auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
+
+    static auto SmartItemDefClass = FindClass("FortSmartBuildingItemDefinition");
+    static bool HasCosmeticLoadoutPC = PlayerController->HasCosmeticLoadoutPC();
+    static bool HasCustomizationLoadout = PlayerController->HasCustomizationLoadout();
+
+    if (HasCosmeticLoadoutPC && PlayerController->CosmeticLoadoutPC.Pickaxe)
+        PlayerController->WorldInventory->GiveItem(PlayerController->CosmeticLoadoutPC.Pickaxe->WeaponDefinition);
+    else if (HasCustomizationLoadout && PlayerController->CustomizationLoadout.Pickaxe)
+        PlayerController->WorldInventory->GiveItem(PlayerController->CustomizationLoadout.Pickaxe->WeaponDefinition);
+    else if (HasCosmeticLoadoutPC || HasCustomizationLoadout) // fix ur backend gng
+    {
+        static auto DefaultPickaxe = FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
+
+        PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
+    }
+
+    if (GameMode->StartingItems.Num() == 0)
+    {
+        static auto DefaultPickaxe = FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
+        static auto WallBuild = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Wall.BuildingItemData_Wall");
+        static auto FloorBuild = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Floor.BuildingItemData_Floor");
+        static auto StairBuild = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Stair_W.BuildingItemData_Stair_W");
+        static auto ConeBuild = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_RoofS.BuildingItemData_RoofS");
+        static auto EditTool = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/EditTool.EditTool");
+
+        PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
+        PlayerController->WorldInventory->GiveItem(WallBuild);
+        PlayerController->WorldInventory->GiveItem(FloorBuild);
+        PlayerController->WorldInventory->GiveItem(StairBuild);
+        PlayerController->WorldInventory->GiveItem(ConeBuild);
+        PlayerController->WorldInventory->GiveItem(EditTool);
+    }
+    else
+        for (int i = 0; i < GameMode->StartingItems.Num(); i++)
+        {
+            auto& StartingItem = GameMode->StartingItems.Get(i, FItemAndCount::Size());
+
+            if (StartingItem.Count && (!SmartItemDefClass || !StartingItem.Item->IsA(SmartItemDefClass)))
+                PlayerController->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
+        }
+}
+
 void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, FFrame& Stack)
 {
     AActor* Pawn;
@@ -80,91 +177,14 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
             PlayerController->WorldInventory->Remove(Guid);
     }
 
-    if (VersionInfo.FortniteVersion >= 18)
-    {
-        if (VersionInfo.FortniteVersion >= 25.20)
-        {
-            static auto Effect = FindObject<UClass>(L"/Game/Athena/SafeZone/GE_OutsideSafeZoneDamage.GE_OutsideSafeZoneDamage_C");
+    if (VersionInfo.FortniteVersion >= 25.20)
+        ApplyStormDamageEffect(PlayerController->PlayerState);
 
-            bool Found = false;
-            auto AbilitySystemComponent = PlayerController->PlayerState->AbilitySystemComponent;
-
-            for (int i = 0; i < AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Num(); i++)
-            {
-                auto& ActiveEffect = AbilitySystemComponent->ActiveGameplayEffects.GameplayEffects_Internal.Get(i, FActiveGameplayEffect::Size());
-
-                if (ActiveEffect.Spec.Def)
-                    if (ActiveEffect.Spec.Def->IsA(Effect))
-                    {
-                        Found = true;
-                        break;
-                    }
-            }
-
-            if (!Found)
-            {
-                auto EffectHandle = FGameplayEffectContextHandle();
-                auto SpecHandle = AbilitySystemComponent->BP_ApplyGameplayEffectToSelf(Effect, 0.f, EffectHandle);
-
-                // AbilitySystemComponent->SetActiveGameplayEffectLevel(SpecHandle, 1);
-
-                AbilitySystemComponent->UpdateActiveGameplayEffectSetByCallerMagnitude(SpecHandle, FGameplayTag(FName(L"SetByCaller.StormCampingDamage")), 1.f);
-            }
-        }
-    }
-
-    auto Interface = PlayerController->PlayerState->GetInterface(IFortAbilitySystemInterface::StaticClass());
-    if (InitializePlayerGameplayAbilities_ && Interface)
-    {
-        auto InitializePlayerGameplayAbilities = (void (*&)(const IInterface*))InitializePlayerGameplayAbilities_;
-
-        InitializePlayerGameplayAbilities(Interface);
-    }
-    else
-        for (auto& AbilitySet : AFortGameMode::AbilitySets)
-            PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
+    GrantPlayerAbilities(PlayerController->PlayerState);
 
     if (Num == 0)
     {
-        static auto SmartItemDefClass = FindClass("FortSmartBuildingItemDefinition");
-        static bool HasCosmeticLoadoutPC = PlayerController->HasCosmeticLoadoutPC();
-        static bool HasCustomizationLoadout = PlayerController->HasCustomizationLoadout();
-
-        if (HasCosmeticLoadoutPC && PlayerController->CosmeticLoadoutPC.Pickaxe)
-            PlayerController->WorldInventory->GiveItem(PlayerController->CosmeticLoadoutPC.Pickaxe->WeaponDefinition);
-        else if (HasCustomizationLoadout && PlayerController->CustomizationLoadout.Pickaxe)
-            PlayerController->WorldInventory->GiveItem(PlayerController->CustomizationLoadout.Pickaxe->WeaponDefinition);
-        else if (HasCosmeticLoadoutPC || HasCustomizationLoadout) // fix ur backend gng
-        {
-            static auto DefaultPickaxe = FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
-
-            PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
-        }
-
-        if (GameMode->StartingItems.Num() == 0)
-        {
-            static auto DefaultPickaxe = FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
-            static auto WallBuild = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Wall.BuildingItemData_Wall");
-            static auto FloorBuild = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Floor.BuildingItemData_Floor");
-            static auto StairBuild = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_Stair_W.BuildingItemData_Stair_W");
-            static auto ConeBuild = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/BuildingItemData_RoofS.BuildingItemData_RoofS");
-            static auto EditTool = FindObject<UFortItemDefinition>(L"/Game/Items/Weapons/BuildingTools/EditTool.EditTool");
-
-            PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
-            PlayerController->WorldInventory->GiveItem(WallBuild);
-            PlayerController->WorldInventory->GiveItem(FloorBuild);
-            PlayerController->WorldInventory->GiveItem(StairBuild);
-            PlayerController->WorldInventory->GiveItem(ConeBuild);
-            PlayerController->WorldInventory->GiveItem(EditTool);
-        }
-        else
-            for (int i = 0; i < GameMode->StartingItems.Num(); i++)
-            {
-                auto& StartingItem = GameMode->StartingItems.Get(i, FItemAndCount::Size());
-
-                if (StartingItem.Count && (!SmartItemDefClass || !StartingItem.Item->IsA(SmartItemDefClass)))
-                    PlayerController->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
-            }
+        GiveStartingItems(PlayerController);
 
         /*auto pickaxeEntry = PlayerController->WorldInventory->Inventory.ReplicatedEntries.Search([](FFortItemEntry& entry)
             { return entry.ItemDefinition->IsA<UFortWeaponMeleeItemDefinition>(); }, FFortItemEntry::Size());
@@ -181,16 +201,7 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
             ((void (*)(AActor*, AActor*))ApplyCharacterCustomization)(PlayerController->PlayerState, Pawn);
         }
 
-        auto Interface = PlayerController->PlayerState->GetInterface(IFortAbilitySystemInterface::StaticClass());
-        if (InitializePlayerGameplayAbilities_ && Interface)
-        {
-            auto InitializePlayerGameplayAbilities = (void (*&)(const IInterface*))InitializePlayerGameplayAbilities_;
-
-            InitializePlayerGameplayAbilities(Interface);
-        }
-        else
-            for (auto& AbilitySet : AFortGameMode::AbilitySets)
-                PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
+        GrantPlayerAbilities(PlayerController->PlayerState);
     }
     else if (FConfiguration::bLateGame && (!FConfiguration::bKeepInventory || FConfiguration::bLateGame))
     {
@@ -453,6 +464,72 @@ uint64_t CantBuild_ = 0;
 uint64_t CanAffordToPlaceBuildableClass_;
 uint64_t PayBuildableClassPlacementCost_;
 uint64_t CanPlaceBuildableClassInStructuralGrid_;
+// Validation + placement part of ServerCreateBuildingActor, shared with the bot system
+// (BotSystem/Private/Building/BotBuilder.cpp). Resource checks/payment stay with the caller.
+// SpawningController may be nullptr (AI-controller bots).
+ABuildingSMActor* AFortPlayerControllerAthena::PlaceBuildingActor(AActor* Owner, AFortPlayerControllerAthena* SpawningController, AFortPlayerStateAthena* PlayerState, TSubclassOf<AActor> BuildingClass,
+                                                                  FBuildingClassData& BuildingClassData, FVector BuildLoc, FRotator BuildRot, bool bMirrored)
+{
+    struct _Pad_0xC
+    {
+        uint8_t Padding[0xC];
+    };
+    struct _Pad_0x18
+    {
+        uint8_t Padding[0x18];
+    };
+
+    if (!CantBuild_ || !BuildingClass)
+        return nullptr;
+
+    TArray<ABuildingSMActor*> RemoveBuildings;
+    if (VersionInfo.FortniteVersion >= 27)
+    {
+        char _Unk_OutVar1;
+        auto CantBuild = (__int64 (*)(UWorld*, TSubclassOf<AActor>&, _Pad_0x18, _Pad_0x18, bool, TArray<ABuildingSMActor*>*, char*))CantBuild_;
+
+        if (CantBuild(UWorld::GetWorld(), BuildingClass, *(_Pad_0x18*)&BuildLoc, *(_Pad_0x18*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1))
+            return nullptr;
+    }
+    else
+    {
+        char _Unk_OutVar1;
+        auto CantBuild = (__int64 (*)(UWorld*, const UClass*, _Pad_0xC, _Pad_0xC, bool, TArray<ABuildingSMActor*>*, char*))CantBuild_;
+        auto CantBuildNew = (__int64 (*)(UWorld*, const UClass*, _Pad_0x18, _Pad_0x18, bool, TArray<ABuildingSMActor*>*, char*))CantBuild_;
+
+        if (VersionInfo.FortniteVersion >= 20.00 ? CantBuildNew(UWorld::GetWorld(), BuildingClass, *(_Pad_0x18*)&BuildLoc, *(_Pad_0x18*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1)
+                                                 : CantBuild(UWorld::GetWorld(), BuildingClass, *(_Pad_0xC*)&BuildLoc, *(_Pad_0xC*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1))
+            return nullptr;
+    }
+
+    for (auto& RemoveBuilding : RemoveBuildings)
+        RemoveBuilding->K2_DestroyActor();
+    RemoveBuildings.Free();
+
+    ABuildingSMActor* Building = UWorld::SpawnActorUnfinished<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, Owner);
+    if (!Building)
+        return nullptr;
+
+    Building->InitializeKismetSpawnedBuildingActor(Building, SpawningController, true, nullptr, false);
+    UWorld::FinishSpawnActor(Building, BuildLoc, BuildRot);
+
+    static auto UpgradeLevelOffset = FBuildingClassData::StaticStruct()->GetOffset("UpgradeLevel");
+    Building->CurrentBuildingLevel = VersionInfo.EngineVersion >= 5.3 ? *(uint8*)(__int64(&BuildingClassData) + UpgradeLevelOffset) : *(uint32*)(__int64(&BuildingClassData) + UpgradeLevelOffset);
+    Building->OnRep_CurrentBuildingLevel();
+
+    Building->SetMirrored(bMirrored);
+
+    Building->bPlayerPlaced = true;
+
+    if (PlayerState && PlayerState->HasTeamIndex())
+        Building->Team = PlayerState->TeamIndex;
+
+    if (Building->HasTeamIndex())
+        Building->TeamIndex = Building->Team;
+
+    return Building;
+}
+
 void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FFrame& Stack)
 {
     TSubclassOf<AActor> BuildingClass;
@@ -579,60 +656,9 @@ void AFortPlayerControllerAthena::ServerCreateBuildingActor(UObject* Context, FF
         }
     }
 
-    TArray<ABuildingSMActor*> RemoveBuildings;
-    if (VersionInfo.FortniteVersion >= 27)
-    {
-        char _Unk_OutVar1;
-        auto CantBuild = (__int64 (*)(UWorld*, TSubclassOf<AActor>&, _Pad_0x18, _Pad_0x18, bool, TArray<ABuildingSMActor*>*, char*))CantBuild_;
-
-        if (CantBuild(UWorld::GetWorld(), BuildingClass, *(_Pad_0x18*)&BuildLoc, *(_Pad_0x18*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1))
-            return;
-    }
-    else
-    {
-        char _Unk_OutVar1;
-        auto CantBuild = (__int64 (*)(UWorld*, const UClass*, _Pad_0xC, _Pad_0xC, bool, TArray<ABuildingSMActor*>*, char*))CantBuild_;
-        auto CantBuildNew = (__int64 (*)(UWorld*, const UClass*, _Pad_0x18, _Pad_0x18, bool, TArray<ABuildingSMActor*>*, char*))CantBuild_;
-
-        if (VersionInfo.FortniteVersion >= 20.00 ? CantBuildNew(UWorld::GetWorld(), BuildingClass, *(_Pad_0x18*)&BuildLoc, *(_Pad_0x18*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1)
-                                                 : CantBuild(UWorld::GetWorld(), BuildingClass, *(_Pad_0xC*)&BuildLoc, *(_Pad_0xC*)&BuildRot, bMirrored, &RemoveBuildings, &_Unk_OutVar1))
-            return;
-    }
-
-    for (auto& RemoveBuilding : RemoveBuildings)
-        RemoveBuilding->K2_DestroyActor();
-    RemoveBuildings.Free();
-
-    static auto K2_SpawnBuildingActor = ABuildingSMActor::GetDefaultObj()->GetFunction("K2_SpawnBuildingActor");
-
-    ABuildingSMActor* Building = nullptr;
-    /*if (K2_SpawnBuildingActor)
-    {
-        FTransform SpawnTransform(BuildLoc, BuildRot);
-        Building = ABuildingSMActor::K2_SpawnBuildingActor(PlayerController, BuildingClass, SpawnTransform, PlayerController, nullptr, false, false);
-    }
-    else*/
-    Building = UWorld::SpawnActorUnfinished<ABuildingSMActor>(BuildingClass, BuildLoc, BuildRot, PlayerController);
-
-    Building->InitializeKismetSpawnedBuildingActor(Building, PlayerController, true, nullptr, false);
-    UWorld::FinishSpawnActor(Building, BuildLoc, BuildRot);
-
+    auto Building = PlaceBuildingActor(PlayerController, PlayerController, PlayerController->PlayerState, BuildingClass, BuildingClassData, BuildLoc, BuildRot, bMirrored);
     if (!Building)
         return;
-
-    static auto UpgradeLevelOffset = FBuildingClassData::StaticStruct()->GetOffset("UpgradeLevel");
-    Building->CurrentBuildingLevel = VersionInfo.EngineVersion >= 5.3 ? *(uint8*)(__int64(&BuildingClassData) + UpgradeLevelOffset) : *(uint32*)(__int64(&BuildingClassData) + UpgradeLevelOffset);
-    Building->OnRep_CurrentBuildingLevel();
-
-    Building->SetMirrored(bMirrored);
-
-    Building->bPlayerPlaced = true;
-
-    if (((AFortPlayerStateAthena*)PlayerController->PlayerState)->HasTeamIndex())
-        Building->Team = ((AFortPlayerStateAthena*)PlayerController->PlayerState)->TeamIndex;
-
-    if (Building->HasTeamIndex())
-        Building->TeamIndex = Building->Team;
 
     if (!PlayerController->bBuildFree && !FConfiguration::bInfiniteMats)
     {
@@ -1086,6 +1112,10 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 {
     if (!PlayerController)
         return ClientOnPawnDiedOG(PlayerController, DeathReport);
+
+    // Lets the bot system react immediately instead of waiting for its next maintenance pass. No-op for humans.
+    FBotManager::NotifyPawnDied(PlayerController);
+
     auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
     auto GameState = (AFortGameStateAthena*)GameMode->GameState;
     auto PlayerState = (AFortPlayerStateAthena*)PlayerController->PlayerState;
@@ -1107,6 +1137,9 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
     auto KillerPlayerState = (AFortPlayerStateAthena*)DeathReport.KillerPlayerState;
     auto KillerPawn = (AFortPlayerPawnAthena*)DeathReport.KillerPawn;
     auto KillerPlayerController = KillerPlayerState ? (AFortPlayerControllerAthena*)KillerPlayerState->Owner : nullptr;
+    // The killer can be an AI-controlled bot (bot system): only call player-controller functions
+    // (quests, win screen, crown) when it really is a player controller.
+    bool bKillerIsPlayerController = KillerPlayerController && KillerPlayerController->IsA<AFortPlayerControllerAthena>();
 
     if (VersionInfo.FortniteVersion > 1.8 || VersionInfo.EngineVersion >= 4.19)
     {
@@ -1202,7 +1235,8 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
                 // Interface->GetOwnedGameplayTags(&TargetTags);
             }
 
-            KillerPlayerController->GetQuestManager(1)->SendStatEvent(KillerPlayerController, EFortQuestObjectiveStatEvent::GetKill(), 1, false, PlayerController->Pawn, TargetTags);
+            if (bKillerIsPlayerController)
+                KillerPlayerController->GetQuestManager(1)->SendStatEvent(KillerPlayerController, EFortQuestObjectiveStatEvent::GetKill(), 1, false, PlayerController->Pawn, TargetTags);
 
             TargetTags.GameplayTags.Free();
             TargetTags.ParentTags.Free();
@@ -1269,12 +1303,15 @@ void AFortPlayerControllerAthena::ClientOnPawnDied(AFortPlayerControllerAthena* 
 
                 auto KillerWeapon = DamageCauser ? DamageCauser->WeaponData : nullptr;
 
-                if (VersionInfo.FortniteVersion >= 16)
-                    KillerPlayerController->PlayWinEffects(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause, false);
-                KillerPlayerController->ClientNotifyWon(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause);
-                KillerPlayerController->ClientNotifyTeamWon(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause);
+                if (bKillerIsPlayerController)
+                {
+                    if (VersionInfo.FortniteVersion >= 16)
+                        KillerPlayerController->PlayWinEffects(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause, false);
+                    KillerPlayerController->ClientNotifyWon(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause);
+                    KillerPlayerController->ClientNotifyTeamWon(KillerPawn, KillerWeapon, PlayerState->DeathInfo.DeathCause);
+                }
 
-                if (KillerPlayerState != PlayerState && VersionInfo.FortniteVersion >= 19)
+                if (bKillerIsPlayerController && KillerPlayerState != PlayerState && VersionInfo.FortniteVersion >= 19)
                 {
                     auto Crown = FindObject<UFortItemDefinition>(L"/VictoryCrownsGameplay/Items/AGID_VictoryCrown.AGID_VictoryCrown");
 
@@ -1612,7 +1649,6 @@ std::unordered_map<std::string, std::vector<FVector>> Waypoints;
 extern uint64_t ApplyCharacterCustomization;
 extern uint64_t NotifyGameMemberAdded_;
 
-int32 PlayerBotID = 0;
 void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 {
     FString Msg;
@@ -1657,7 +1693,19 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
     cheat speed <Speed> - Sets the player's movement speed
     cheat timeofday <Hour> - Sets the time of day (0-23)
     cheat pausetimeofday - Pauses/Unpauses the time of day
-    cheat spawnbot - Spawns a player bot at your location (WIP)
+    cheat spawnbot <Count = 1> - Spawns player bots in front of you
+    cheat removebot <Id> - Removes a bot
+    cheat removebots - Removes all bots
+    cheat listbots - Lists active bots
+    cheat botfollow <Id = all> - Bots follow you
+    cheat botgoto <Id = all> - Bots walk to your location
+    cheat botwander <Id = all> - Bots wander around
+    cheat botidle <Id = all> - Bots stand still
+    cheat botbuild <wall|floor|ramp|cone> <Id = all> - Bots build a piece facing you
+    cheat botoutfit <CID_...> <Id = all> - Changes bot outfits
+    cheat botdifficulty <easy|normal|hard> <Id = all> - Sets bot difficulty
+    cheat botdebug <Id> - Shows a bot's state, target, weapon, inventory
+    cheat botwatch <Id | 0> - Logs a bot's debug info every 3 seconds
     cheat startevent - Starts the event for the current version
     cheat tp <X> <Y> <Z> - Teleports to a location
     cheat launch <X> <Y> <Z> - Launches the player
@@ -2011,7 +2059,6 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
             if (!PlayerController->Pawn)
                 return;
 
-            auto CallerController = PlayerController;
             int Count = 1;
 
             if (args.size() >= 2)
@@ -2025,151 +2072,169 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
                 }
             }
 
-            for (int i = 0; i < Count; i++)
+            // Spawned by the bot system over the next frames (see BotSystem/Public/BotManager.h),
+            // scattered around a point in front of the caller.
+            auto Location = PlayerController->Pawn->K2_GetActorLocation() + PlayerController->Pawn->GetActorForwardVector() * 500.f;
+            auto Queued = FBotManager::SpawnBots(Count, &Location);
+
+            PlayerController->ClientMessage(FString(std::wstring(L"Queued " + std::to_wstring(Queued) + L" bot(s).").c_str()), FName(), 1.f);
+        }
+        else if (command == "removebot")
+        {
+            if (args.size() != 2)
             {
-                auto Transform = PlayerController->Pawn->GetTransform();
-
-                auto GameMode = (AFortGameMode*)UWorld::GetWorld()->AuthorityGameMode;
-                auto GameState = GameMode->GameState;
-                // auto PlayerController = (AFortPlayerControllerAthena*)UWorld::SpawnActor(GameMode->PlayerControllerClass, FVector{});
-                auto Pawn = (AFortPlayerPawnAthena*)UWorld::SpawnActor(GameMode->DefaultPawnClass, Transform);
-                auto PlayerController = (AFortPlayerControllerAthena*)UWorld::SpawnActor(FindObject<UClass>(L"/Game/Athena/Athena_PlayerController.Athena_PlayerController_C"), Transform);
-                // auto PlayerState = PlayerController->PlayerState;
-
-                if (!PlayerController || !Pawn)
-                    continue;
-
-                PlayerController->Possess(Pawn);
-                PlayerController->MyFortPawn = Pawn; // dont't ask, crashes on 27+
-
-                auto PlayerState = (AFortPlayerStateAthena*)UWorld::SpawnActor(AFortPlayerStateAthena::StaticClass(), Transform);
-
-                PlayerState->SetOwner(PlayerController);
-
-                PlayerController->PlayerState = PlayerState;
-                PlayerController->OnRep_PlayerState();
-
-                Pawn->PlayerState = PlayerState;
-                Pawn->OnRep_PlayerState();
-
-                Pawn->SetMaxHealth(100.f);
-                // Pawn->SetHealth(100.f);
-
-                PlayerState->TeamIndex = AFortGameMode::PickTeam(GameMode, 0, PlayerController);
-                if (PlayerState->HasSquadId())
-                    PlayerState->SquadId = PlayerState->TeamIndex - 3;
-                if (PlayerState->HasbIsABot())
-                    PlayerState->bIsABot = true;
-
-                if (GameState->HasGameMemberInfoArray())
-                {
-                    auto Member = (FGameMemberInfo*)malloc(FGameMemberInfo::Size());
-                    memset((PBYTE)Member, 0, FGameMemberInfo::Size());
-
-                    Member->MostRecentArrayReplicationKey = -1;
-                    Member->ReplicationID = -1;
-                    Member->ReplicationKey = -1;
-                    Member->TeamIndex = PlayerState->TeamIndex;
-                    Member->SquadId = PlayerState->SquadId;
-                    Member->MemberUniqueId = PlayerState->UniqueId;
-
-                    GameState->GameMemberInfoArray.Members.Add(*Member, FGameMemberInfo::Size());
-                    GameState->GameMemberInfoArray.MarkItemDirty(*Member);
-
-                    auto NotifyGameMemberAdded = (void (*)(AFortGameStateAthena*, uint8_t, uint8_t, FUniqueNetIdRepl*))NotifyGameMemberAdded_;
-                    if (NotifyGameMemberAdded)
-                        NotifyGameMemberAdded(GameState, Member->SquadId, Member->TeamIndex, &Member->MemberUniqueId);
-
-                    free(Member);
-                }
-
-                for (auto& AbilitySet : AFortGameMode::AbilitySets)
-                    PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
-
-                /*PlayerController->WorldInventory = (AFortInventory*)UWorld::SpawnActor(AFortInventory::StaticClass(), FVector{});
-                PlayerController->WorldInventory->SetOwner(PlayerController);
-                PlayerController->WorldInventory->InventoryType = 0;*/
-                // PlayerController->bHasInitializedWorldInventory = true;
-
-                GameState->PlayersLeft++;
-                GameState->OnRep_PlayersLeft();
-
-                GameMode->AlivePlayers.Add(PlayerController);
-
-                static auto Commando = FindObject(L"/Game/Athena/Heroes/HID_001_Athena_Commando_F.HID_001_Athena_Commando_F", nullptr);
-                static auto Commando2 = FindObject(L"/Game/Athena/Heroes/HID_Commando_Athena_01.HID_Commando_Athena_01", nullptr);
-                PlayerState->HeroType = Commando ? Commando : Commando2;
-
-                static auto CharacterPartsOffset = PlayerState->GetOffset("CharacterParts", 0x100000);
-
-                if (CharacterPartsOffset == -1)
-                {
-                    static auto CharacterPartsOff = PlayerState->GetOffset("CharacterParts");
-                    if (CharacterPartsOff == -1)
-                        CharacterPartsOff = PlayerState->GetOffset("LocalCharacterParts");
-                    auto& CharacterParts = GetFromOffset<const UObject* [0x6]>(PlayerState, CharacterPartsOff);
-
-                    static auto Head = FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Heads/F_Med_Head1.F_Med_Head1");
-                    static auto Body = FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Bodies/F_Med_Soldier_01.F_Med_Soldier_01");
-                    static auto Backpack = FindObject<UObject>(L"/Game/Characters/CharacterParts/Backpacks/NoBackpack.NoBackpack");
-
-                    CharacterParts[0] = Head;
-                    CharacterParts[1] = Body;
-                    CharacterParts[3] = Backpack;
-                }
-                else
-                {
-                    static auto CharacterPartsOff = PlayerState->GetOffset("CharacterParts");
-                    auto& CustomCharacterParts = GetFromOffset<FCustomCharacterParts>(PlayerState, CharacterPartsOff);
-                    static auto PartsOffset = FCustomCharacterParts::StaticStruct()->GetOffset("Parts");
-                    auto& CharacterParts = GetFromOffset<const UObject* [0x6]>(&CustomCharacterParts, PartsOffset);
-
-                    static auto Head = FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Heads/F_Med_Head1.F_Med_Head1");
-                    static auto Body = FindObject<UObject>(L"/Game/Characters/CharacterParts/Female/Medium/Bodies/F_Med_Soldier_01.F_Med_Soldier_01");
-                    static auto Backpack = FindObject<UObject>(L"/Game/Characters/CharacterParts/Backpacks/NoBackpack.NoBackpack");
-
-                    CharacterParts[0] = Head;
-                    CharacterParts[1] = Body;
-                    CharacterParts[3] = Backpack;
-                }
-
-                if (ApplyCharacterCustomization)
-                    ((void (*)(AActor*, AFortPlayerPawnAthena*))ApplyCharacterCustomization)(PlayerState, Pawn);
-
-                PlayerBotID++;
-                std::string Name = "Erbium Bot (#" + std::to_string(PlayerBotID) + ")";
-
-                std::wstring WideName(Name.begin(), Name.end());
-
-                FString BotName = FString(WideName.c_str());
-
-                if (std::floor(VersionInfo.FortniteVersion) < 9)
-                {
-                    PlayerController->ServerChangeName(BotName);
-                }
-                else
-                {
-                    GameMode->ChangeName(PlayerController, BotName, true);
-                }
-
-                PlayerState->OnRep_PlayerName();
-
-                /*static auto DefaultPickaxe = FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
-
-                PlayerController->WorldInventory->GiveItem(DefaultPickaxe);
-
-                static auto SmartItem	DefClass = FindClass("FortSmartBuildingItemDefinition");
-
-                for (int i = 0; i < GameMode->StartingItems.Num(); i++)
-                {
-                    auto& StartingItem = GameMode->StartingItems.Get(i, FItemAndCount::Size());
-
-                    if (StartingItem.Count && (!SmartItemDefClass || !StartingItem.Item->IsA(SmartItemDefClass)))
-                        PlayerController->WorldInventory->GiveItem(StartingItem.Item, StartingItem.Count);
-                }*/
-
-                // CallerController->ClientMessage(FString(L"Spawned a player bot!"), FName(), 1.f); // todo: fix
+                PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1.f);
+                return;
             }
+
+            uint32 BotId = 0;
+            try
+            {
+                BotId = (uint32)std::stoul(args[1].c_str(), nullptr);
+            }
+            catch (...)
+            {
+            }
+
+            PlayerController->ClientMessage(FString(FBotManager::RemoveBot(BotId) ? L"Removed bot." : L"No bot with that id."), FName(), 1.f);
+        }
+        else if (command == "removebots")
+        {
+            auto Count = FBotManager::GetBotCount();
+            FBotManager::RemoveAllBots();
+            PlayerController->ClientMessage(FString(std::wstring(L"Removed " + std::to_wstring(Count) + L" bot(s).").c_str()), FName(), 1.f);
+        }
+        else if (command == "listbots")
+        {
+            std::wstring List = L"Bots: " + std::to_wstring(FBotManager::GetBotCount()) + L" (queued " + std::to_wstring(FBotManager::GetPendingSpawnCount()) + L")";
+
+            for (auto Bot : FBotManager::GetActiveBots())
+            {
+                std::string Info = std::string(ToString(Bot->GetAIState())) + " " + ToString(Bot->GetControllerKind()) + " nav=" + BotNavigation::ToString(Bot->GetMovement().GetNavMode()) +
+                                   " builds=" + std::to_string(Bot->GetBuilder().GetPlacedCount()) + " [" + Bot->Cosmetics.Describe() + "]";
+                List += L"\n#" + std::to_wstring(Bot->GetId()) + L" " + std::wstring(Info.begin(), Info.end());
+            }
+
+            PlayerController->ClientMessage(FString(List.c_str()), FName(), 1.f);
+        }
+        else if (command == "botdebug" || command == "botwatch")
+        {
+            uint32 BotId = 0;
+            if (args.size() >= 2)
+            {
+                try
+                {
+                    BotId = (uint32)std::stoul(args[1].c_str(), nullptr);
+                }
+                catch (...)
+                {
+                }
+            }
+
+            if (command == "botwatch")
+            {
+                FBotManager::WatchedBotId = BotId;
+                PlayerController->ClientMessage(FString(BotId ? L"Watching bot (server log every 3 s)." : L"Stopped watching."), FName(), 1.f);
+            }
+            else
+            {
+                auto Text = FBotManager::DescribeBot(BotId);
+                printf("[BotAI] %s\n", Text.c_str());
+                PlayerController->ClientMessage(FString(std::wstring(Text.begin(), Text.end()).c_str()), FName(), 1.f);
+            }
+        }
+        else if (command == "botdifficulty")
+        {
+            EBotDifficulty Difficulty;
+            if (args.size() < 2 || !BotDifficulty::Parse(args[1].c_str(), Difficulty))
+            {
+                PlayerController->ClientMessage(FString(L"Usage: cheat botdifficulty <easy|normal|hard> [id]"), FName(), 1.f);
+                return;
+            }
+
+            uint32 BotId = 0;
+            if (args.size() >= 3)
+            {
+                try
+                {
+                    BotId = (uint32)std::stoul(args[2].c_str(), nullptr);
+                }
+                catch (...)
+                {
+                }
+            }
+
+            // New bots use it too when it is applied to all.
+            if (BotId == 0)
+                FBotSystemConfig::DefaultDifficulty = Difficulty;
+
+            auto Count = FBotManager::CommandDifficulty(BotId, Difficulty);
+            PlayerController->ClientMessage(FString(std::wstring(L"Difficulty set for " + std::to_wstring(Count) + L" bot(s).").c_str()), FName(), 1.f);
+        }
+        else if (command == "botbuild" || command == "botoutfit")
+        {
+            // botbuild <wall|floor|ramp|cone> [id]   botoutfit <CID_...> [id]
+            if (args.size() < 2)
+            {
+                PlayerController->ClientMessage(FString(L"Wrong number of arguments!"), FName(), 1.f);
+                return;
+            }
+
+            uint32 BotId = 0;
+            if (args.size() >= 3)
+            {
+                try
+                {
+                    BotId = (uint32)std::stoul(args[2].c_str(), nullptr);
+                }
+                catch (...)
+                {
+                }
+            }
+
+            int Count = 0;
+            if (command == "botoutfit")
+            {
+                std::string Id = args[1].c_str();
+                Count = FBotManager::CommandOutfit(BotId, std::wstring(Id.begin(), Id.end()));
+            }
+            else if (PlayerController->Pawn)
+            {
+                std::string PieceName = args[1].c_str();
+                std::transform(PieceName.begin(), PieceName.end(), PieceName.begin(), tolower);
+
+                auto Piece = PieceName == "floor" ? EBotBuildPiece::Floor : PieceName == "ramp" ? EBotBuildPiece::Ramp : PieceName == "cone" ? EBotBuildPiece::Cone : EBotBuildPiece::Wall;
+                Count = FBotManager::CommandBuild(BotId, Piece, PlayerController->Pawn);
+            }
+
+            PlayerController->ClientMessage(FString(std::wstring(L"Commanded " + std::to_wstring(Count) + L" bot(s).").c_str()), FName(), 1.f);
+        }
+        else if (command == "botfollow" || command == "botgoto" || command == "botwander" || command == "botidle")
+        {
+            // Optional bot id; default = all bots.
+            uint32 BotId = 0;
+            if (args.size() >= 2)
+            {
+                try
+                {
+                    BotId = (uint32)std::stoul(args[1].c_str(), nullptr);
+                }
+                catch (...)
+                {
+                }
+            }
+
+            int Count = 0;
+            if (command == "botfollow" && PlayerController->Pawn)
+                Count = FBotManager::CommandFollow(BotId, PlayerController->Pawn);
+            else if (command == "botgoto" && PlayerController->Pawn)
+                Count = FBotManager::CommandMoveTo(BotId, PlayerController->Pawn->K2_GetActorLocation());
+            else if (command == "botwander")
+                Count = FBotManager::CommandState(BotId, EBotAIState::Searching);
+            else if (command == "botidle")
+                Count = FBotManager::CommandState(BotId, EBotAIState::Idle);
+
+            PlayerController->ClientMessage(FString(std::wstring(L"Commanded " + std::to_wstring(Count) + L" bot(s).").c_str()), FName(), 1.f);
         }
         else if (command == "startevent")
         {
