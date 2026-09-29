@@ -563,6 +563,18 @@ namespace BotCompat
         if (!Pawn)
             return;
 
+        // Without collision the pawn would still fall under gravity: through the floor and out of the
+        // world, where the game kills it (bots "died" as soon as the bus started). So movement is frozen
+        // (MOVE_None) while out of play and set to falling (MOVE_Falling) when it comes back in the air.
+        if (auto Movement = Pawn->CharacterMovement)
+        {
+            uint8 Mode = bInPlay ? 3 : 0;
+            uint8 CustomMode = 0;
+            Movement->SetMovementMode(Mode, CustomMode);
+            if (!bInPlay)
+                Movement->Velocity = FVector();
+        }
+
         bool bHidden = !bInPlay;
         Pawn->SetActorHiddenInGame(bHidden);
         ((ACharacter*)Pawn)->SetActorEnableCollision(bInPlay);

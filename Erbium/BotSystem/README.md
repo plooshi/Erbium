@@ -446,6 +446,12 @@ Two Erbium hooks assumed the pawn or instigator always has a player controller. 
 - **Deaths when the bus starts.** `FBotController::Validate` treated a missing pawn as an elimination. When the bus starts the game removes the ground pawn of player-controller bots; they get a new one when they jump. Now only a pawn that is really dead counts. A missing pawn during the bus phase is expected; outside it, the bot waits 10 s before being treated as eliminated. An AI bot whose pawn was removed while in the bus gets a new one at its jump point (`BotSpawner::RespawnPawn`).
 - **Outfits.** If an outfit resolved but none of its character parts did, `ApplyLoadout` still reported success. That skipped the default appearance and left the bot with no parts applied. It now fails in that case, and the AI tab shows how many bots are dressed, how many outfits the build has, and the last reason an outfit could not be applied.
 
+
+## Round 12: bots stuck in place, bus deaths
+
+- **Bots jumped and swung but never moved.** `AAIController::MoveTo` *accepted* the requests, so the navigation layer counted the mode as working. But path following never drove the Fortnite pawn: the stuck check jumped, re-issued the same move, and so on. `BotNavigation::ReportProgress` now judges a mode by whether bots actually cover ground. After 3 stuck moves with no progress by any bot, Pathfinding / DirectPath is dropped and every bot switches to Steering (`AddMovementInput`) right away. The AI tab shows the movement method in use.
+- **Bots died right when the bus started, so none ever jumped.** Boarding hid the pawn and turned off its collision, but gravity stayed on: the pawn fell through the ground and out of the world, and the game killed it. `BotCompat::SetPawnInPlay` now freezes movement (`MOVE_None`) while in the bus, and sets `MOVE_Falling` when the bot jumps.
+
 ## Where to find everything
 
 **Branch:** `claude/erbium-ai-bot-system-sus0gw` on `wieseichwiesenicht-art/Erbium-AI-Fork2`, one commit per phase on top of `main`.

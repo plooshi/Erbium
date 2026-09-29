@@ -60,6 +60,17 @@ namespace BotNavigation
     // the rest of the match; one that has worked before is kept (individual goals can be unreachable).
     void ReportResult(EBotNavMode Mode, bool bSucceeded);
 
+    // Feeds actual movement back. An accepted MoveTo request does not mean the pawn moves (path
+    // following can be unable to drive a Fortnite pawn): a mode under which bots got stuck several
+    // times and never made progress is dropped, so the bots fall back to steering.
+    void ReportProgress(EBotNavMode Mode, bool bMadeProgress);
+
+    // Whether Mode was dropped for the rest of the match.
+    bool IsDisabled(EBotNavMode Mode);
+
+    // Name of the mode new moves use (for the GUI; a string literal).
+    const char* GetPreferredModeName();
+
     // Random reachable point on the nav mesh, or a random point on the circle when there is no usable
     // nav data (the movement layer's stuck handling copes with unreachable points).
     FVector GetRandomPointInRadius(const FVector& Origin, float Radius);

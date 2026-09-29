@@ -93,6 +93,7 @@ public:
     static inline std::atomic<int> DiagAIControllerBots = 0;     // can move
     static inline std::atomic<int> DiagPlayerControllerBots = 0; // fallback, cannot move
     static inline std::atomic<int> DiagDressedBots = 0;          // wearing a chosen outfit
+    static inline std::atomic<const char*> DiagNavMode = "none yet"; // navigation mode new moves use
 
     // Latest perf numbers (microseconds), for the GUI.
     static float GetLastAverageTickMicros() { return LastAverageTickMicros; }

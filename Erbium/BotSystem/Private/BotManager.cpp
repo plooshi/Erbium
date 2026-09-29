@@ -652,6 +652,7 @@ void FBotManager::Tick(const UObject* NetDriver, float DeltaSeconds)
     DiagAIControllerBots = AIBots;
     DiagPlayerControllerBots = (int)Bots.size() - AIBots;
     DiagDressedBots = Dressed;
+    DiagNavMode = BotNavigation::GetPreferredModeName();
 
     RecordTickTime(Now, NowMicros() - Start);
 }

@@ -175,8 +175,12 @@ namespace BotNavigation
     {
         int Successes = 0;
         int ConsecutiveFailures = 0;
+        int ProgressCount = 0;     // think checks in which a bot using this mode actually moved
+        int NoProgressFailures = 0; // moves given up because the bot did not move at all
         bool bDisabled = false;
     };
+
+    static constexpr int MaxNoProgressFailures = 3;
 
     static constexpr int MaxFailuresBeforeDisable = 8;
 
@@ -249,6 +253,36 @@ namespace BotNavigation
             ModeStats.bDisabled = true;
             BOT_LOG(BOT_CATEGORY_NAV, "%s never succeeded (%d failures); using %s from now on.", ToString(Mode), ModeStats.ConsecutiveFailures, ToString(GetPreferredMode()));
         }
+    }
+
+    void ReportProgress(EBotNavMode Mode, bool bMadeProgress)
+    {
+        if (Mode != EBotNavMode::Pathfinding && Mode != EBotNavMode::DirectPath)
+            return;
+
+        auto& ModeStats = Stats[(int)Mode];
+        if (bMadeProgress)
+        {
+            ModeStats.ProgressCount++;
+            return;
+        }
+
+        if (++ModeStats.NoProgressFailures >= MaxNoProgressFailures && ModeStats.ProgressCount == 0 && !ModeStats.bDisabled)
+        {
+            ModeStats.bDisabled = true;
+            BOT_LOG(BOT_CATEGORY_NAV, "%s accepts moves but no bot has moved with it (%d stuck moves); using %s from now on.", ToString(Mode), ModeStats.NoProgressFailures,
+                    ToString(GetPreferredMode()));
+        }
+    }
+
+    bool IsDisabled(EBotNavMode Mode)
+    {
+        return (Mode == EBotNavMode::Pathfinding || Mode == EBotNavMode::DirectPath) && Stats[(int)Mode].bDisabled;
+    }
+
+    const char* GetPreferredModeName()
+    {
+        return ToString(GetPreferredMode());
     }
 
     FVector GetRandomPointInRadius(const FVector& Origin, float Radius)

@@ -179,6 +179,7 @@ void FBotMovement::CheckProgress(double Now, double Distance)
 
             if (StuckChecks >= Config.MaxStuckChecks)
             {
+                BotNavigation::ReportProgress(NavMode, false);
                 bStuckFailurePending = true;
                 StuckFailureTime = Now;
                 StuckFailureGoal = FVector(GoalLocation);
@@ -199,7 +200,10 @@ void FBotMovement::CheckProgress(double Now, double Distance)
             bRequestActive = false;
         }
         else
+        {
             StuckChecks = 0;
+            BotNavigation::ReportProgress(NavMode, true);
+        }
     }
 
     LastProgressLocation = Location;
@@ -254,7 +258,11 @@ void FBotMovement::Update(double Now)
 
     auto& Config = Bot.GetConfig();
     bool bMovingGoal = GoalType != EBotMoveGoal::Location;
-    bool bNeedsIssue = !bRequestActive || (bMovingGoal && Now - LastIssueTime >= Config.RepathInterval) ||
+    // The mode in use was dropped (see BotNavigation::ReportProgress): re-issue with the new one.
+    bool bModeDropped = bRequestActive && BotNavigation::IsDisabled(NavMode);
+    if (bModeDropped)
+        BotNavigation::Get(NavMode)->Stop(Bot);
+    bool bNeedsIssue = bModeDropped || !bRequestActive || (bMovingGoal && Now - LastIssueTime >= Config.RepathInterval) ||
                        (Now - LastIssueTime >= MinReissueInterval && !BotNavigation::Get(NavMode)->IsMoving(Bot));
 
     if (bNeedsIssue)
