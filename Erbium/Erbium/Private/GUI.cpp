@@ -442,6 +442,11 @@ void GUI::Init()
                 ImGui::Text("Why the AI controller failed: %s", BotSpawner::GetLastAIControllerError());
                 ImGui::Text("Movement method: %s", FBotManager::DiagNavMode.load());
                 ImGui::TextWrapped("First bot: %s", FBotManager::GetFirstBotStatus().c_str());
+
+                // One click, one sentence: which layer stops the bots from moving.
+                if (ImGui::Button("Run movement test"))
+                    FBotManager::RequestMovementTest();
+                ImGui::TextWrapped("Movement test: %s", FBotManager::GetMovementTestResult().c_str());
                 ImGui::Text("Bots wearing a random outfit: %d (outfits found: %d)", FBotManager::DiagDressedBots.load(), BotCosmetics::GetKnownCount(EBotCosmeticSlot::Outfit));
                 ImGui::Text("Last outfit problem: %s", BotCosmetics::GetLastProblem());
                 ImGui::Text("Last spawn error: %s", BotSpawner::GetLastError());

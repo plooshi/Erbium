@@ -501,6 +501,24 @@ Bots appeared at the bus but neither fell nor moved, and on the ground they neve
 
 The AI tab's first-bot line now also shows `movement ticking` and `locally controlled`. The server only simulates an AI pawn's movement when that pawn counts as locally controlled; a 0 there means the controller setup itself is the problem.
 
+
+## Round 17: movement self-test
+
+AI tab → **Run movement test**. It takes over one AI bot on the ground for about 4 s:
+1. 2.5 s of forced movement input (`AddMovementInput`, `bForce`).
+2. A physics launch (`ACharacter::LaunchCharacter`).
+3. It measures on the server how far each step moved the pawn.
+
+The verdict, also logged as `[BotNavigation] Movement test: ...`, is one of:
+
+| Result | Meaning |
+|---|---|
+| Input moved it | The server moves the bot. If it looks frozen in the game, the client is not receiving the movement (replication). |
+| Only the launch moved it | The server simulates the pawn but ignores movement input. |
+| Nothing moved it | The server does not simulate the pawn's movement at all. |
+
+The result line also has the movement state before and after the test.
+
 ## Where to find everything
 
 **Branch:** `claude/erbium-ai-bot-system-sus0gw` on `wieseichwiesenicht-art/Erbium-AI-Fork2`, one commit per phase on top of `main`.

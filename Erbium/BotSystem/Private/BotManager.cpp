@@ -326,7 +326,7 @@ void FBotManager::RunThink(double Now)
 {
     for (auto& Bot : Bots)
     {
-        if (Bot->GetLifeState() != EBotLifeState::Active || Now < Bot->NextThinkTime)
+        if (Bot->GetLifeState() != EBotLifeState::Active || Now < Bot->NextThinkTime || IsInMovementTest(*Bot))
             continue;
 
         Bot->NextThinkTime = Now + FBotSystemConfig::ThinkInterval;
@@ -420,8 +420,10 @@ void FBotManager::UpdateMatchFlow(double Now)
 void FBotManager::RunFrame(double Now, float DeltaSeconds)
 {
     for (auto& Bot : Bots)
-        if (Bot->GetLifeState() == EBotLifeState::Active)
+        if (Bot->GetLifeState() == EBotLifeState::Active && !IsInMovementTest(*Bot))
             Bot->TickFrame(Now, DeltaSeconds);
+
+    TickMovementTestFrame();
 }
 
 std::vector<uint8> FBotManager::GetAliveTeams()
@@ -669,6 +671,7 @@ void FBotManager::Tick(const UObject* NetDriver, float DeltaSeconds)
     }
 
     UpdatePause();
+    UpdateMovementTest(Now);
     if (!FBotSystemConfig::bPaused)
     {
         RunThink(Now);
@@ -789,6 +792,151 @@ std::string FBotManager::GetFirstBotStatus()
 {
     std::lock_guard Lock(DiagMutex);
     return DiagFirstBot;
+}
+
+static std::string DescribeMovement(AFortPlayerPawnAthena* Pawn)
+{
+    auto Info = BotCompat::GetMovementInfo(Pawn);
+    char Text[200];
+    sprintf_s(Text, "mode %d, movement ticking %d, locally controlled %d, speed limit %.0f, walk speed %.0f, accel %.0f", Info.Mode, Info.TickEnabled, Info.LocallyControlled, Info.MaxSpeed,
+              Info.MaxWalkSpeed, Info.MaxAcceleration);
+    return Text;
+}
+
+static double Distance2D(const FVector& A, const FVector& B)
+{
+    auto DX = A.X - B.X, DY = A.Y - B.Y;
+    return sqrt(DX * DX + DY * DY);
+}
+
+std::string FBotManager::GetMovementTestResult()
+{
+    std::lock_guard Lock(DiagMutex);
+    return MovementTestResult;
+}
+
+void FBotManager::UpdateMovementTest(double Now)
+{
+    auto SetResult = [](const std::string& Text)
+    {
+        BOT_LOG(BOT_CATEGORY_NAV, "Movement test: %s", Text.c_str());
+        std::lock_guard Lock(DiagMutex);
+        MovementTestResult = Text;
+    };
+
+    auto& Test = MovementTest;
+
+    if (Test.Stage == 0)
+    {
+        if (!bMovementTestRequested.exchange(false))
+            return;
+
+        // An AI-controller bot standing in the world (not in the bus, not skydiving).
+        FBotController* Chosen = nullptr;
+        for (auto& Bot : Bots)
+        {
+            auto State = Bot->GetAIState();
+            if (Bot->IsAlive() && Bot->CanMove() && BotCompat::IsPawnInPlay(Bot->GetPawn()) && State != EBotAIState::InBus && State != EBotAIState::Skydiving)
+            {
+                Chosen = Bot.get();
+                break;
+            }
+        }
+
+        if (!Chosen)
+        {
+            SetResult(FBotManager::DiagAIControllerBots > 0 ? "no AI bot is on the ground right now (in the bus or skydiving); try again when they are."
+                                                             : "no AI-controller bot exists (only player-controller bots, which cannot move by design).");
+            return;
+        }
+
+        auto Pawn = Chosen->GetPawn();
+        Chosen->GetMovement().Stop();
+        Chosen->GetCombat().Reset();
+
+        auto Rotation = Pawn->K2_GetActorRotation();
+        auto Yaw = Rotation.Yaw * 3.14159265358979323846 / 180.0;
+
+        Test.Stage = 1;
+        Test.BotId = Chosen->GetId();
+        Test.StageStart = Now;
+        Test.Direction = FVector(cos(Yaw), sin(Yaw), 0.0);
+        Test.Start = Pawn->K2_GetActorLocation();
+        Test.Before = DescribeMovement(Pawn);
+
+        {
+            std::lock_guard Lock(DiagMutex);
+            MovementTestResult = "running (bot #" + std::to_string(Test.BotId) + ")...";
+        }
+        BOT_LOG(BOT_CATEGORY_NAV, "Movement test on bot #%u started: %s", Test.BotId, Test.Before.c_str());
+        return;
+    }
+
+    auto Bot = FindBot(Test.BotId);
+    auto Pawn = Bot && Bot->IsAlive() ? Bot->GetPawn() : nullptr;
+    if (!Pawn)
+    {
+        Test.Stage = 0;
+        SetResult("the test bot died or disappeared during the test; run it again.");
+        return;
+    }
+
+    // Stage 1: 2.5 s of movement input (forced, so nothing can filter it out).
+    if (Test.Stage == 1)
+    {
+        if (Now - Test.StageStart < 2.5)
+            return;
+
+        Test.AfterInput = Pawn->K2_GetActorLocation();
+
+        // Stage 2: a physics launch, which moves any simulated character regardless of input handling.
+        FVector Launch(Test.Direction.X * 900.0, Test.Direction.Y * 900.0, 450.0);
+        bool bXYOverride = true, bZOverride = true;
+        ((ACharacter*)Pawn)->LaunchCharacter(Launch, bXYOverride, bZOverride);
+
+        Test.Stage = 2;
+        Test.StageStart = Now;
+        return;
+    }
+
+    if (Now - Test.StageStart < 1.5)
+        return;
+
+    auto End = Pawn->K2_GetActorLocation();
+    auto InputMoved = Distance2D(Test.Start, Test.AfterInput);
+    auto LaunchMoved = Distance2D(Test.AfterInput, End);
+    auto LaunchRise = fabs(End.Z - Test.AfterInput.Z);
+
+    const char* Verdict;
+    if (InputMoved >= 150.0)
+        Verdict = "the SERVER moves the bot with input. If it looks frozen in your game, the server moves it but your client does not get the updates (replication).";
+    else if (LaunchMoved >= 150.0 || LaunchRise >= 50.0)
+        Verdict = "the server simulates the bot (launch moved it) but IGNORES movement input: walking input never reaches the character.";
+    else
+        Verdict = "the server does NOT simulate this bot's movement at all (neither input nor a launch moved it).";
+
+    char Text[900];
+    sprintf_s(Text, "bot #%u: input moved it %.0f cm, launch moved it %.0f cm (up %.0f). Verdict: %s | before: %s | after: %s", Test.BotId, InputMoved, LaunchMoved, LaunchRise, Verdict,
+              Test.Before.c_str(), DescribeMovement(Pawn).c_str());
+
+    Test.Stage = 0;
+    SetResult(Text);
+}
+
+void FBotManager::TickMovementTestFrame()
+{
+    if (MovementTest.Stage != 1)
+        return;
+
+    auto Bot = FindBot(MovementTest.BotId);
+    auto Pawn = Bot ? Bot->GetPawn() : nullptr;
+    if (!Pawn)
+        return;
+
+    FVector Direction = MovementTest.Direction;
+    float Scale = 1.f;
+    bool bForce = true;
+    ((ACharacter*)Pawn)->AddMovementInput(Direction, Scale, bForce);
 }
 
 void FBotManager::UpdatePause()

@@ -67,6 +67,7 @@ public:
     DEFINE_FUNC(SetActorEnableCollision, void);
     DEFINE_FUNC(Jump, void);
     DEFINE_FUNC(StopJumping, void);
+    DEFINE_FUNC(LaunchCharacter, void); // (FVector LaunchVelocity, bool bXYOverride, bool bZOverride)
 };
 
 // NavigationSystemV1 (UE 4.20+). Static Kismet-style helpers.

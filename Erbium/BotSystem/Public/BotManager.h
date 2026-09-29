@@ -8,6 +8,18 @@
 #include <mutex>
 #include <string>
 
+// State of the movement self-test (see FBotManager::RequestMovementTest).
+struct FBotMovementTest
+{
+    int Stage = 0; // 0 = idle, 1 = movement input, 2 = launch
+    uint32 BotId = 0;
+    double StageStart = 0.0;
+    FVector Direction{};
+    FVector Start{};
+    FVector AfterInput{};
+    std::string Before; // movement state when the test started
+};
+
 // Central owner of all bots.
 //
 // Threading: everything that touches engine objects runs on the game thread, driven by Tick()
@@ -70,6 +82,12 @@ public:
     // Tops the match up to FBotSystemConfig::AutoSpawnCount bots now (GUI "Fill now").
     static void RequestAutoFill() { bAutoFillRequested = true; }
 
+    // Movement self-test (GUI button): takes over one living bot for ~4 s, pushes it with movement input
+    // and then with a physics launch, and measures on the server how far it actually moved. The verdict
+    // says which layer is broken (input, movement simulation, or replication to the client).
+    static void RequestMovementTest() { bMovementTestRequested = true; }
+    static std::string GetMovementTestResult();
+
     // Bot count as of the last game-thread tick (safe to read from the GUI thread).
     static int GetPublishedBotCount() { return PublishedBotCount; }
 
@@ -119,6 +137,9 @@ private:
     static void UpdateMatchFlow(double Now);
     static void UpdateAutoSpawn(const UObject* NetDriver, double Now);
     static void UpdatePause();
+    static void UpdateMovementTest(double Now);
+    static void TickMovementTestFrame();
+    static bool IsInMovementTest(const FBotController& Bot) { return MovementTest.Stage != 0 && Bot.GetId() == MovementTest.BotId; }
     static void BoardBus(FBotController& Bot, double Now);
     template <typename Fn>
     static int ForEachCommandTarget(uint32 BotId, Fn&& Func);
@@ -148,6 +169,10 @@ private:
     static constexpr int MaxAutoFillAttempts = 3;
     static inline bool bAnyBotSpawned = false;
     static inline bool bWasPaused = false;
+
+    static inline FBotMovementTest MovementTest;
+    static inline std::atomic<bool> bMovementTestRequested = false;
+    static inline std::string MovementTestResult = "not run yet";
 
     static inline double NextMaintenanceTime = 0.0;
     static inline double NextWatchTime = 0.0;
