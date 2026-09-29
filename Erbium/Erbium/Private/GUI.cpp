@@ -8,6 +8,7 @@
 #include "../Public/Configuration.h"
 #include "../Public/Events.h"
 #include "../../BotSystem/Public/BotManager.h"
+#include "../../BotSystem/Public/BotSpawner.h"
 #include <d3d11.h>
 #include <fstream>
 #include <sstream>
@@ -413,6 +414,32 @@ void GUI::Init()
             ImGui::SameLine();
             ImGui::TextDisabled("(off removes every bot)");
             ImGui::Checkbox("Pause bot AI", &FBotSystemConfig::bPaused);
+
+            // Where spawning stands, so a match without bots can be diagnosed without the log.
+            ImGui::SeparatorText("Status");
+            {
+                static uint32 LastTickCount = 0;
+                static double LastTickChange = 0.0;
+                auto TickCount = FBotManager::DiagTickCount.load();
+                if (TickCount != LastTickCount)
+                {
+                    LastTickCount = TickCount;
+                    LastTickChange = ImGui::GetTime();
+                }
+                bool bTicking = TickCount != 0 && ImGui::GetTime() - LastTickChange < 2.0;
+
+                const char* ServerStatus = gsStatus == StartedMatch ? "match started" : gsStatus >= Joinable ? "joinable" : "not ready (loading)";
+                ImGui::Text("Server: %s", ServerStatus);
+                ImGui::Text("Bot system running: %s", bTicking ? "yes" : "NO (server tick not reaching the bot system)");
+                auto Connections = FBotManager::DiagClientConnections.load();
+                if (Connections >= 0)
+                    ImGui::Text("Players connected: %d", Connections);
+                else
+                    ImGui::Text("Players connected: unknown");
+                ImGui::Text("Auto spawn: %s", FBotManager::DiagAutoSpawn.load());
+                ImGui::Text("Last spawn error: %s", BotSpawner::GetLastError());
+                ImGui::Text("Last rejected spawn: %s", FBotManager::DiagLastReject.load());
+            }
 
             ImGui::SeparatorText("Spawning");
             ImGui::Text("Bots: %d / %d", FBotManager::GetPublishedBotCount(), FBotSystemConfig::MaxBots);

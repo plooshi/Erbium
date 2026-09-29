@@ -413,6 +413,22 @@ Still open, because they need in-game results first:
   - Auto spawn toggle and count, manual spawn/fill/remove, and the behavior, cosmetic and debug settings.
 - **F8 console (ErbiumClient).** The client DLL created the console once at injection and crashed or did nothing if the viewport did not exist yet, and Fortnite's console key list usually only has the tilde key. `ErbiumClient/Private/Client.cpp` now retries creating the console every client tick until it exists and adds F8 (and Tilde) to `UInputSettings::ConsoleKeys`. This only helps if you inject ErbiumClient into your game client; the server DLL cannot give a client a console.
 
+
+## Round 9: spawn fallback, status panel, console retry
+
+- **Spawn falls back per step.** Before, only spawning the controller itself fell back to the next controller class. A failure later (player state, pawn, player start, possession) gave up. Now `BotSpawner::SpawnBot` runs steps 1-6 with each candidate in turn (engine AIController, FortAthenaAIBotController, then the player controller). A failed attempt's actors are destroyed before the next one.
+- **Auto spawn retries.** If a fill produced no bot at all, it is retried every 10 s, up to 3 times. A manual "Remove All Bots" is never refilled automatically.
+- **Status panel (AI tab)** shows:
+  - the server state
+  - whether the bot system is receiving server ticks
+  - connected players
+  - the auto-spawn stage
+  - the last spawn error
+  - the last rejected spawn
+
+  Use it to report why no bots appear.
+- **Console keys retried (ErbiumClient).** The previous fix looked up the input settings once, through a getter that caches its first result. When the DLL was injected before the game created that object, F8 was never added. `EnsureConsoleKeys` now looks it up until found, and re-checks the keys about every 3 s.
+
 ## Where to find everything
 
 **Branch:** `claude/erbium-ai-bot-system-sus0gw` on `wieseichwiesenicht-art/Erbium-AI-Fork2`, one commit per phase on top of `main`.

@@ -84,6 +84,13 @@ public:
     // inventory-owner interface belongs to an AI-controller bot; false = not ours, use the player path.
     static bool HandleRemoveInventoryItem(const IInterface* Interface, const FGuid& ItemGuid, int Count, bool bForceRemoval, bool& bOutRemoved);
 
+    // Status for the GUI's AI tab. Written on the game thread; the strings are literals, so they are
+    // safe to read from the GUI thread.
+    static inline std::atomic<uint32> DiagTickCount = 0;         // Tick() calls on the main net driver
+    static inline std::atomic<int> DiagClientConnections = -1;   // human connections (-1 = never ticked)
+    static inline std::atomic<const char*> DiagAutoSpawn = "waiting for the first server tick";
+    static inline std::atomic<const char*> DiagLastReject = "none";
+
     // Latest perf numbers (microseconds), for the GUI.
     static float GetLastAverageTickMicros() { return LastAverageTickMicros; }
 
@@ -127,6 +134,10 @@ private:
     // whether the automatic fill already happened this match.
     static inline double FirstPlayerTime = -1.0;
     static inline bool bAutoFilled = false;
+    static inline int AutoFillAttempts = 0;
+    static inline double NextAutoFillTime = 0.0;
+    static constexpr int MaxAutoFillAttempts = 3;
+    static inline bool bAnyBotSpawned = false;
     static inline bool bWasPaused = false;
 
     static inline double NextMaintenanceTime = 0.0;

@@ -47,6 +47,9 @@ FBotController* FBotManager::SpawnBotInternal(const FSpawnRequest& Request)
 {
     if (!CanSpawnMore(1))
     {
+        DiagLastReject = !FBotSystemConfig::bEnabled ? "AI bots are disabled"
+                         : GUI::gsStatus < Joinable  ? "server not joinable yet"
+                                                     : "bot limit reached";
         BOT_LOG(BOT_CATEGORY_SPAWN, "Spawn rejected (enabled=%d, bots=%d/%d, server ready=%d).", FBotSystemConfig::bEnabled, (int)Bots.size(), FBotSystemConfig::MaxBots, GUI::gsStatus >= Joinable);
         return nullptr;
     }
@@ -69,6 +72,7 @@ FBotController* FBotManager::SpawnBotInternal(const FSpawnRequest& Request)
 
     PerfSpawnCount++;
     PerfSpawnMicros += Elapsed;
+    bAnyBotSpawned = true;
 
     auto Now = GetWorldTime();
     Bot->Activate(Now);
@@ -568,11 +572,14 @@ void FBotManager::Tick(const UObject* NetDriver, float DeltaSeconds)
     if (!World || NetDriver != World->NetDriver)
         return;
 
+    DiagTickCount++;
+
     // AI switched off in the GUI: nothing may stay in the match.
     if (!FBotSystemConfig::bEnabled)
     {
         RequestedSpawnCount = 0;
         bAutoFillRequested = false;
+        DiagAutoSpawn = "AI bots are disabled";
         if (!Bots.empty() || !SpawnQueue.empty())
         {
             BOT_LOG(BOT_CATEGORY_SPAWN, "Bot system disabled: removing %d bot(s).", (int)Bots.size());
@@ -643,14 +650,41 @@ void FBotManager::UpdateAutoSpawn(const UObject* NetDriver, double Now)
 {
     bool bFillNow = bAutoFillRequested.exchange(false);
 
+    auto Connections = ((UNetDriver*)NetDriver)->ClientConnections.Num();
+    DiagClientConnections = Connections;
+
+    // A fill that produced no bot at all (every spawn failed) is retried a few times: the first
+    // attempt can come while the joining player is still loading.
+    if (bAutoFilled && !bAnyBotSpawned && SpawnQueue.empty() && RequestedSpawnCount == 0 && AutoFillAttempts < MaxAutoFillAttempts && Now >= NextAutoFillTime)
+    {
+        bAutoFilled = false;
+        FirstPlayerTime = Now - FBotSystemConfig::AutoSpawnDelay;
+    }
+
     if (!bFillNow)
     {
-        if (!FBotSystemConfig::bAutoSpawn || bAutoFilled || GUI::gsStatus < Joinable)
+        if (!FBotSystemConfig::bAutoSpawn)
+        {
+            DiagAutoSpawn = "off";
             return;
+        }
+        if (bAutoFilled)
+        {
+            DiagAutoSpawn = !bAnyBotSpawned && AutoFillAttempts >= MaxAutoFillAttempts ? "gave up: every spawn failed (see last spawn error)" : "done";
+            return;
+        }
+        if (GUI::gsStatus < Joinable)
+        {
+            DiagAutoSpawn = "waiting for the server to become joinable";
+            return;
+        }
 
         // Wait for a real player: bots have no net connection, so any client connection is a human.
-        if (((UNetDriver*)NetDriver)->ClientConnections.Num() == 0)
+        if (Connections == 0)
+        {
+            DiagAutoSpawn = "waiting for a player to connect";
             return;
+        }
 
         if (FirstPlayerTime < 0.0)
         {
@@ -659,10 +693,17 @@ void FBotManager::UpdateAutoSpawn(const UObject* NetDriver, double Now)
         }
 
         if (Now - FirstPlayerTime < FBotSystemConfig::AutoSpawnDelay)
+        {
+            DiagAutoSpawn = "player connected, spawning in a few seconds";
             return;
+        }
 
         bAutoFilled = true;
+        AutoFillAttempts++;
+        NextAutoFillTime = Now + 10.0;
     }
+
+    DiagAutoSpawn = "spawning";
 
     auto Missing = FBotSystemConfig::AutoSpawnCount - (int)Bots.size() - (int)SpawnQueue.size() - RequestedSpawnCount.load();
     Missing = (std::min)(Missing, FBotSystemConfig::MaxBots - (int)Bots.size() - (int)SpawnQueue.size());

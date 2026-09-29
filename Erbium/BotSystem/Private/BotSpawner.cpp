@@ -7,6 +7,7 @@
 #include "../Public/Cosmetics/BotCosmetics.h"
 #include "../Public/Loot/BotLoot.h"
 #include "../../FortniteGame/Public/FortGameMode.h"
+#include <atomic>
 
 // ESpawnActorCollisionHandlingMethod
 static constexpr uint8_t AdjustIfPossibleButAlwaysSpawn = 2;
@@ -96,96 +97,148 @@ static std::wstring MakeBotName(const FBotController& Bot)
     return std::wstring(Bot.GetConfig().NamePrefix) + L" (#" + std::to_wstring(Bot.GetId()) + L")";
 }
 
-// Spawns the first controller candidate that the engine accepts.
-static AController* SpawnController(AFortGameMode* GameMode, FTransform& Transform, EBotControllerKind& OutKind)
-{
-    for (auto& Candidate : BotCompat::GetBotControllerCandidates(GameMode))
-    {
-        if (auto Controller = (AController*)UWorld::SpawnActor(Candidate.Class, Transform))
-        {
-            OutKind = Candidate.Kind;
-            return Controller;
-        }
+static std::atomic<const char*> LastError = "none";
 
-        BOT_LOG(BOT_CATEGORY_SPAWN, "Could not spawn controller %s, trying the next candidate.", Candidate.Class->GetName().ToString().c_str());
+static bool Fail(FBotController& Bot, const char* ClassName, const char* Reason)
+{
+    LastError = Reason;
+    BOT_LOG(BOT_CATEGORY_SPAWN, "Bot #%u with %s: %s", Bot.GetId(), ClassName, Reason);
+    return false;
+}
+
+// Destroys the actors of a failed attempt and forgets them, so the next candidate starts clean.
+static void DiscardAttempt(FBotController& Bot, AController* Controller, AFortPlayerStateAthena* PlayerState, AFortInventory* Inventory, AFortPlayerPawnAthena* Pawn)
+{
+    if (Controller && Pawn && Controller->Pawn == Pawn)
+        Controller->UnPossess();
+
+    DestroyActorIfAlive(Pawn);
+    DestroyActorIfAlive(Inventory);
+    DestroyActorIfAlive(Controller);
+    DestroyActorIfAlive(PlayerState);
+
+    Bot.BindController(nullptr, EBotControllerKind::PlayerController, nullptr);
+    Bot.InventoryOwnerInterface = nullptr;
+}
+
+// Steps 1-6 with one controller class. On failure everything created is discarded again.
+static bool TrySpawnWith(FBotController& Bot, const FBotSpawnParams& Params, AFortGameMode* GameMode, const BotCompat::FControllerClassChoice& Candidate)
+{
+    auto ClassNameString = Candidate.Class->GetName().ToString();
+    auto ClassName = ClassNameString.c_str();
+    auto Kind = Candidate.Kind;
+
+    // 1. Controller
+    FRotator ControllerRotation = Params.Rotation;
+    FTransform ControllerTransform(Params.Location, ControllerRotation);
+
+    auto Controller = (AController*)UWorld::SpawnActor(Candidate.Class, ControllerTransform);
+    if (!Controller)
+        return Fail(Bot, ClassName, "could not spawn the controller");
+
+    // 2. Player state
+    auto PlayerState = BotCompat::EnsurePlayerState(Controller, ControllerTransform);
+    if (!PlayerState)
+    {
+        DiscardAttempt(Bot, Controller, nullptr, nullptr, nullptr);
+        return Fail(Bot, ClassName, "could not create a player state");
+    }
+    Bot.BindController(Controller, Kind, PlayerState);
+
+    // 3. Inventory: native where the controller supports one, otherwise virtual (see BotInventory.h).
+    auto Inventory = BotCompat::EnsureWorldInventory(Controller, Kind);
+    Bot.GetInventory().Initialize(Inventory);
+    if (Inventory && Kind == EBotControllerKind::AIController)
+        Bot.InventoryOwnerInterface = Controller->GetInterface(IFortInventoryOwnerInterface::StaticClass());
+
+    // 4. Location  5. Pawn
+    auto PawnClass = BotCompat::GetBotPawnClass(GameMode, Controller);
+    if (!PawnClass)
+    {
+        DiscardAttempt(Bot, Controller, PlayerState, Inventory, nullptr);
+        return Fail(Bot, ClassName, "the game mode has no pawn class for this controller");
     }
 
-    return nullptr;
+    AFortPlayerPawnAthena* Pawn = nullptr;
+    bool bHasLocation = false;
+
+    for (int Attempt = 0; Attempt < MaxPawnSpawnAttempts && !Pawn; Attempt++)
+    {
+        FTransform SpawnTransform;
+        if (!SelectSpawnTransform(GameMode, Controller, Params, Attempt, SpawnTransform))
+            break;
+        bHasLocation = true;
+
+        // Try to avoid spawning inside geometry/other bots first; on the last attempt accept an adjusted location.
+        auto CollisionHandling = Attempt + 1 < MaxPawnSpawnAttempts ? AdjustIfPossibleButDontSpawnIfColliding : AdjustIfPossibleButAlwaysSpawn;
+        Pawn = (AFortPlayerPawnAthena*)UWorld::SpawnActor(PawnClass, SpawnTransform, Controller, CollisionHandling);
+    }
+
+    if (!Pawn)
+    {
+        DiscardAttempt(Bot, Controller, PlayerState, Inventory, nullptr);
+        return Fail(Bot, ClassName, bHasLocation ? "the pawn could not be spawned" : "no player start was found");
+    }
+
+    // 6. Possess
+    if (!BotCompat::PossessPawn(Controller, Kind, Pawn, PlayerState) || !Bot.OnPossessed(Pawn))
+    {
+        DiscardAttempt(Bot, Controller, PlayerState, Inventory, Pawn);
+        return Fail(Bot, ClassName, "the controller did not possess the pawn");
+    }
+
+    return true;
 }
 
 namespace BotSpawner
 {
+    const char* GetLastError()
+    {
+        return LastError;
+    }
+
     bool SpawnBot(FBotController& Bot, const FBotSpawnParams& Params)
     {
         auto World = UWorld::GetWorld();
         auto GameMode = World ? (AFortGameMode*)World->AuthorityGameMode : nullptr;
         if (!GameMode || !GameMode->GameState)
         {
+            LastError = "no game mode (map not loaded yet)";
             BOT_LOG(BOT_CATEGORY_SPAWN, "Bot #%u: no game mode, cannot spawn.", Bot.GetId());
             return false;
         }
 
         auto& Config = Bot.GetConfig();
 
-        // 1. Controller
-        FRotator ControllerRotation = Params.Rotation;
-        FTransform ControllerTransform(Params.Location, ControllerRotation);
-        EBotControllerKind Kind = EBotControllerKind::PlayerController;
-
-        auto Controller = SpawnController(GameMode, ControllerTransform, Kind);
-        if (!Controller)
+        auto Candidates = BotCompat::GetBotControllerCandidates(GameMode);
+        if (Candidates.empty())
         {
-            BOT_LOG(BOT_CATEGORY_SPAWN, "Bot #%u: failed to spawn a controller.", Bot.GetId());
+            LastError = "no usable controller class on this build";
+            BOT_LOG(BOT_CATEGORY_SPAWN, "Bot #%u: no controller class to spawn.", Bot.GetId());
             return false;
         }
 
-        // 2. Player state  3. Inventory
-        auto PlayerState = BotCompat::EnsurePlayerState(Controller, ControllerTransform);
-        Bot.BindController(Controller, Kind, PlayerState);
-
-        if (!PlayerState)
+        bool bSpawned = false;
+        for (size_t i = 0; i < Candidates.size() && !bSpawned; i++)
         {
-            BOT_LOG(BOT_CATEGORY_SPAWN, "Bot #%u: failed to create player state.", Bot.GetId());
-            DestroyBot(Bot);
+            bSpawned = TrySpawnWith(Bot, Params, GameMode, Candidates[i]);
+            if (!bSpawned && i + 1 < Candidates.size())
+                BOT_LOG(BOT_CATEGORY_SPAWN, "Bot #%u: trying the next controller class.", Bot.GetId());
+        }
+
+        if (!bSpawned)
+        {
+            BOT_LOG(BOT_CATEGORY_SPAWN, "Bot #%u: every controller class failed (last error: %s).", Bot.GetId(), GetLastError());
+            Bot.MarkPendingRemoval();
             return false;
         }
 
-        // Native inventory where the controller supports one, otherwise virtual (see BotInventory.h).
-        auto Inventory = BotCompat::EnsureWorldInventory(Controller, Kind);
-        Bot.GetInventory().Initialize(Inventory);
-        if (Inventory && Kind == EBotControllerKind::AIController)
-            Bot.InventoryOwnerInterface = Controller->GetInterface(IFortInventoryOwnerInterface::StaticClass());
-
-        // 4. Location  5. Pawn
-        auto PawnClass = BotCompat::GetBotPawnClass(GameMode, Controller);
-        AFortPlayerPawnAthena* Pawn = nullptr;
-
-        for (int Attempt = 0; Attempt < MaxPawnSpawnAttempts && PawnClass && !Pawn; Attempt++)
-        {
-            FTransform SpawnTransform;
-            if (!SelectSpawnTransform(GameMode, Controller, Params, Attempt, SpawnTransform))
-                break;
-
-            // Try to avoid spawning inside geometry/other bots first; on the last attempt accept an adjusted location.
-            auto CollisionHandling = Attempt + 1 < MaxPawnSpawnAttempts ? AdjustIfPossibleButDontSpawnIfColliding : AdjustIfPossibleButAlwaysSpawn;
-            Pawn = (AFortPlayerPawnAthena*)UWorld::SpawnActor(PawnClass, SpawnTransform, Controller, CollisionHandling);
-        }
-
-        if (!Pawn)
-        {
-            BOT_LOG(BOT_CATEGORY_SPAWN, "Bot #%u: failed to spawn pawn (no valid location or pawn class).", Bot.GetId());
-            DestroyBot(Bot);
-            return false;
-        }
-
-        // 6. Possess
-        if (!BotCompat::PossessPawn(Controller, Kind, Pawn, PlayerState) || !Bot.OnPossessed(Pawn))
-        {
-            BOT_LOG(BOT_CATEGORY_SPAWN, "Bot #%u: possession failed.", Bot.GetId());
-            DestroyActorIfAlive(Pawn); // not yet owned by the bot, so DestroyBot would not see it
-            DestroyBot(Bot);
-            return false;
-        }
+        auto Controller = Bot.GetController();
+        auto Kind = Bot.GetControllerKind();
+        auto PlayerState = Bot.GetPlayerState();
+        auto Pawn = Bot.GetPawn();
+        auto Inventory = Bot.GetInventory().GetNativeInventory();
+        LastError = "none";
 
         BotCompat::DisableBuiltInAI(Controller, Kind);
 
