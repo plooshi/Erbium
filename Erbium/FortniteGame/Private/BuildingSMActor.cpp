@@ -35,7 +35,9 @@ void ABuildingSMActor::OnDamageServer(ABuildingSMActor* Actor, float Damage, FGa
                     Controller->GetQuestManager(1)->SendStatEvent(Controller, EFortQuestObjectiveStatEvent::GetComplexCustom(), 1, Actor, TargetTags);
     }*/
 
-    if (!InstigatedBy || !Actor->IsA<ABuildingSMActor>() || Actor->bPlayerPlaced || Actor->GetHealth() == 1 || (Actor->HasbAllowResourceDrop() && !Actor->bAllowResourceDrop))
+    // Materials go into the instigator's WorldInventory, which only player controllers have. AI-controlled
+    // bots (bot system) harvesting with their pickaxe are left to the game.
+    if (!InstigatedBy || !InstigatedBy->IsA<AFortPlayerControllerAthena>() || !Controller->WorldInventory || !Actor->IsA<ABuildingSMActor>() || Actor->bPlayerPlaced || Actor->GetHealth() == 1 || (Actor->HasbAllowResourceDrop() && !Actor->bAllowResourceDrop))
         return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);
     if (!DamageCauser || !DamageCauser->IsA<AFortWeapon>() || !((AFortWeapon*)DamageCauser)->WeaponData->IsA(UFortWeaponMeleeItemDefinition::StaticClass()))
         return OnDamageServerOG(Actor, Damage, DamageTags, Momentum, HitInfo, InstigatedBy, DamageCauser, EffectContext);

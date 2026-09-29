@@ -429,6 +429,16 @@ Still open, because they need in-game results first:
   Use it to report why no bots appear.
 - **Console keys retried (ErbiumClient).** The previous fix looked up the input settings once, through a getter that caches its first result. When the DLL was injected before the game created that object, F8 was never added. `EnsureConsoleKeys` now looks it up until found, and re-checks the keys about every 3 s.
 
+
+## Round 10: server crash after loading in
+
+Two Erbium hooks assumed the pawn or instigator always has a player controller. Both run for bots once they are in the world:
+
+| Hook | When it ran for a bot | Fix |
+|---|---|---|
+| `AFortPlayerPawnAthena::EndSkydiving` (FortPlayerPawnAthena.cpp) | every time a pawn lands: bus drop, drop-in spawn, or a fall | Returns early unless the controller is an `AFortPlayerControllerAthena`; quest events need one. |
+| `ABuildingSMActor::OnDamageServer` (BuildingSMActor.cpp) | a bot hits a tree, rock or wall with its pickaxe | Material harvesting (writes into `WorldInventory`) only for player controllers that have one; everything else goes to the original function. |
+
 ## Where to find everything
 
 **Branch:** `claude/erbium-ai-bot-system-sus0gw` on `wieseichwiesenicht-art/Erbium-AI-Fork2`, one commit per phase on top of `main`.
