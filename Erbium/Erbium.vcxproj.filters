@@ -10,6 +10,24 @@
     <Filter Include="BotSystem\Private">
       <UniqueIdentifier>{682b3c9c-8642-4a84-9c66-8db6bd355ba1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="BotSystem\Public\Navigation">
+      <UniqueIdentifier>{931af4e4-e63f-4d58-98f8-f85a6ca7c04a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BotSystem\Public\Perception">
+      <UniqueIdentifier>{250acc8a-59f7-4dcd-8ad6-8f4e8e7eebb1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BotSystem\Public\Behaviors">
+      <UniqueIdentifier>{33c723c5-be57-4d63-aa3c-987adf967986}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BotSystem\Private\Navigation">
+      <UniqueIdentifier>{a6b7dd1c-1d83-47a4-8d4f-07cbf8ddf3c7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BotSystem\Private\Perception">
+      <UniqueIdentifier>{c3cdc986-7214-4839-8c32-4afb961ed02a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BotSystem\Private\Behaviors">
+      <UniqueIdentifier>{3c5b857f-169b-4e29-92fe-13ada9f913a7}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Engine">
       <UniqueIdentifier>{bf7becbc-c9a6-4671-8262-0472d74df6ce}</UniqueIdentifier>
     </Filter>
@@ -57,6 +75,21 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BotSystem\Public\BotEngineTypes.h">
+      <Filter>BotSystem\Public</Filter>
+    </ClInclude>
+    <ClInclude Include="BotSystem\Public\Navigation\BotNavigation.h">
+      <Filter>BotSystem\Public\Navigation</Filter>
+    </ClInclude>
+    <ClInclude Include="BotSystem\Public\Navigation\BotMovement.h">
+      <Filter>BotSystem\Public\Navigation</Filter>
+    </ClInclude>
+    <ClInclude Include="BotSystem\Public\Perception\BotPerception.h">
+      <Filter>BotSystem\Public\Perception</Filter>
+    </ClInclude>
+    <ClInclude Include="BotSystem\Public\Behaviors\BotBehaviors.h">
+      <Filter>BotSystem\Public\Behaviors</Filter>
+    </ClInclude>
     <ClInclude Include="BotSystem\Public\BotBehavior.h">
       <Filter>BotSystem\Public</Filter>
     </ClInclude>
@@ -293,6 +326,18 @@
     </ClCompile>
     <ClCompile Include="Engine\Private\AbilitySystemComponent.cpp">
       <Filter>Engine\Private</Filter>
+    </ClCompile>
+    <ClCompile Include="BotSystem\Private\Navigation\BotNavigation.cpp">
+      <Filter>BotSystem\Private\Navigation</Filter>
+    </ClCompile>
+    <ClCompile Include="BotSystem\Private\Navigation\BotMovement.cpp">
+      <Filter>BotSystem\Private\Navigation</Filter>
+    </ClCompile>
+    <ClCompile Include="BotSystem\Private\Perception\BotPerception.cpp">
+      <Filter>BotSystem\Private\Perception</Filter>
+    </ClCompile>
+    <ClCompile Include="BotSystem\Private\Behaviors\BotBehaviors.cpp">
+      <Filter>BotSystem\Private\Behaviors</Filter>
     </ClCompile>
     <ClCompile Include="BotSystem\Private\BotBehavior.cpp">
       <Filter>BotSystem\Private</Filter>

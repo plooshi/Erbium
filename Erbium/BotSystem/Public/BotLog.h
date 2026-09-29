@@ -16,6 +16,8 @@
 #define BOT_CATEGORY_AI "BotAI"
 #define BOT_CATEGORY_PERF "BotPerf"
 #define BOT_CATEGORY_COMPAT "BotCompat"
+#define BOT_CATEGORY_NAV "BotNavigation"
+#define BOT_CATEGORY_PERCEPTION "BotPerception"
 
 #define BOT_LOG(Category, Format, ...) printf("[" Category "] " Format "\n", ##__VA_ARGS__)
 

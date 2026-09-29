@@ -11,12 +11,26 @@ enum class EBotLifeState : uint8
     PendingRemoval, // Scheduled for destruction on the next maintenance pass.
 };
 
-// High-level AI state. Phase 1 only uses Idle and Dead; later phases add Searching, Moving, Looting,
-// Targeting, ... as separate IBotBehavior implementations.
+// Which engine controller type drives the bot. See BotCompat::GetBotControllerClass.
+enum class EBotControllerKind : uint8
+{
+    // Client-less APlayerController (Phase 1). Can exist in the match but cannot move on a dedicated
+    // server, because the movement component only simulates player pawns from client RPCs.
+    PlayerController,
+
+    // AAIController subclass. Its pawn is simulated on the server, so it can move and act.
+    AIController,
+};
+
+// High-level AI state. Each value maps to one IBotBehavior (see Behaviors/BotBehaviors.h).
+// Phase 2A: movement states. Looting/combat/healing states are added with their systems.
 enum class EBotAIState : uint8
 {
     None,
-    Idle,
+    Idle,      // Stand still.
+    Searching, // Wander around the area looking for something to do.
+    Moving,    // Go to a commanded location, then Idle.
+    Following, // Stay close to a commanded actor.
     Dead,
 };
 
@@ -36,6 +50,11 @@ inline const char* ToString(EBotLifeState State)
     return "Unknown";
 }
 
+inline const char* ToString(EBotControllerKind Kind)
+{
+    return Kind == EBotControllerKind::AIController ? "AIController" : "PlayerController";
+}
+
 inline const char* ToString(EBotAIState State)
 {
     switch (State)
@@ -44,6 +63,12 @@ inline const char* ToString(EBotAIState State)
         return "None";
     case EBotAIState::Idle:
         return "Idle";
+    case EBotAIState::Searching:
+        return "Searching";
+    case EBotAIState::Moving:
+        return "Moving";
+    case EBotAIState::Following:
+        return "Following";
     case EBotAIState::Dead:
         return "Dead";
     }

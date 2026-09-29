@@ -419,6 +419,11 @@ void GUI::Init()
                 ImGui::SameLine();
                 if (ImGui::Button("Remove All Bots"))
                     FBotManager::RequestRemoveAllBots();
+                // Applies to bots spawned afterwards.
+                static int ControllerMode = (int)FBotSystemConfig::ControllerMode;
+                if (ImGui::Combo("Bot controller", &ControllerMode, "Auto\0AI controller\0Player controller (cannot move)\0"))
+                    FBotSystemConfig::ControllerMode = (EBotControllerMode)ControllerMode;
+                ImGui::Checkbox("Use nav mesh", &FBotSystemConfig::bUseNavMesh);
                 ImGui::Checkbox("Remove dead bots", &FBotSystemConfig::bRemoveDeadBots);
                 ImGui::Checkbox("Verbose bot logging", &FBotSystemConfig::bVerboseLogging);
             }

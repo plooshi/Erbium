@@ -35,6 +35,11 @@ public:
     static int GetBotCount();
     static int GetPendingSpawnCount();
 
+    // Commands for every living bot (0 = all bots) or one bot id. Return how many bots were commanded.
+    static int CommandMoveTo(uint32 BotId, const FVector& Location);
+    static int CommandFollow(uint32 BotId, AActor* Target);
+    static int CommandState(uint32 BotId, EBotAIState State);
+
     static FBotController* FindBot(uint32 BotId);
     static FBotController* FindBotByController(const AActor* Controller);
     static bool IsBot(const AActor* Controller) { return FindBotByController(Controller) != nullptr; }
@@ -71,6 +76,9 @@ private:
     static void ProcessQueuedRequests();
     static void RunMaintenance(double Now);
     static void RunThink(double Now);
+    static void RunFrame();
+    template <typename Fn>
+    static int ForEachCommandTarget(uint32 BotId, Fn&& Func);
     static void FlushPendingRemovals();
     static void RecordTickTime(double Now, double Micros);
     static double GetWorldTime();

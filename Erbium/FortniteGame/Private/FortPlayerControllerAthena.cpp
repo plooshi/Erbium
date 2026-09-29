@@ -15,6 +15,7 @@
 #include "../Public/FortWeapon.h"
 #include "../Public/FortVehicleSeatWeaponComponent.h"
 #include "../../BotSystem/Public/BotManager.h"
+#include "../../BotSystem/Public/Navigation/BotNavigation.h"
 
 void AFortPlayerControllerAthena::GetPlayerViewPoint(AFortPlayerControllerAthena* PlayerController, FVector& Loc, FRotator& Rot)
 {
@@ -32,9 +33,9 @@ uint64_t InitializePlayerGameplayAbilities_;
 
 // Shared by ServerAcknowledgePossession (real players) and the bot system (BotSystem/Private/BotSpawner.cpp),
 // which has no client to send ServerAcknowledgePossession.
-void AFortPlayerControllerAthena::GrantPlayerAbilities(AFortPlayerControllerAthena* PlayerController)
+void AFortPlayerControllerAthena::GrantPlayerAbilities(AFortPlayerStateAthena* PlayerState)
 {
-    auto Interface = PlayerController->PlayerState->GetInterface(IFortAbilitySystemInterface::StaticClass());
+    auto Interface = PlayerState->GetInterface(IFortAbilitySystemInterface::StaticClass());
     if (InitializePlayerGameplayAbilities_ && Interface)
     {
         auto InitializePlayerGameplayAbilities = (void (*&)(const IInterface*))InitializePlayerGameplayAbilities_;
@@ -43,7 +44,7 @@ void AFortPlayerControllerAthena::GrantPlayerAbilities(AFortPlayerControllerAthe
     }
     else
         for (auto& AbilitySet : AFortGameMode::AbilitySets)
-            PlayerController->PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
+            PlayerState->AbilitySystemComponent->GiveAbilitySet(AbilitySet);
 }
 
 void AFortPlayerControllerAthena::GiveStartingItems(AFortPlayerControllerAthena* PlayerController)
@@ -176,7 +177,7 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
         }
     }
 
-    GrantPlayerAbilities(PlayerController);
+    GrantPlayerAbilities(PlayerController->PlayerState);
 
     if (Num == 0)
     {
@@ -197,7 +198,7 @@ void AFortPlayerControllerAthena::ServerAcknowledgePossession(UObject* Context, 
             ((void (*)(AActor*, AActor*))ApplyCharacterCustomization)(PlayerController->PlayerState, Pawn);
         }
 
-        GrantPlayerAbilities(PlayerController);
+        GrantPlayerAbilities(PlayerController->PlayerState);
     }
     else if (FConfiguration::bLateGame && (!FConfiguration::bKeepInventory || FConfiguration::bLateGame))
     {
@@ -1671,6 +1672,10 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
     cheat removebot <Id> - Removes a bot
     cheat removebots - Removes all bots
     cheat listbots - Lists active bots
+    cheat botfollow <Id = all> - Bots follow you
+    cheat botgoto <Id = all> - Bots walk to your location
+    cheat botwander <Id = all> - Bots wander around
+    cheat botidle <Id = all> - Bots stand still
     cheat startevent - Starts the event for the current version
     cheat tp <X> <Y> <Z> - Teleports to a location
     cheat launch <X> <Y> <Z> - Launches the player
@@ -2075,11 +2080,38 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
 
             for (auto Bot : FBotManager::GetActiveBots())
             {
-                std::string State = ToString(Bot->GetAIState());
-                List += L"\n#" + std::to_wstring(Bot->GetId()) + L" " + std::wstring(State.begin(), State.end());
+                std::string Info = std::string(ToString(Bot->GetAIState())) + " " + ToString(Bot->GetControllerKind()) + " nav=" + BotNavigation::ToString(Bot->GetMovement().GetNavMode());
+                List += L"\n#" + std::to_wstring(Bot->GetId()) + L" " + std::wstring(Info.begin(), Info.end());
             }
 
             PlayerController->ClientMessage(FString(List.c_str()), FName(), 1.f);
+        }
+        else if (command == "botfollow" || command == "botgoto" || command == "botwander" || command == "botidle")
+        {
+            // Optional bot id; default = all bots.
+            uint32 BotId = 0;
+            if (args.size() >= 2)
+            {
+                try
+                {
+                    BotId = (uint32)std::stoul(args[1].c_str(), nullptr);
+                }
+                catch (...)
+                {
+                }
+            }
+
+            int Count = 0;
+            if (command == "botfollow" && PlayerController->Pawn)
+                Count = FBotManager::CommandFollow(BotId, PlayerController->Pawn);
+            else if (command == "botgoto" && PlayerController->Pawn)
+                Count = FBotManager::CommandMoveTo(BotId, PlayerController->Pawn->K2_GetActorLocation());
+            else if (command == "botwander")
+                Count = FBotManager::CommandState(BotId, EBotAIState::Searching);
+            else if (command == "botidle")
+                Count = FBotManager::CommandState(BotId, EBotAIState::Idle);
+
+            PlayerController->ClientMessage(FString(std::wstring(L"Commanded " + std::to_wstring(Count) + L" bot(s).").c_str()), FName(), 1.f);
         }
         else if (command == "startevent")
         {

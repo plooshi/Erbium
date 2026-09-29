@@ -156,6 +156,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="BotSystem\Public\BotEngineTypes.h" />
+    <ClInclude Include="BotSystem\Public\Navigation\BotNavigation.h" />
+    <ClInclude Include="BotSystem\Public\Navigation\BotMovement.h" />
+    <ClInclude Include="BotSystem\Public\Perception\BotPerception.h" />
+    <ClInclude Include="BotSystem\Public\Behaviors\BotBehaviors.h" />
     <ClInclude Include="BotSystem\Public\BotBehavior.h" />
     <ClInclude Include="BotSystem\Public\BotCompat.h" />
     <ClInclude Include="BotSystem\Public\BotConfig.h" />
@@ -228,6 +233,10 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="BotSystem\Private\Navigation\BotNavigation.cpp" />
+    <ClCompile Include="BotSystem\Private\Navigation\BotMovement.cpp" />
+    <ClCompile Include="BotSystem\Private\Perception\BotPerception.cpp" />
+    <ClCompile Include="BotSystem\Private\Behaviors\BotBehaviors.cpp" />
     <ClCompile Include="BotSystem\Private\BotBehavior.cpp" />
     <ClCompile Include="BotSystem\Private\BotCompat.cpp" />
     <ClCompile Include="BotSystem\Private\BotController.cpp" />

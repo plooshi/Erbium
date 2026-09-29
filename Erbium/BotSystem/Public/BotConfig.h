@@ -1,4 +1,5 @@
 #pragma once
+#include "BotState.h"
 
 // Bot system configuration.
 //
@@ -10,10 +11,21 @@
 // phases (difficulty, aim, perception...) can give different bots different values without touching
 // the global settings.
 
+enum class EBotControllerMode : uint8
+{
+    // Use an AI controller when the build has a usable class, otherwise fall back to a player controller.
+    Auto,
+    AIController,
+    // Phase 1 behavior: bots exist and can be killed, but cannot move (see EBotControllerKind).
+    PlayerController,
+};
+
 struct FBotSystemConfig
 {
     // Master switch. When false, spawn requests are rejected.
     static inline bool bEnabled = true;
+
+    static inline EBotControllerMode ControllerMode = EBotControllerMode::Auto;
 
     // Hard cap on simultaneously existing bots (alive + dead-awaiting-cleanup).
     static inline int MaxBots = 100;
@@ -24,6 +36,10 @@ struct FBotSystemConfig
     // How often (seconds) each bot's behavior is ticked. Bots are staggered across this interval so
     // that 100 bots do not all think on the same frame.
     static inline float ThinkInterval = 0.1f;
+
+    // How often (seconds) the shared world snapshot used by perception is rebuilt. One actor query per
+    // interval, shared by all bots.
+    static inline float PerceptionSnapshotInterval = 0.5f;
 
     // Maximum number of bots spawned per server tick. Spawning is comparatively expensive (several
     // actors, inventory, abilities), so large requests are spread over multiple frames.
@@ -39,6 +55,10 @@ struct FBotSystemConfig
     // Radius (cm) around the requested location in which bots are scattered, so a batch spawned at the
     // same point does not stack on top of each other.
     static inline float SpawnScatterRadius = 400.f;
+
+    // Try nav-mesh pathfinding first. When the map has no usable nav data the navigation layer
+    // automatically falls back to direct paths and then to steering (see BotNavigation.h).
+    static inline bool bUseNavMesh = true;
 
     // Log aggregated tick timings every PerfReportInterval seconds while bots exist (0 disables).
     static inline float PerfReportInterval = 30.f;
@@ -56,4 +76,24 @@ struct FBotConfig
 
     // Give the playlist's starting items (pickaxe, build tools, ...) the same way a real player gets them.
     bool bGiveStartingItems = true;
+
+    // State entered after spawning (only when the bot can move; otherwise Idle).
+    EBotAIState DefaultAIState = EBotAIState::Searching;
+
+    // --- Perception ---
+    float DetectionRadius = 5000.f;    // cm. Pawns further away are ignored entirely.
+    float PerceptionInterval = 0.5f;   // Seconds between this bot's perception updates.
+    int MaxLineOfSightChecks = 4;      // Nearest N candidates get a line-of-sight trace per update.
+
+    // --- Movement ---
+    float AcceptanceRadius = 100.f;    // cm. Close enough to a location goal.
+    float FollowDistance = 400.f;      // cm. Following bots stop this far from their target.
+    float SprintDistance = 1500.f;     // cm. Sprint when the goal is further than this.
+    float SearchRadius = 3000.f;       // cm. Wander radius while Searching.
+    float RepathInterval = 1.0f;       // Seconds between path refreshes for moving goals.
+    float StuckCheckInterval = 1.5f;   // Seconds between progress checks.
+    float StuckDistance = 50.f;        // cm. Less progress than this counts as stuck.
+    int MaxStuckChecks = 3;            // Give up on a goal after this many stuck checks in a row.
+    bool bCanSprint = true;
+    bool bCanJump = true;              // Jump when stuck.
 };

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "../Public/BotCompat.h"
+#include "../Public/BotEngineTypes.h"
 #include "../Public/BotLog.h"
 #include "../../FortniteGame/Public/FortGameMode.h"
 #include "../../FortniteGame/Public/FortKismetLibrary.h"
@@ -14,6 +15,9 @@ namespace BotCompat
 {
     static bool IsChildOf(const UStruct* Struct, const UStruct* Parent)
     {
+        if (!Parent)
+            return false;
+
         for (; Struct; Struct = Struct->GetSuper())
             if (Struct == Parent)
                 return true;
@@ -21,24 +25,59 @@ namespace BotCompat
         return false;
     }
 
-    const UClass* GetBotControllerClass(AFortGameMode* GameMode)
+    static void AddPlayerControllerCandidates(AFortGameMode* GameMode, std::vector<FControllerClassChoice>& Out)
     {
         if (GameMode->HasPlayerControllerClass())
         {
             auto Class = GameMode->PlayerControllerClass;
 
             if (Class && IsChildOf(Class, AFortPlayerControllerAthena::StaticClass()))
-                return Class;
+                Out.push_back({ Class, EBotControllerKind::PlayerController });
         }
 
         static auto Fallback = FindObject<UClass>(L"/Game/Athena/Athena_PlayerController.Athena_PlayerController_C");
-        if (!Fallback)
-            BOT_LOG(BOT_CATEGORY_COMPAT, "No usable player controller class found on this build.");
-
-        return Fallback;
+        if (Fallback)
+            Out.push_back({ Fallback, EBotControllerKind::PlayerController });
     }
 
-    const UClass* GetBotPawnClass(AFortGameMode* GameMode, AFortPlayerControllerAthena* Controller)
+    static void AddAIControllerCandidates(std::vector<FControllerClassChoice>& Out)
+    {
+        // Plain engine AI controller first: it has no Fortnite bot logic of its own that could need
+        // bot data we do not provide, or compete with the bot system for the pawn.
+        if (auto EngineAIController = AAIController::StaticClass())
+            Out.push_back({ EngineAIController, EBotControllerKind::AIController });
+
+        // Fortnite's own bot controller (the class Epic's server bots use in this version range).
+        static auto FortBotController = FindClass("FortAthenaAIBotController");
+        if (FortBotController)
+            Out.push_back({ FortBotController, EBotControllerKind::AIController });
+    }
+
+    std::vector<FControllerClassChoice> GetBotControllerCandidates(AFortGameMode* GameMode)
+    {
+        std::vector<FControllerClassChoice> Candidates;
+
+        switch (FBotSystemConfig::ControllerMode)
+        {
+        case EBotControllerMode::AIController:
+            AddAIControllerCandidates(Candidates);
+            break;
+        case EBotControllerMode::PlayerController:
+            AddPlayerControllerCandidates(GameMode, Candidates);
+            break;
+        case EBotControllerMode::Auto:
+            AddAIControllerCandidates(Candidates);
+            AddPlayerControllerCandidates(GameMode, Candidates);
+            break;
+        }
+
+        if (Candidates.empty())
+            BOT_LOG(BOT_CATEGORY_COMPAT, "No usable controller class found on this build.");
+
+        return Candidates;
+    }
+
+    const UClass* GetBotPawnClass(AFortGameMode* GameMode, AController* Controller)
     {
         if (auto Class = GameMode->GetDefaultPawnClassForController(Controller))
             return Class;
@@ -46,7 +85,7 @@ namespace BotCompat
         return GameMode->DefaultPawnClass;
     }
 
-    AFortPlayerStateAthena* EnsurePlayerState(AFortPlayerControllerAthena* Controller, const FTransform& Transform)
+    AFortPlayerStateAthena* EnsurePlayerState(AController* Controller, const FTransform& Transform)
     {
         if (auto Existing = Controller->PlayerState)
             return Existing;
@@ -64,34 +103,59 @@ namespace BotCompat
         return PlayerState;
     }
 
-    AFortInventory* EnsureWorldInventory(AFortPlayerControllerAthena* Controller)
+    AFortInventory* EnsureWorldInventory(AController* Controller, EBotControllerKind Kind)
     {
-        if (auto Existing = Controller->WorldInventory)
-            return Existing;
-
-        if (!Controller->HasWorldInventoryClass() || !Controller->WorldInventoryClass)
+        if (Kind != EBotControllerKind::PlayerController)
             return nullptr;
 
-        auto Inventory = UWorld::SpawnActor<AFortInventory>(Controller->WorldInventoryClass, FVector{}, FRotator{}, Controller);
+        auto PlayerController = (AFortPlayerControllerAthena*)Controller;
+
+        if (auto Existing = PlayerController->WorldInventory)
+            return Existing;
+
+        if (!PlayerController->HasWorldInventoryClass() || !PlayerController->WorldInventoryClass)
+            return nullptr;
+
+        auto Inventory = UWorld::SpawnActor<AFortInventory>(PlayerController->WorldInventoryClass, FVector{}, FRotator{}, PlayerController);
         if (!Inventory)
             return nullptr;
 
         Inventory->InventoryType = 0;
-        Controller->WorldInventory = Inventory;
+        PlayerController->WorldInventory = Inventory;
 
         return Inventory;
     }
 
-    bool PossessPawn(AFortPlayerControllerAthena* Controller, AFortPlayerPawnAthena* Pawn, AFortPlayerStateAthena* PlayerState)
+    void DisableBuiltInAI(AController* Controller, EBotControllerKind Kind)
+    {
+        if (Kind != EBotControllerKind::AIController)
+            return;
+
+        auto AIController = (AAIController*)Controller;
+        if (!AIController->HasBrainComponent())
+            return;
+
+        if (auto Brain = AIController->BrainComponent)
+        {
+            FString Reason = FString(L"Erbium bot system");
+            Brain->StopLogic(Reason);
+        }
+    }
+
+    bool PossessPawn(AController* Controller, EBotControllerKind Kind, AFortPlayerPawnAthena* Pawn, AFortPlayerStateAthena* PlayerState)
     {
         Controller->Possess(Pawn);
 
         if (Controller->Pawn != Pawn || Pawn->Controller != Controller)
             return false;
 
-        // The original spawnbot notes this crashes on 27+ when left unset.
-        if (Controller->HasMyFortPawn())
-            Controller->MyFortPawn = Pawn;
+        if (Kind == EBotControllerKind::PlayerController)
+        {
+            // The original spawnbot notes this crashes on 27+ when left unset.
+            auto PlayerController = (AFortPlayerControllerAthena*)Controller;
+            if (PlayerController->HasMyFortPawn())
+                PlayerController->MyFortPawn = Pawn;
+        }
 
         if (PlayerState && Pawn->PlayerState != PlayerState)
         {
@@ -102,11 +166,12 @@ namespace BotCompat
         return true;
     }
 
-    void AssignTeam(AFortGameMode* GameMode, AFortPlayerControllerAthena* Controller, AFortPlayerStateAthena* PlayerState)
+    void AssignTeam(AFortGameMode* GameMode, AController* Controller, AFortPlayerStateAthena* PlayerState)
     {
         auto GameState = GameMode->GameState;
 
-        PlayerState->TeamIndex = AFortGameMode::PickTeam(GameMode, 0, Controller);
+        // PickTeam only reads the game mode / playlist; the controller argument is unused.
+        PlayerState->TeamIndex = AFortGameMode::PickTeam(GameMode, 0, (AFortPlayerControllerAthena*)Controller);
 
         if (PlayerState->HasSquadId())
         {
@@ -140,12 +205,12 @@ namespace BotCompat
         free(Member);
     }
 
-    void SetPlayerName(AFortGameMode* GameMode, AFortPlayerControllerAthena* Controller, AFortPlayerStateAthena* PlayerState, const wchar_t* Name)
+    void SetPlayerName(AFortGameMode* GameMode, AController* Controller, EBotControllerKind Kind, AFortPlayerStateAthena* PlayerState, const wchar_t* Name)
     {
         FString BotName = FString(Name);
 
-        if (std::floor(VersionInfo.FortniteVersion) < 9)
-            Controller->ServerChangeName(BotName);
+        if (Kind == EBotControllerKind::PlayerController && std::floor(VersionInfo.FortniteVersion) < 9)
+            ((AFortPlayerControllerAthena*)Controller)->ServerChangeName(BotName);
         else
             GameMode->ChangeName(Controller, BotName, true);
 
@@ -202,7 +267,7 @@ namespace BotCompat
             ((void (*)(AActor*, AActor*))ApplyCharacterCustomization)(PlayerState, Pawn);
     }
 
-    static int32 FindAlivePlayerIndex(AFortGameMode* GameMode, AFortPlayerControllerAthena* Controller)
+    static int32 FindAlivePlayerIndex(AFortGameMode* GameMode, AController* Controller)
     {
         if (!GameMode->HasAlivePlayers())
             return -1;
@@ -217,33 +282,50 @@ namespace BotCompat
         return -1;
     }
 
-    bool IsInAlivePlayers(AFortGameMode* GameMode, AFortPlayerControllerAthena* Controller)
+    static void ChangePlayersLeft(AFortGameMode* GameMode, int Delta)
     {
-        return FindAlivePlayerIndex(GameMode, Controller) != -1;
-    }
-
-    void AddToAlivePlayers(AFortGameMode* GameMode, AFortPlayerControllerAthena* Controller)
-    {
-        if (!GameMode->HasAlivePlayers() || IsInAlivePlayers(GameMode, Controller))
+        auto GameState = GameMode->GameState;
+        if (!GameState->HasPlayersLeft())
             return;
 
-        auto GameState = GameMode->GameState;
-        GameState->PlayersLeft++;
-        GameState->OnRep_PlayersLeft();
+        if (Delta < 0 && GameState->PlayersLeft <= 0)
+            return;
 
+        GameState->PlayersLeft += Delta;
+        GameState->OnRep_PlayersLeft();
+    }
+
+    void RegisterAlive(AFortGameMode* GameMode, AController* Controller, EBotControllerKind Kind)
+    {
+        if (Kind == EBotControllerKind::AIController)
+        {
+            ChangePlayersLeft(GameMode, 1);
+            return;
+        }
+
+        if (!GameMode->HasAlivePlayers() || FindAlivePlayerIndex(GameMode, Controller) != -1)
+            return;
+
+        ChangePlayersLeft(GameMode, 1);
         GameMode->AlivePlayers.Add(Controller);
     }
 
-    void RemoveFromAlivePlayers(AFortGameMode* GameMode, AFortPlayerControllerAthena* Controller)
+    void UnregisterAlive(AFortGameMode* GameMode, AController* Controller, EBotControllerKind Kind)
     {
-        if (!IsInAlivePlayers(GameMode, Controller))
+        if (Kind == EBotControllerKind::AIController)
+        {
+            ChangePlayersLeft(GameMode, -1);
+            return;
+        }
+
+        if (FindAlivePlayerIndex(GameMode, Controller) == -1)
             return;
 
         if (RemoveFromAlivePlayers_)
         {
             // Same call ClientOnPawnDied makes, with no killer / weapon / death cause: the bot left the match.
-            ((void (*)(AFortGameMode*, AFortPlayerControllerAthena*, AFortPlayerStateAthena*, AFortPlayerPawnAthena*, UFortItemDefinition*, uint8, char))RemoveFromAlivePlayers_)(
-                GameMode, Controller, nullptr, nullptr, nullptr, 0, 0);
+            ((void (*)(AFortGameMode*, AController*, AFortPlayerStateAthena*, AFortPlayerPawnAthena*, UFortItemDefinition*, uint8, char))RemoveFromAlivePlayers_)(GameMode, Controller, nullptr,
+                                                                                                                                                     nullptr, nullptr, 0, 0);
         }
 
         // Fallback (or the native function kept it for some reason): AlivePlayers holds raw pointers and
@@ -252,13 +334,7 @@ namespace BotCompat
         if (Index != -1)
         {
             GameMode->AlivePlayers.Remove(Index);
-
-            auto GameState = GameMode->GameState;
-            if (GameState->PlayersLeft > 0)
-            {
-                GameState->PlayersLeft--;
-                GameState->OnRep_PlayersLeft();
-            }
+            ChangePlayersLeft(GameMode, -1);
         }
     }
 
@@ -274,14 +350,55 @@ namespace BotCompat
         return Pawn->GetHealth() <= 0.f;
     }
 
-    bool IsEliminated(AFortPlayerControllerAthena* Controller, AFortPlayerPawnAthena* Pawn)
+    bool IsEliminated(AController* Controller, EBotControllerKind Kind, AFortPlayerPawnAthena* Pawn)
     {
         if (Pawn)
             return IsPawnDead(Pawn);
 
-        static auto IsInAircraftFunc = Controller->GetFunction("IsInAircraft");
-        if (IsInAircraftFunc && Controller->Call<bool>(IsInAircraftFunc))
+        if (Kind == EBotControllerKind::PlayerController)
+        {
+            static auto IsInAircraftFunc = Controller->GetFunction("IsInAircraft");
+            if (IsInAircraftFunc && Controller->Call<bool>(IsInAircraftFunc))
+                return false;
+        }
+
+        return true;
+    }
+
+    bool SetMovementSpeed(AFortPlayerPawnAthena* Pawn, EBotMoveSpeed Speed)
+    {
+        static auto StyleOffset = Pawn->GetOffset("CurrentMovementStyle");
+        static auto StyleEnum = SDK::FindEnum("EFortMovementStyle");
+        static auto OnRepFunc = Pawn->GetFunction("OnRep_CurrentMovementStyle");
+
+        if (StyleOffset == -1 || !StyleEnum)
+        {
+            static bool bLogged = false;
+            if (!bLogged)
+            {
+                bLogged = true;
+                BOT_LOG(BOT_CATEGORY_COMPAT, "Movement styles are not exposed on this build; bots keep their default speed.");
+            }
             return false;
+        }
+
+        static auto WalkValue = StyleEnum->GetValue("Walking");
+        static auto RunValue = StyleEnum->GetValue("Running");
+        static auto SprintValue = StyleEnum->GetValue("Sprinting");
+
+        auto Value = Speed == EBotMoveSpeed::Walk ? WalkValue : (Speed == EBotMoveSpeed::Sprint ? SprintValue : RunValue);
+        if (Value == -1)
+            Value = RunValue; // e.g. no dedicated sprint style on this build
+        if (Value == -1)
+            return false;
+
+        auto& Style = *(uint8*)(__int64(Pawn) + StyleOffset);
+        if (Style == (uint8)Value)
+            return true;
+
+        Style = (uint8)Value;
+        if (OnRepFunc)
+            Pawn->ProcessEvent(OnRepFunc, nullptr);
 
         return true;
     }

@@ -1,9 +1,11 @@
 #include "pch.h"
 #include "../Public/BotManager.h"
+#include "../Public/BotCompat.h"
 #include "../Public/BotLog.h"
 #include "../Public/BotSpawner.h"
+#include "../Public/Perception/BotPerception.h"
+#include "../../FortniteGame/Public/FortGameMode.h"
 #include "../../Erbium/Public/GUI.h"
-#include "../../FortniteGame/Public/FortPlayerPawnAthena.h"
 
 static double NowMicros()
 {
@@ -68,7 +70,7 @@ FBotController* FBotManager::SpawnBotInternal(const FSpawnRequest& Request)
     // Stagger thinking so bots spawned together do not all run on the same frame.
     Bot->NextThinkTime = Now + FBotSystemConfig::ThinkInterval * (double)(Bot->GetId() % 10) / 10.0;
 
-    BOT_LOG(BOT_CATEGORY_SPAWN, "Spawned bot #%u in %.2fms (%d active).", Bot->GetId(), Elapsed / 1000.0, (int)Bots.size() + 1);
+    BOT_LOG(BOT_CATEGORY_SPAWN, "Spawned bot #%u (%s) in %.2fms (%d active).", Bot->GetId(), ToString(Bot->GetControllerKind()), Elapsed / 1000.0, (int)Bots.size() + 1);
 
     Bots.push_back(std::move(Bot));
     return Bots.back().get();
@@ -254,12 +256,24 @@ void FBotManager::ProcessQueuedRequests()
 
 void FBotManager::RunMaintenance(double Now)
 {
+    auto World = UWorld::GetWorld();
+    auto GameMode = World ? (AFortGameMode*)World->AuthorityGameMode : nullptr;
+
     for (auto& Bot : Bots)
     {
         if (!Bot->Validate(Now))
         {
             Bot->MarkPendingRemoval();
             continue;
+        }
+
+        // Dead bots stop counting as alive players right away, not only when they are removed. For
+        // player controllers the game's death handling usually did this already (idempotent).
+        if (Bot->GetLifeState() == EBotLifeState::Dead && Bot->bRegisteredAlive && GameMode)
+        {
+            if (auto Controller = Bot->GetController())
+                BotCompat::UnregisterAlive(GameMode, Controller, Bot->GetControllerKind());
+            Bot->bRegisteredAlive = false;
         }
 
         if (FBotSystemConfig::bRemoveDeadBots && Bot->GetLifeState() == EBotLifeState::Dead && Now - Bot->GetDeathTime() >= FBotSystemConfig::DeadBotCleanupDelay)
@@ -279,6 +293,45 @@ void FBotManager::RunThink(double Now)
     }
 }
 
+void FBotManager::RunFrame()
+{
+    for (auto& Bot : Bots)
+        if (Bot->GetLifeState() == EBotLifeState::Active)
+            Bot->TickFrame();
+}
+
+template <typename Fn>
+int FBotManager::ForEachCommandTarget(uint32 BotId, Fn&& Func)
+{
+    int Count = 0;
+
+    for (auto& Bot : Bots)
+    {
+        if ((BotId != 0 && Bot->GetId() != BotId) || !Bot->IsAlive())
+            continue;
+
+        Func(*Bot);
+        Count++;
+    }
+
+    return Count;
+}
+
+int FBotManager::CommandMoveTo(uint32 BotId, const FVector& Location)
+{
+    return ForEachCommandTarget(BotId, [&](FBotController& Bot) { Bot.CommandMoveTo(Location); });
+}
+
+int FBotManager::CommandFollow(uint32 BotId, AActor* Target)
+{
+    return ForEachCommandTarget(BotId, [&](FBotController& Bot) { Bot.CommandFollow(Target); });
+}
+
+int FBotManager::CommandState(uint32 BotId, EBotAIState State)
+{
+    return ForEachCommandTarget(BotId, [&](FBotController& Bot) { Bot.SetAIState(State); });
+}
+
 void FBotManager::Tick(const UObject* NetDriver, float DeltaSeconds)
 {
     auto World = UWorld::GetWorld();
@@ -287,7 +340,11 @@ void FBotManager::Tick(const UObject* NetDriver, float DeltaSeconds)
 
     if (Bots.empty() && SpawnQueue.empty() && !bRemoveAllRequested && RequestedSpawnCount == 0)
     {
-        PublishedBotCount = 0;
+        if (PublishedBotCount != 0)
+        {
+            PublishedBotCount = 0;
+            BotPerceptionWorld::Reset();
+        }
         return;
     }
 
@@ -304,7 +361,12 @@ void FBotManager::Tick(const UObject* NetDriver, float DeltaSeconds)
         RunMaintenance(Now);
     }
 
+    // One shared actor snapshot per interval for all bots' perception.
+    if (!Bots.empty())
+        BotPerceptionWorld::Update(Now);
+
     RunThink(Now);
+    RunFrame();
 
     bIsTicking = false;
     FlushPendingRemovals();

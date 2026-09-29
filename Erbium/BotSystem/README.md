@@ -1,7 +1,8 @@
 # Erbium Bot System
 
 A modular system for AI-controlled players in a local/private Erbium test server. It is being built in
-phases; **only Phase 1 (spawning and lifecycle) is implemented so far.**
+phases. **Implemented: Phase 1 (spawning and lifecycle), Phase 2A (movement, navigation, perception).**
+Next: Phase 2B (loot and inventory), then Phase 2C (combat and healing).
 
 ## How Erbium works (and why this matters for bots)
 
@@ -17,7 +18,8 @@ Erbium is not an Unreal project. It is a DLL injected into a shipped Fortnite se
 | **Server tick** | `UNetDriver::TickFlush` has three variants (legacy, ReplicationGraph, Iris), depending on the build. | `FBotManager::Tick` is called from all three and ignores net drivers other than the world's main one. |
 | **Threading** | The ImGui GUI runs on its own thread. | The GUI never touches bot actors. It only sets atomic requests, which `Tick` carries out on the game thread. |
 | **Inventory / weapons** | `AFortInventory::GiveItem`, `ServerExecuteInventoryItem`, `AFortWeapon` | Phase 2 will reuse these. It won't add a separate weapon system. |
-| **Navigation** | `UWorld::NavigationSystem` is exposed. Nothing in Erbium uses pathfinding yet. | Phase 2 will put navigation behind an interface, because nav mesh availability varies by map and version. |
+| **Net mode** | `Misc::GetNetMode` forces **dedicated server** (1). | On a dedicated server `APlayerController::IsLocalController()` is always false, so the movement component moves a PlayerController's pawn only from *client* `ServerMove` RPCs. A client-less PlayerController bot cannot walk. **Bots that need to move use an AI controller** (see below). |
+| **Navigation** | `UWorld::NavigationSystem` exists. Nothing in Erbium used pathfinding before this. | `IBotNavigation`, with runtime fallback, because nav mesh availability varies by map and version (Phase 2A). |
 | **Building** | Hooks for `ServerCreateBuildingActor` / `ServerEditBuildingActor` / `ServerRepairBuildingActor`, plus `ABuildingSMActor` | Phase 4 will go through these server functions. |
 | **Cosmetics** | `CosmeticLoadoutPC` / `CustomizationLoadout` (`FFortAthenaLoadout`), `CharacterParts` (raw array or `FCustomCharacterParts`, depending on the build). `Misc.cpp` already references `FortAthenaAIBotCustomizationData`. | Phase 3 |
 
@@ -26,6 +28,10 @@ Erbium is not an Unreal project. It is a DLL injected into a shipped Fortnite se
 ```
 BotSystem/
   Public/
+    BotEngineTypes.h AController / AAIController / ACharacter / NavigationSystemV1 views
+    Navigation/      IBotNavigation strategies + FBotMovement (goals, arrival, stuck, speed)
+    Perception/      shared world snapshot + per-bot FBotPerception
+    Behaviors/       Idle / Searching / Moving / Following / Dead
     BotConfig.h      FBotSystemConfig (server-wide, GUI-editable) + FBotConfig (per bot)
     BotState.h       EBotLifeState (exists/dead/removing) and EBotAIState (what it is doing)
     BotBehavior.h    IBotBehavior: OnEnter / Tick / OnExit, one object per AI state
@@ -83,12 +89,58 @@ For each of 1, 5, 10, 25, 50 and 100 bots:
 6. Start the bus with bots alive. Bots must **not** be marked dead. Their in-bus behavior is Phase 2.
 7. Spawn/remove 25 bots in a loop 10×. Memory should stay flat, with no crash.
 
-### Known limitations (Phase 1)
+### Known limitations (Phase 1, some lifted by 2A)
 - **Not run-time tested yet.** It has been compiled and checked (see below) but not run against a game build in this environment.
-- Bots stand still (Idle). Movement, perception and combat are Phase 2.
+- Player-controller bots stand still. AI-controller bots move (Phase 2A).
 - Bots do not jump from the bus by themselves. Erbium's aircraft code already skips `bIsABot` players for auto-jump. Phase 2 will add a bus-exit behavior.
 - The `GameMemberInfoArray` entry is not removed when a bot is removed. Erbium has no removal code for real players either. The effect is limited to squad UI data.
 - The default appearance is fixed. Random cosmetics are Phase 3.
+
+## Phase 2A: movement, navigation, perception
+
+### Controller backends
+`FBotSystemConfig::ControllerMode` (GUI: Misc → Bots → "Bot controller"):
+- **Auto** (default): try the engine `AIController`, then `FortAthenaAIBotController`, then fall back to the Phase 1 player controller.
+- **AI controller**: `AAIController` subclasses. The pawn is simulated on the server, so it can move. It gets a player state (created if the class doesn't make one), a team, abilities, a name and appearance. Any built-in behavior tree is stopped (`BrainComponent->StopLogic`), so only the bot system drives the pawn.
+- **Player controller**: Phase 1 behavior. The bot cannot move (see Net mode above).
+
+AI-controller bots are **not** added to `GameMode->AlivePlayers`, because Erbium iterates it in many places and casts every entry to `AFortPlayerControllerAthena`. They count towards `GameState->PlayersLeft` only. The engine `AIController` doesn't implement Fortnite's inventory-owner interface, so these bots get no inventory until Phase 2B.
+
+### Navigation (`Navigation/BotNavigation.h`)
+| Mode | How | Needs |
+|---|---|---|
+| Pathfinding | `AAIController::MoveToLocation/MoveToActor`, pathfinding on | nav mesh data on the map |
+| DirectPath | the same calls with `bUsePathfinding = false` | a navigation system |
+| Steering | `APawn::AddMovementInput` towards the goal every frame | nothing (the pawn must be locally controlled, which AI pawns are) |
+
+No mode teleports. All movement goes through the character movement component. A mode that fails 8 times without ever succeeding is disabled for the match, with a `[BotNavigation]` log line. A single failed request falls through to the next mode right away. Search points come from `NavigationSystemV1::K2_GetRandomReachablePointInRadius` when a nav mesh answers, or a random point on the circle otherwise.
+
+`FBotMovement` turns goals (`MoveToLocation`, `MoveToActor`, `Follow`) into navigation requests. It handles arrival (2D radius with ±3 m height tolerance), repathing for moving targets, stuck detection (jump, then give up after `MaxStuckChecks`), and speed (sprint beyond `SprintDistance`). Speed uses the pawn's `CurrentMovementStyle`, with the values looked up by name in `EFortMovementStyle`. If the build doesn't expose that, speed stays at the default and this is logged once.
+
+### Perception (`Perception/BotPerception.h`)
+- One `GetAllActorsOfClass(FortPlayerPawnAthena)` every `PerceptionSnapshotInterval` (0.5 s), shared by all bots.
+- Each bot, every `PerceptionInterval`, applies a distance cull (`DetectionRadius`) against the snapshot, sorts by distance, and runs `AController::LineOfSightTo` for the nearest `MaxLineOfSightChecks` pawns only. `LastSeenTime` is kept so later combat can remember targets briefly.
+- Teams come from player states. Bots don't learn anything a player couldn't: pawns out of range are unknown, and unseen pawns are marked not visible.
+
+### State machine
+`Idle`, `Searching` (wander to random reachable points with short pauses), `Moving` (commanded destination, then Idle), `Following` (commanded target, repaths as it moves, back to Searching if it is gone), and `Dead`. Behaviors only set goals; `FBotMovement` executes them. Each think runs perception → behavior → movement.
+
+### Test cheats
+`cheat botfollow [id]`, `cheat botgoto [id]`, `cheat botwander [id]`, `cheat botidle [id]`. With no id, the command applies to all bots. `cheat listbots` now shows the state, controller kind and nav mode.
+
+### Phase 2A test plan
+1. Spawn 5 bots. The log should say `Spawned bot #n (AIController)`. If it says `PlayerController`, no AI controller class could be spawned on this build. Report the `[BotSpawn]` lines.
+2. Bots should start wandering (Searching) within about 1 s. `cheat listbots` shows `nav=Pathfinding`, `DirectPath` or `Steering`, meaning the best mode that worked. Check for `[BotNavigation]` lines about disabled modes.
+3. `cheat botfollow`, then run around. Bots should follow, stop about 4 m away, and sprint when far behind (unless `[BotCompat] Movement styles are not exposed` was logged).
+4. `cheat botgoto` from somewhere else. Bots walk to that spot and stop.
+5. Walk bots into a wall or fence. They should jump, then give up and pick a new point.
+6. Kill a bot. Check for `Bot #x died`, the player count going down, and removal after 5 s.
+7. Repeat steps 1–2 with 25, 50 and 100 bots and record the `[BotPerf]` lines, especially `steady=`.
+
+### Phase 2A limitations
+- AI-controller bots have no inventory or items yet (Phase 2B), so they can't fight (Phase 2C).
+- Killing an AI-controller bot doesn't go through Erbium's `ClientOnPawnDied`, which is a PlayerController function. The bot is detected as dead and removed, but kill-feed and killer stats for these kills aren't handled yet. This comes with combat (2C).
+- Bots don't board the battle bus. Bus and drop handling is planned with 2C and Phase 5.
 
 ### Build verification
 There is no Windows toolchain in the development container. Each changed translation unit was checked with clang in MSVC-compatibility mode against mingw-w64 headers (`-fms-extensions -fms-compatibility -fsyntax-only`). The error output is identical to the untouched baseline: only libstdc++-internal errors that the toolchain itself causes. The authoritative build is MSBuild (`.github/workflows/Build.yml`).
