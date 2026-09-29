@@ -649,4 +649,72 @@ namespace BotCompat
 
         return true;
     }
+
+    FMovementInfo GetMovementInfo(AFortPlayerPawnAthena* Pawn)
+    {
+        FMovementInfo Info;
+        auto Movement = Pawn ? (UObject*)Pawn->CharacterMovement : nullptr;
+        if (!Movement)
+            return Info;
+
+        static auto ModeOffset = Movement->GetOffset("MovementMode");
+        static auto MaxWalkSpeedOffset = Movement->GetOffset("MaxWalkSpeed");
+        static auto MaxAccelerationOffset = Movement->GetOffset("MaxAcceleration");
+        static auto GetMaxSpeedFunc = Movement->GetFunction("GetMaxSpeed");
+
+        if (ModeOffset != -1)
+            Info.Mode = *(uint8*)(__int64(Movement) + ModeOffset);
+        if (MaxWalkSpeedOffset != -1)
+            Info.MaxWalkSpeed = *(float*)(__int64(Movement) + MaxWalkSpeedOffset);
+        if (MaxAccelerationOffset != -1)
+            Info.MaxAcceleration = *(float*)(__int64(Movement) + MaxAccelerationOffset);
+        if (GetMaxSpeedFunc)
+            Info.MaxSpeed = Movement->Call<float>(GetMaxSpeedFunc);
+
+        auto& Velocity = Pawn->CharacterMovement->Velocity;
+        Info.Speed2D = (float)sqrt(Velocity.X * Velocity.X + Velocity.Y * Velocity.Y);
+        return Info;
+    }
+
+    bool EnsureCanWalk(AFortPlayerPawnAthena* Pawn)
+    {
+        auto Movement = Pawn ? (UObject*)Pawn->CharacterMovement : nullptr;
+        if (!Movement)
+            return false;
+
+        auto Info = GetMovementInfo(Pawn);
+        bool bChanged = false;
+
+        // Standard player values (UE defaults for acceleration; Fortnite's running speed).
+        static auto MaxWalkSpeedOffset = Movement->GetOffset("MaxWalkSpeed");
+        static auto MaxAccelerationOffset = Movement->GetOffset("MaxAcceleration");
+
+        if (MaxAccelerationOffset != -1 && Info.MaxAcceleration >= 0.f && Info.MaxAcceleration < 10.f)
+        {
+            *(float*)(__int64(Movement) + MaxAccelerationOffset) = 2048.f;
+            bChanged = true;
+        }
+
+        if (MaxWalkSpeedOffset != -1 && Info.MaxWalkSpeed >= 0.f && Info.MaxWalkSpeed < 10.f)
+        {
+            *(float*)(__int64(Movement) + MaxWalkSpeedOffset) = 600.f;
+            bChanged = true;
+        }
+
+        if (bChanged)
+        {
+            static int Logged = 0;
+            if (Logged++ < 3)
+                BOT_LOG(BOT_CATEGORY_COMPAT, "Bot pawn had no walking speed (max speed %.0f, walk %.0f, accel %.0f): restored player defaults.", Info.MaxSpeed, Info.MaxWalkSpeed,
+                        Info.MaxAcceleration);
+        }
+
+        return bChanged;
+    }
+
+    void SetDamageable(AFortPlayerPawnAthena* Pawn, bool bDamageable)
+    {
+        if (Pawn && Pawn->HasbCanBeDamaged())
+            Pawn->bCanBeDamaged = bDamageable;
+    }
 }

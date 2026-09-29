@@ -11,6 +11,22 @@
 #include "../../Erbium/Public/GUI.h"
 #include "../../Engine/Public/NetDriver.h"
 
+static const char* MoveStatusName(EBotMoveStatus Status)
+{
+    switch (Status)
+    {
+    case EBotMoveStatus::Idle:
+        return "idle";
+    case EBotMoveStatus::Moving:
+        return "moving";
+    case EBotMoveStatus::Arrived:
+        return "arrived";
+    case EBotMoveStatus::Failed:
+        return "failed (stuck)";
+    }
+    return "?";
+}
+
 static double NowMicros()
 {
     static LARGE_INTEGER Frequency = []
@@ -317,10 +333,12 @@ void FBotManager::RunThink(double Now)
 void FBotManager::BoardBus(FBotController& Bot, double Now)
 {
     double DropStart, DropEnd;
-    double JumpTime = Now + 1.0;
+    // No usable drop window (no bus any more, or times this build does not expose): jump soon.
+    double JumpTime = Now + 12.0 + 25.0 * ((double)rand() / RAND_MAX);
 
-    // A random moment in the bus's drop window, like players who all jump at different times.
-    if (BotWorld::GetPhase() == EBotMatchPhase::Aircraft && BotWorld::GetDropWindow(DropStart, DropEnd))
+    // A random moment in the bus's drop window, like players who all jump at different times. Windows
+    // that make no sense for "now" (already over, or far in the future) are ignored.
+    if (BotWorld::GetAircraft() && BotWorld::GetDropWindow(DropStart, DropEnd) && DropEnd > Now + 3.0 && DropStart < Now + 120.0)
     {
         auto Earliest = (std::max)(DropStart + 2.0, Now + 1.0);
         auto Latest = (std::max)(DropEnd - 5.0, Earliest);
@@ -329,6 +347,7 @@ void FBotManager::BoardBus(FBotController& Bot, double Now)
 
     Bot.SetBusJumpTime(JumpTime);
     Bot.SetAIState(EBotAIState::InBus);
+    BOT_VERBOSE(BOT_CATEGORY_SYSTEM, "Bot #%u boards the bus, jumps in %.1f s.", Bot.GetId(), JumpTime - Now);
 }
 
 void FBotManager::UpdateMatchFlow(double Now)
@@ -336,34 +355,47 @@ void FBotManager::UpdateMatchFlow(double Now)
     BotWorld::Update(Now);
 
     auto Phase = BotWorld::GetPhase();
-    if (Phase == EBotMatchPhase::Aircraft && LastMatchPhase != EBotMatchPhase::Aircraft && FBotSystemConfig::bBotsUseBattleBus)
+
+    // See BotWorld::IsBusPhase / IsBusGone: not the phase value alone.
+    bool bBusPhase = BotWorld::IsBusPhase();
+    bool bMatchStarted = bBusPhase || BotWorld::IsBusGone();
+
+    if (bMatchStarted && Phase != EBotMatchPhase::EndGame && FBotSystemConfig::bBotsUseBattleBus)
     {
         int Boarded = 0;
         for (auto& Bot : Bots)
         {
             auto State = Bot->GetAIState();
-            if (!Bot->IsAlive() || State == EBotAIState::InBus || State == EBotAIState::Skydiving)
+            if (!Bot->IsAlive() || Bot->bDroppedIn || State == EBotAIState::InBus || State == EBotAIState::Skydiving)
                 continue;
 
             if (!Bot->CanMove())
             {
                 // Player-controller bots are in AlivePlayers, so the game puts them in the bus itself;
                 // they only need a jump time (Erbium's auto-jump skips bIsABot players).
-                double DropStart, DropEnd;
-                Bot->SetBusJumpTime(BotWorld::GetDropWindow(DropStart, DropEnd) ? DropStart + (DropEnd - DropStart) * ((double)rand() / RAND_MAX) : Now + 10.0);
+                if (bBusPhase && Bot->GetBusJumpTime() <= 0.0)
+                {
+                    double DropStart, DropEnd;
+                    Bot->SetBusJumpTime(BotWorld::GetDropWindow(DropStart, DropEnd) && DropEnd > Now ? (std::max)(Now + 1.0, DropStart + (DropEnd - DropStart) * ((double)rand() / RAND_MAX))
+                                                                                                     : Now + 3.0);
+                }
                 continue;
             }
 
+            // In the bus phase: board and jump in the drop window. After it (a bot still standing on the
+            // spawn island when the bus left): drop in over the safe zone right away instead of being
+            // left behind in the storm.
             BoardBus(*Bot, Now);
             Boarded++;
         }
 
-        BOT_LOG(BOT_CATEGORY_SYSTEM, "Battle bus: %d bot(s) boarded.", Boarded);
+        if (Boarded > 0)
+            BOT_LOG(BOT_CATEGORY_SYSTEM, "%s: %d bot(s) boarded.", bBusPhase ? "Battle bus" : "Bus already gone, dropping in", Boarded);
     }
 
     // Player-controller bots: jump the way a client does (ServerAttemptAircraftJump, which Erbium hooks
     // and turns into a respawn in the air), at their jump time.
-    if (Phase == EBotMatchPhase::Aircraft)
+    if (bBusPhase)
         for (auto& Bot : Bots)
         {
             auto PlayerController = Bot->GetPlayerController();
@@ -654,6 +686,24 @@ void FBotManager::Tick(const UObject* NetDriver, float DeltaSeconds)
     DiagDressedBots = Dressed;
     DiagNavMode = BotNavigation::GetPreferredModeName();
 
+    {
+        char Line[256] = "no living bots";
+        for (auto& Bot : Bots)
+        {
+            auto Pawn = Bot->IsAlive() ? Bot->GetPawn() : nullptr;
+            if (!Pawn)
+                continue;
+
+            auto Info = BotCompat::GetMovementInfo(Pawn);
+            sprintf_s(Line, "#%u %s | move mode %d | speed limit %.0f | walk speed %.0f | accel %.0f | moving at %.0f | move %s", Bot->GetId(), ToString(Bot->GetAIState()), Info.Mode,
+                      Info.MaxSpeed, Info.MaxWalkSpeed, Info.MaxAcceleration, Info.Speed2D, MoveStatusName(Bot->GetMovement().GetStatus()));
+            break;
+        }
+
+        std::lock_guard Lock(DiagMutex);
+        DiagFirstBot = Line;
+    }
+
     RecordTickTime(Now, NowMicros() - Start);
 }
 
@@ -722,6 +772,12 @@ void FBotManager::UpdateAutoSpawn(const UObject* NetDriver, double Now)
     BOT_LOG(BOT_CATEGORY_SPAWN, "Auto spawn: requesting %d bot(s) (target %d).", (std::max)(Missing, 0), FBotSystemConfig::AutoSpawnCount);
     if (Missing > 0)
         RequestedSpawnCount += Missing;
+}
+
+std::string FBotManager::GetFirstBotStatus()
+{
+    std::lock_guard Lock(DiagMutex);
+    return DiagFirstBot;
 }
 
 void FBotManager::UpdatePause()

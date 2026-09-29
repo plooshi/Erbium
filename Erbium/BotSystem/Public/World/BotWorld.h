@@ -52,6 +52,13 @@ namespace BotWorld
 
     // The battle bus while it flies, and its drop window in world time.
     AActor* GetAircraft();
+
+    // Bus state that does not depend on the game-phase value alone (its numbering differs between
+    // builds). Bus phase: the match started (Erbium's StartAircraftPhase) and the bus has not left.
+    // Bus gone: storm phase, or the bus actor disappeared (with a grace period for the first seconds
+    // after the start, before the bus actor exists).
+    bool IsBusPhase();
+    bool IsBusGone();
     bool GetDropWindow(double& OutStart, double& OutEnd);
 
     struct FContainer

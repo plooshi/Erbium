@@ -5,6 +5,8 @@
 #include "World/BotWorld.h"
 #include <atomic>
 #include <deque>
+#include <mutex>
+#include <string>
 
 // Central owner of all bots.
 //
@@ -95,6 +97,9 @@ public:
     static inline std::atomic<int> DiagDressedBots = 0;          // wearing a chosen outfit
     static inline std::atomic<const char*> DiagNavMode = "none yet"; // navigation mode new moves use
 
+    // One line about the first living bot (state, movement mode, speeds). Copy under the mutex.
+    static std::string GetFirstBotStatus();
+
     // Latest perf numbers (microseconds), for the GUI.
     static float GetLastAverageTickMicros() { return LastAverageTickMicros; }
 
@@ -146,6 +151,8 @@ private:
 
     static inline double NextMaintenanceTime = 0.0;
     static inline double NextWatchTime = 0.0;
+    static inline std::mutex DiagMutex;
+    static inline std::string DiagFirstBot = "no bots";
     static inline EBotMatchPhase LastMatchPhase = EBotMatchPhase::Unknown;
 
     // Perf accounting (see RecordTickTime).

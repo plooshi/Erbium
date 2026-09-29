@@ -5,6 +5,7 @@
 #include "../../Public/Navigation/BotNavigation.h"
 #include "../../../FortniteGame/Public/BattleRoyaleGamePhaseLogic.h"
 #include "../../../FortniteGame/Public/BuildingContainer.h"
+#include "../../../Erbium/Public/GUI.h"
 
 namespace
 {
@@ -13,6 +14,10 @@ namespace
     TWeakObjectPtr<AActor> Aircraft;
     std::vector<BotWorld::FContainer> Containers;
     double NextContainerSnapshotTime = 0.0;
+    double MatchStartSeenTime = -1.0;
+    bool bSawBus = false;
+    bool bBusPhase = false;
+    bool bBusGone = false;
 }
 
 static UFortGameStateComponent_BattleRoyaleGamePhaseLogic* GetPhaseLogic()
@@ -179,6 +184,16 @@ namespace BotWorld
         }
 
         Aircraft = TWeakObjectPtr<AActor>(ReadAircraft(GameMode->GameState));
+
+        bool bStarted = GUI::gsStatus == StartedMatch || Phase == EBotMatchPhase::Aircraft || Phase == EBotMatchPhase::SafeZones;
+        if (bStarted && MatchStartSeenTime < 0.0)
+            MatchStartSeenTime = Now;
+
+        bool bHasBus = GetAircraft() != nullptr;
+        bSawBus |= bStarted && bHasBus;
+        bBusGone = bStarted && (Phase == EBotMatchPhase::SafeZones || Phase == EBotMatchPhase::EndGame || (!bHasBus && (bSawBus || Now - MatchStartSeenTime > 15.0)));
+        bBusPhase = bStarted && !bBusGone;
+
         ReadSafeZone(GameMode, Now);
         SnapshotContainers(Now);
     }
@@ -189,6 +204,18 @@ namespace BotWorld
         SafeZone = FBotSafeZone{};
         Containers.clear();
         NextContainerSnapshotTime = 0.0;
+        MatchStartSeenTime = -1.0;
+        bSawBus = bBusPhase = bBusGone = false;
+    }
+
+    bool IsBusPhase()
+    {
+        return bBusPhase;
+    }
+
+    bool IsBusGone()
+    {
+        return bBusGone;
     }
 
     EBotMatchPhase GetPhase()

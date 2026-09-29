@@ -586,9 +586,10 @@ void FBotInBusBehavior::Tick(FBotController& Bot, float DeltaSeconds)
     auto Now = Bot.GetNow();
     auto Bus = BotWorld::GetAircraft();
 
-    // Jump at our time, or at the latest when the bus is gone / the storm phase started.
-    bool bBusGone = !Bus || BotWorld::GetPhase() == EBotMatchPhase::SafeZones;
-    if (Now < Bot.GetBusJumpTime() && !bBusGone)
+    // Jump at our time, or at the latest when the bus is gone / the storm phase started. Right after
+    // the start the bus actor may not exist yet: wait for it (IsBusGone has a grace period for that).
+    bool bBusGone = BotWorld::IsBusGone();
+    if (!bBusGone && (!Bus || Now < Bot.GetBusJumpTime()))
         return;
 
     // Place the pawn where a player jumping now would appear: at the bus, spread out a little
@@ -603,6 +604,13 @@ void FBotInBusBehavior::Tick(FBotController& Bot, float DeltaSeconds)
         auto Offset = RandomRange(0.f, Zone.NextRadius * 0.7f);
         auto OffsetAngle = RandomRange(0.f, 6.2831853f);
         Origin = FVector(Zone.NextCenter.X + cos(OffsetAngle) * Offset, Zone.NextCenter.Y + sin(OffsetAngle) * Offset, Zone.NextCenter.Z + 20000.0);
+    }
+    else if (auto& Containers = BotWorld::GetContainers(); !Containers.empty())
+    {
+        // No storm circle yet: above a random chest, which is always on the playable map (the spawn
+        // island the bot came from is not).
+        auto& Entry = Containers[(size_t)rand() % Containers.size()];
+        Origin = FVector(Entry.Location.X, Entry.Location.Y, Entry.Location.Z + 15000.0);
     }
     else
         Origin = FVector(Bot.GetLastKnownLocation().X, Bot.GetLastKnownLocation().Y, Bot.GetLastKnownLocation().Z + 20000.0);
@@ -625,9 +633,15 @@ void FBotInBusBehavior::Tick(FBotController& Bot, float DeltaSeconds)
     BotCompat::SetPawnInPlay(Pawn, true);
     Pawn->K2_SetActorLocation(JumpLocation, false, nullptr, true);
 
+    // Bots cannot open a glider, so the landing would kill them: no damage until they have landed
+    // (FBotSkydivingBehavior::OnExit turns it back on).
+    BotCompat::SetDamageable(Pawn, false);
+
     bool bFromBus = true;
     Pawn->BeginSkydiving(bFromBus);
 
+    Bot.bDroppedIn = true;
+    BOT_LOG(BOT_CATEGORY_SYSTEM, "Bot #%u jumped out of the bus.", Bot.GetId());
     Bot.SetAIState(EBotAIState::Skydiving);
 }
 
@@ -684,6 +698,7 @@ void FBotSkydivingBehavior::Tick(FBotController& Bot, float DeltaSeconds)
 
 void FBotSkydivingBehavior::OnExit(FBotController& Bot)
 {
+    BotCompat::SetDamageable(Bot.GetPawn(), true);
     Bot.GetMovement().SetForcedNavMode(EBotNavMode::None);
     Bot.GetMovement().Stop();
 }

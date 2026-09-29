@@ -136,7 +136,14 @@ bool FBotController::Validate(double Now)
         {
             MissingPawnSince = 0.0;
             if (BotCompat::IsPawnDead(CurrentPawn))
+            {
                 OnPawnDied(Now);
+                return true;
+            }
+
+            // Walking pawns: make sure they have a walking speed at all (see EnsureCanWalk).
+            if (CanMove() && BotCompat::IsPawnInPlay(CurrentPawn))
+                BotCompat::EnsureCanWalk(CurrentPawn);
             return true;
         }
 

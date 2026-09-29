@@ -452,6 +452,14 @@ Two Erbium hooks assumed the pawn or instigator always has a player controller. 
 - **Bots jumped and swung but never moved.** `AAIController::MoveTo` *accepted* the requests, so the navigation layer counted the mode as working. But path following never drove the Fortnite pawn: the stuck check jumped, re-issued the same move, and so on. `BotNavigation::ReportProgress` now judges a mode by whether bots actually cover ground. After 3 stuck moves with no progress by any bot, Pathfinding / DirectPath is dropped and every bot switches to Steering (`AddMovementInput`) right away. The AI tab shows the movement method in use.
 - **Bots died right when the bus started, so none ever jumped.** Boarding hid the pawn and turned off its collision, but gravity stayed on: the pawn fell through the ground and out of the world, and the game killed it. `BotCompat::SetPawnInPlay` now freezes movement (`MOVE_None`) while in the bus, and sets `MOVE_Falling` when the bot jumps.
 
+
+## Round 13: bus boarding/jumping, deaths after the bus, walking speed
+
+- **Bus boarding no longer depends on the game-phase value alone.** `BotWorld::IsBusPhase / IsBusGone` combine Erbium's own "match started" status (set in `StartAircraftPhase`) with the bus actor. There is a 15 s grace period for the bus actor to appear, then storm phase or bus actor gone = bus gone. Every AI bot boards once (`bDroppedIn`). A bot still on the spawn island after the bus left drops in right away: over the safe zone, or over a random chest when there is no circle yet. It is no longer left to die in the storm.
+- **Jump time.** A drop window that does not make sense for "now" is ignored; the fallback is 12-37 s after boarding. Bots wait for the bus actor before jumping, and each jump logs `Bot #N jumped out of the bus.`
+- **No death on landing.** Bots cannot open a glider, so a bot takes no damage (`AActor::bCanBeDamaged`) from its jump until it has landed.
+- **Walking.** `BotCompat::EnsureCanWalk` restores `MaxWalkSpeed` 600 / `MaxAcceleration` 2048 on pawns where they are 0: a pawn that did not go through a player's possession flow could jump and swing but not walk. The AI tab shows the first bot's movement mode, speed limit, walk speed, acceleration and current speed.
+
 ## Where to find everything
 
 **Branch:** `claude/erbium-ai-bot-system-sus0gw` on `wieseichwiesenicht-art/Erbium-AI-Fork2`, one commit per phase on top of `main`.

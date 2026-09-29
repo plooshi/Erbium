@@ -93,6 +93,9 @@ public:
     // Player-controller bots ride the game's own bus; set once they asked to jump.
     bool bJumpedFromBus = false;
 
+    // AI-controller bots: set once they left the bus (or dropped in after it), so they board only once.
+    bool bDroppedIn = false;
+
     // AI-controller bots with a native inventory: the inventory-owner interface of their controller,
     // cached so Erbium's inventory hook (called on every shot fired by anyone) only compares pointers.
     const IInterface* InventoryOwnerInterface = nullptr;

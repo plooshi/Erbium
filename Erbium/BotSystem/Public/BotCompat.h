@@ -136,4 +136,23 @@ namespace BotCompat
     // EFortMovementStyle. Returns false (and logs once) when the build does not expose it; the pawn then
     // keeps its default (running) speed.
     bool SetMovementSpeed(AFortPlayerPawnAthena* Pawn, EBotMoveSpeed Speed);
+
+    // Character movement state, for diagnostics (-1 = not readable on this build).
+    struct FMovementInfo
+    {
+        int Mode = -1;            // EMovementMode (1 = walking, 3 = falling, 6 = custom e.g. skydiving)
+        float MaxSpeed = -1.f;    // UMovementComponent::GetMaxSpeed (what actually limits walking)
+        float MaxWalkSpeed = -1.f;
+        float MaxAcceleration = -1.f;
+        float Speed2D = 0.f;
+    };
+    FMovementInfo GetMovementInfo(AFortPlayerPawnAthena* Pawn);
+
+    // A pawn that never went through a player's possession flow can end up with a walking speed or
+    // acceleration of 0: it can jump and use items but not walk. Restores player defaults when that is
+    // the case. Returns true if something was changed.
+    bool EnsureCanWalk(AFortPlayerPawnAthena* Pawn);
+
+    // Fall damage off/on (AActor::bCanBeDamaged) while a bot skydives: bots cannot open a glider.
+    void SetDamageable(AFortPlayerPawnAthena* Pawn, bool bDamageable);
 }
