@@ -43,9 +43,10 @@ public:
             return EBotNavRequestResult::Failed;
 
         // Face the destination while walking: Fortnite pawns turn with the control rotation, and the
-        // AI controller derives that from its focal point.
+        // AI controller derives that from its focal point. Not while fighting: combat owns the aim.
         FVector Dest = Goal;
-        AI->K2_SetFocalPoint(Dest);
+        if (!Bot.IsAimLocked())
+            AI->K2_SetFocalPoint(Dest);
 
         // (Dest, AcceptanceRadius, bStopOnOverlap, bUsePathfinding, bProjectDestinationToNavigation,
         //  bCanStrafe, FilterClass, bAllowPartialPath). Argument types must match the UFunction exactly.
@@ -62,7 +63,8 @@ public:
         if (!AI || !Goal)
             return EBotNavRequestResult::Failed;
 
-        AI->K2_SetFocus(Goal);
+        if (!Bot.IsAimLocked())
+            AI->K2_SetFocus(Goal);
 
         // (Goal, AcceptanceRadius, bStopOnOverlap, bUsePathfinding, bCanStrafe, FilterClass, bAllowPartialPath)
         bool bStopOnOverlap = true, bUsePath = bUsePathfinding, bCanStrafe = true, bAllowPartialPath = true;
@@ -77,7 +79,8 @@ public:
         if (auto AI = Bot.GetAIController())
         {
             AI->StopMovement();
-            AI->K2_ClearFocus();
+            if (!Bot.IsAimLocked())
+                AI->K2_ClearFocus();
         }
     }
 
@@ -107,7 +110,8 @@ public:
             return EBotNavRequestResult::Failed;
 
         FVector Dest = Goal;
-        AI->K2_SetFocalPoint(Dest);
+        if (!Bot.IsAimLocked())
+            AI->K2_SetFocalPoint(Dest);
         return EBotNavRequestResult::Moving;
     }
 
@@ -117,13 +121,14 @@ public:
         if (!AI || !Goal || !Bot.GetPawn())
             return EBotNavRequestResult::Failed;
 
-        AI->K2_SetFocus(Goal);
+        if (!Bot.IsAimLocked())
+            AI->K2_SetFocus(Goal);
         return EBotNavRequestResult::Moving;
     }
 
     void Stop(FBotController& Bot) override
     {
-        if (auto AI = Bot.GetAIController())
+        if (auto AI = Bot.GetAIController(); AI && !Bot.IsAimLocked())
             AI->K2_ClearFocus();
     }
 

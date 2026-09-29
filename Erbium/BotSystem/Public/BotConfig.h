@@ -64,6 +64,22 @@ struct FBotSystemConfig
     // Global switch for Phase 4 building on top of the per-bot FBotConfig::bCanBuild.
     static inline bool bAllowBuilding = true;
 
+    // How often (seconds) the shared pickup snapshot used for looting is rebuilt.
+    static inline float LootSnapshotInterval = 1.0f;
+
+    // Difficulty applied to newly spawned bots (Phase 5.2).
+    static inline EBotDifficulty DefaultDifficulty = EBotDifficulty::Normal;
+
+    // Virtual-inventory bots (engine AIController) cannot use consumables through the game's item
+    // abilities, which need a real inventory item. When true they apply the item's effect after its
+    // use time instead (see FBotConsumableEffects); when false they simply carry heals unused.
+    static inline bool bEmulateConsumablesForVirtualInventory = true;
+
+    // Prefer Fortnite's own FortAthenaAIBotController over the engine AIController in Auto mode. It has a
+    // native inventory (real item pickups, game-driven reload/consumables) but also Fortnite bot logic of
+    // its own, which the bot system stops at spawn. Try this if weapons do not fire with the default.
+    static inline bool bPreferFortniteBotController = false;
+
     // Log aggregated tick timings every PerfReportInterval seconds while bots exist (0 disables).
     static inline float PerfReportInterval = 30.f;
 
@@ -83,6 +99,38 @@ struct FBotConfig
 
     // State entered after spawning (only when the bot can move; otherwise Idle).
     EBotAIState DefaultAIState = EBotAIState::Searching;
+
+    EBotDifficulty Difficulty = EBotDifficulty::Normal;
+
+    // --- Decisions (Phase 5.1) ---
+    float DecisionInterval = 0.4f;
+    // Weight per EBotPriority: Search, Loot, Combat, Healing, Survival.
+    float PriorityWeights[(int)EBotPriority::Count] = { 1.f, 1.f, 1.f, 1.f, 1.f };
+    float Aggression = 1.0f;            // Scales the Combat score.
+
+    // --- Loot / inventory (Phase 2B) ---
+    bool bCanLoot = true;
+    float LootSearchRadius = 3000.f;    // cm
+    float MinLootScore = 5.f;           // ignore pickups scoring below this (after distance falloff)
+
+    // --- Combat (Phase 2C) ---
+    float AimReactionTime = 0.5f;       // s before a new target is tracked at all
+    float AimAccuracy = 0.6f;           // 0..1, 1 = no random error
+    float AimTurnSpeed = 180.f;         // deg/s the aim point can move
+    float TargetSwitchDelay = 1.0f;     // s before switching to a different target
+    float MaxAimDistance = 6000.f;      // cm
+    float TargetMemory = 3.0f;          // s a target out of sight is still pursued
+    float AimHeightOffset = 35.f;       // cm above the target's origin (upper body)
+    float FireToleranceDegrees = 6.f;   // fire only when the aim is this close to the target
+    float RepositionInterval = 3.5f;    // s between combat strafes
+
+    // --- Healing / survival (Phase 2C) ---
+    bool bCanHeal = true;
+    float HealHealthThreshold = 70.f;   // heal below this health (if carrying healing)
+    float HealShieldThreshold = 50.f;   // shield up below this shield (if carrying shields)
+    float SafeHealDistance = 2500.f;    // no healing with a visible enemy closer than this (cm)
+    float RetreatHealthFraction = 0.3f; // (health+shield)/200 below which the bot retreats when threatened
+    float EscapeDistance = 2000.f;      // cm
 
     // --- Perception ---
     float DetectionRadius = 5000.f;    // cm. Pawns further away are ignored entirely.

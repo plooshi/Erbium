@@ -1,10 +1,11 @@
 # Erbium Bot System
 
 A modular system for AI-controlled players in a local/private Erbium test server. It is being built in
-phases. **Implemented: Phase 1 (spawning and lifecycle), Phase 2A (movement, navigation, perception),
-Phase 3 (cosmetics), and Phase 4 (building, the parts that don't depend on combat).**
-Still open: Phase 2B (loot and inventory), Phase 2C (combat and healing), Phase 4 combat building
-(needs 2C), and Phase 5.
+phases. **All phases are implemented; none has been run in-game yet.** Phase 1 (spawning), 2A (movement,
+navigation, perception), 2B (loot, inventory), 2C (combat, healing, escaping), 3 (cosmetics),
+4 (building, including combat building) and 5 (decision system, difficulty, debugging) are all in the
+code. Everything was compile-checked (see Build verification) but not run against a game build in the
+development container. The test plans below are how each phase gets verified.
 
 ## How Erbium works (and why this matters for bots)
 
@@ -36,6 +37,10 @@ BotSystem/
     Behaviors/       Idle / Searching / Moving / Following / Building / Dead
     Cosmetics/       catalogue from the build's asset registry, loadouts, application
     Building/        piece catalogue, grid + self-calibration, per-bot builder
+    Inventory/       item classification + scoring, native/virtual inventory storage
+    Loot/            shared pickup snapshot, claims, pickup execution
+    Combat/          weapon compat (fire/reload/ammo), targeting + aiming + weapon handling
+    Decision/        utility brain (priorities), difficulty presets
     BotConfig.h      FBotSystemConfig (server-wide, GUI-editable) + FBotConfig (per bot)
     BotState.h       EBotLifeState (exists/dead/removing) and EBotAIState (what it is doing)
     BotBehavior.h    IBotBehavior: OnEnter / Tick / OnExit, one object per AI state
@@ -170,7 +175,7 @@ Ids are the ones the game uses, which are also the ones listed on fortnite.gg. T
 **Applying.** Parts are resolved the same way as Erbium's native-bot cosmetics (`Misc.cpp`): hero specializations plus backpack parts. They're shown through the pawn's `ServerChoosePart` and the player state's `CharacterParts` (both layouts), followed by the usual visual refresh. For player-controller bots the controller's `CosmeticLoadoutPC` is filled too, so `GiveStartingItems` gives them their pickaxe. If the outfit can't be applied, the bot gets the default appearance.
 
 **Limitations.**
-- AI-controller bots don't get their cosmetic pickaxe or glider yet. They have no inventory (Phase 2B) and don't skydive yet. The choice is kept in `FBotController::Cosmetics` for when they do.
+- AI-controller bots get their cosmetic pickaxe through their inventory (added with Phase 2B). Gliders aren't used yet, because bots don't skydive.
 - Styles/variants use the defaults.
 - Loading a cosmetic is a synchronous asset load. Spawning is spread over frames (`MaxSpawnsPerTick`), but mass spawns can still hitch. Watch `avgSpawn` in `[BotPerf]`.
 
@@ -213,6 +218,116 @@ If every candidate fails, the builder backs off for `BuildCooldown`.
 4. `cheat botgoto` from behind a wall or cliff. Bots should get stuck, place a ramp, and walk over it.
 5. Materials: AI bots stop building after 45 pieces (300 wood + 150 stone at 10 each). With `bInfiniteMats` they keep going.
 6. Invalid spots (inside buildings or terrain): no crash, the build is rejected, and `builds=` in `listbots` doesn't increase.
+
+## Phase 2B: loot and inventory
+
+**Storage** (`Inventory/BotInventory.h`). All decisions go through one interface, which has two backends:
+- **Native**: a real `AFortInventory`, changed only through Erbium's own `GiveItem`/`Remove`/`UpdateEntry`. Used by player-controller bots and by AI controllers that implement Fortnite's inventory-owner interface (`FortAthenaAIBotController`).
+- **Virtual**: the bot system keeps the item list itself. Used by the plain engine `AIController`, which has no inventory-owner interface. Weapons are still equipped on the pawn with the game's `EquipWeaponDefinition`. Only counts and reserve ammo are tracked locally, and building materials go to the bot's builder.
+
+**Changes to existing Erbium code** (needed as soon as a non-player owns real items):
+- `RemoveInventoryItem` hook: it derived a PlayerController from the interface pointer with a fixed offset. It now first asks `FBotManager::HandleRemoveInventoryItem` whether the interface belongs to an AI-controller bot.
+- `SetLoadedAmmo` / `SetPhantomReserveAmmo` hooks: they cast the item's owning controller to a PlayerController. For any other owner they now update the entry in the item's own `ParentInventory`.
+- `FinishedTargetSpline` (pickup completion): now has an explicit PlayerController guard.
+
+Player behaviour is unchanged in all three.
+
+**Item evaluation** (`Inventory/BotItems.h`):
+- **Categories:** Weapon, Melee, Ammo, Healing, Shield, Utility, Resource, Tool, Other. They come from the item definition class (`FortAmmoItemDefinition`, `FortResourceItemDefinition`, ...), whether a weapon uses separate ammo (`GetAmmoWorldItemDefinition_BP`), and configurable name tokens for consumables and weapon range.
+- **Scores:** configurable weights in `FBotItemPriorities`.
+  - Rarity adds a bonus.
+  - A gun is worth much less if the bot already has an equal or better one for that range, and double if it has no gun at all.
+  - Ammo only counts for carried guns.
+  - Consumables are worth less once the bot already carries some.
+- **Full slots:** with all five primary slots in use, an item is only picked up if it beats the worst one, which is dropped as a pickup.
+
+**Looting.** One pickup snapshot every `LootSnapshotInterval` is shared by all bots. The brain scores the best pickup within `LootSearchRadius`, with a distance falloff. A pickup is *claimed* so other bots leave it alone. The bot walks to it, takes it the way the game completes a pickup (mark as picked up, notify, destroy the pickup), then re-equips its best weapon. A pickup it can't reach is ignored for 30 s. Chests aren't opened: Erbium opens containers through a PlayerController interaction RPC.
+
+**Phase 3 fix included.** AI-controller bots now get their cosmetic pickaxe (or the default one) plus the playlist's starting items through their inventory, and equip it at spawn.
+
+## Phase 2C: combat, healing, escaping
+
+**Weapons** (`Combat/BotWeapons.h`, all detected by name at runtime):
+- **Firing:** `PawnStartFire`/`PawnStopFire`, falling back to `TryActivateAbility`/`CancelAbilityHandle` on the weapon's primary ability. The chosen method is logged as `[BotCombat] Firing method on this build: ...`.
+- **Reloading:** the weapon's reload ability. Virtual inventories move reserve ammo into the magazine after the weapon's `ReloadTime`.
+- If no fire method exists, bots position and aim but never fake damage.
+
+**Targeting and aim** (`Combat/BotCombat.h`):
+- **Targets:** only from perception, meaning enemies in range that the bot can see or saw within `TargetMemory`. The score is distance and visibility, with a bonus for the current target, and a new target is taken only after `TargetSwitchDelay`. Enemy health isn't read, because players can't see it in BR.
+- **Aim:** it doesn't start before `AimReactionTime`. It moves toward the target at up to `AimTurnSpeed` degrees per second (no snapping), and adds a random error from `AimAccuracy` that scales with distance and is re-rolled regularly. The aim point drives the AI controller's focal point, which is what the weapon fires along. It's updated every frame, so it's smooth.
+- **Firing:** in bursts with pauses, only when the target is visible and the aim is within `FireToleranceDegrees`. When empty the bot reloads, and when it's out of ammo it switches weapons. The weapon is chosen for the distance (close/medium/long by name tokens, then rarity), with the pickaxe used only up close.
+
+**Combat behaviour** (nested states):
+- **Approach:** beyond the weapon's preferred range.
+- **Back off:** too close for the weapon.
+- **Strafe:** a sideways move every `RepositionInterval` (never standing still).
+- **Search:** go to the last-seen position when the target is out of sight.
+- Bots run instead of sprinting, because Fortnite pawns can't fire while sprinting.
+
+**Healing.** Used when health is below `HealHealthThreshold` or shield below `HealShieldThreshold`, with no visible enemy within `SafeHealDistance` and no recent damage. The bot equips the item and holds "fire", which is how consumables are used, until the game consumes it. Taking damage interrupts it.
+
+Virtual-inventory bots can't use consumables through the game's item abilities, which need a real item. With `bEmulateConsumablesForVirtualInventory` they apply the standard effect from `FBotConsumableEffects` after its use time. **This is an emulation**, so turn it off if it isn't wanted.
+
+**Escaping.** When low (`RetreatHealthFraction`) and threatened, or when facing an enemy with nothing to fight with, the bot sprints `EscapeDistance` away from the threat.
+
+**AI-controller bot deaths.** The bot drops its items as pickups, and the most recent damager gets the kill (kill score and kill feed, the same calls `ClientOnPawnDied` makes). Placement and victory handling for AI victims isn't done.
+
+## Phase 4 addition: combat building
+Build decisions are now also evaluated during Looting and **Combat**. A bot that is hit while fighting a visible enemy places a wall toward it (`DefensiveBuildChance`), holds behind it, and returns to Combat, where it repositions, aims and shoots again. Reaction time, cooldown and the per-minute limit keep this non-deterministic.
+
+## Phase 5: decision system, difficulty, debugging
+
+**Brain** (`Decision/BotBrain.h`). Every `DecisionInterval` the bot scores five priorities, each with its own small function and a configurable weight (`FBotConfig::PriorityWeights`):
+
+| Priority | State | Scored from |
+|---|---|---|
+| Survival | Escaping | low health and threatened, or an enemy and nothing to fight with |
+| Combat | Combat | nearest known enemy (visible, or seen recently) and a usable weapon, × `Aggression` |
+| Healing | Healing | missing health/shield, carrying the right item, safe |
+| Loot | Looting | best pickup score |
+| Search | Searching | constant baseline |
+
+A switch needs a 15% margin and at least 0.75 s in the current state (except Survival), so bots don't flip-flop. The brain only switches between autonomous states. Commanded states (cheat Idle/Moving/Following) and Building aren't overridden.
+
+**Difficulty** (`BotDifficulty::Apply`): Easy, Normal or Hard. Presets set reaction time, accuracy, tracking speed, target-switch delay, detection and engagement range, aggression, reposition rate, build reaction/chance/rate, and sprinting. They never give information a player wouldn't have. New bots use `FBotSystemConfig::DefaultDifficulty` (GUI). `cheat botdifficulty <easy|normal|hard> [id]` changes existing bots.
+
+**Debugging.**
+- `cheat botdebug <id>` shows:
+  - id, state and difficulty
+  - the decision with all five scores
+  - health and shield
+  - position and destination with nav mode
+  - target distance and visibility, and combat activity
+  - weapon and its ammo
+  - inventory, builds and materials, and cosmetics
+- `cheat botwatch <id>` logs the same every 3 s (`botwatch 0` stops).
+- `[BotAI]`, `[BotCombat]`, `[BotLoot]` and the other categories log lifecycle events only. Per-decision detail is behind the GUI's "Verbose bot logging".
+
+**Performance.**
+- The pawn and pickup snapshots are shared by all bots and rebuilt every 0.5 s / 1 s.
+- Line-of-sight traces are capped per bot.
+- The loot search is cached for 1 s, and decisions run every 0.4 s.
+- Thinks are staggered, and only aim smoothing and steering run every frame.
+
+Measure with `[BotPerf]` as in Phase 1.
+
+## Test plan for 2B / 2C / 5
+1. Spawn 10 bots on a map with floor loot. `cheat botdebug 1`: the inventory shows the pickaxe and starting items, and the state moves Searching → Looting → Searching. Inventory mode is `Virtual` with the default controller.
+2. Drop a weapon near a bot. It should walk over, pick it up, and equip it (`botdebug` weapon line).
+3. Walk into view of an armed bot. It should switch to Combat, turn toward you over roughly half a second, and fire in bursts. The log states the firing method. If bots aim but never shoot, enable GUI → "Prefer Fortnite bot controller", spawn new bots, and report both results.
+4. Hide behind a wall. The bot should go to where it last saw you.
+5. Damage a bot while it fights. It should build a wall (some of the time) and then keep fighting. Bring it low: it should escape, and later heal if it carries heals.
+6. Kill a bot. Its items should drop and your kill count go up. With AI controllers there's no placement or victory handling yet.
+7. `cheat botdifficulty easy`, then `hard`: aim delay, accuracy and building rate should be clearly different.
+8. 50 and 100 bots with loot and fighting: record `[BotPerf]`.
+
+### Known limitations after this round
+- **Not run-time tested.** The things most likely to need adjustment in-game:
+  - whether weapons fire through the engine `AIController` (there's a fallback option)
+  - ramp facing
+  - speed via movement styles
+- No chest opening, no bus/skydive handling, no editing or repairing.
+- AI-controller victims get kill credit and drops, but no placement or win handling.
 
 ### Build verification
 There is no Windows toolchain in the development container. Each changed translation unit was checked with clang in MSVC-compatibility mode against mingw-w64 headers (`-fms-extensions -fms-compatibility -fsyntax-only`). The error output is identical to the untouched baseline: only libstdc++-internal errors that the toolchain itself causes. The authoritative build is MSBuild (`.github/workflows/Build.yml`).

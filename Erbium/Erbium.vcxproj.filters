@@ -40,6 +40,30 @@
     <Filter Include="BotSystem\Private\Building">
       <UniqueIdentifier>{943aa326-6ce3-4a2b-85b2-dc0f0e4d58ea}</UniqueIdentifier>
     </Filter>
+    <Filter Include="BotSystem\Public\Inventory">
+      <UniqueIdentifier>{138b15bc-4fdd-4c9d-8932-33cfbe751232}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BotSystem\Public\Loot">
+      <UniqueIdentifier>{b5626074-164a-4f72-8896-0927107d9233}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BotSystem\Public\Combat">
+      <UniqueIdentifier>{2b6fb477-4e53-4e5b-a00f-6a23630a8b91}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BotSystem\Public\Decision">
+      <UniqueIdentifier>{b347fad3-252c-4918-9386-0a3c98d35054}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BotSystem\Private\Inventory">
+      <UniqueIdentifier>{92fac62e-78a6-4041-b148-9e1426d3830f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BotSystem\Private\Loot">
+      <UniqueIdentifier>{3083df22-4de9-4989-bc91-b5a973a4c4e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BotSystem\Private\Combat">
+      <UniqueIdentifier>{671399fb-9446-439f-b78c-d89df9a6eb5c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="BotSystem\Private\Decision">
+      <UniqueIdentifier>{08293fe0-3225-4663-af3e-b4dac33c7643}</UniqueIdentifier>
+    </Filter>
     <Filter Include="Engine">
       <UniqueIdentifier>{bf7becbc-c9a6-4671-8262-0472d74df6ce}</UniqueIdentifier>
     </Filter>
@@ -113,6 +137,24 @@
     </ClInclude>
     <ClInclude Include="BotSystem\Public\Building\BotBuilder.h">
       <Filter>BotSystem\Public\Building</Filter>
+    </ClInclude>
+    <ClInclude Include="BotSystem\Public\Inventory\BotItems.h">
+      <Filter>BotSystem\Public\Inventory</Filter>
+    </ClInclude>
+    <ClInclude Include="BotSystem\Public\Inventory\BotInventory.h">
+      <Filter>BotSystem\Public\Inventory</Filter>
+    </ClInclude>
+    <ClInclude Include="BotSystem\Public\Loot\BotLoot.h">
+      <Filter>BotSystem\Public\Loot</Filter>
+    </ClInclude>
+    <ClInclude Include="BotSystem\Public\Combat\BotWeapons.h">
+      <Filter>BotSystem\Public\Combat</Filter>
+    </ClInclude>
+    <ClInclude Include="BotSystem\Public\Combat\BotCombat.h">
+      <Filter>BotSystem\Public\Combat</Filter>
+    </ClInclude>
+    <ClInclude Include="BotSystem\Public\Decision\BotBrain.h">
+      <Filter>BotSystem\Public\Decision</Filter>
     </ClInclude>
     <ClInclude Include="BotSystem\Public\BotBehavior.h">
       <Filter>BotSystem\Public</Filter>
@@ -374,6 +416,24 @@
     </ClCompile>
     <ClCompile Include="BotSystem\Private\Building\BotBuilder.cpp">
       <Filter>BotSystem\Private\Building</Filter>
+    </ClCompile>
+    <ClCompile Include="BotSystem\Private\Inventory\BotItems.cpp">
+      <Filter>BotSystem\Private\Inventory</Filter>
+    </ClCompile>
+    <ClCompile Include="BotSystem\Private\Inventory\BotInventory.cpp">
+      <Filter>BotSystem\Private\Inventory</Filter>
+    </ClCompile>
+    <ClCompile Include="BotSystem\Private\Loot\BotLoot.cpp">
+      <Filter>BotSystem\Private\Loot</Filter>
+    </ClCompile>
+    <ClCompile Include="BotSystem\Private\Combat\BotWeapons.cpp">
+      <Filter>BotSystem\Private\Combat</Filter>
+    </ClCompile>
+    <ClCompile Include="BotSystem\Private\Combat\BotCombat.cpp">
+      <Filter>BotSystem\Private\Combat</Filter>
+    </ClCompile>
+    <ClCompile Include="BotSystem\Private\Decision\BotBrain.cpp">
+      <Filter>BotSystem\Private\Decision</Filter>
     </ClCompile>
     <ClCompile Include="BotSystem\Private\BotBehavior.cpp">
       <Filter>BotSystem\Private</Filter>

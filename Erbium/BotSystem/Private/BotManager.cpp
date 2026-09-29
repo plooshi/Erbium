@@ -1,9 +1,12 @@
 #include "pch.h"
 #include "../Public/BotManager.h"
 #include "../Public/BotCompat.h"
+#include "../Public/BotEngineTypes.h"
 #include "../Public/BotLog.h"
 #include "../Public/BotSpawner.h"
 #include "../Public/Perception/BotPerception.h"
+#include "../Public/Loot/BotLoot.h"
+#include "../Public/Combat/BotWeapons.h"
 #include "../../FortniteGame/Public/FortGameMode.h"
 #include "../../Erbium/Public/GUI.h"
 
@@ -52,7 +55,9 @@ FBotController* FBotManager::SpawnBotInternal(const FSpawnRequest& Request)
     Params.Location = FVector(Request.Location);
     Params.ScatterRadius = FBotSystemConfig::SpawnScatterRadius;
 
-    auto Bot = std::make_unique<FBotController>(NextBotId++, FBotConfig{});
+    FBotConfig Config{};
+    BotDifficulty::Apply(Config, FBotSystemConfig::DefaultDifficulty);
+    auto Bot = std::make_unique<FBotController>(NextBotId++, Config);
 
     auto Start = NowMicros();
     bool bSpawned = BotSpawner::SpawnBot(*Bot, Params);
@@ -293,11 +298,87 @@ void FBotManager::RunThink(double Now)
     }
 }
 
-void FBotManager::RunFrame()
+void FBotManager::RunFrame(double Now, float DeltaSeconds)
 {
     for (auto& Bot : Bots)
         if (Bot->GetLifeState() == EBotLifeState::Active)
-            Bot->TickFrame();
+            Bot->TickFrame(Now, DeltaSeconds);
+}
+
+int FBotManager::CommandDifficulty(uint32 BotId, EBotDifficulty Difficulty)
+{
+    return ForEachCommandTarget(BotId, [&](FBotController& Bot) { BotDifficulty::Apply(Bot.GetMutableConfig(), Difficulty); });
+}
+
+bool FBotManager::HandleRemoveInventoryItem(const IInterface* Interface, const FGuid& ItemGuid, int Count, bool bForceRemoval, bool& bOutRemoved)
+{
+    for (auto& Bot : Bots)
+    {
+        if (Bot->GetControllerKind() != EBotControllerKind::AIController)
+            continue;
+
+        auto Controller = Bot->GetController();
+        if (!Controller || Controller->GetInterface(IFortInventoryOwnerInterface::StaticClass()) != Interface)
+            continue;
+
+        bOutRemoved = Bot->GetInventory().Consume(ItemGuid, (Count < 0 || bForceRemoval) ? -1 : Count);
+        return true;
+    }
+
+    return false;
+}
+
+static std::string Format(const char* Fmt, ...)
+{
+    char Buffer[512];
+    va_list Args;
+    va_start(Args, Fmt);
+    vsnprintf(Buffer, sizeof(Buffer), Fmt, Args);
+    va_end(Args);
+    return Buffer;
+}
+
+std::string FBotManager::DescribeBot(uint32 BotId)
+{
+    auto Bot = FindBot(BotId);
+    if (!Bot)
+        return "No bot with that id.";
+
+    auto Pawn = Bot->GetPawn();
+    auto& Combat = Bot->GetCombat();
+    auto& Brain = Bot->GetBrain();
+    auto& Movement = Bot->GetMovement();
+
+    std::string Text = Format("Bot #%u [%s, %s, %s]\n", Bot->GetId(), ToString(Bot->GetLifeState()), ToString(Bot->GetControllerKind()), BotDifficulty::ToString(Bot->GetConfig().Difficulty));
+    Text += Format("State: %s | Decision: %s (search %.2f loot %.2f combat %.2f heal %.2f survive %.2f)\n", ToString(Bot->GetAIState()), FBotBrain::ToString(Brain.GetPriority()),
+                   Brain.GetScore(EBotPriority::Search), Brain.GetScore(EBotPriority::Loot), Brain.GetScore(EBotPriority::Combat), Brain.GetScore(EBotPriority::Healing), Brain.GetScore(EBotPriority::Survival));
+
+    if (Pawn)
+    {
+        auto Location = Pawn->K2_GetActorLocation();
+        Text += Format("Health: %.0f | Shield: %.0f | At (%.0f, %.0f, %.0f)\n", Pawn->GetHealth(), Pawn->GetShield(), Location.X, Location.Y, Location.Z);
+    }
+
+    auto Goal = Movement.GetGoalLocation();
+    Text += Format("Destination: %s (%.0f, %.0f, %.0f) nav=%s\n", Movement.HasGoal() ? "yes" : "none", Goal.X, Goal.Y, Goal.Z, BotNavigation::ToString(Movement.GetNavMode()));
+
+    if (Combat.HasTarget())
+        Text += Format("Target: %.0f m, %s | Combat: %s\n", Combat.GetTargetDistance() / 100.f, Combat.IsTargetVisible() ? "visible" : "last seen", Combat.GetActivity());
+    else
+        Text += "Target: none\n";
+
+    auto Weapon = BotWeapons::GetCurrentWeapon(Pawn);
+    Text += Format("Weapon: %s (ammo %d)\n", Weapon ? BotItems::GetName(BotWeapons::GetWeaponData(Weapon)).c_str() : "none", BotWeapons::GetLoadedAmmo(Weapon));
+
+    Text += Format("Inventory (%s):", Bot->GetInventory().GetStorageName());
+    for (auto& Item : Bot->GetInventory().GetItems())
+        Text += Format(" %s x%d;", BotItems::GetName(Item.Definition).c_str(), Item.Count);
+    Text += "\n";
+
+    Text += Format("Builds: %d placed, %d failed | Materials W%d S%d M%d\n", Bot->GetBuilder().GetPlacedCount(), Bot->GetBuilder().GetFailedCount(), Bot->GetBuilder().GetMaterials(EBotBuildMaterial::Wood),
+                   Bot->GetBuilder().GetMaterials(EBotBuildMaterial::Stone), Bot->GetBuilder().GetMaterials(EBotBuildMaterial::Metal));
+    Text += "Cosmetics: " + Bot->Cosmetics.Describe();
+    return Text;
 }
 
 template <typename Fn>
@@ -384,6 +465,7 @@ void FBotManager::Tick(const UObject* NetDriver, float DeltaSeconds)
         {
             PublishedBotCount = 0;
             BotPerceptionWorld::Reset();
+            BotLootWorld::Reset();
         }
         return;
     }
@@ -401,12 +483,21 @@ void FBotManager::Tick(const UObject* NetDriver, float DeltaSeconds)
         RunMaintenance(Now);
     }
 
-    // One shared actor snapshot per interval for all bots' perception.
+    // One shared actor snapshot per interval for all bots' perception and looting.
     if (!Bots.empty())
+    {
         BotPerceptionWorld::Update(Now);
+        BotLootWorld::Update(Now);
+    }
 
     RunThink(Now);
-    RunFrame();
+    RunFrame(Now, DeltaSeconds);
+
+    if (WatchedBotId != 0 && Now >= NextWatchTime)
+    {
+        NextWatchTime = Now + 3.0;
+        BOT_LOG(BOT_CATEGORY_AI, "%s", DescribeBot(WatchedBotId).c_str());
+    }
 
     bIsTicking = false;
     FlushPendingRemovals();

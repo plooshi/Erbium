@@ -1693,6 +1693,9 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
     cheat botidle <Id = all> - Bots stand still
     cheat botbuild <wall|floor|ramp|cone> <Id = all> - Bots build a piece facing you
     cheat botoutfit <CID_...> <Id = all> - Changes bot outfits
+    cheat botdifficulty <easy|normal|hard> <Id = all> - Sets bot difficulty
+    cheat botdebug <Id> - Shows a bot's state, target, weapon, inventory
+    cheat botwatch <Id | 0> - Logs a bot's debug info every 3 seconds
     cheat startevent - Starts the event for the current version
     cheat tp <X> <Y> <Z> - Teleports to a location
     cheat launch <X> <Y> <Z> - Launches the player
@@ -2103,6 +2106,60 @@ void AFortPlayerControllerAthena::ServerCheat(UObject* Context, FFrame& Stack)
             }
 
             PlayerController->ClientMessage(FString(List.c_str()), FName(), 1.f);
+        }
+        else if (command == "botdebug" || command == "botwatch")
+        {
+            uint32 BotId = 0;
+            if (args.size() >= 2)
+            {
+                try
+                {
+                    BotId = (uint32)std::stoul(args[1].c_str(), nullptr);
+                }
+                catch (...)
+                {
+                }
+            }
+
+            if (command == "botwatch")
+            {
+                FBotManager::WatchedBotId = BotId;
+                PlayerController->ClientMessage(FString(BotId ? L"Watching bot (server log every 3 s)." : L"Stopped watching."), FName(), 1.f);
+            }
+            else
+            {
+                auto Text = FBotManager::DescribeBot(BotId);
+                printf("[BotAI] %s\n", Text.c_str());
+                PlayerController->ClientMessage(FString(std::wstring(Text.begin(), Text.end()).c_str()), FName(), 1.f);
+            }
+        }
+        else if (command == "botdifficulty")
+        {
+            EBotDifficulty Difficulty;
+            if (args.size() < 2 || !BotDifficulty::Parse(args[1].c_str(), Difficulty))
+            {
+                PlayerController->ClientMessage(FString(L"Usage: cheat botdifficulty <easy|normal|hard> [id]"), FName(), 1.f);
+                return;
+            }
+
+            uint32 BotId = 0;
+            if (args.size() >= 3)
+            {
+                try
+                {
+                    BotId = (uint32)std::stoul(args[2].c_str(), nullptr);
+                }
+                catch (...)
+                {
+                }
+            }
+
+            // New bots use it too when it is applied to all.
+            if (BotId == 0)
+                FBotSystemConfig::DefaultDifficulty = Difficulty;
+
+            auto Count = FBotManager::CommandDifficulty(BotId, Difficulty);
+            PlayerController->ClientMessage(FString(std::wstring(L"Difficulty set for " + std::to_wstring(Count) + L" bot(s).").c_str()), FName(), 1.f);
         }
         else if (command == "botbuild" || command == "botoutfit")
         {

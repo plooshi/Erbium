@@ -42,14 +42,19 @@ namespace BotCompat
 
     static void AddAIControllerCandidates(std::vector<FControllerClassChoice>& Out)
     {
-        // Plain engine AI controller first: it has no Fortnite bot logic of its own that could need
-        // bot data we do not provide, or compete with the bot system for the pawn.
-        if (auto EngineAIController = AAIController::StaticClass())
-            Out.push_back({ EngineAIController, EBotControllerKind::AIController });
+        // Plain engine AI controller: no Fortnite bot logic of its own that could need bot data we do
+        // not provide, or compete with the bot system for the pawn. Virtual inventory.
+        auto EngineAIController = AAIController::StaticClass();
 
         // Fortnite's own bot controller (the class Epic's server bots use in this version range).
+        // Native inventory; its own brain is stopped at spawn (DisableBuiltInAI).
         static auto FortBotController = FindClass("FortAthenaAIBotController");
-        if (FortBotController)
+
+        if (FBotSystemConfig::bPreferFortniteBotController && FortBotController)
+            Out.push_back({ FortBotController, EBotControllerKind::AIController });
+        if (EngineAIController)
+            Out.push_back({ EngineAIController, EBotControllerKind::AIController });
+        if (!FBotSystemConfig::bPreferFortniteBotController && FortBotController)
             Out.push_back({ FortBotController, EBotControllerKind::AIController });
     }
 
@@ -103,10 +108,37 @@ namespace BotCompat
         return PlayerState;
     }
 
+    static AFortInventory* EnsureAIInventory(AController* Controller)
+    {
+        if (!Controller->GetInterface(IFortInventoryOwnerInterface::StaticClass()))
+            return nullptr;
+
+        // 0x10000 = object property cast flag: only plain object references are written directly.
+        static auto WorldInventoryOffset = Controller->GetOffset("WorldInventory", 0x10000);
+        static auto InventoryOffset = Controller->GetOffset("Inventory", 0x10000);
+        auto Offset = WorldInventoryOffset != -1 ? WorldInventoryOffset : InventoryOffset;
+
+        if (Offset != -1)
+            if (auto Existing = *(AFortInventory**)(__int64(Controller) + Offset))
+                return Existing;
+
+        auto Inventory = UWorld::SpawnActor<AFortInventory>(AFortInventory::StaticClass(), FVector{}, FRotator{}, Controller);
+        if (!Inventory)
+            return nullptr;
+
+        Inventory->InventoryType = 0;
+        if (Offset != -1)
+            *(AFortInventory**)(__int64(Controller) + Offset) = Inventory;
+        else
+            BOT_LOG(BOT_CATEGORY_COMPAT, "AI controller has no inventory property; its inventory is only known to the bot system.");
+
+        return Inventory;
+    }
+
     AFortInventory* EnsureWorldInventory(AController* Controller, EBotControllerKind Kind)
     {
         if (Kind != EBotControllerKind::PlayerController)
-            return nullptr;
+            return EnsureAIInventory(Controller);
 
         auto PlayerController = (AFortPlayerControllerAthena*)Controller;
 
@@ -377,6 +409,43 @@ namespace BotCompat
             GameMode->AlivePlayers.Remove(Index);
             ChangePlayersLeft(GameMode, -1);
         }
+    }
+
+    void CreditBotKill(AFortPlayerPawnAthena* VictimPawn, AFortPlayerStateAthena* VictimState)
+    {
+        if (!VictimPawn || !VictimPawn->HasDamagers() || VictimPawn->Damagers.Num() == 0)
+            return;
+
+        // Most recent damager (entries are appended as damage comes in).
+        auto& Damagers = VictimPawn->Damagers;
+        auto Killer = Damagers[Damagers.Num() - 1].DamageCauser;
+        if (!Killer || !Killer->IsA(AController::StaticClass()))
+            return;
+
+        auto KillerState = ((AController*)Killer)->PlayerState;
+        if (!KillerState || KillerState == VictimState)
+            return;
+
+        if (KillerState->HasKillScore())
+            KillerState->KillScore++;
+        else
+            KillerState->Kills++;
+        KillerState->OnRep_Kills();
+
+        if (KillerState->HasTeamKillScore())
+        {
+            KillerState->TeamKillScore++;
+            KillerState->OnRep_TeamKillScore();
+        }
+
+        // Kill feed / elimination message for a human killer, same call ClientOnPawnDied makes.
+        struct FReportKillParams
+        {
+            AFortPlayerStateAthena* Victim;
+            uint8_t Padding[0x8];
+        };
+        FReportKillParams Params{ VictimState };
+        KillerState->ClientReportKill(Params);
     }
 
     bool IsPawnDead(AFortPlayerPawnAthena* Pawn)

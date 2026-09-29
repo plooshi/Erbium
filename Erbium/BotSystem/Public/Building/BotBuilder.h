@@ -61,6 +61,9 @@ public:
     EBotBuildResult Build(const FBotBuildRequest& Request, double Now);
 
     int GetMaterials(EBotBuildMaterial Material) const;
+
+    // Materials picked up by bots without a native inventory (Phase 2B looting).
+    void AddMaterials(EBotBuildMaterial Material, int Count);
     int GetPlacedCount() const { return PlacedCount; }
     int GetFailedCount() const { return FailedCount; }
     AActor* GetLastBuilding() const { return (AActor*)LastBuilding.Get(); }

@@ -5,6 +5,7 @@
 #include "../Public/BotEngineTypes.h"
 #include "../Public/BotLog.h"
 #include "../Public/Cosmetics/BotCosmetics.h"
+#include "../Public/Loot/BotLoot.h"
 #include "../../FortniteGame/Public/FortGameMode.h"
 
 // ESpawnActorCollisionHandlingMethod
@@ -56,6 +57,38 @@ static void DestroyActorIfAlive(AActor* Actor)
 {
     if (Actor && !Actor->bActorIsBeingDestroyed)
         Actor->K2_DestroyActor();
+}
+
+// Starting loadout for bots that do not go through AFortPlayerControllerAthena::GiveStartingItems
+// (AI-controller bots): the cosmetic pickaxe (Phase 3) or the default one, plus the playlist's
+// starting items, with the same filter GiveStartingItems applies.
+static void GiveAIStartingItems(FBotController& Bot, AFortGameMode* GameMode)
+{
+    auto& Inventory = Bot.GetInventory();
+
+    const UFortItemDefinition* Pickaxe = nullptr;
+    if (auto CosmeticPickaxe = (UAthenaPickaxeItemDefinition*)Bot.Cosmetics.Get(EBotCosmeticSlot::Pickaxe))
+        Pickaxe = CosmeticPickaxe->WeaponDefinition;
+
+    static auto DefaultPickaxe = FindObject<UFortItemDefinition>(L"/Game/Athena/Items/Weapons/WID_Harvest_Pickaxe_Athena_C_T01.WID_Harvest_Pickaxe_Athena_C_T01");
+    if (!Pickaxe)
+        Pickaxe = DefaultPickaxe;
+
+    if (Pickaxe)
+        Inventory.Give(Pickaxe, 1, 0);
+
+    static auto SmartItemDefClass = FindClass("FortSmartBuildingItemDefinition");
+    for (int i = 0; i < GameMode->StartingItems.Num(); i++)
+    {
+        auto& StartingItem = GameMode->StartingItems.Get(i, FItemAndCount::Size());
+        auto Item = StartingItem.Item;
+
+        // The playlist's pickaxe is replaced by the one chosen above.
+        if (!Item || !StartingItem.Count || (SmartItemDefClass && Item->IsA(SmartItemDefClass)) || Item->IsA<UFortWeaponMeleeItemDefinition>())
+            continue;
+
+        Inventory.Give(Item, StartingItem.Count, 0);
+    }
 }
 
 static std::wstring MakeBotName(const FBotController& Bot)
@@ -117,9 +150,9 @@ namespace BotSpawner
             return false;
         }
 
+        // Native inventory where the controller supports one, otherwise virtual (see BotInventory.h).
         auto Inventory = BotCompat::EnsureWorldInventory(Controller, Kind);
-        if (!Inventory)
-            BOT_VERBOSE(BOT_CATEGORY_SPAWN, "Bot #%u: no world inventory for this controller type, continuing without items.", Bot.GetId());
+        Bot.GetInventory().Initialize(Inventory);
 
         // 4. Location  5. Pawn
         auto PawnClass = BotCompat::GetBotPawnClass(GameMode, Controller);
@@ -170,8 +203,15 @@ namespace BotSpawner
         Bot.Cosmetics = BotCosmetics::ChooseLoadout();
         bool bDressed = BotCosmetics::ApplyLoadout(Bot, Bot.Cosmetics);
 
-        if (Inventory && Config.bGiveStartingItems)
-            AFortPlayerControllerAthena::GiveStartingItems((AFortPlayerControllerAthena*)Controller);
+        if (Config.bGiveStartingItems)
+        {
+            if (Kind == EBotControllerKind::PlayerController && Inventory)
+                AFortPlayerControllerAthena::GiveStartingItems((AFortPlayerControllerAthena*)Controller);
+            else
+                GiveAIStartingItems(Bot, GameMode);
+        }
+
+        BotLoot::EquipBestLoadout(Bot);
 
         if (!bDressed)
             BotCompat::ApplyDefaultAppearance(PlayerState, Pawn);
@@ -191,8 +231,8 @@ namespace BotSpawner
 
         auto Controller = Bot.GetController();
         auto Pawn = Bot.GetPawn();
-        auto PlayerController = Bot.GetPlayerController();
-        auto Inventory = PlayerController ? PlayerController->WorldInventory : nullptr;
+        // Player controllers' WorldInventory, or the inventory created for an AI controller.
+        auto Inventory = Bot.GetInventory().GetNativeInventory();
 
         // AlivePlayers stores raw pointers: unregister before the controller can be destroyed.
         if (GameMode && Controller && Bot.bRegisteredAlive)

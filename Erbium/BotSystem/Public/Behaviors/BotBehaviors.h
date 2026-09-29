@@ -1,7 +1,9 @@
 #pragma once
 #include "../BotBehavior.h"
+#include "../../../FortniteGame/Public/FortInventory.h"
 
-// Phase 2A behaviors: standing, wandering, commanded movement.
+// Behaviors: standing, wandering, commanded movement (2A), looting (2B), combat / healing / escaping
+// (2C), building (4). The brain (Decision/BotBrain.h) chooses between the autonomous ones.
 //
 // Transition overview:
 //
@@ -13,8 +15,7 @@
 //   Building ──> the state it interrupted
 //   any ──> Dead (pawn died)
 //
-// Looting / Targeting / Attacking / Healing / Escaping arrive with their systems (Phase 2B/2C) and
-// will be selected by Searching when perception reports something worth doing.
+//   Searching <-> Looting / Combat / Healing / Escaping   (chosen by FBotBrain by score)
 
 // Stand still.
 class FBotIdleBehavior final : public IBotBehavior
@@ -86,6 +87,73 @@ private:
 
     EPhase Phase = EPhase::Reacting;
     float Timer = 0.f;
+};
+
+// Phase 2B. Walk to the pickup the brain chose (claimed so other bots leave it), take it, re-equip.
+// Gives up (and ignores that pickup for a while) when it cannot be reached.
+class FBotLootingBehavior final : public IBotBehavior
+{
+public:
+    EBotAIState GetState() const override { return EBotAIState::Looting; }
+    void OnEnter(FBotController& Bot) override;
+    void Tick(FBotController& Bot, float DeltaSeconds) override;
+    void OnExit(FBotController& Bot) override;
+
+private:
+    TWeakObjectPtr<AFortPickupAthena> Pickup;
+    float TimeLeft = 0.f;
+};
+
+// Phase 2C. Nested combat state machine driven by FBotCombat (targeting, aim, fire, reload) plus
+// positioning here:
+//   Approach   - target further than the weapon's preferred range: move closer
+//   Engage     - in range: stand and shoot, strafe to a new spot every RepositionInterval
+//   Back off   - target too close for the weapon: step away
+//   Search     - target out of sight (within TargetMemory): go to where it was last seen
+class FBotCombatBehavior final : public IBotBehavior
+{
+public:
+    EBotAIState GetState() const override { return EBotAIState::Combat; }
+    void OnEnter(FBotController& Bot) override;
+    void Tick(FBotController& Bot, float DeltaSeconds) override;
+    void OnExit(FBotController& Bot) override;
+
+private:
+    double NextRepositionTime = 0.0;
+    double NextMoveDecisionTime = 0.0;
+};
+
+// Phase 2C. Use the most fitting healing/shield item: equip it and hold "fire" (how consumables are
+// used), until the item count drops or it times out. Virtual-inventory bots emulate the effect (see
+// FBotSystemConfig::bEmulateConsumablesForVirtualInventory).
+class FBotHealingBehavior final : public IBotBehavior
+{
+public:
+    EBotAIState GetState() const override { return EBotAIState::Healing; }
+    void OnEnter(FBotController& Bot) override;
+    void Tick(FBotController& Bot, float DeltaSeconds) override;
+    void OnExit(FBotController& Bot) override;
+
+private:
+    FGuid ItemGuid{};
+    const UFortItemDefinition* ItemDefinition = nullptr;
+    int CountBefore = 0;
+    float TimeLeft = 0.f;
+    float EmulatedUseTime = -1.f;
+    bool bUsing = false;
+};
+
+// Phase 2C. Sprint away from the nearest threat, then let the brain decide again.
+class FBotEscapingBehavior final : public IBotBehavior
+{
+public:
+    EBotAIState GetState() const override { return EBotAIState::Escaping; }
+    void OnEnter(FBotController& Bot) override;
+    void Tick(FBotController& Bot, float DeltaSeconds) override;
+    void OnExit(FBotController& Bot) override;
+
+private:
+    float TimeLeft = 0.f;
 };
 
 // Terminal state while the bot is dead and waiting for cleanup.

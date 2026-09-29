@@ -165,6 +165,12 @@
     <ClInclude Include="BotSystem\Public\Building\BotBuildCatalog.h" />
     <ClInclude Include="BotSystem\Public\Building\BotBuildGrid.h" />
     <ClInclude Include="BotSystem\Public\Building\BotBuilder.h" />
+    <ClInclude Include="BotSystem\Public\Inventory\BotItems.h" />
+    <ClInclude Include="BotSystem\Public\Inventory\BotInventory.h" />
+    <ClInclude Include="BotSystem\Public\Loot\BotLoot.h" />
+    <ClInclude Include="BotSystem\Public\Combat\BotWeapons.h" />
+    <ClInclude Include="BotSystem\Public\Combat\BotCombat.h" />
+    <ClInclude Include="BotSystem\Public\Decision\BotBrain.h" />
     <ClInclude Include="BotSystem\Public\BotBehavior.h" />
     <ClInclude Include="BotSystem\Public\BotCompat.h" />
     <ClInclude Include="BotSystem\Public\BotConfig.h" />
@@ -245,6 +251,12 @@
     <ClCompile Include="BotSystem\Private\Building\BotBuildCatalog.cpp" />
     <ClCompile Include="BotSystem\Private\Building\BotBuildGrid.cpp" />
     <ClCompile Include="BotSystem\Private\Building\BotBuilder.cpp" />
+    <ClCompile Include="BotSystem\Private\Inventory\BotItems.cpp" />
+    <ClCompile Include="BotSystem\Private\Inventory\BotInventory.cpp" />
+    <ClCompile Include="BotSystem\Private\Loot\BotLoot.cpp" />
+    <ClCompile Include="BotSystem\Private\Combat\BotWeapons.cpp" />
+    <ClCompile Include="BotSystem\Private\Combat\BotCombat.cpp" />
+    <ClCompile Include="BotSystem\Private\Decision\BotBrain.cpp" />
     <ClCompile Include="BotSystem\Private\BotBehavior.cpp" />
     <ClCompile Include="BotSystem\Private\BotCompat.cpp" />
     <ClCompile Include="BotSystem\Private\BotController.cpp" />

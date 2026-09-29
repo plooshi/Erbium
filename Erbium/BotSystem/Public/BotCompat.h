@@ -49,10 +49,18 @@ namespace BotCompat
     // plain engine AIController does not. Creates and attaches one when missing.
     AFortPlayerStateAthena* EnsurePlayerState(AController* Controller, const FTransform& Transform);
 
-    // Same inventory creation path as AFortGameMode::HandleStartingNewPlayer_. Player controllers only
-    // for now: Erbium's inventory code expects the owner to implement the Fortnite inventory-owner
-    // interface, which a plain AIController does not. AI inventories arrive with looting (Phase 2B).
+    // Native inventory for the bot, or nullptr when it should use virtual storage (see BotInventory.h).
+    //  - Player controllers: their WorldInventory, created the same way as in HandleStartingNewPlayer_.
+    //  - AI controllers that implement Fortnite's inventory-owner interface (FortAthenaAIBotController):
+    //    a new AFortInventory owned by the controller, also stored in the controller's
+    //    WorldInventory/Inventory property when that is a plain object property.
+    //  - Other AI controllers (the engine AIController): nullptr. Item callbacks the game makes on an
+    //    inventory owner would have no valid owner interface.
     AFortInventory* EnsureWorldInventory(AController* Controller, EBotControllerKind Kind);
+
+    // Credits the kill of an AI-controller bot to whoever damaged it last (same score updates
+    // ClientOnPawnDied makes for player victims, which never runs for AI controllers).
+    void CreditBotKill(AFortPlayerPawnAthena* VictimPawn, AFortPlayerStateAthena* VictimState);
 
     // Stops any behavior tree / brain the controller class starts on its own, so it cannot fight the
     // bot system for control of the pawn.

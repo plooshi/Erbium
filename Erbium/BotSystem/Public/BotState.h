@@ -23,7 +23,9 @@ enum class EBotControllerKind : uint8
 };
 
 // High-level AI state. Each value maps to one IBotBehavior (see Behaviors/BotBehaviors.h).
-// Phase 2A: movement states. Looting/combat/healing states are added with their systems.
+// One behavior per state (Behaviors/BotBehaviors.h). Searching/Looting/Combat/Healing/Escaping are
+// chosen by the brain (Decision/BotBrain.h); Idle/Moving/Following are commanded; Building interrupts
+// and returns.
 enum class EBotAIState : uint8
 {
     None,
@@ -32,8 +34,34 @@ enum class EBotAIState : uint8
     Moving,    // Go to a commanded location, then Idle.
     Following, // Stay close to a commanded actor.
     Building,  // Place a piece (defensive wall / obstacle ramp / commanded), then return (Phase 4).
+    Looting,   // Walk to a pickup and take it (Phase 2B).
+    Combat,    // Target, aim, shoot, reload, reposition (Phase 2C).
+    Healing,   // Use a healing / shield item (Phase 2C).
+    Escaping,  // Retreat from a threat (Phase 2C).
     Dead,
 };
+
+// Phase 5.1: high-level priorities.
+enum class EBotPriority : uint8
+{
+    Search,   // -> Searching
+    Loot,     // -> Looting
+    Combat,   // -> Combat
+    Healing,  // -> Healing
+    Survival, // -> Escaping
+    Count,
+};
+
+// Phase 5.2: difficulty presets. They only change reaction/accuracy/tactics parameters, never what the
+// bot is allowed to know.
+enum class EBotDifficulty : uint8
+{
+    Easy,
+    Normal,
+    Hard,
+};
+
+
 
 inline const char* ToString(EBotLifeState State)
 {
@@ -72,6 +100,14 @@ inline const char* ToString(EBotAIState State)
         return "Following";
     case EBotAIState::Building:
         return "Building";
+    case EBotAIState::Looting:
+        return "Looting";
+    case EBotAIState::Combat:
+        return "Combat";
+    case EBotAIState::Healing:
+        return "Healing";
+    case EBotAIState::Escaping:
+        return "Escaping";
     case EBotAIState::Dead:
         return "Dead";
     }

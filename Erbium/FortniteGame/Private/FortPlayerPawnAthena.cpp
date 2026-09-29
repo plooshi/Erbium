@@ -192,7 +192,9 @@ bool AFortPlayerPawnAthena::FinishedTargetSpline(void* _Pickup)
         return FinishedTargetSplineOG(Pickup);
 
     auto PlayerController = (AFortPlayerControllerAthena*)Pawn->Controller;
-    if (!PlayerController)
+    // Everything below needs a player controller (inventory, swap state); AI-controlled pawns
+    // (bot system) pick items up through their own inventory instead.
+    if (!PlayerController || !PlayerController->IsA<AFortPlayerControllerAthena>())
         return FinishedTargetSplineOG(Pickup);
 
     // if (auto entry = PlayerController->HasSwappingItemDefinition() ? (FFortItemEntry*)PlayerController->SwappingItemDefinition : nullptr)

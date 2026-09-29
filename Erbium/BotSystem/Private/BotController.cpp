@@ -18,6 +18,9 @@ FBotController::FBotController(uint32 InId, const FBotConfig& InConfig)
     , Movement(*this)
     , Perception(*this)
     , Builder(*this)
+    , Inventory(*this)
+    , Combat(*this)
+    , Brain(*this)
 {
 }
 
@@ -90,8 +93,13 @@ void FBotController::OnPawnDied(double Now)
 
     LifeState = EBotLifeState::Dead;
     DeathTime = Now;
+    Combat.Reset();
     Movement.Stop();
+    BotLootWorld::ReleaseClaims(Id);
     SetAIState(EBotAIState::Dead);
+
+    if (ControllerKind == EBotControllerKind::AIController)
+        HandleAIDeath();
 
     BOT_LOG(BOT_CATEGORY_SYSTEM, "Bot #%u died.", Id);
 }
@@ -132,9 +140,13 @@ void FBotController::Think(double Now)
     auto DeltaSeconds = (float)(Now - LastThinkTime);
     LastThinkTime = Now;
 
-    // Order matters: behaviors decide on fresh perception, movement executes what they decided.
+    if (auto CurrentPawn = GetPawn())
+        LastKnownLocation = CurrentPawn->K2_GetActorLocation();
+
+    // Order matters: decisions use fresh perception, behaviors act on the decision, movement executes.
     Perception.Update(Now);
     TrackDamage(Now);
+    Brain.Update(Now);
     EvaluateBuildDecision(Now);
 
     if (Behavior)
@@ -143,9 +155,33 @@ void FBotController::Think(double Now)
     Movement.Update(Now);
 }
 
-void FBotController::TickFrame()
+void FBotController::TickFrame(double Now, float DeltaSeconds)
 {
     Movement.TickFrame();
+
+    if (GetAIState() == EBotAIState::Combat)
+        Combat.UpdateAim(Now, DeltaSeconds);
+}
+
+void FBotController::IgnoreLoot(AFortPickupAthena* Pickup, double Seconds)
+{
+    if (Pickup)
+        IgnoredLoot[Pickup->Index] = LastThinkTime + Seconds;
+}
+
+bool FBotController::IsLootIgnored(const TWeakObjectPtr<AFortPickupAthena>& Pickup) const
+{
+    auto Found = IgnoredLoot.find(Pickup.ObjectIndex);
+    return Found != IgnoredLoot.end() && Found->second > LastThinkTime;
+}
+
+void FBotController::HandleAIDeath()
+{
+    // The pawn may already be flagged for destruction; the object itself is still valid this frame.
+    auto DeadPawn = Pawn.Get();
+
+    Inventory.DropAll(LastKnownLocation);
+    BotCompat::CreditBotKill(DeadPawn, GetPlayerState());
 }
 
 void FBotController::SetAIState(EBotAIState NewState)
@@ -190,9 +226,11 @@ void FBotController::EvaluateBuildDecision(double Now)
 
     NextBuildDecisionTime = Now + Config.BuildDecisionInterval;
 
-    // Only interrupt "ordinary" states; never an ongoing build.
+    // Only interrupt "ordinary" states; never an ongoing build, heal or escape. Combat is included:
+    // shoot -> build cover -> back to Combat (reposition, aim, shoot) is Phase 4 combat building.
     auto State = GetAIState();
-    if (State != EBotAIState::Idle && State != EBotAIState::Searching && State != EBotAIState::Moving && State != EBotAIState::Following)
+    if (State != EBotAIState::Idle && State != EBotAIState::Searching && State != EBotAIState::Moving && State != EBotAIState::Following && State != EBotAIState::Looting &&
+        State != EBotAIState::Combat)
         return;
 
     if (!Builder.IsReady(Now))

@@ -425,6 +425,12 @@ void GUI::Init()
                     FBotSystemConfig::ControllerMode = (EBotControllerMode)ControllerMode;
                 ImGui::Checkbox("Use nav mesh", &FBotSystemConfig::bUseNavMesh);
                 ImGui::Checkbox("Bots can build", &FBotSystemConfig::bAllowBuilding);
+                ImGui::Checkbox("Prefer Fortnite bot controller", &FBotSystemConfig::bPreferFortniteBotController);
+                ImGui::Checkbox("Emulate consumables (virtual inventory)", &FBotSystemConfig::bEmulateConsumablesForVirtualInventory);
+
+                static int Difficulty = (int)FBotSystemConfig::DefaultDifficulty;
+                if (ImGui::Combo("Difficulty (new bots)", &Difficulty, "Easy\0Normal\0Hard\0"))
+                    FBotSystemConfig::DefaultDifficulty = (EBotDifficulty)Difficulty;
 
                 // Cosmetics apply to bots spawned afterwards.
                 ImGui::Checkbox("Random cosmetics", &FBotCosmeticSettings::bEnabled);

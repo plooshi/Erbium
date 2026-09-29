@@ -4,6 +4,9 @@
 #include "BotConfig.h"
 #include "BotState.h"
 #include "Building/BotBuilder.h"
+#include "Combat/BotCombat.h"
+#include "Decision/BotBrain.h"
+#include "Inventory/BotInventory.h"
 #include "Cosmetics/BotCosmetics.h"
 #include "Navigation/BotMovement.h"
 #include "Perception/BotPerception.h"
@@ -61,6 +64,26 @@ public:
     const FBotPerception& GetPerception() const { return Perception; }
     FBotBuilder& GetBuilder() { return Builder; }
     const FBotBuilder& GetBuilder() const { return Builder; }
+    FBotInventory& GetInventory() { return Inventory; }
+    const FBotInventory& GetInventory() const { return Inventory; }
+    FBotCombat& GetCombat() { return Combat; }
+    const FBotCombat& GetCombat() const { return Combat; }
+    FBotBrain& GetBrain() { return Brain; }
+    const FBotBrain& GetBrain() const { return Brain; }
+
+    // Per-bot settings can change at runtime (difficulty command).
+    FBotConfig& GetMutableConfig() { return Config; }
+
+    // While set, navigation leaves the controller's focus alone (combat is aiming with it).
+    void SetAimLock(bool bLocked) { bAimLock = bLocked; }
+    bool IsAimLocked() const { return bAimLock; }
+
+    // Pickups this bot failed to reach are skipped for a while.
+    void IgnoreLoot(AFortPickupAthena* Pickup, double Seconds);
+    bool IsLootIgnored(const TWeakObjectPtr<AFortPickupAthena>& Pickup) const;
+
+    // Last position of the pawn (valid after it is gone, e.g. for death drops).
+    const FVector& GetLastKnownLocation() const { return LastKnownLocation; }
 
     // World time of the current/last think. Behaviors use it where they need absolute time.
     double GetNow() const { return LastThinkTime; }
@@ -88,8 +111,8 @@ public:
     // Perception + behavior + movement. Called at FBotSystemConfig::ThinkInterval.
     void Think(double Now);
 
-    // Every server frame (only movement modes that need continuous input do work here).
-    void TickFrame();
+    // Every server frame: steering input and combat aim smoothing.
+    void TickFrame(double Now, float DeltaSeconds);
 
     void SetAIState(EBotAIState NewState);
 
@@ -127,9 +150,19 @@ private:
     void EvaluateBuildDecision(double Now);
     void TrackDamage(double Now);
 
+    // AI-controller bots: drop items and credit the killer (ClientOnPawnDied only runs for players).
+    void HandleAIDeath();
+
     FBotMovement Movement;
     FBotPerception Perception;
     FBotBuilder Builder;
+    FBotInventory Inventory;
+    FBotCombat Combat;
+    FBotBrain Brain;
+
+    bool bAimLock = false;
+    std::unordered_map<int32, double> IgnoredLoot; // pickup object index -> ignore until (world time)
+    FVector LastKnownLocation{};
 
     float LastHealthAndShield = -1.f;
     double LastDamageTime = 0.0;

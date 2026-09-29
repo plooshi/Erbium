@@ -43,6 +43,14 @@ public:
     static int CommandBuild(uint32 BotId, EBotBuildPiece Piece, AActor* Towards);
     // Dress one bot (or all) in a specific outfit id; returns how many changed.
     static int CommandOutfit(uint32 BotId, const std::wstring& OutfitId);
+    static int CommandDifficulty(uint32 BotId, EBotDifficulty Difficulty);
+
+    // Multi-line debug description of one bot (Phase 5.5): id, state, decision, target, weapon, health,
+    // shield, destination, inventory, cosmetics, builds.
+    static std::string DescribeBot(uint32 BotId);
+
+    // Log DescribeBot for this bot every few seconds (0 = off).
+    static inline uint32 WatchedBotId = 0;
 
     static FBotController* FindBot(uint32 BotId);
     static FBotController* FindBotByController(const AActor* Controller);
@@ -65,6 +73,10 @@ public:
     // Called from AFortPlayerControllerAthena::ClientOnPawnDied for every controller; no-op for humans.
     static void NotifyPawnDied(const AActor* Controller);
 
+    // Called from Erbium's RemoveInventoryItem hook. Returns true (and the result in bOutRemoved) if the
+    // inventory-owner interface belongs to an AI-controller bot; false = not ours, use the player path.
+    static bool HandleRemoveInventoryItem(const IInterface* Interface, const FGuid& ItemGuid, int Count, bool bForceRemoval, bool& bOutRemoved);
+
     // Latest perf numbers (microseconds), for the GUI.
     static float GetLastAverageTickMicros() { return LastAverageTickMicros; }
 
@@ -80,7 +92,7 @@ private:
     static void ProcessQueuedRequests();
     static void RunMaintenance(double Now);
     static void RunThink(double Now);
-    static void RunFrame();
+    static void RunFrame(double Now, float DeltaSeconds);
     template <typename Fn>
     static int ForEachCommandTarget(uint32 BotId, Fn&& Func);
     static void FlushPendingRemovals();
@@ -100,6 +112,7 @@ private:
     static inline std::atomic<int> PublishedBotCount = 0;
 
     static inline double NextMaintenanceTime = 0.0;
+    static inline double NextWatchTime = 0.0;
 
     // Perf accounting (see RecordTickTime).
     static inline double PerfWindowStart = 0.0;

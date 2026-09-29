@@ -20,6 +20,8 @@
 #define BOT_CATEGORY_PERCEPTION "BotPerception"
 #define BOT_CATEGORY_COSMETICS "BotCosmetics"
 #define BOT_CATEGORY_BUILDING "BotBuilding"
+#define BOT_CATEGORY_LOOT "BotLoot"
+#define BOT_CATEGORY_COMBAT "BotCombat"
 
 #define BOT_LOG(Category, Format, ...) printf("[" Category "] " Format "\n", ##__VA_ARGS__)
 

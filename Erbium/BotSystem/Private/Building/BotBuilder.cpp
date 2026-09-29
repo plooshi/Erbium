@@ -96,6 +96,12 @@ int FBotBuilder::GetMaterials(EBotBuildMaterial Material) const
     return VirtualMaterials[(int)Material];
 }
 
+void FBotBuilder::AddMaterials(EBotBuildMaterial Material, int Count)
+{
+    // Same cap as the game's resource stacks.
+    VirtualMaterials[(int)Material] = (std::min)(VirtualMaterials[(int)Material] + Count, 999);
+}
+
 bool FBotBuilder::IsReady(double Now) const
 {
     auto& Config = Bot.GetConfig();
