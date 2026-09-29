@@ -95,4 +95,10 @@ namespace BotCosmetics
 
     // Any thread (GUI): performed on the game thread before the next loadout is chosen.
     void RequestReload();
+
+    // Why the last bot got the default appearance, or "none". Safe from the GUI thread.
+    const char* GetLastProblem();
+
+    // Catalogue size as last built on the game thread (0 before the first bot). Read-only, for the GUI.
+    int GetKnownCount(EBotCosmeticSlot Slot);
 }

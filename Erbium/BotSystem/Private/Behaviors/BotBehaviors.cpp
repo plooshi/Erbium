@@ -7,6 +7,7 @@
 #include "../../Public/Loot/BotLoot.h"
 #include "../../Public/World/BotWorld.h"
 #include "../../Public/BotCompat.h"
+#include "../../Public/BotSpawner.h"
 #include "../../../FortniteGame/Public/BuildingContainer.h"
 #include "../../../FortniteGame/Public/FortPlayerPawnAthena.h"
 
@@ -590,10 +591,6 @@ void FBotInBusBehavior::Tick(FBotController& Bot, float DeltaSeconds)
     if (Now < Bot.GetBusJumpTime() && !bBusGone)
         return;
 
-    auto Pawn = Bot.GetPawn();
-    if (!Pawn)
-        return;
-
     // Place the pawn where a player jumping now would appear: at the bus, spread out a little
     // (same offsetting Erbium's late-game jump uses). Without a bus (bot spawned mid-match), drop in
     // over the safe zone.
@@ -612,6 +609,18 @@ void FBotInBusBehavior::Tick(FBotController& Bot, float DeltaSeconds)
     auto Angle = RandomRange(0.f, 6.2831853f);
     auto Radius = RandomRange(0.f, 1000.f);
     FVector JumpLocation(Origin.X + cos(Angle) * Radius, Origin.Y + sin(Angle) * Radius, Origin.Z - 500.0);
+
+    // The game may have removed the pawn that waited on the warmup island: give the bot a new one at
+    // the jump point (the same thing Erbium does for players who jump, via RestartPlayer).
+    auto Pawn = Bot.GetPawn();
+    if (!Pawn)
+    {
+        if (!BotSpawner::RespawnPawn(Bot, JumpLocation))
+            return; // retried next think
+        Pawn = Bot.GetPawn();
+        if (!Pawn)
+            return;
+    }
 
     BotCompat::SetPawnInPlay(Pawn, true);
     Pawn->K2_SetActorLocation(JumpLocation, false, nullptr, true);

@@ -7,6 +7,7 @@
 #include "../../FortniteGame/Public/FortGameMode.h"
 #include "../../Erbium/Public/GUI.h"
 #include "../Public/BotManager.h"
+#include "../Public/World/BotWorld.h"
 
 template <typename T>
 static T* GetLiveActor(const TWeakObjectPtr<T>& Weak)
@@ -131,8 +132,30 @@ bool FBotController::Validate(double Now)
             CurrentPawn = Possessed;
         }
 
-        if (BotCompat::IsEliminated(CurrentController, ControllerKind, CurrentPawn))
+        if (CurrentPawn)
+        {
+            MissingPawnSince = 0.0;
+            if (BotCompat::IsPawnDead(CurrentPawn))
+                OnPawnDied(Now);
+            return true;
+        }
+
+        // No pawn. That is not a death by itself: when the bus starts the game removes the ground pawn
+        // of player-controller bots (they get a new one when they jump), and an AI bot waiting in the bus
+        // gets a new pawn at its jump time (FBotInBusBehavior). Real deaths of player-controller bots
+        // arrive through ClientOnPawnDied (NotifyPawnDied); AI bots always die with a pawn (health 0).
+        if (MissingPawnSince == 0.0)
+            MissingPawnSince = Now;
+
+        bool bInBus = BotWorld::GetPhase() == EBotMatchPhase::Aircraft || GetAIState() == EBotAIState::InBus ||
+                      (ControllerKind == EBotControllerKind::PlayerController && !BotCompat::IsEliminated(CurrentController, ControllerKind, nullptr));
+
+        // Otherwise give the game a moment (respawn, pawn swap) before calling it an elimination.
+        if (!bInBus && Now - MissingPawnSince > 10.0)
+        {
+            BOT_LOG(BOT_CATEGORY_SYSTEM, "Bot #%u has had no pawn for 10 s outside the bus: treating it as eliminated.", Id);
             OnPawnDied(Now);
+        }
     }
 
     return true;

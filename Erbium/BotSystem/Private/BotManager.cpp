@@ -643,6 +643,16 @@ void FBotManager::Tick(const UObject* NetDriver, float DeltaSeconds)
     FlushPendingRemovals();
     PublishedBotCount = (int)Bots.size();
 
+    int AIBots = 0, Dressed = 0;
+    for (auto& Bot : Bots)
+    {
+        AIBots += Bot->GetControllerKind() == EBotControllerKind::AIController;
+        Dressed += Bot->bDressed;
+    }
+    DiagAIControllerBots = AIBots;
+    DiagPlayerControllerBots = (int)Bots.size() - AIBots;
+    DiagDressedBots = Dressed;
+
     RecordTickTime(Now, NowMicros() - Start);
 }
 

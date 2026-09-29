@@ -142,6 +142,7 @@ public:
 
     // Chosen at spawn (Phase 3). Purely visual; no behavior reads it.
     FBotCosmeticLoadout Cosmetics;
+    bool bDressed = false; // the chosen outfit was applied (false = default appearance)
 
     // Whether the bot currently counts towards the match's alive players (see BotCompat::RegisterAlive).
     bool bRegisteredAlive = false;
@@ -194,4 +195,5 @@ private:
 
     double LastThinkTime = 0.0;
     double DeathTime = 0.0;
+    double MissingPawnSince = 0.0; // world time the pawn went missing (0 = has one)
 };

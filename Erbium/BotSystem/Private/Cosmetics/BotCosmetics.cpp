@@ -62,6 +62,8 @@ namespace
     };
 
     FSlotCatalog Catalogs[(int)EBotCosmeticSlot::Count];
+    std::atomic<const char*> LastProblem = "none"; // string literals only (read by the GUI thread)
+    std::atomic<int> KnownCounts[(int)EBotCosmeticSlot::Count] = {}; // published catalogue sizes (GUI)
     bool bSettingsLoaded = false;
     std::atomic<bool> bReloadRequested = false;
 }
@@ -112,6 +114,7 @@ static void BuildCatalog(EBotCosmeticSlot Slot)
             }
     }
 
+    KnownCounts[(int)Slot] = (int)Catalog.Ids.size();
     BOT_LOG(BOT_CATEGORY_COSMETICS, "%s: %d available (%s).", BotCosmetics::ToString(Slot), (int)Catalog.Ids.size(), Source);
 }
 
@@ -387,7 +390,13 @@ namespace BotCosmetics
 
         auto Character = (UAthenaCharacterItemDefinition*)Loadout.Get(EBotCosmeticSlot::Outfit);
         if (!Character)
+        {
+            LastProblem = !FBotCosmeticSettings::bEnabled                               ? "random cosmetics are turned off"
+                          : FBotCosmeticSettings::Slots[(int)EBotCosmeticSlot::Outfit].Mode == EBotCosmeticMode::None ? "outfit slot is set to None"
+                          : Catalogs[(int)EBotCosmeticSlot::Outfit].Ids.empty()           ? "no outfits found on this build"
+                                                                                          : "no outfit could be loaded";
             return false;
+        }
 
         // Same part resolution as Erbium's native-bot cosmetics (Misc.cpp InitializeCosmeticLoadout):
         // hero specializations give the body/head/..., the backpack adds its own parts.
@@ -411,11 +420,28 @@ namespace BotCosmetics
                 if (Part && Part->CharacterPartType < Parts.size())
                     Parts[Part->CharacterPartType] = Part;
 
+        // Nothing resolved (parts not loadable on this build): report failure so the caller applies the
+        // default appearance instead of leaving the bot without any parts.
+        size_t PartCount = 0;
+        for (auto Part : Parts)
+            PartCount += Part != nullptr;
+        if (PartCount == 0)
+        {
+            LastProblem = "the outfit's character parts could not be loaded";
+            BOT_LOG(BOT_CATEGORY_COSMETICS, "Bot #%u: outfit %s has no loadable character parts.", Bot.GetId(), Loadout.Ids[(int)EBotCosmeticSlot::Outfit].c_str());
+            return false;
+        }
+
         if (PlayerState->HasHeroType())
             PlayerState->HeroType = Hero;
 
         if (!BotCompat::ApplyCharacterParts(PlayerState, Pawn, Parts))
+        {
+            LastProblem = "this build has no way to set character parts";
             return false;
+        }
+
+        LastProblem = "none";
 
         BOT_VERBOSE(BOT_CATEGORY_COSMETICS, "Bot #%u wears %s", Bot.GetId(), Loadout.Describe().c_str());
         return true;
@@ -425,6 +451,16 @@ namespace BotCosmetics
     {
         BuildCatalog(Slot);
         return (int)Catalogs[(int)Slot].Ids.size();
+    }
+
+    const char* GetLastProblem()
+    {
+        return LastProblem;
+    }
+
+    int GetKnownCount(EBotCosmeticSlot Slot)
+    {
+        return KnownCounts[(int)Slot];
     }
 
     void RequestReload()

@@ -32,6 +32,13 @@ namespace BotSpawner
     // Why the most recent spawn failed, or "none" (a string literal; safe to read from the GUI thread).
     const char* GetLastError();
 
+    // Why the last AI-controller attempt failed (the bot then became an immobile player-controller bot).
+    const char* GetLastAIControllerError();
+
+    // Gives an existing bot a new pawn at Location (its old one was removed by the game, e.g. when the
+    // bus started). Controller, player state, inventory and cosmetics are kept.
+    bool RespawnPawn(FBotController& Bot, const FVector& Location);
+
     // Tears the bot down in reverse order. Safe to call on a partially spawned or already
     // half-destroyed bot; every step checks that its object still exists.
     void DestroyBot(FBotController& Bot);

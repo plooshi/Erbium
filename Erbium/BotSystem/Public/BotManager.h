@@ -90,6 +90,9 @@ public:
     static inline std::atomic<int> DiagClientConnections = -1;   // human connections (-1 = never ticked)
     static inline std::atomic<const char*> DiagAutoSpawn = "waiting for the first server tick";
     static inline std::atomic<const char*> DiagLastReject = "none";
+    static inline std::atomic<int> DiagAIControllerBots = 0;     // can move
+    static inline std::atomic<int> DiagPlayerControllerBots = 0; // fallback, cannot move
+    static inline std::atomic<int> DiagDressedBots = 0;          // wearing a chosen outfit
 
     // Latest perf numbers (microseconds), for the GUI.
     static float GetLastAverageTickMicros() { return LastAverageTickMicros; }

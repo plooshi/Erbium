@@ -439,6 +439,13 @@ Two Erbium hooks assumed the pawn or instigator always has a player controller. 
 | `AFortPlayerPawnAthena::EndSkydiving` (FortPlayerPawnAthena.cpp) | every time a pawn lands: bus drop, drop-in spawn, or a fall | Returns early unless the controller is an `AFortPlayerControllerAthena`; quest events need one. |
 | `ABuildingSMActor::OnDamageServer` (BuildingSMActor.cpp) | a bot hits a tree, rock or wall with its pickaxe | Material harvesting (writes into `WorldInventory`) only for player controllers that have one; everything else goes to the original function. |
 
+
+## Round 11: immobile bots, outfits, deaths when the bus starts
+
+- **Immobile bots.** To place a bot, `SelectSpawnTransform` asks `GameMode->ChoosePlayerStart(Controller)`. Fortnite can refuse controllers that are not player controllers. The AI-controller attempt then failed with "no player start was found", and the Round 9 fallback spawned a player-controller bot, which cannot move. Now, if the bot's own controller gets no start, it asks with a real player's controller, then picks a `FortPlayerStartWarmup` / `PlayerStart` actor directly. The AI tab shows how many bots can and cannot move, and why the AI controller failed. Setting "Bot controller" to "AI controller" disables the player-controller fallback entirely.
+- **Deaths when the bus starts.** `FBotController::Validate` treated a missing pawn as an elimination. When the bus starts the game removes the ground pawn of player-controller bots; they get a new one when they jump. Now only a pawn that is really dead counts. A missing pawn during the bus phase is expected; outside it, the bot waits 10 s before being treated as eliminated. An AI bot whose pawn was removed while in the bus gets a new one at its jump point (`BotSpawner::RespawnPawn`).
+- **Outfits.** If an outfit resolved but none of its character parts did, `ApplyLoadout` still reported success. That skipped the default appearance and left the bot with no parts applied. It now fails in that case, and the AI tab shows how many bots are dressed, how many outfits the build has, and the last reason an outfit could not be applied.
+
 ## Where to find everything
 
 **Branch:** `claude/erbium-ai-bot-system-sus0gw` on `wieseichwiesenicht-art/Erbium-AI-Fork2`, one commit per phase on top of `main`.

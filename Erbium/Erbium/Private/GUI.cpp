@@ -437,6 +437,11 @@ void GUI::Init()
                 else
                     ImGui::Text("Players connected: unknown");
                 ImGui::Text("Auto spawn: %s", FBotManager::DiagAutoSpawn.load());
+                ImGui::Text("Bots that can move (AI controller): %d", FBotManager::DiagAIControllerBots.load());
+                ImGui::Text("Bots that cannot move (player controller fallback): %d", FBotManager::DiagPlayerControllerBots.load());
+                ImGui::Text("Why the AI controller failed: %s", BotSpawner::GetLastAIControllerError());
+                ImGui::Text("Bots wearing a random outfit: %d (outfits found: %d)", FBotManager::DiagDressedBots.load(), BotCosmetics::GetKnownCount(EBotCosmeticSlot::Outfit));
+                ImGui::Text("Last outfit problem: %s", BotCosmetics::GetLastProblem());
                 ImGui::Text("Last spawn error: %s", BotSpawner::GetLastError());
                 ImGui::Text("Last rejected spawn: %s", FBotManager::DiagLastReject.load());
             }

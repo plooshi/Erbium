@@ -41,7 +41,43 @@ static bool SelectSpawnTransform(AFortGameMode* GameMode, AController* Controlle
     }
 
     // Same source of spawn points real players use (see AFortGameMode::SpawnDefaultPawnFor).
-    if (auto PlayerStart = GameMode->ChoosePlayerStart(Controller))
+    // Fortnite's ChoosePlayerStart can refuse controllers that are not player controllers, which made
+    // every AI-controller spawn fail and fall back to (immobile) player-controller bots. Then: ask with
+    // a real player's controller, and finally pick a player start actor ourselves.
+    AActor* PlayerStart = GameMode->ChoosePlayerStart(Controller);
+
+    if (!PlayerStart && !Controller->IsA<AFortPlayerControllerAthena>())
+    {
+        TArray<AFortPlayerControllerAthena*> Players;
+        Utils::GetAll<AFortPlayerControllerAthena>(Players);
+        for (int i = 0; i < Players.Num() && !PlayerStart; i++)
+            if (Players[i] && !Players[i]->bActorIsBeingDestroyed)
+                PlayerStart = GameMode->ChoosePlayerStart(Players[i]);
+        Players.Free();
+    }
+
+    if (!PlayerStart)
+    {
+        static auto WarmupStartClass = FindClass("FortPlayerStartWarmup");
+        static auto PlayerStartClass = FindClass("PlayerStart");
+
+        for (auto Class : { WarmupStartClass, PlayerStartClass })
+        {
+            if (!Class)
+                continue;
+
+            TArray<AActor*> Starts;
+            Utils::GetAll(Class, Starts);
+            if (Starts.Num() > 0)
+                PlayerStart = Starts[rand() % Starts.Num()];
+            Starts.Free();
+
+            if (PlayerStart)
+                break;
+        }
+    }
+
+    if (PlayerStart)
     {
         auto StartTransform = PlayerStart->GetTransform();
         FRotator Rotation{};
@@ -98,6 +134,7 @@ static std::wstring MakeBotName(const FBotController& Bot)
 }
 
 static std::atomic<const char*> LastError = "none";
+static std::atomic<const char*> LastAIError = "none";
 
 static bool Fail(FBotController& Bot, const char* ClassName, const char* Reason)
 {
@@ -197,6 +234,11 @@ namespace BotSpawner
         return LastError;
     }
 
+    const char* GetLastAIControllerError()
+    {
+        return LastAIError;
+    }
+
     bool SpawnBot(FBotController& Bot, const FBotSpawnParams& Params)
     {
         auto World = UWorld::GetWorld();
@@ -222,8 +264,14 @@ namespace BotSpawner
         for (size_t i = 0; i < Candidates.size() && !bSpawned; i++)
         {
             bSpawned = TrySpawnWith(Bot, Params, GameMode, Candidates[i]);
-            if (!bSpawned && i + 1 < Candidates.size())
-                BOT_LOG(BOT_CATEGORY_SPAWN, "Bot #%u: trying the next controller class.", Bot.GetId());
+            if (bSpawned)
+                break;
+
+            if (Candidates[i].Kind == EBotControllerKind::AIController)
+                LastAIError = GetLastError();
+            if (i + 1 < Candidates.size())
+                BOT_LOG(BOT_CATEGORY_SPAWN, "Bot #%u: trying the next controller class%s.", Bot.GetId(),
+                        Candidates[i + 1].Kind == EBotControllerKind::PlayerController ? " (player controller: this bot will not be able to move)" : "");
         }
 
         if (!bSpawned)
@@ -262,6 +310,7 @@ namespace BotSpawner
         // CosmeticLoadoutPC, which GiveStartingItems reads.
         Bot.Cosmetics = BotCosmetics::ChooseLoadout();
         bool bDressed = BotCosmetics::ApplyLoadout(Bot, Bot.Cosmetics);
+        Bot.bDressed = bDressed;
 
         if (Config.bGiveStartingItems)
         {
@@ -281,6 +330,42 @@ namespace BotSpawner
         BotCompat::RegisterAlive(GameMode, Controller, Kind);
         Bot.bRegisteredAlive = true;
 
+        return true;
+    }
+
+    bool RespawnPawn(FBotController& Bot, const FVector& Location)
+    {
+        auto World = UWorld::GetWorld();
+        auto GameMode = World ? (AFortGameMode*)World->AuthorityGameMode : nullptr;
+        auto Controller = Bot.GetController();
+        auto PlayerState = Bot.GetPlayerState();
+        if (!GameMode || !Controller || !PlayerState)
+            return false;
+
+        auto PawnClass = BotCompat::GetBotPawnClass(GameMode, Controller);
+        if (!PawnClass)
+            return false;
+
+        FRotator Rotation{};
+        FTransform Transform(Location, Rotation);
+        auto Pawn = (AFortPlayerPawnAthena*)UWorld::SpawnActor(PawnClass, Transform, Controller, AdjustIfPossibleButAlwaysSpawn);
+        if (!Pawn)
+            return false;
+
+        if (!BotCompat::PossessPawn(Controller, Bot.GetControllerKind(), Pawn, PlayerState) || !Bot.OnPossessed(Pawn))
+        {
+            DestroyActorIfAlive(Pawn);
+            return false;
+        }
+
+        float MaxHealth = Bot.GetConfig().MaxHealth;
+        Pawn->SetMaxHealth(MaxHealth);
+
+        if (!BotCosmetics::ApplyLoadout(Bot, Bot.Cosmetics))
+            BotCompat::ApplyDefaultAppearance(PlayerState, Pawn);
+        BotLoot::EquipBestLoadout(Bot);
+
+        BOT_LOG(BOT_CATEGORY_SPAWN, "Bot #%u got a new pawn (its previous one was removed).", Bot.GetId());
         return true;
     }
 
