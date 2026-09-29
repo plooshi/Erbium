@@ -27,7 +27,7 @@ static EFireMethod DetectFireMethod(AFortPlayerPawnAthena* Pawn, UAbilitySystemC
         FireMethod = EFireMethod::Unsupported;
 
     static const char* Names[] = { "unknown", "PawnStartFire", "weapon ability activation", "none" };
-    BOT_LOG(BOT_CATEGORY_COMBAT, "Firing method on this build: %s.", Names[(int)FireMethod]);
+    BOT_VERBOSE(BOT_CATEGORY_COMBAT, "Firing method on this build: %s.", Names[(int)FireMethod]);
     return FireMethod;
 }
 

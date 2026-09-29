@@ -142,7 +142,7 @@ namespace BotBuildGrid
             Cal.LocalOffsetZ = Origin.Z - Pivot.Z;
             Cal.bCalibrated = true;
 
-            BOT_LOG(BOT_CATEGORY_BUILDING, "Calibrated %s: pivot offset (%.0f, %.0f, %.0f).", BotBuildCatalog::ToString(Piece), LocalX, LocalY, Cal.LocalOffsetZ);
+            BOT_VERBOSE(BOT_CATEGORY_BUILDING, "Calibrated %s: pivot offset (%.0f, %.0f, %.0f).", BotBuildCatalog::ToString(Piece), LocalX, LocalY, Cal.LocalOffsetZ);
         }
 
         // Walls must be thin along the build direction.
@@ -157,7 +157,7 @@ namespace BotBuildGrid
                 // The pivot offset was learned with the wrong yaw; measure again next time.
                 Cal.bCalibrated = false;
                 bMisplaced = true;
-                BOT_LOG(BOT_CATEGORY_BUILDING, "Wall faced the wrong way; wall yaw offset is now %.0f.", Cal.YawOffset);
+                BOT_VERBOSE(BOT_CATEGORY_BUILDING, "Wall faced the wrong way; wall yaw offset is now %.0f.", Cal.YawOffset);
             }
         }
 

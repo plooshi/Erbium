@@ -709,7 +709,7 @@ namespace BotCompat
                 Movement->Call(SetTickEnabledFunc, bEnabled);
                 bChanged = true;
                 if (LoggedRepairs++ < 5)
-                    BOT_LOG(BOT_CATEGORY_COMPAT, "Bot pawn's movement component was not ticking: enabled it.");
+                    BOT_VERBOSE(BOT_CATEGORY_COMPAT, "Bot pawn's movement component was not ticking: enabled it.");
             }
         }
 
@@ -722,7 +722,7 @@ namespace BotCompat
             Pawn->CharacterMovement->SetMovementMode(Mode, CustomMode);
             bChanged = true;
             if (LoggedRepairs++ < 5)
-                BOT_LOG(BOT_CATEGORY_COMPAT, "Bot pawn had movement mode None (frozen): set it to falling.");
+                BOT_VERBOSE(BOT_CATEGORY_COMPAT, "Bot pawn had movement mode None (frozen): set it to falling.");
         }
 
         // Standard player values (UE defaults for acceleration; Fortnite's running speed).
@@ -745,7 +745,7 @@ namespace BotCompat
         {
             static int Logged = 0;
             if (Logged++ < 3)
-                BOT_LOG(BOT_CATEGORY_COMPAT, "Bot pawn had no walking speed (max speed %.0f, walk %.0f, accel %.0f): restored player defaults.", Info.MaxSpeed, Info.MaxWalkSpeed,
+                BOT_VERBOSE(BOT_CATEGORY_COMPAT, "Bot pawn had no walking speed (max speed %.0f, walk %.0f, accel %.0f): restored player defaults.", Info.MaxSpeed, Info.MaxWalkSpeed,
                         Info.MaxAcceleration);
         }
 

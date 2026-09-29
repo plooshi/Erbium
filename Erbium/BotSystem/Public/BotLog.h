@@ -8,8 +8,10 @@
 // filtered. Erbium logs through printf (stdout is redirected to the console or stdout.log by
 // dllmain), so we do the same instead of introducing another logging backend.
 //
-// BOT_LOG is for lifecycle events (spawn, remove, death, state changes) and must never be used in
-// per-frame paths. BOT_VERBOSE is gated behind FBotSystemConfig::bVerboseLogging.
+// BOT_LOG is only for things a server operator needs to see: failures, features missing on this
+// build, and match results. Routine events (spawn, removal, deaths, bus, phase changes, performance)
+// use BOT_VERBOSE, which is gated behind FBotSystemConfig::bVerboseLogging (GUI: AI tab, Advanced).
+// Neither may be used in per-frame paths.
 
 #define BOT_CATEGORY_SYSTEM "BotSystem"
 #define BOT_CATEGORY_SPAWN "BotSpawn"

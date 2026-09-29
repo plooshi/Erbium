@@ -111,7 +111,7 @@ void FBotController::OnPawnDied(double Now)
     if (ControllerKind == EBotControllerKind::AIController)
         HandleAIDeath();
 
-    BOT_LOG(BOT_CATEGORY_SYSTEM, "Bot #%u died.", Id);
+    BOT_VERBOSE(BOT_CATEGORY_SYSTEM, "Bot #%u died.", Id);
 }
 
 bool FBotController::Validate(double Now)
@@ -123,7 +123,7 @@ bool FBotController::Validate(double Now)
     auto CurrentController = GetController();
     if (!CurrentController)
     {
-        BOT_LOG(BOT_CATEGORY_SYSTEM, "Bot #%u lost its controller.", Id);
+        BOT_VERBOSE(BOT_CATEGORY_SYSTEM, "Bot #%u lost its controller.", Id);
         return false;
     }
 

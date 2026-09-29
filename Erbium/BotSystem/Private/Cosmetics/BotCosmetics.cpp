@@ -115,7 +115,7 @@ static void BuildCatalog(EBotCosmeticSlot Slot)
     }
 
     KnownCounts[(int)Slot] = (int)Catalog.Ids.size();
-    BOT_LOG(BOT_CATEGORY_COSMETICS, "%s: %d available (%s).", BotCosmetics::ToString(Slot), (int)Catalog.Ids.size(), Source);
+    BOT_VERBOSE(BOT_CATEGORY_COSMETICS, "%s: %d available (%s).", BotCosmetics::ToString(Slot), (int)Catalog.Ids.size(), Source);
 }
 
 // Loads and validates one cosmetic. Returns nullptr if it does not exist or is not usable.
@@ -267,7 +267,7 @@ static void LoadSettingsFile()
     }
 
     fclose(File);
-    BOT_LOG(BOT_CATEGORY_COSMETICS, "Loaded %d slot setting(s) from settings file.", Applied);
+    BOT_VERBOSE(BOT_CATEGORY_COSMETICS, "Loaded %d slot setting(s) from settings file.", Applied);
 }
 
 std::string FBotCosmeticLoadout::Describe() const

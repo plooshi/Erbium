@@ -179,7 +179,7 @@ namespace BotWorld
         auto NewPhase = ReadPhase(GameMode->GameState);
         if (NewPhase != Phase)
         {
-            BOT_LOG(BOT_CATEGORY_SYSTEM, "Match phase: %s -> %s", ToString(Phase), ToString(NewPhase));
+            BOT_VERBOSE(BOT_CATEGORY_SYSTEM, "Match phase: %s -> %s", ToString(Phase), ToString(NewPhase));
             Phase = NewPhase;
         }
 

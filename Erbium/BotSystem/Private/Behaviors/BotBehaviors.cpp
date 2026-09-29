@@ -641,7 +641,7 @@ void FBotInBusBehavior::Tick(FBotController& Bot, float DeltaSeconds)
     Pawn->BeginSkydiving(bFromBus);
 
     Bot.bDroppedIn = true;
-    BOT_LOG(BOT_CATEGORY_SYSTEM, "Bot #%u jumped out of the bus.", Bot.GetId());
+    BOT_VERBOSE(BOT_CATEGORY_SYSTEM, "Bot #%u jumped out of the bus.", Bot.GetId());
     Bot.SetAIState(EBotAIState::Skydiving);
 }
 

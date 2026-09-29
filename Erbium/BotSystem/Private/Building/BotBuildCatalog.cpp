@@ -85,7 +85,8 @@ static void BuildCatalog()
                         Class ? Class->GetName().ToString().c_str() : "(none)");
         }
 
-    BOT_LOG(BOT_CATEGORY_BUILDING, "Build catalogue: %s.", bAvailable ? "ready" : "no usable pieces found");
+    if (!bAvailable)
+        BOT_LOG(BOT_CATEGORY_BUILDING, "No usable build pieces found on this build; bots cannot build.");
 }
 
 namespace BotBuildCatalog

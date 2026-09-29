@@ -78,7 +78,7 @@ Remove from `AlivePlayers` (the native `RemoveFromAlivePlayers` if Erbium found 
 | Where | Action |
 |---|---|
 | Cheat console | `cheat spawnbot <N>`, `cheat removebot <id>`, `cheat removebots`, `cheat listbots` |
-| GUI → AI tab | Spawn N / Remove all / toggles |
+| GUI → AI tab (Advanced for the less common settings) | Spawn N / Remove all / toggles |
 | Code | `FBotManager::SpawnBot()`, `SpawnBot(Loc, Rot)`, `SpawnBots(N, &Near)`, `RemoveBot(id)`, `RemoveAllBots()`, `GetActiveBots()`, `GetBotCount()`, `IsBot(controller)` |
 
 Large requests are queued and spawned at `MaxSpawnsPerTick` per frame. `MaxBots` caps bots plus queued requests.
@@ -518,6 +518,20 @@ The verdict, also logged as `[BotNavigation] Movement test: ...`, is one of:
 | Nothing moved it | The server does not simulate the pawn's movement at all. |
 
 The result line also has the movement state before and after the test.
+
+
+## Round 18: compact AI tab, quiet logging
+
+Bots move on 12.61 now.
+
+- **AI tab.** The main view has only the everyday controls:
+  - enable / pause and the bot count
+  - auto spawn with its count
+  - spawn / fill / remove all
+  - difficulty, building, random cosmetics
+
+  Warnings appear only when something is wrong: bots that cannot move, or a spawn error. Everything else (controller, navigation, bus, per-slot cosmetics, verbose logging) is under **Advanced**. The status lines and the movement test are under **Advanced → Diagnostics**.
+- **Logging.** The console only gets what an operator needs: failures, features missing on this build, the match winner, and the movement-test result. Routine events (spawn, removal, deaths, bus boarding and jumps, phase changes, auto-spawn steps, navigation choices, movement repairs, perf stats) are `BOT_VERBOSE`, shown only with "Verbose bot logging".
 
 ## Where to find everything
 

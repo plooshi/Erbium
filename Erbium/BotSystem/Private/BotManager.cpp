@@ -106,7 +106,7 @@ FBotController* FBotManager::SpawnBotInternal(const FSpawnRequest& Request)
     else if (Request.bUseLocation && (BotWorld::IsBusPhase() || BotWorld::IsBusGone()))
         Bot->bDroppedIn = true;
 
-    BOT_LOG(BOT_CATEGORY_SPAWN, "Spawned bot #%u (%s) in %.2fms (%d active).", Bot->GetId(), ToString(Bot->GetControllerKind()), Elapsed / 1000.0, (int)Bots.size() + 1);
+    BOT_VERBOSE(BOT_CATEGORY_SPAWN, "Spawned bot #%u (%s) in %.2fms (%d active).", Bot->GetId(), ToString(Bot->GetControllerKind()), Elapsed / 1000.0, (int)Bots.size() + 1);
 
     Bots.push_back(std::move(Bot));
     return Bots.back().get();
@@ -199,7 +199,7 @@ void FBotManager::FlushPendingRemovals()
 
         BotSpawner::DestroyBot(*Bot);
         BotLootWorld::ReleaseClaims(Bot->GetId());
-        BOT_LOG(BOT_CATEGORY_SYSTEM, "Removed bot #%u (%d remaining).", Bot->GetId(), (int)Bots.size() - 1);
+        BOT_VERBOSE(BOT_CATEGORY_SYSTEM, "Removed bot #%u (%d remaining).", Bot->GetId(), (int)Bots.size() - 1);
 
         Bots.erase(Bots.begin() + i);
     }
@@ -394,7 +394,7 @@ void FBotManager::UpdateMatchFlow(double Now)
         }
 
         if (Boarded > 0)
-            BOT_LOG(BOT_CATEGORY_SYSTEM, "%s: %d bot(s) boarded.", bBusPhase ? "Battle bus" : "Bus already gone, dropping in", Boarded);
+            BOT_VERBOSE(BOT_CATEGORY_SYSTEM, "%s: %d bot(s) boarded.", bBusPhase ? "Battle bus" : "Bus already gone, dropping in", Boarded);
     }
 
     // Player-controller bots: jump the way a client does (ServerAttemptAircraftJump, which Erbium hooks
@@ -764,7 +764,7 @@ void FBotManager::UpdateAutoSpawn(const UObject* NetDriver, double Now)
         if (FirstPlayerTime < 0.0)
         {
             FirstPlayerTime = Now;
-            BOT_LOG(BOT_CATEGORY_SPAWN, "Player connected: auto spawning %d bot(s) in %.0f s.", FBotSystemConfig::AutoSpawnCount, FBotSystemConfig::AutoSpawnDelay);
+            BOT_VERBOSE(BOT_CATEGORY_SPAWN, "Player connected: auto spawning %d bot(s) in %.0f s.", FBotSystemConfig::AutoSpawnCount, FBotSystemConfig::AutoSpawnDelay);
         }
 
         if (Now - FirstPlayerTime < FBotSystemConfig::AutoSpawnDelay)
@@ -783,7 +783,7 @@ void FBotManager::UpdateAutoSpawn(const UObject* NetDriver, double Now)
     auto Missing = FBotSystemConfig::AutoSpawnCount - (int)Bots.size() - (int)SpawnQueue.size() - RequestedSpawnCount.load();
     Missing = (std::min)(Missing, FBotSystemConfig::MaxBots - (int)Bots.size() - (int)SpawnQueue.size());
 
-    BOT_LOG(BOT_CATEGORY_SPAWN, "Auto spawn: requesting %d bot(s) (target %d).", (std::max)(Missing, 0), FBotSystemConfig::AutoSpawnCount);
+    BOT_VERBOSE(BOT_CATEGORY_SPAWN, "Auto spawn: requesting %d bot(s) (target %d).", (std::max)(Missing, 0), FBotSystemConfig::AutoSpawnCount);
     if (Missing > 0)
         RequestedSpawnCount += Missing;
 }
@@ -868,7 +868,7 @@ void FBotManager::UpdateMovementTest(double Now)
             std::lock_guard Lock(DiagMutex);
             MovementTestResult = "running (bot #" + std::to_string(Test.BotId) + ")...";
         }
-        BOT_LOG(BOT_CATEGORY_NAV, "Movement test on bot #%u started: %s", Test.BotId, Test.Before.c_str());
+        BOT_VERBOSE(BOT_CATEGORY_NAV, "Movement test on bot #%u started: %s", Test.BotId, Test.Before.c_str());
         return;
     }
 
@@ -945,7 +945,7 @@ void FBotManager::UpdatePause()
         return;
 
     bWasPaused = FBotSystemConfig::bPaused;
-    BOT_LOG(BOT_CATEGORY_AI, "Bot AI %s.", bWasPaused ? "paused" : "resumed");
+    BOT_VERBOSE(BOT_CATEGORY_AI, "Bot AI %s.", bWasPaused ? "paused" : "resumed");
 
     // Stop what the controllers are doing, otherwise path following and firing would carry on.
     if (bWasPaused)
@@ -974,7 +974,7 @@ void FBotManager::RecordTickTime(double Now, double Micros)
     // Tick time includes spawning; report spawn cost separately so steady-state cost is visible.
     auto SteadyMicros = PerfTickCount > 0 ? (PerfTotalMicros - PerfSpawnMicros) / PerfTickCount : 0.0;
 
-    BOT_LOG(BOT_CATEGORY_PERF, "bots=%d alive=%d ticks=%d avg=%.1fus steady=%.1fus max=%.1fus spawns=%d avgSpawn=%.2fms", (int)Bots.size(), (int)GetActiveBots().size(), PerfTickCount,
+    BOT_VERBOSE(BOT_CATEGORY_PERF, "bots=%d alive=%d ticks=%d avg=%.1fus steady=%.1fus max=%.1fus spawns=%d avgSpawn=%.2fms", (int)Bots.size(), (int)GetActiveBots().size(), PerfTickCount,
             LastAverageTickMicros, SteadyMicros, PerfMaxMicros, PerfSpawnCount, PerfSpawnCount ? PerfSpawnMicros / PerfSpawnCount / 1000.0 : 0.0);
 
     PerfWindowStart = Now;

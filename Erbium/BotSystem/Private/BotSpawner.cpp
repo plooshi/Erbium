@@ -139,7 +139,7 @@ static std::atomic<const char*> LastAIError = "none";
 static bool Fail(FBotController& Bot, const char* ClassName, const char* Reason)
 {
     LastError = Reason;
-    BOT_LOG(BOT_CATEGORY_SPAWN, "Bot #%u with %s: %s", Bot.GetId(), ClassName, Reason);
+    BOT_VERBOSE(BOT_CATEGORY_SPAWN, "Bot #%u with %s: %s", Bot.GetId(), ClassName, Reason);
     return false;
 }
 
@@ -270,7 +270,7 @@ namespace BotSpawner
             if (Candidates[i].Kind == EBotControllerKind::AIController)
                 LastAIError = GetLastError();
             if (i + 1 < Candidates.size())
-                BOT_LOG(BOT_CATEGORY_SPAWN, "Bot #%u: trying the next controller class%s.", Bot.GetId(),
+                BOT_VERBOSE(BOT_CATEGORY_SPAWN, "Bot #%u: trying the next controller class%s.", Bot.GetId(),
                         Candidates[i + 1].Kind == EBotControllerKind::PlayerController ? " (player controller: this bot will not be able to move)" : "");
         }
 
@@ -365,7 +365,7 @@ namespace BotSpawner
             BotCompat::ApplyDefaultAppearance(PlayerState, Pawn);
         BotLoot::EquipBestLoadout(Bot);
 
-        BOT_LOG(BOT_CATEGORY_SPAWN, "Bot #%u got a new pawn (its previous one was removed).", Bot.GetId());
+        BOT_VERBOSE(BOT_CATEGORY_SPAWN, "Bot #%u got a new pawn (its previous one was removed).", Bot.GetId());
         return true;
     }
 

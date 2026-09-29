@@ -241,13 +241,13 @@ namespace BotNavigation
         bChecked = true;
         if (World->HasNavigationSystem() && World->NavigationSystem)
         {
-            BOT_LOG(BOT_CATEGORY_NAV, "Navigation system present (%s): trying pathfinding first.", World->NavigationSystem->Class->GetName().ToString().c_str());
+            BOT_VERBOSE(BOT_CATEGORY_NAV, "Navigation system present (%s): trying pathfinding first.", World->NavigationSystem->Class->GetName().ToString().c_str());
             return;
         }
 
         Stats[(int)EBotNavMode::Pathfinding].bDisabled = true;
         bNavQueriesBroken = true;
-        BOT_LOG(BOT_CATEGORY_NAV, "No navigation system in this world: no pathfinding, bots use direct moves / steering.");
+        BOT_VERBOSE(BOT_CATEGORY_NAV, "No navigation system in this world: no pathfinding, bots use direct moves / steering.");
     }
 
     EBotNavMode GetPreferredMode()
@@ -282,7 +282,7 @@ namespace BotNavigation
         if (++ModeStats.ConsecutiveFailures >= MaxFailuresBeforeDisable && ModeStats.Successes == 0 && !ModeStats.bDisabled)
         {
             ModeStats.bDisabled = true;
-            BOT_LOG(BOT_CATEGORY_NAV, "%s never succeeded (%d failures); using %s from now on.", ToString(Mode), ModeStats.ConsecutiveFailures, ToString(GetPreferredMode()));
+            BOT_VERBOSE(BOT_CATEGORY_NAV, "%s never succeeded (%d failures); using %s from now on.", ToString(Mode), ModeStats.ConsecutiveFailures, ToString(GetPreferredMode()));
         }
     }
 
@@ -301,7 +301,7 @@ namespace BotNavigation
         if (++ModeStats.NoProgressFailures >= MaxNoProgressFailures && ModeStats.ProgressCount == 0 && !ModeStats.bDisabled)
         {
             ModeStats.bDisabled = true;
-            BOT_LOG(BOT_CATEGORY_NAV, "%s accepts moves but no bot has moved with it (%d stuck moves); using %s from now on.", ToString(Mode), ModeStats.NoProgressFailures,
+            BOT_VERBOSE(BOT_CATEGORY_NAV, "%s accepts moves but no bot has moved with it (%d stuck moves); using %s from now on.", ToString(Mode), ModeStats.NoProgressFailures,
                     ToString(GetPreferredMode()));
         }
     }
@@ -334,7 +334,7 @@ namespace BotNavigation
             if (++NavQueryFailures >= MaxFailuresBeforeDisable && NavQuerySuccesses == 0)
             {
                 bNavQueriesBroken = true;
-                BOT_LOG(BOT_CATEGORY_NAV, "No nav mesh data answered %d queries; picking search points without it.", NavQueryFailures);
+                BOT_VERBOSE(BOT_CATEGORY_NAV, "No nav mesh data answered %d queries; picking search points without it.", NavQueryFailures);
             }
         }
 
