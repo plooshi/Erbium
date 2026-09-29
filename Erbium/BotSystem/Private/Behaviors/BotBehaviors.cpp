@@ -597,7 +597,7 @@ void FBotInBusBehavior::Tick(FBotController& Bot, float DeltaSeconds)
     // over the safe zone.
     FVector Origin;
     auto& Zone = BotWorld::GetSafeZone();
-    if (Bus)
+    if (Bus && !bBusGone) // after the drop window the bus may still exist but is off the droppable map
         Origin = Bus->K2_GetActorLocation();
     else if (Zone.bActive && Zone.NextRadius > 0.f)
     {

@@ -26,6 +26,21 @@ FBotMovement::FBotMovement(FBotController& InBot)
 
 void FBotMovement::SetGoal(EBotMoveGoal Type, AActor* Target, const FVector& Location, float Radius)
 {
+    // Behaviors re-send their destination every decision (combat: every 0.5 s). The same goal again
+    // must not restart the move: that would re-issue the navigation request and reset the stuck
+    // detection each time, so a bot that cannot move would never be detected (or fall back to steering).
+    if (Status == EBotMoveStatus::Moving && GoalType == Type && fabs(GoalRadius - Radius) < 1.f)
+    {
+        bool bSameTarget = Type == EBotMoveGoal::Location ? Distance2D(GoalLocation, Location) < 100.0 && fabs(GoalLocation.Z - Location.Z) < 200.0
+                                                           : GoalActor.Get() == Target;
+        if (bSameTarget)
+        {
+            if (Type == EBotMoveGoal::Location)
+                GoalLocation = FVector(Location);
+            return;
+        }
+    }
+
     GoalType = Type;
     GoalActor = TWeakObjectPtr<AActor>(Target);
     GoalLocation = FVector(Location);

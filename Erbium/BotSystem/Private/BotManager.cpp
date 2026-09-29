@@ -98,9 +98,13 @@ FBotController* FBotManager::SpawnBotInternal(const FSpawnRequest& Request)
 
     // Spawned after the bus started (and not at an explicit spot): join the match from the air like
     // everyone else instead of standing on the warmup island.
-    auto Phase = BotWorld::GetPhase();
-    if (!Request.bUseLocation && Bot->CanMove() && FBotSystemConfig::bBotsUseBattleBus && (Phase == EBotMatchPhase::Aircraft || Phase == EBotMatchPhase::SafeZones))
+    bool bMatchStarted = BotWorld::IsBusPhase() || BotWorld::IsBusGone();
+    if (!Request.bUseLocation && Bot->CanMove() && FBotSystemConfig::bBotsUseBattleBus && bMatchStarted)
         BoardBus(*Bot, Now);
+    // Placed at an explicit spot after the match started: stay there (UpdateMatchFlow would otherwise
+    // board it on the next tick).
+    else if (Request.bUseLocation && (BotWorld::IsBusPhase() || BotWorld::IsBusGone()))
+        Bot->bDroppedIn = true;
 
     BOT_LOG(BOT_CATEGORY_SPAWN, "Spawned bot #%u (%s) in %.2fms (%d active).", Bot->GetId(), ToString(Bot->GetControllerKind()), Elapsed / 1000.0, (int)Bots.size() + 1);
 
@@ -591,6 +595,7 @@ int FBotManager::CommandOutfit(uint32 BotId, const std::wstring& OutfitId)
         if (BotCosmetics::ChooseSpecific(Loadout, EBotCosmeticSlot::Outfit, OutfitId) && BotCosmetics::ApplyLoadout(Bot, Loadout))
         {
             Bot.Cosmetics = Loadout;
+            Bot.bDressed = true;
             Count++;
         }
     });
@@ -630,6 +635,11 @@ void FBotManager::Tick(const UObject* NetDriver, float DeltaSeconds)
             BotLootWorld::Reset();
             BotWorld::Reset();
             LastMatchPhase = EBotMatchPhase::Unknown;
+            DiagAIControllerBots = 0;
+            DiagPlayerControllerBots = 0;
+            DiagDressedBots = 0;
+            std::lock_guard Lock(DiagMutex);
+            DiagFirstBot = "no bots";
         }
         return;
     }

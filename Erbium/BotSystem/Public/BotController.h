@@ -132,6 +132,8 @@ public:
     // Every server frame: steering input and combat aim smoothing.
     void TickFrame(double Now, float DeltaSeconds);
 
+    // Switches behavior. Safe to call from inside a behavior: the change is then applied as soon as
+    // the current behavior call returns (see ApplyPendingState).
     void SetAIState(EBotAIState NewState);
 
     // Commands, e.g. from cheats. They set the data the Moving/Following behaviors read, then switch.
@@ -171,6 +173,15 @@ private:
 
     // AI-controller bots: drop items and credit the killer (ClientOnPawnDied only runs for players).
     void HandleAIDeath();
+
+    // State machine plumbing (see SetAIState): swap the behavior, and apply a change that was
+    // requested from inside a behavior call.
+    void ChangeState(EBotAIState NewState);
+    void ApplyPendingState();
+
+    bool bInBehaviorCall = false;
+    bool bHasPendingState = false;
+    EBotAIState PendingState = EBotAIState::None;
 
     FBotMovement Movement;
     FBotPerception Perception;

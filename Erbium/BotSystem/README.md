@@ -460,6 +460,19 @@ Two Erbium hooks assumed the pawn or instigator always has a player controller. 
 - **No death on landing.** Bots cannot open a glider, so a bot takes no damage (`AActor::bCanBeDamaged`) from its jump until it has landed.
 - **Walking.** `BotCompat::EnsureCanWalk` restores `MaxWalkSpeed` 600 / `MaxAcceleration` 2048 on pawns where they are 0: a pawn that did not go through a player's possession flow could jump and swing but not walk. The AI tab shows the first bot's movement mode, speed limit, walk speed, acceleration and current speed.
 
+
+## Round 14: quality pass (manager, controller, movement, compat, combat)
+
+| Area | Problem | Fix |
+|---|---|---|
+| State machine | Behaviors switch state from inside their own `Tick` / `OnEnter` / `OnExit`. That destroyed the behavior object while its member function was still running: safe only as long as every call site returned immediately. | `SetAIState` queues the change while a behavior call is running; `ApplyPendingState` applies it once the call returns (bounded to 4 chained changes, logged if exceeded). |
+| Movement | Behaviors re-send their destination every decision (combat every 0.5 s). Each call restarted the navigation request and reset stuck detection, so a bot that could not move was never detected and never fell back to steering. | `FBotMovement::SetGoal` keeps the running move when the goal is the same (same actor, or a location within 1 m). |
+| Mid-match spawns | A bot spawned "at my position" after the match started was pulled into the bus on the next tick. It also used the unreliable phase value to decide whether to board. | Marked as dropped in; boarding uses `BotWorld::IsBusPhase / IsBusGone`. |
+| Late drops | After the drop window a bot could still jump from the bus position, off the map. | Bus position only while the bus is still dropping; otherwise safe zone, a chest, then last location. |
+| Death drops | AI bots dropped their items where they were at the last think (up to 0.1 s old). | Dropped at the dead pawn's location. |
+| Winner | A later death with one team left could replay the win screen. | `DeclareWinner` runs once per match. |
+| Diagnostics | The first-bot line and the counters kept stale values after all bots were removed. | Reset with the rest of the world state. |
+
 ## Where to find everything
 
 **Branch:** `claude/erbium-ai-bot-system-sus0gw` on `wieseichwiesenicht-art/Erbium-AI-Fork2`, one commit per phase on top of `main`.

@@ -30,9 +30,15 @@ FBotController::FBotController(uint32 InId, const FBotConfig& InConfig)
 
 FBotController::~FBotController()
 {
-    // Behaviors may hold per-bot state; give them a chance to release it.
+    // Behaviors may hold per-bot state; give them a chance to release it. State changes requested
+    // from here are ignored: the bot is going away.
     if (Behavior)
+    {
+        bInBehaviorCall = true;
         Behavior->OnExit(*this);
+        bInBehaviorCall = false;
+        bHasPendingState = false;
+    }
 }
 
 AController* FBotController::GetController() const
@@ -154,7 +160,7 @@ bool FBotController::Validate(double Now)
         if (MissingPawnSince == 0.0)
             MissingPawnSince = Now;
 
-        bool bInBus = BotWorld::GetPhase() == EBotMatchPhase::Aircraft || GetAIState() == EBotAIState::InBus ||
+        bool bInBus = BotWorld::IsBusPhase() || GetAIState() == EBotAIState::InBus ||
                       (ControllerKind == EBotControllerKind::PlayerController && !BotCompat::IsEliminated(CurrentController, ControllerKind, nullptr));
 
         // Otherwise give the game a moment (respawn, pawn swap) before calling it an elimination.
@@ -191,7 +197,12 @@ void FBotController::Think(double Now)
     EvaluateBuildDecision(Now);
 
     if (Behavior)
+    {
+        bInBehaviorCall = true;
         Behavior->Tick(*this, DeltaSeconds);
+        bInBehaviorCall = false;
+        ApplyPendingState();
+    }
 
     Movement.Update(Now);
 }
@@ -221,6 +232,9 @@ void FBotController::HandleAIDeath()
     // The pawn may already be flagged for destruction; the object itself is still valid this frame.
     auto DeadPawn = Pawn.Get();
 
+    // Drop where the pawn actually died (LastKnownLocation is only refreshed at think rate).
+    if (DeadPawn)
+        LastKnownLocation = DeadPawn->K2_GetActorLocation();
     Inventory.DropAll(LastKnownLocation);
 
     auto World = UWorld::GetWorld();
@@ -255,19 +269,55 @@ void FBotController::HandleAIDeath()
 
 void FBotController::SetAIState(EBotAIState NewState)
 {
+    // Behaviors switch state from inside their own Tick/OnEnter/OnExit. Replacing the behavior there
+    // would destroy the object whose member function is still running, so the change is queued and
+    // applied once that call has returned (ApplyPendingState). The last request wins.
+    if (bInBehaviorCall)
+    {
+        PendingState = NewState;
+        bHasPendingState = true;
+        return;
+    }
+
+    ChangeState(NewState);
+    ApplyPendingState();
+}
+
+void FBotController::ChangeState(EBotAIState NewState)
+{
     auto OldState = GetAIState();
     if (OldState == NewState && Behavior)
         return;
 
+    bInBehaviorCall = true;
     if (Behavior)
         Behavior->OnExit(*this);
+    bInBehaviorCall = false;
 
     Behavior = CreateBotBehavior(NewState);
 
+    bInBehaviorCall = true;
     if (Behavior)
         Behavior->OnEnter(*this);
+    bInBehaviorCall = false;
 
     BOT_VERBOSE(BOT_CATEGORY_AI, "Bot #%u: %s -> %s", Id, ToString(OldState), ToString(NewState));
+}
+
+void FBotController::ApplyPendingState()
+{
+    // Bounded: a behavior that switches state in OnEnter every time must not loop forever.
+    for (int i = 0; i < 4 && bHasPendingState && !bInBehaviorCall; i++)
+    {
+        bHasPendingState = false;
+        ChangeState(PendingState);
+    }
+
+    if (bHasPendingState && !bInBehaviorCall)
+    {
+        BOT_LOG(BOT_CATEGORY_AI, "Bot #%u: state kept changing on entry (last: %s); stopping here.", Id, ToString(PendingState));
+        bHasPendingState = false;
+    }
 }
 
 void FBotController::TrackDamage(double Now)

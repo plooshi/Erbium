@@ -505,6 +505,10 @@ namespace BotCompat
         if (!KillerState)
             return;
 
+        // Only once per match (a later death with one team left must not replay the win screen).
+        if (GameState->HasWinningPlayerState() && GameState->WinningPlayerState)
+            return;
+
         if (KillerState->HasPlace())
         {
             KillerState->Place = 1;
