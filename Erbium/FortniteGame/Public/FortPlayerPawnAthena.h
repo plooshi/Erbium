@@ -20,7 +20,7 @@ public:
 
     DEFINE_STRUCT_PROP(bJumped, bool);
     DEFINE_STRUCT_PROP(bIsZiplining, bool);
-    DEFINE_STRUCT_PROP(Zipline, TWeakObjectPtr<AActor>);
+    DEFINE_STRUCT_NEWOBJ_PROP(Zipline, AActor);
 
     uint8_t Padding[0x100];
 };
@@ -110,6 +110,7 @@ public:
     DEFINE_PROP(RegisteredMovementModeExtentionLogic, TMap<uint32, UObject*>);
     DEFINE_PROP(VehicleInputComponent, UObject*);
     DEFINE_PROP(ZiplinePostBegin, TMulticastInlineDelegate<void()>);
+    DEFINE_PROP(ZiplineStateChanged, TMulticastInlineDelegate<void(bool, AActor*)>);
 
     DEFINE_FUNC(BeginSkydiving, void);
     DEFINE_FUNC(GetHealth, float);

@@ -301,9 +301,11 @@ void AFortPlayerPawnAthena::ServerSendZiplineState(UObject* Context, FFrame& Sta
         Ascender->OnRep_PawnUsingHandle();
     }
 
-    if (Pawn->ZiplineState.HasbIsZiplining() && Pawn->ZiplineState.HasZipline() && Pawn->ZiplineState.bIsZiplining && (!PreviousState.bIsZiplining || Pawn->ZiplineState.Zipline != PreviousState.Zipline) &&
-        Pawn->HasZiplinePostBegin())
+    if (Pawn->HasZiplinePostBegin() && Pawn->ZiplineState.bIsZiplining && (!PreviousState.bIsZiplining || Pawn->ZiplineState.Zipline != PreviousState.Zipline))
         Pawn->ZiplinePostBegin.Process();
+
+    if (Pawn->HasZiplineStateChanged())
+        Pawn->ZiplineStateChanged.Process(Pawn->ZiplineState.bIsZiplining, Pawn);
 }
 
 void AFortPlayerPawnAthena::OnCapsuleBeginOverlap_(UObject* Context, FFrame& Stack)
@@ -593,7 +595,7 @@ void AFortPlayerPawnAthena::SetIsInsideSafeZone(AFortPlayerPawnAthena* _this, bo
 {
     if (_this->bIsInsideSafeZone == bNewValue)
         return;
-    
+
     _this->bIsInsideSafeZone = bNewValue;
     _this->OnRep_IsInsideSafeZone();
 }
@@ -602,7 +604,7 @@ void AFortPlayerPawnAthena::UpdateOutsideSafeZone(AFortPlayerPawnAthena* _this)
 {
     if (_this->bIsInsideSafeZone == !_this->bIsInAnyStorm)
         return;
-    
+
     _this->bIsInsideSafeZone = !_this->bIsInAnyStorm;
     _this->OnRep_IsInsideSafeZone();
 }
