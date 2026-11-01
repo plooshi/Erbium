@@ -300,6 +300,10 @@ void AFortPlayerPawnAthena::ServerSendZiplineState(UObject* Context, FFrame& Sta
         Ascender->PreviousPawnUsingHandle = nullptr;
         Ascender->OnRep_PawnUsingHandle();
     }
+
+    if (Pawn->ZiplineState.HasbIsZiplining() && Pawn->ZiplineState.HasZipline() && Pawn->ZiplineState.bIsZiplining && (!PreviousState.bIsZiplining || Pawn->ZiplineState.Zipline != PreviousState.Zipline) &&
+        Pawn->HasZiplinePostBegin())
+        Pawn->ZiplinePostBegin.Process();
 }
 
 void AFortPlayerPawnAthena::OnCapsuleBeginOverlap_(UObject* Context, FFrame& Stack)

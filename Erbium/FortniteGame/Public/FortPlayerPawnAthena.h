@@ -19,6 +19,8 @@ public:
     USCRIPTSTRUCT_COMMON_MEMBERS(FZiplinePawnState);
 
     DEFINE_STRUCT_PROP(bJumped, bool);
+    DEFINE_STRUCT_PROP(bIsZiplining, bool);
+    DEFINE_STRUCT_PROP(Zipline, TWeakObjectPtr<AActor>);
 
     uint8_t Padding[0x100];
 };
@@ -107,6 +109,7 @@ public:
     DEFINE_BITFIELD_PROP(bIsSkydivingFromBus);
     DEFINE_PROP(RegisteredMovementModeExtentionLogic, TMap<uint32, UObject*>);
     DEFINE_PROP(VehicleInputComponent, UObject*);
+    DEFINE_PROP(ZiplinePostBegin, TMulticastInlineDelegate<void()>);
 
     DEFINE_FUNC(BeginSkydiving, void);
     DEFINE_FUNC(GetHealth, float);
